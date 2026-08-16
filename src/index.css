@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dark-brown: #2B1A12;
+  --color-rich-brown: #4A2F22;
+  --color-deep-brown: #1C120E;
+  --color-black-sheikh: #0F0D0C;
+  --color-off-white: #F3EEE5;
+  --color-warm-cream: #E8DED0;
+  --color-luxury-gold: #C6A15B;
+  --color-muted-gold: #9D7B43;
+  --color-gold-light: #DFBF7A;
+  --color-gold-dark: #7A5E2E;
+
+  --font-serif: 'Cinzel', serif;
+  --font-editorial: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-arabic: 'Amiri', 'Traditional Arabic', serif;
+}
+
+:root {
+  --bg-main: #0F0D0C;
+  --bg-surface: #1C120E;
+  --bg-card: #2B1A12;
+  --text-main: #F3EEE5;
+  --text-muted: #C5B8A8;
+  --gold-primary: #C6A15B;
+  --gold-border: rgba(198, 161, 91, 0.25);
+  --gold-hover: rgba(198, 161, 91, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #0F0D0C;
+  color: #F3EEE5;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Custom Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F0D0C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4A2F22;
+  border-radius: 3px;
+  border: 1px solid rgba(198, 161, 91, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C6A15B;
+}
+
+/* Typography Helpers */
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-cormorant {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-arabic {
+  font-family: 'Amiri', serif;
+}
+
+/* Gold Accents & Hairlines */
+.border-gold-subtle {
+  border-color: rgba(198, 161, 91, 0.22);
+}
+
+.border-gold-glow {
+  border-color: rgba(198, 161, 91, 0.45);
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #C6A15B 0%, #DFBF7A 50%, #9D7B43 100%);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #DFBF7A 0%, #C6A15B 50%, #B88E43 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Luxury Card & Glass Surface */
+.luxury-card {
+  background-color: #1C120E;
+  border: 1px solid rgba(198, 161, 91, 0.18);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-card:hover {
+  border-color: rgba(198, 161, 91, 0.45);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(198, 161, 91, 0.12);
+}
+
+.luxury-btn-gold {
+  position: relative;
+  background-color: #C6A15B;
+  color: #0F0D0C;
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.luxury-btn-gold:hover {
+  background-color: #DFBF7A;
+  box-shadow: 0 0 20px rgba(198, 161, 91, 0.35);
+  transform: translateY(-1px);
+}
+
+.luxury-btn-outline {
+  border: 1px solid rgba(198, 161, 91, 0.5);
+  color: #F3EEE5;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.luxury-btn-outline:hover {
+  border-color: #C6A15B;
+  background-color: rgba(198, 161, 91, 0.1);
+  color: #C6A15B;
+  transform: translateY(-1px);
+}
+
+/* Shimmer Loading Effect */
+@keyframes luxuryShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #1C120E 25%, #2B1A12 50%, #1C120E 75%);
+  background-size: 200% 100%;
+  animation: luxuryShimmer 2s infinite;
+}
+
+/* Fade in animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

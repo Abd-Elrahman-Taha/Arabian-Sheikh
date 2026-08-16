@@ -1,0 +1,65 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
+
+const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const current = authService.getCurrentUser();
+    setUser(current);
+    setLoading(false);
+  }, []);
+
+  const login = async (email, password) => {
+    const loggedUser = await authService.login(email, password);
+    setUser(loggedUser);
+    return loggedUser;
+  };
+
+  const signup = async (payload) => {
+    const newUser = await authService.signup(payload);
+    setUser(newUser);
+    return newUser;
+  };
+
+  const logout = () => {
+    authService.logout();
+    setUser(null);
+  };
+
+  const updateProfile = async (updates) => {
+    const updated = await authService.updateProfile(updates);
+    setUser(updated);
+    return updated;
+  };
+
+  const isAdmin = user?.role === 'ADMIN';
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAdmin,
+        loading,
+        login,
+        signup,
+        logout,
+        updateProfile,
+        isAuthenticated: !!user
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
