@@ -25,9 +25,8 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import SearchPage from './pages/SearchPage';
 
-//3D Effects
+// 3D Effects
 import ArabianIntro from './components/3d effects/ArabianIntro';
-import BakhoorSmoke from './components/3d effects/BakhoorSmoke';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -71,6 +70,7 @@ function MainRouter() {
   const { currentPath } = useRouter();
   const { user, isAdmin, isAuthenticated } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
 
   const isAdminRoute = currentPath.startsWith('/admin');
 
@@ -180,6 +180,11 @@ function MainRouter() {
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-400">
       
+      {/* Standalone Cinematic Bakhoor Smoke Intro (unmounts automatically after intro) */}
+      {showIntro && !isAdminRoute && (
+        <ArabianIntro onComplete={() => setShowIntro(false)} />
+      )}
+
       {/* Customer Header (hidden on Admin pages) */}
       {!isAdminRoute && <Header onOpenSearch={() => setSearchOpen(true)} />}
 

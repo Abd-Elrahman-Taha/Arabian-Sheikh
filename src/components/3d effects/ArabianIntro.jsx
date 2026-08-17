@@ -1,514 +1,157 @@
-import {
-  Canvas,
-  useFrame,
-} from "@react-three/fiber";
-
-import {
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-import * as THREE from "three";
-
+import React, { Suspense, useEffect, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import { gsap } from "gsap";
-
 import BakhoorSmoke from "./BakhoorSmoke";
 
+/**
+ * ArabianIntro Component
+ *
+ * Standalone cinematic Bakhoor smoke intro effect.
+ * Plays immediately upon page load for ~3.5s, smoothly fades out over 1.3s (ending at ~4.8s),
+ * and completely unmounts from the DOM to release all GPU/WebGL resources.
+ */
+export default function ArabianIntro({ onComplete }) {
+  const containerRef = useRef(null);
+  const timelineRef = useRef(null);
+  const [isFinished, setIsFinished] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-/*
-|--------------------------------------------------------------------------
-| Door Scene
-|--------------------------------------------------------------------------
-*/
-
-function DoorScene({
-  isOpening,
-  onFinished,
-}) {
-  const leftDoor = useRef<THREE.Group>(null);
-  const rightDoor = useRef<THREE.Group>(null);
-
-  const smokeGroup = useRef<THREE.Group>(null);
-
-  const [smokeVisible, setSmokeVisible] = useState(false);
-
+  // Check for prefers-reduced-motion
   useEffect(() => {
-    if (!isOpening) return;
+    if (typeof window === "undefined") return;
 
-    const timeline = gsap.timeline({
-      onComplete: onFinished,
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Door Animation
-    |--------------------------------------------------------------------------
-    */
-
-    if (leftDoor.current && rightDoor.current) {
-      timeline.to(
-        leftDoor.current.rotation,
-        {
-          y: -Math.PI / 2,
-          duration: 1.5,
-          ease: "power3.inOut",
-        },
-        0
-      );
-
-      timeline.to(
-        rightDoor.current.rotation,
-        {
-          y: Math.PI / 2,
-          duration: 1.5,
-          ease: "power3.inOut",
-        },
-        0
-      );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Bakhoor starts after doors begin opening
-    |--------------------------------------------------------------------------
-    */
-
-    timeline.call(
-      () => {
-        setSmokeVisible(true);
-      },
-      [],
-      0.55
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | Smoke movement
-    |--------------------------------------------------------------------------
-    */
-
-    if (smokeGroup.current) {
-      timeline.fromTo(
-        smokeGroup.current.scale,
-        {
-          x: 0.5,
-          y: 0.5,
-          z: 0.5,
-        },
-        {
-          x: 1.5,
-          y: 1.6,
-          z: 1.5,
-          duration: 1.7,
-          ease: "power2.out",
-        },
-        0.6
-      );
-    }
-
-    return () => {
-      timeline.kill();
-    };
-  }, [isOpening, onFinished]);
-
-  return (
-    <>
-
-      {/* Background */}
-
-      <mesh position={[0, 2, -4]}>
-        <planeGeometry args={[30, 20]} />
-
-        <meshStandardMaterial
-          color="#130C05"
-        />
-      </mesh>
-
-
-      {/* Warm palace light */}
-
-      <pointLight
-        position={[0, 3, -2]}
-        intensity={25}
-        distance={15}
-        color="#D2A55F"
-      />
-
-
-      {/* Left Door */}
-
-      <group
-        ref={leftDoor}
-        position={[-1.7, 1.8, 0]}
-      >
-
-        <mesh position={[0.85, 0, 0]}>
-          <boxGeometry
-            args={[1.7, 3.6, 0.25]}
-          />
-
-          <meshStandardMaterial
-            color="#5A2D18"
-            metalness={0.65}
-            roughness={0.3}
-          />
-        </mesh>
-
-
-        {/* Gold decoration */}
-
-        <mesh position={[0.85, 0, 0.15]}>
-          <boxGeometry
-            args={[1.3, 2.9, 0.04]}
-          />
-
-          <meshStandardMaterial
-            color="#D2A55F"
-            metalness={0.9}
-            roughness={0.2}
-          />
-        </mesh>
-
-      </group>
-
-
-      {/* Right Door */}
-
-      <group
-        ref={rightDoor}
-        position={[1.7, 1.8, 0]}
-      >
-
-        <mesh position={[-0.85, 0, 0]}>
-          <boxGeometry
-            args={[1.7, 3.6, 0.25]}
-          />
-
-          <meshStandardMaterial
-            color="#5A2D18"
-            metalness={0.65}
-            roughness={0.3}
-          />
-        </mesh>
-
-
-        {/* Gold decoration */}
-
-        <mesh position={[-0.85, 0, 0.15]}>
-          <boxGeometry
-            args={[1.3, 2.9, 0.04]}
-          />
-
-          <meshStandardMaterial
-            color="#D2A55F"
-            metalness={0.9}
-            roughness={0.2}
-          />
-        </mesh>
-
-      </group>
-
-
-      {/* Bakhoor */}
-
-      <group
-        ref={smokeGroup}
-        position={[0, 1.2, -0.7]}
-      >
-
-        <BakhoorSmoke
-          visible={smokeVisible}
-          opacity={0.4}
-        />
-
-      </group>
-
-
-      {/* Ground */}
-
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-      >
-
-        <planeGeometry args={[30, 30]} />
-
-        <meshStandardMaterial
-          color="#130C05"
-          roughness={0.8}
-        />
-
-      </mesh>
-
-    </>
-  );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Arabian Intro
-|--------------------------------------------------------------------------
-*/
-
-export default function ArabianIntro({
-  onComplete,
-}) {
-
-  const [isOpening, setIsOpening] =
-    useState(false);
-
-  const [isFinished, setIsFinished] =
-    useState(false);
-
-  const [reducedMotion, setReducedMotion] =
-    useState(false);
-
-
-  /*
-  |--------------------------------------------------------------------------
-  | Check reduced motion
-  |--------------------------------------------------------------------------
-  */
-
-  useEffect(() => {
-
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      );
-
-    setReducedMotion(mediaQuery.matches);
-
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches) {
-      finishIntro();
-    }
-
-  }, []);
-
-
-  /*
-  |--------------------------------------------------------------------------
-  | Finish Intro
-  |--------------------------------------------------------------------------
-  */
-
-  const finishIntro = () => {
-
-    setIsFinished(true);
-
-    localStorage.setItem(
-      "arabian_intro_seen",
-      "true"
-    );
-
-    onComplete?.();
-
-  };
-
-
-  /*
-  |--------------------------------------------------------------------------
-  | Check if intro was already seen
-  |--------------------------------------------------------------------------
-  */
-
-  useEffect(() => {
-
-    const hasSeenIntro =
-      localStorage.getItem(
-        "arabian_intro_seen"
-      );
-
-    if (hasSeenIntro === "true") {
-
+      setReducedMotion(true);
       setIsFinished(true);
-
       onComplete?.();
-
     }
-
   }, [onComplete]);
 
+  // Master GSAP Intro Timeline (0.0s -> 3.5s -> 4.8s)
+  useEffect(() => {
+    if (reducedMotion || isFinished) return;
 
-  /*
-  |--------------------------------------------------------------------------
-  | Open door
-  |--------------------------------------------------------------------------
-  */
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setIsFinished(true);
+          onComplete?.();
+        },
+      });
 
-  const handleOpen = () => {
+      timelineRef.current = tl;
 
-    if (isOpening || isFinished) {
-      return;
+      // 0.0s -> 0.7s: Smooth initial fade-in of the smoke atmosphere
+      tl.fromTo(
+        containerRef.current,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 0.7,
+          ease: "power2.out",
+        },
+        0
+      );
+
+      // 0.7s -> 3.5s: Smoke is visible, actively moving, swirling and rising
+
+      // 3.5s -> 4.8s: Smooth cinematic fade-out / dissolve
+      tl.to(
+        containerRef.current,
+        {
+          opacity: 0,
+          duration: 1.3,
+          ease: "power2.inOut",
+        },
+        3.5
+      );
+    }, containerRef);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [reducedMotion, isFinished, onComplete]);
+
+  // Graceful user skip handler
+  const handleSkip = () => {
+    if (timelineRef.current) {
+      timelineRef.current.kill();
     }
 
-    setIsOpening(true);
-
+    if (containerRef.current) {
+      gsap.to(containerRef.current, {
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.out",
+        onComplete: () => {
+          setIsFinished(true);
+          onComplete?.();
+        },
+      });
+    } else {
+      setIsFinished(true);
+      onComplete?.();
+    }
   };
 
-
-  /*
-  |--------------------------------------------------------------------------
-  | Skip
-  |--------------------------------------------------------------------------
-  */
-
-  const handleSkip = () => {
-
-    finishIntro();
-
-  };
-
-
-  /*
-  |--------------------------------------------------------------------------
-  | Don't render after intro
-  |--------------------------------------------------------------------------
-  */
-
+  // Do not render anything once finished or if reduced motion is enabled
   if (isFinished || reducedMotion) {
     return null;
   }
 
-
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-[#130C05]"
-      onClick={handleOpen}
+      ref={containerRef}
+      className="fixed inset-0 z-[9999] pointer-events-none select-none overflow-hidden bg-radial from-[#130C05]/40 via-[#130C05]/75 to-[#0B0602]/95 backdrop-blur-[2px]"
+      style={{ opacity: 0 }}
+      aria-label="Arabian Bakhoor Smoke Intro"
     >
-
       {/* Three.js Canvas */}
-
       <Canvas
         camera={{
-          position: [0, 2, 8],
-          fov: 45,
-          near: 0.1,
-          far: 1000,
+          position: [0, 0, 500],
+          fov: 55,
+          near: 1,
+          far: 3000,
         }}
-
-        dpr={[1, 1.5]}
-
+        dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2)]}
         gl={{
           antialias: true,
-          alpha: false,
+          alpha: true,
+          powerPreference: "high-performance",
         }}
       >
-
-        <ambientLight
-          intensity={1.2}
-        />
-
+        {/* Warm Palace & Incense Lighting */}
+        <ambientLight intensity={1.6} color="#F5ECE2" />
         <directionalLight
-          position={[5, 8, 5]}
-          intensity={3}
-          color="#FFF1D0"
+          position={[100, 300, 150]}
+          intensity={2.2}
+          color="#FCEFD5"
         />
-
+        <pointLight
+          position={[0, -60, -80]}
+          intensity={3.8}
+          distance={850}
+          color="#D2A55F"
+        />
 
         <Suspense fallback={null}>
-
-          <DoorScene
-            isOpening={isOpening}
-            onFinished={finishIntro}
-          />
-
+          <BakhoorSmoke visible={true} opacity={0.35} />
         </Suspense>
-
       </Canvas>
 
-
-      {/* Skip button */}
-
-      <button
-        onClick={(event) => {
-          event.stopPropagation();
-          handleSkip();
-        }}
-
-        className="
-          absolute
-          right-6
-          top-6
-          z-[10000]
-
-          rounded-full
-
-          border
-          border-[#D2A55F]
-
-          bg-[#130C05]/70
-
-          px-5
-          py-2
-
-          text-sm
-          tracking-[0.2em]
-          uppercase
-
-          text-[#EADED2]
-
-          backdrop-blur-md
-
-          transition-all
-          duration-300
-
-          hover:bg-[#D2A55F]
-          hover:text-[#130C05]
-        "
-      >
-        Skip
-      </button>
-
-
-      {/* Click instruction */}
-
-      {!isOpening && (
-
-        <div
-          className="
-            pointer-events-none
-
-            absolute
-            bottom-10
-            left-1/2
-
-            -translate-x-1/2
-
-            text-center
-
-            text-[#EADED2]
-          "
+      {/* Elegant Minimalist Skip Button */}
+      <div className="absolute top-6 right-6 z-[10000] pointer-events-auto">
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="group flex items-center gap-2 rounded-full border border-[#D2A55F]/40 bg-[#130C05]/60 px-4 py-1.5 text-xs font-cinzel tracking-[0.25em] uppercase text-[#EADED2] backdrop-blur-md transition-all duration-300 hover:border-[#D2A55F] hover:bg-[#D2A55F]/20 hover:text-[#FFF5EB] focus:outline-none focus:ring-1 focus:ring-[#D2A55F]"
+          title="Skip Intro"
         >
-
-          <p
-            className="
-              text-xs
-              tracking-[0.35em]
-              uppercase
-              opacity-70
-            "
-          >
-            Enter the Palace
-          </p>
-
-          <p
-            className="
-              mt-2
-              text-xs
-              opacity-50
-            "
-          >
-            Tap anywhere to open
-          </p>
-
-        </div>
-
-      )}
-
+          <span>Skip</span>
+        </button>
+      </div>
     </div>
   );
 }
