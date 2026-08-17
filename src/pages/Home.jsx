@@ -107,7 +107,7 @@ export default function Home() {
   return (
     <div className="space-y-24 sm:space-y-32 pb-20">
       {/* 1. HERO SECTION WITH CINEMATIC ARABIAN PALACE BACKGROUND */}
-      <section className="relative min-h-[94vh] flex items-center justify-center overflow-hidden pt-28 pb-16">
+      <section className="relative min-h-[94vh] flex items-center justify-center overflow-hidden pt-36 sm:pt-44 lg:pt-48 pb-16">
         {/* Arabian Palace Background Image with Rich Dark Gradient Masks */}
         <div className="absolute inset-0 z-0">
           <img

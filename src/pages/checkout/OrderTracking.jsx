@@ -51,7 +51,7 @@ export default function OrderTracking() {
   const activeIndex = currentStageIndex === -1 ? 3 : currentStageIndex;
 
   return (
-    <div className="pt-28 pb-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[var(--text-primary)]">
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-4 gap-4">

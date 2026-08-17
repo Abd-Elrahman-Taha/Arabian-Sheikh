@@ -36,7 +36,7 @@ export default function SearchPage() {
   }, [query]);
 
   return (
-    <div className="pt-28 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--text-primary)]">
       <ScrollReveal direction="up">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">

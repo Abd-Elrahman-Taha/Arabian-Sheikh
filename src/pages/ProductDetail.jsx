@@ -160,7 +160,7 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className="pt-28 pb-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 animate-fade-in text-[var(--text-primary)]">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center gap-2 text-xs font-sans text-[var(--text-muted)]">
         <Link to="/" className="hover:text-[var(--gold-primary)] transition-colors">Home</Link>

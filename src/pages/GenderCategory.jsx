@@ -64,7 +64,7 @@ export default function GenderCategory({ genderType }) {
     <div className="space-y-16 pb-20 animate-fade-in text-[var(--text-primary)]">
       {/* Editorial Category Hero */}
       <ScrollReveal direction="up">
-        <section className="relative min-h-[50vh] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden pt-28 pb-12">
+        <section className="relative min-h-[50vh] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden pt-36 sm:pt-44 pb-12">
           <div className="absolute inset-0 z-0">
             <img
               src={meta.image}

@@ -28,7 +28,7 @@ export default function OrderConfirmation() {
   }, [orderId]);
 
   return (
-    <div className="pt-28 pb-24 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-[var(--text-primary)]">
       <ScrollReveal direction="up">
         <div className="bg-[var(--bg-card)] border-2 border-[var(--gold-primary)]/40 p-8 sm:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden">
           {/* Success Icon */}

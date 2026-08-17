@@ -17,7 +17,7 @@ export default function TheHouse() {
   return (
     <div className="space-y-24 sm:space-y-32 pb-24 animate-fade-in text-[var(--text-primary)]">
       {/* 1. Grand Editorial Hero */}
-      <section className="relative min-h-[75vh] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden pt-28 pb-16">
+      <section className="relative min-h-[75vh] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden pt-36 sm:pt-44 pb-16">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=2000&q=90"

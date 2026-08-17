@@ -7,7 +7,7 @@ export default function About() {
   const { t } = useTranslation();
 
   return (
-    <div className="pt-28 pb-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 animate-fade-in text-[var(--text-primary)]">
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">

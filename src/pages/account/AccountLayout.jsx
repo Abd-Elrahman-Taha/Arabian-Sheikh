@@ -36,7 +36,7 @@ export default function AccountLayout({ children }) {
   ];
 
   return (
-    <div className="pt-28 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[var(--text-primary)]">
       {/* Account Hero Bar */}
       <div className="bg-[var(--bg-card)] border border-[var(--border-card)] p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
         <div className="flex items-center gap-4">

@@ -253,20 +253,9 @@ export default function Header({ onOpenSearch }) {
               </Link>
             </nav>
 
-            {/* Mobile Hamburger Trigger */}
-            <div className="flex lg:hidden items-center">
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="p-2 text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors focus:outline-none cursor-pointer"
-                aria-label="Open Navigation Menu"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-            </div>
-
             {/* Center Brand / Logo */}
-            <div className="text-center">
-              <Link to="/" className="inline-block group text-center focus:outline-none">
+            <div className="text-left lg:text-center">
+              <Link to="/" className="inline-block group focus:outline-none">
                 <span className="block font-cinzel text-xl sm:text-2xl lg:text-3xl font-bold tracking-[0.28em] text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors">
                   ARABIAN SHEIKH
                 </span>
@@ -276,8 +265,8 @@ export default function Header({ onOpenSearch }) {
               </Link>
             </div>
 
-            {/* Right Action Icons, Theme Toggle & Language Selector */}
-            <div className="flex items-center space-x-3 sm:space-x-4 text-[var(--text-primary)]">
+            {/* Right Action Icons, Theme Toggle, Language Selector & Mobile Toggle */}
+            <div className="flex items-center space-x-2 sm:space-x-4 text-[var(--text-primary)]">
               {/* Theme Toggle (Desktop) */}
               <div className="hidden sm:flex items-center">
                 <ThemeToggle />
@@ -337,7 +326,7 @@ export default function Header({ onOpenSearch }) {
               <div className="relative">
                 <button
                   onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans uppercase tracking-widest text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-all bg-[var(--bg-card)] cursor-pointer shadow-sm"
+                  className="flex items-center gap-1.5 px-2 py-1 border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans uppercase tracking-widest text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-all bg-[var(--bg-card)] cursor-pointer shadow-sm"
                 >
                   <Globe className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
                   <span>{language.toUpperCase()}</span>
@@ -368,6 +357,17 @@ export default function Header({ onOpenSearch }) {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Mobile Menu Toggle Button (Aligned on the same right side as the exit button) */}
+              <div className="flex lg:hidden items-center">
+                <button
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="p-2 text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors focus:outline-none cursor-pointer"
+                  aria-label="Open Navigation Menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
               </div>
             </div>
           </div>
