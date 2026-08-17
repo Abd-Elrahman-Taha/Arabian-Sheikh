@@ -4,7 +4,9 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
-import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+
 
 export default function GenderCategory({ genderType }) {
   const { currentPath } = useRouter();
@@ -59,46 +61,50 @@ export default function GenderCategory({ genderType }) {
   }, [currentGender]);
 
   return (
-    <div className="space-y-16 pb-20 animate-fade-in">
+    <div className="space-y-16 pb-20 animate-fade-in text-[var(--text-primary)]">
       {/* Editorial Category Hero */}
-      <section className="relative min-h-[50vh] flex items-center justify-center bg-[#0F0D0C] overflow-hidden pt-28 pb-12">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={meta.image}
-            alt={meta.title}
-            className="w-full h-full object-cover object-center opacity-30 scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F0D0C] via-[#0F0D0C]/70 to-[#0F0D0C]/90" />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#C6A15B]/30 bg-[#1C120E]/80">
-            <Sparkles className="w-3.5 h-3.5 text-[#C6A15B]" />
-            <span className="font-cinzel text-xs uppercase tracking-[0.25em] text-[#C6A15B]">
-              {meta.subtitle}
-            </span>
+      <ScrollReveal direction="up">
+        <section className="relative min-h-[50vh] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden pt-28 pb-12">
+          <div className="absolute inset-0 z-0">
+            <img
+              src={meta.image}
+              alt={meta.title}
+              className="w-full h-full object-cover object-center opacity-30 scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/70 to-[var(--bg-primary)]/90" />
           </div>
 
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[#F3EEE5] uppercase tracking-wider">
-            {meta.title}
-          </h1>
+          <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--border-gold-subtle)] bg-[var(--bg-card)]/80 backdrop-blur-md shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
+              <span className="font-cinzel text-xs uppercase tracking-[0.25em] text-[var(--gold-primary)] font-semibold">
+                {meta.subtitle}
+              </span>
+            </div>
 
-          <p className="font-arabic text-lg text-[#DFBF7A]">
-            {meta.arabic}
-          </p>
+            <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+              {meta.title}
+            </h1>
 
-          <p className="text-xs sm:text-sm text-[#C5B8A8] max-w-xl mx-auto leading-relaxed">
-            {meta.desc}
-          </p>
-        </div>
-      </section>
+            <p className="font-arabic text-lg text-[var(--gold-light)]">
+              {meta.arabic}
+            </p>
+
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-xl mx-auto leading-relaxed">
+              {meta.desc}
+            </p>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* Products Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="border-b border-[#C6A15B]/20 pb-4 mb-8 flex justify-between items-center text-xs text-[#C5B8A8]">
-          <span>Displaying {products.length} exclusive formulations</span>
-          <span className="font-cinzel uppercase text-[#C6A15B]">Pure Extrait de Parfum</span>
-        </div>
+        <ScrollReveal direction="up">
+          <div className="border-b border-[var(--border-subtle)] pb-4 mb-8 flex justify-between items-center text-xs text-[var(--text-muted)]">
+            <span>Displaying {products.length} exclusive formulations</span>
+            <span className="font-cinzel uppercase text-[var(--gold-primary)] font-semibold">Pure Extrait de Parfum</span>
+          </div>
+        </ScrollReveal>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -108,8 +114,10 @@ export default function GenderCategory({ genderType }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {products.map((p, index) => (
+              <ScrollRevealItem key={p.id} index={index}>
+                <ProductCard product={p} />
+              </ScrollRevealItem>
             ))}
           </div>
         )}

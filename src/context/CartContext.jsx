@@ -1,24 +1,42 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { cartService } from '../services/cartService';
 import { discountService } from '../services/discountService';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
+import LoginRequiredModal from '../components/auth/LoginRequiredModal';
 
 const CartContext = createContext();
 
+const PENDING_CART_KEY = 'arabian_sheikh_pending_cart_intent';
+
 export function CartProvider({ children }) {
+  const { isAuthenticated, user } = useAuth();
+  const { success, error, info } = useToast();
+
   const [cart, setCart] = useState(() => cartService.getCart());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { success, error } = useToast();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingItem, setPendingItem] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(PENDING_CART_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [cartBadgeAnimated, setCartBadgeAnimated] = useState(false);
 
+  // Sync cart to storage
   useEffect(() => {
     cartService.saveCart(cart);
   }, [cart]);
 
   const totals = cartService.calculateTotals(cart);
 
-  const addToCart = (product, size = '100ml', quantity = 1) => {
+  // Direct internal add without auth check
+  const _internalAdd = useCallback((product, size = '100ml', quantity = 1) => {
     setCart(prev => {
-      const items = [...prev.items];
+      const items = [...(prev.items || [])];
       const existingIndex = items.findIndex(
         item => item.productId === product.id && item.size === size
       );
@@ -29,11 +47,11 @@ export function CartProvider({ children }) {
         items.push({
           productId: product.id,
           name: product.name,
-          arabicName: product.arabicName,
+          arabicName: product.arabicName || '',
           price: product.price,
-          originalPrice: product.originalPrice,
+          originalPrice: product.originalPrice || null,
           image: product.images?.[0] || '',
-          fragranceFamily: product.fragranceFamily,
+          fragranceFamily: product.fragranceFamily || 'Haute Parfumerie',
           size,
           quantity
         });
@@ -42,8 +60,42 @@ export function CartProvider({ children }) {
       return { ...prev, items };
     });
 
-    success(`Added ${product.name} (${size}) to your bag.`);
+    // Trigger cart badge bounce
+    setCartBadgeAnimated(true);
+    setTimeout(() => setCartBadgeAnimated(false), 500);
+
+    success(`Added ${product.name} (${size}) to your Royal Bag.`);
     setIsDrawerOpen(true);
+  }, [success]);
+
+  // Handle pending cart additions when user logs in
+  useEffect(() => {
+    if (isAuthenticated && pendingItem) {
+      const { product, size, quantity } = pendingItem;
+      sessionStorage.removeItem(PENDING_CART_KEY);
+      setPendingItem(null);
+      setAuthModalOpen(false);
+
+      // Auto add preserved product
+      _internalAdd(product, size || '100ml', quantity || 1);
+    }
+  }, [isAuthenticated, pendingItem, _internalAdd]);
+
+  const addToCart = (product, size = '100ml', quantity = 1) => {
+    if (!isAuthenticated) {
+      const intent = { product, size, quantity };
+      setPendingItem(intent);
+      try {
+        sessionStorage.setItem(PENDING_CART_KEY, JSON.stringify(intent));
+      } catch (e) {
+        console.error(e);
+      }
+      setAuthModalOpen(true);
+      return false;
+    }
+
+    _internalAdd(product, size, quantity);
+    return true;
   };
 
   const updateQuantity = (productId, size, newQty) => {
@@ -59,6 +111,8 @@ export function CartProvider({ children }) {
       }
       return { ...prev, items };
     });
+    setCartBadgeAnimated(true);
+    setTimeout(() => setCartBadgeAnimated(false), 400);
   };
 
   const removeFromCart = (productId, size) => {
@@ -66,6 +120,7 @@ export function CartProvider({ children }) {
       ...prev,
       items: prev.items.filter(i => !(i.productId === productId && i.size === size))
     }));
+    info('Creation removed from your bag.');
   };
 
   const toggleGiftWrap = () => {
@@ -112,10 +167,16 @@ export function CartProvider({ children }) {
     <CartContext.Provider
       value={{
         cart,
-        items: cart.items,
+        items: cart.items || [],
         totals,
         isDrawerOpen,
-        openDrawer: () => setIsDrawerOpen(true),
+        openDrawer: () => {
+          if (!isAuthenticated) {
+            setAuthModalOpen(true);
+            return;
+          }
+          setIsDrawerOpen(true);
+        },
         closeDrawer: () => setIsDrawerOpen(false),
         addToCart,
         updateQuantity,
@@ -123,10 +184,21 @@ export function CartProvider({ children }) {
         toggleGiftWrap,
         applyDiscount,
         removeDiscount,
-        clearCart
+        clearCart,
+        cartBadgeAnimated,
+        openAuthModal: () => setAuthModalOpen(true),
+        closeAuthModal: () => setAuthModalOpen(false)
       }}
     >
       {children}
+
+      {/* Global Login Required Modal for Cart Action */}
+      <LoginRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        pendingItem={pendingItem}
+        onAuthenticatedAdd={(prod, sz, qty) => _internalAdd(prod, sz, qty)}
+      />
     </CartContext.Provider>
   );
 }

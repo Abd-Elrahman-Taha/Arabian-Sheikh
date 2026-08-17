@@ -12,9 +12,7 @@ import {
   Percent,
   Settings,
   LogOut,
-  ExternalLink,
-  ShieldCheck,
-  Crown
+  ExternalLink
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -34,18 +32,18 @@ export default function AdminLayout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F0D0C] text-[#F3EEE5] flex flex-col pt-20">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col pt-20">
       {/* Admin Top Header Bar */}
-      <div className="bg-[#1C120E] border-b border-[#C6A15B]/30 px-6 py-3.5 flex items-center justify-between shadow-xl sticky top-0 z-30">
+      <div className="bg-[var(--bg-card)] border-b border-[var(--border-card)] px-6 py-3.5 flex items-center justify-between shadow-md sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-none border border-[#C6A15B] bg-[#0F0D0C] flex items-center justify-center text-[#C6A15B] font-bold font-cinzel">
+          <div className="w-8 h-8 rounded-none border border-[var(--gold-primary)] bg-[var(--bg-primary)] flex items-center justify-center text-[var(--gold-primary)] font-bold font-cinzel">
             AS
           </div>
           <div>
-            <span className="font-cinzel text-sm font-bold tracking-widest text-[#F3EEE5] uppercase block">
+            <span className="font-cinzel text-sm font-bold tracking-widest text-[var(--text-primary)] uppercase block">
               Arabian Sheikh • Grand Atelier Suite
             </span>
-            <span className="text-[10px] text-[#C6A15B] font-mono">
+            <span className="text-[10px] text-[var(--gold-primary)] font-mono">
               Management & Olfactory Inventory Console
             </span>
           </div>
@@ -54,15 +52,15 @@ export default function AdminLayout({ children }) {
         <div className="flex items-center gap-4">
           <Link
             to="/"
-            className="text-xs text-[#C5B8A8] hover:text-[#C6A15B] flex items-center gap-1.5 font-cinzel uppercase tracking-wider"
+            className="text-xs text-[var(--text-muted)] hover:text-[var(--gold-primary)] flex items-center gap-1.5 font-cinzel uppercase tracking-wider cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>Storefront</span>
           </Link>
-          <div className="h-4 w-px bg-[#C6A15B]/20" />
+          <div className="h-4 w-px bg-[var(--border-subtle)]" />
           <div className="text-right hidden sm:block">
-            <span className="text-xs font-semibold text-[#F3EEE5] block font-cinzel">{user?.name || 'Grand Concierge'}</span>
-            <span className="text-[10px] text-[#C6A15B] font-mono uppercase">Master Administrator</span>
+            <span className="text-xs font-semibold text-[var(--text-primary)] block font-cinzel">{user?.name || 'Grand Concierge'}</span>
+            <span className="text-[10px] text-[var(--gold-primary)] font-mono uppercase font-semibold">Master Administrator</span>
           </div>
         </div>
       </div>
@@ -70,8 +68,8 @@ export default function AdminLayout({ children }) {
       {/* Admin Body: Sidebar + Main Content */}
       <div className="flex-1 flex flex-col md:flex-row">
         {/* Admin Navigation Sidebar */}
-        <aside className="w-full md:w-64 bg-[#140D0A] border-r border-[#C6A15B]/20 p-4 space-y-1 shrink-0">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-[#C6A15B] font-cinzel px-3 py-2">
+        <aside className="w-full md:w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-card)] p-4 space-y-1 shrink-0">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--gold-primary)] font-cinzel px-3 py-2 font-bold">
             Palace Administration
           </p>
           {navLinks.map((link) => {
@@ -86,8 +84,8 @@ export default function AdminLayout({ children }) {
                 to={link.to}
                 className={`flex items-center gap-3 px-3.5 py-2.5 text-xs font-sans font-medium transition-all ${
                   isActive
-                    ? 'bg-[#2B1A12] text-[#C6A15B] border-l-2 border-[#C6A15B] font-semibold'
-                    : 'text-[#C5B8A8] hover:text-[#F3EEE5] hover:bg-[#1C120E]'
+                    ? 'bg-[var(--bg-card)] text-[var(--gold-primary)] border-l-2 border-[var(--gold-primary)] font-semibold shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]'
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -96,13 +94,13 @@ export default function AdminLayout({ children }) {
             );
           })}
 
-          <div className="pt-6 mt-6 border-t border-[#C6A15B]/15 px-3">
+          <div className="pt-6 mt-6 border-t border-[var(--border-subtle)] px-3">
             <button
               onClick={() => {
                 logout();
                 navigate('/login');
               }}
-              className="w-full flex items-center gap-2 text-xs text-red-400 hover:text-red-300 transition-colors"
+              className="w-full flex items-center gap-2 text-xs text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out Admin</span>
@@ -111,7 +109,7 @@ export default function AdminLayout({ children }) {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 sm:p-8 overflow-y-auto bg-[#0F0D0C]">
+        <main className="flex-1 p-6 sm:p-8 overflow-y-auto bg-[var(--bg-primary)]">
           {children}
         </main>
       </div>

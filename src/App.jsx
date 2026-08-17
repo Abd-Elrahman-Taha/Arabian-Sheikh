@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { RouterProvider, useRouter } from './router/RouterContext';
 import { LanguageProvider } from './i18n/LanguageContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
@@ -11,6 +12,7 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/cart/CartDrawer';
 import SearchOverlay from './components/search/SearchOverlay';
+import PageTransition from './components/common/PageTransition';
 
 // Public Pages
 import Home from './pages/Home';
@@ -76,7 +78,6 @@ function MainRouter() {
     // 1. Admin Routes
     if (isAdminRoute) {
       if (!user || user.role !== 'ADMIN') {
-        // If not logged in as admin, redirect or show unauthorized
         return <Unauthorized />;
       }
 
@@ -97,10 +98,10 @@ function MainRouter() {
       );
     }
 
-    // 2. Customer Account Routes
+    // 2. Customer Account Routes (Protected: must be logged in)
     if (isAccountRoute) {
       if (!isAuthenticated) {
-        return <Login />;
+        return <Login returnPath={currentPath} />;
       }
 
       return (
@@ -118,7 +119,15 @@ function MainRouter() {
       );
     }
 
-    // 3. Public, Commerce, Auth Routes
+    // 3. Commerce Routes with Strict Authentication Requirement
+    if (currentPath === '/cart' || currentPath === '/checkout') {
+      if (!isAuthenticated) {
+        return <Login returnPath={currentPath} />;
+      }
+      return currentPath === '/cart' ? <CartPage /> : <CheckoutPage />;
+    }
+
+    // 4. Public, Commerce Confirmation, Auth Routes
     switch (true) {
       case currentPath === '/':
         return <Home />;
@@ -153,11 +162,7 @@ function MainRouter() {
       case currentPath.startsWith('/reset-password'):
         return <ResetPassword />;
 
-      // Commerce
-      case currentPath === '/cart':
-        return <CartPage />;
-      case currentPath === '/checkout':
-        return <CheckoutPage />;
+      // Commerce confirmation & tracking
       case currentPath.startsWith('/order-confirmation'):
         return <OrderConfirmation />;
       case currentPath.startsWith('/order-tracking'):
@@ -169,12 +174,16 @@ function MainRouter() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0F0D0C] text-[#F3EEE5]">
+    <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-400">
       {/* Customer Header (hidden on Admin pages) */}
       {!isAdminRoute && <Header onOpenSearch={() => setSearchOpen(true)} />}
 
-      {/* Main Page Body */}
-      <main className="flex-1 w-full">{renderContent()}</main>
+      {/* Main Page Body with PageTransition */}
+      <main className="flex-1 w-full">
+        <PageTransition key={currentPath}>
+          {renderContent()}
+        </PageTransition>
+      </main>
 
       {/* Global Slide-Over Cart Drawer */}
       <CartDrawer />
@@ -190,18 +199,20 @@ function MainRouter() {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <RouterProvider>
-                <MainRouter />
-              </RouterProvider>
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <RouterProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <MainRouter />
+                </WishlistProvider>
+              </CartProvider>
+            </RouterProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useRouter, Link } from '../../router/RouterContext';
+import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { authService } from '../../services/authService';
 import { useToast } from '../../context/ToastContext';
-import { Lock, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Lock, ArrowRight } from 'lucide-react';
+import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function ResetPassword() {
   const { navigate } = useRouter();
@@ -38,23 +39,24 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="pt-28 pb-24 min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 animate-fade-in text-[#F3EEE5]">
-      <div className="max-w-md w-full bg-[#1C120E] border border-[#C6A15B]/30 p-8 sm:p-10 shadow-2xl space-y-6">
+    <div className="pt-28 pb-24 min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 animate-fade-in text-[var(--text-primary)]">
+      <ScrollReveal direction="up">
+        <div className="max-w-md w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-8 sm:p-10 shadow-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-none border border-[#C6A15B]/40 bg-[#0F0D0C] flex items-center justify-center mx-auto text-[#C6A15B] mb-3">
+          <div className="w-12 h-12 rounded-none border border-[var(--border-gold-subtle)] bg-[var(--bg-primary)] flex items-center justify-center mx-auto text-[var(--gold-primary)] mb-3">
             <Lock className="w-6 h-6" />
           </div>
-          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider">
+          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--text-primary)]">
             {t('auth.resetTitle')}
           </h1>
-          <p className="text-xs text-[#C5B8A8]">
+          <p className="text-xs text-[var(--text-muted)]">
             {t('auth.resetSubtitle')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
           <div>
-            <label className="block uppercase tracking-wider text-[#C5B8A8] mb-1">
+            <label className="block uppercase tracking-wider text-[var(--text-muted)] mb-1">
               New Password
             </label>
             <input
@@ -63,12 +65,12 @@ export default function ResetPassword() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-[#0F0D0C] border border-[#C6A15B]/30 py-2.5 px-3 text-[#F3EEE5] focus:border-[#C6A15B] focus:outline-none"
+              className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] py-2.5 px-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block uppercase tracking-wider text-[#C5B8A8] mb-1">
+            <label className="block uppercase tracking-wider text-[var(--text-muted)] mb-1">
               {t('auth.confirmPassword')}
             </label>
             <input
@@ -77,20 +79,21 @@ export default function ResetPassword() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-[#0F0D0C] border border-[#C6A15B]/30 py-2.5 px-3 text-[#F3EEE5] focus:border-[#C6A15B] focus:outline-none"
+              className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] py-2.5 px-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full luxury-btn-gold py-3.5 text-xs font-semibold uppercase tracking-widest flex items-center justify-center gap-2 mt-4"
+            className="w-full luxury-btn-gold py-3.5 text-xs font-semibold uppercase tracking-widest flex items-center justify-center gap-2 mt-4 cursor-pointer shadow-md"
           >
             <span>{loading ? 'Saving...' : t('auth.saveNewPassword')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
       </div>
+      </ScrollReveal>
     </div>
   );
 }

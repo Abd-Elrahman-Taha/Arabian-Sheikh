@@ -4,7 +4,8 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
-import { Sparkles, Crown, Feather, Sun, ArrowRight } from 'lucide-react';
+import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+import { Crown, Feather, Sun, ArrowRight } from 'lucide-react';
 
 export default function Collections() {
   const { queryParams } = useRouter();
@@ -68,79 +69,84 @@ export default function Collections() {
   }, [activeCollection]);
 
   return (
-    <div className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in">
+    <div className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--text-primary)]">
       {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[#C6A15B] font-semibold">
-          Curated Private Reserves
-        </span>
-        <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[#F3EEE5] uppercase tracking-wider">
-          {t('nav.collections')}
-        </h1>
-        <p className="text-xs sm:text-sm text-[#C5B8A8]">
-          Explore the three sovereign collections distilled by our master perfumers in limited batches.
-        </p>
-      </div>
+      <ScrollReveal direction="up">
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+            Curated Private Reserves
+          </span>
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+            {t('nav.collections')}
+          </h1>
+          <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+            Explore the three sovereign collections distilled by our master perfumers in limited batches.
+          </p>
+        </div>
+      </ScrollReveal>
 
       {/* Collection Tab Selector */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {COLLECTIONS.map((c) => {
+        {COLLECTIONS.map((c, index) => {
           const Icon = c.icon;
           const isActive = activeCollection === c.id;
           return (
-            <div
-              key={c.id}
-              onClick={() => setActiveCollection(isActive ? 'all' : c.id)}
-              className={`cursor-pointer p-6 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
-                isActive
-                  ? 'border-[#C6A15B] bg-[#2B1A12] shadow-2xl scale-[1.02]'
-                  : 'border-[#C6A15B]/20 bg-[#1C120E] hover:border-[#C6A15B]/60'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-8 h-8 rounded-none border border-[#C6A15B]/40 flex items-center justify-center text-[#C6A15B] bg-[#0F0D0C]">
-                    <Icon className="w-4 h-4" />
+            <ScrollRevealItem key={c.id} index={index}>
+              <div
+                onClick={() => setActiveCollection(isActive ? 'all' : c.id)}
+                className={`cursor-pointer p-6 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
+                  isActive
+                    ? 'border-[var(--gold-primary)] bg-[var(--bg-card)] shadow-2xl scale-[1.02]'
+                    : 'border-[var(--border-card)] bg-[var(--bg-card)] hover:border-[var(--gold-primary)]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-none border border-[var(--border-gold-subtle)] flex items-center justify-center text-[var(--gold-primary)] bg-[var(--bg-primary)]">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="font-arabic text-xs text-[var(--gold-light)] font-bold">{c.arabic}</span>
                   </div>
-                  <span className="font-arabic text-xs text-[#DFBF7A]">{c.arabic}</span>
+                  <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] mb-1">
+                    {c.name}
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed line-clamp-2">
+                    {c.desc}
+                  </p>
                 </div>
-                <h3 className="font-cinzel text-base font-bold text-[#F3EEE5] mb-1">
-                  {c.name}
-                </h3>
-                <p className="text-xs text-[#C5B8A8] font-sans leading-relaxed line-clamp-2">
-                  {c.desc}
-                </p>
-              </div>
 
-              <div className="pt-4 mt-3 border-t border-[#C6A15B]/15 flex items-center justify-between text-xs">
-                <span className="font-cinzel uppercase text-[#C6A15B] font-semibold">
-                  {isActive ? 'Showing Collection' : 'Select Collection'}
-                </span>
-                <ArrowRight className={`w-3.5 h-3.5 text-[#C6A15B] ${isActive ? 'rotate-90' : ''} transition-transform`} />
+                <div className="pt-4 mt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
+                  <span className="font-cinzel uppercase text-[var(--gold-primary)] font-semibold">
+                    {isActive ? 'Showing Collection' : 'Select Collection'}
+                  </span>
+                  <ArrowRight className={`w-3.5 h-3.5 text-[var(--gold-primary)] ${isActive ? 'rotate-90' : ''} transition-transform`} />
+                </div>
               </div>
-            </div>
+            </ScrollRevealItem>
           );
         })}
       </div>
 
       {/* Products Grid */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-b border-[#C6A15B]/20 pb-3 text-xs text-[#C5B8A8]">
-          <span>
-            Showing {products.length} masterpieces in{' '}
-            <strong className="text-[#F3EEE5] font-cinzel">
-              {activeCollection === 'all' ? 'All Collections' : activeCollection}
-            </strong>
-          </span>
-          {activeCollection !== 'all' && (
-            <button
-              onClick={() => setActiveCollection('all')}
-              className="text-[#C6A15B] hover:underline"
-            >
-              Show All Collections
-            </button>
-          )}
-        </div>
+        <ScrollReveal direction="up" delay={0.2}>
+          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 text-xs text-[var(--text-muted)]">
+            <span>
+              Showing {products.length} masterpieces in{' '}
+              <strong className="text-[var(--text-primary)] font-cinzel">
+                {activeCollection === 'all' ? 'All Collections' : activeCollection}
+              </strong>
+            </span>
+            {activeCollection !== 'all' && (
+              <button
+                onClick={() => setActiveCollection('all')}
+                className="text-[var(--gold-primary)] hover:underline cursor-pointer font-cinzel"
+              >
+                Show All Collections
+              </button>
+            )}
+          </div>
+        </ScrollReveal>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -150,8 +156,10 @@ export default function Collections() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {products.map((p, index) => (
+              <ScrollRevealItem key={p.id} index={index}>
+                <ProductCard product={p} />
+              </ScrollRevealItem>
             ))}
           </div>
         )}

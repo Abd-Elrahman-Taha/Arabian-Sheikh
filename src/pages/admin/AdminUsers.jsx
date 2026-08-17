@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { userService } from '../../services/userService';
 import { useToast } from '../../context/ToastContext';
-import { Users, Search, ShieldAlert, ShieldCheck, Ban, Trash2, Check } from 'lucide-react';
+import { Search, Ban, Trash2, Check } from 'lucide-react';
 
 export default function AdminUsers() {
   const { t } = useTranslation();
@@ -61,36 +61,36 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-[#F3EEE5]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#C6A15B]/20 pb-4 gap-4">
+    <div className="space-y-6 animate-fade-in text-[var(--text-primary)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-4 gap-4">
         <div>
-          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider">
+          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--text-primary)]">
             {t('admin.users')}
           </h1>
-          <p className="text-xs text-[#C5B8A8]">
+          <p className="text-xs text-[var(--text-muted)]">
             Manage palace patrons, VIP privilege tiers, and administrative credentials.
           </p>
         </div>
       </div>
 
       {/* Search & Filter */}
-      <div className="bg-[#1C120E] border border-[#C6A15B]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="relative w-full sm:w-80">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search patron by name or email..."
-            className="w-full bg-[#0F0D0C] border border-[#C6A15B]/30 pl-9 pr-3 py-2 text-xs text-[#F3EEE5] focus:outline-none"
+            className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] pl-9 pr-3 py-2 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
           />
-          <Search className="w-4 h-4 text-[#C6A15B] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--gold-primary)] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full sm:w-auto bg-[#0F0D0C] border border-[#C6A15B]/30 px-3 py-2 text-xs text-[#F3EEE5] focus:outline-none cursor-pointer"
+            className="w-full sm:w-auto bg-[var(--bg-secondary)] border border-[var(--border-card)] px-3 py-2 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none cursor-pointer"
           >
             <option value="ALL">All Roles</option>
             <option value="ADMIN">ADMIN (Palace Masters)</option>
@@ -100,10 +100,10 @@ export default function AdminUsers() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-[#1C120E] border border-[#C6A15B]/20 shadow-xl overflow-x-auto">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl overflow-x-auto">
         <table className="w-full text-left text-xs font-sans">
           <thead>
-            <tr className="border-b border-[#C6A15B]/20 text-[#C6A15B] uppercase font-cinzel">
+            <tr className="border-b border-[var(--border-subtle)] text-[var(--gold-primary)] uppercase font-cinzel">
               <th className="py-3 px-4">Patron</th>
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Role</th>
@@ -112,69 +112,59 @@ export default function AdminUsers() {
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#C6A15B]/10 text-[#F3EEE5]">
+          <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
             {loading ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-[#C5B8A8]">
+                <td colSpan={6} className="py-8 text-center text-[var(--text-muted)]">
                   Loading patrons...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-[#C5B8A8]">
+                <td colSpan={6} className="py-8 text-center text-[var(--text-muted)]">
                   No patrons found.
                 </td>
               </tr>
             ) : (
               users.map((u) => (
-                <tr key={u.id} className="hover:bg-[#241712] transition-colors">
+                <tr key={u.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
                   <td className="py-3 px-4">
-                    <span className="font-cinzel font-bold text-sm text-[#F3EEE5] block">
+                    <span className="font-cinzel font-bold text-sm text-[var(--text-primary)] block">
                       {u.name}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-mono text-[#C5B8A8]">{u.email}</td>
+                  <td className="py-3 px-4 font-mono text-[var(--text-muted)]">{u.email}</td>
                   <td className="py-3 px-4">
                     <select
                       value={u.role}
                       onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      className="bg-[#0F0D0C] border border-[#C6A15B]/30 px-2 py-1 text-xs text-[#C6A15B] font-cinzel font-bold focus:outline-none cursor-pointer"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-card)] px-2 py-1 text-[11px] text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none cursor-pointer"
                     >
                       <option value="USER">USER</option>
                       <option value="ADMIN">ADMIN</option>
                     </select>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 text-[10px] uppercase font-mono border ${
-                      u.status === 'ACTIVE'
-                        ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
-                        : 'border-red-500/40 bg-red-950/40 text-red-400'
-                    }`}>
+                    <span className={`px-2 py-0.5 text-[10px] font-mono uppercase ${u.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'}`}>
                       {u.status}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-mono text-[#C5B8A8]">{u.memberSince || '2025-01-01'}</td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleToggleBlock(u.id)}
-                        className={`p-1.5 ${
-                          u.status === 'ACTIVE'
-                            ? 'text-[#C5B8A8] hover:text-amber-400'
-                            : 'text-emerald-400 hover:text-emerald-300'
-                        }`}
-                        title={u.status === 'ACTIVE' ? 'Block Account' : 'Unblock Account'}
-                      >
-                        <Ban className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(u.id, u.name)}
-                        className="p-1.5 text-[#C5B8A8] hover:text-red-400"
-                        title="Delete User"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                  <td className="py-3 px-4 font-mono text-[var(--text-muted)]">{u.memberSince || '2025'}</td>
+                  <td className="py-3 px-4 text-right space-x-2">
+                    <button
+                      onClick={() => handleToggleBlock(u.id)}
+                      className="p-1.5 text-[var(--text-muted)] hover:text-[var(--gold-primary)] cursor-pointer"
+                      title={u.status === 'ACTIVE' ? 'Suspend Access' : 'Restore Access'}
+                    >
+                      {u.status === 'ACTIVE' ? <Ban className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(u.id, u.name)}
+                      className="p-1.5 text-[var(--text-muted)] hover:text-rose-400 cursor-pointer"
+                      title="Purge Account"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))

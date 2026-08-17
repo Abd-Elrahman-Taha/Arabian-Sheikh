@@ -4,15 +4,14 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { useWishlist } from '../../context/WishlistContext';
+import AnimatedCounter from '../../components/common/AnimatedCounter';
 import {
   ShoppingBag,
   DollarSign,
   Heart,
-  Truck,
-  ArrowRight,
-  Clock,
-  CheckCircle2
+  ArrowRight
 } from 'lucide-react';
+import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
 
 export default function AccountOverview() {
   const { navigate } = useRouter();
@@ -41,102 +40,109 @@ export default function AccountOverview() {
   const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <h2 className="font-cinzel text-xl font-bold uppercase text-[#F3EEE5] border-b border-[#C6A15B]/20 pb-3">
-        {t('account.dashboard')}
-      </h2>
+    <div className="space-y-8 animate-fade-in text-[var(--text-primary)]">
+      <ScrollReveal direction="up">
+        <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--text-primary)] border-b border-[var(--border-subtle)] pb-3">
+          {t('account.dashboard')}
+        </h2>
+      </ScrollReveal>
 
       {/* KPI Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 bg-[#241712] border border-[#C6A15B]/20 space-y-1">
-          <div className="flex justify-between items-center text-[#C6A15B]">
+      <ScrollReveal direction="up" delay={0.1}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-5 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-1 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--gold-primary)]">
             <span className="text-xs uppercase tracking-wider font-cinzel font-semibold">Total Orders</span>
             <ShoppingBag className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[#F3EEE5]">
-            {orders.length}
+          <p className="font-cinzel text-2xl font-bold text-[var(--text-primary)]">
+            <AnimatedCounter end={orders.length} />
           </p>
         </div>
 
-        <div className="p-5 bg-[#241712] border border-[#C6A15B]/20 space-y-1">
-          <div className="flex justify-between items-center text-[#C6A15B]">
+        <div className="p-5 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-1 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--gold-primary)]">
             <span className="text-xs uppercase tracking-wider font-cinzel font-semibold">Total Invested</span>
             <DollarSign className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[#F3EEE5]">
-            ${totalSpent}
+          <p className="font-cinzel text-2xl font-bold text-[var(--gold-primary)]">
+            $<AnimatedCounter end={totalSpent} />
           </p>
         </div>
 
-        <div className="p-5 bg-[#241712] border border-[#C6A15B]/20 space-y-1">
-          <div className="flex justify-between items-center text-[#C6A15B]">
+        <div className="p-5 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-1 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--gold-primary)]">
             <span className="text-xs uppercase tracking-wider font-cinzel font-semibold">{t('account.savedItems')}</span>
             <Heart className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[#F3EEE5]">
-            {wishlistCount}
+          <p className="font-cinzel text-2xl font-bold text-[var(--text-primary)]">
+            <AnimatedCounter end={wishlistCount} />
           </p>
         </div>
       </div>
+      </ScrollReveal>
 
       {/* Recent Orders Section */}
+      <ScrollReveal direction="up" delay={0.2}>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-cinzel text-base font-bold uppercase text-[#F3EEE5]">
+          <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)]">
             {t('account.recentOrders')}
           </h3>
-          <Link to="/account/orders" className="text-xs text-[#C6A15B] hover:underline flex items-center gap-1">
+          <Link to="/account/orders" className="text-xs text-[var(--gold-primary)] hover:underline flex items-center gap-1">
             <span>{t('account.viewAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-xs text-[#C5B8A8]">Loading palace transactions...</div>
+          <div className="p-8 text-center text-xs text-[var(--text-muted)]">Loading palace transactions...</div>
         ) : orders.length === 0 ? (
-          <div className="p-8 bg-[#241712] border border-[#C6A15B]/15 text-center space-y-3">
-            <ShoppingBag className="w-8 h-8 text-[#C6A15B] mx-auto opacity-50" />
-            <p className="text-xs text-[#C5B8A8]">{t('account.noOrders')}</p>
-            <Link to="/shop" className="luxury-btn-gold px-5 py-2 text-xs inline-block">
+          <div className="p-8 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center space-y-3">
+            <ShoppingBag className="w-8 h-8 text-[var(--gold-primary)] mx-auto opacity-50" />
+            <p className="text-xs text-[var(--text-muted)]">{t('account.noOrders')}</p>
+            <Link to="/shop" className="luxury-btn-gold px-5 py-2 text-xs inline-block cursor-pointer">
               {t('cart.startShopping')}
             </Link>
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.slice(0, 3).map((order) => (
+            {orders.slice(0, 3).map((order, index) => (
+              <ScrollRevealItem key={order.id} index={index}>
               <div
-                key={order.id}
                 onClick={() => navigate(`/account/orders/${order.id}`)}
-                className="cursor-pointer p-4 bg-[#241712] border border-[#C6A15B]/15 hover:border-[#C6A15B]/50 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="cursor-pointer p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--gold-primary)] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-cinzel font-bold text-sm text-[#F3EEE5]">
+                    <span className="font-cinzel font-bold text-sm text-[var(--text-primary)]">
                       {order.id}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 bg-[#0F0D0C] border border-[#C6A15B]/30 text-[#C6A15B] font-mono">
+                    <span className="text-[10px] px-2 py-0.5 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] text-[var(--gold-primary)] font-mono font-semibold">
                       {order.status}
                     </span>
                   </div>
-                  <p className="text-xs text-[#C5B8A8]">
+                  <p className="text-xs text-[var(--text-muted)]">
                     {new Date(order.date).toLocaleDateString()} • {order.items?.length} flacon(s)
                   </p>
                 </div>
 
                 <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                  <span className="font-cinzel text-base font-bold text-[#C6A15B]">
+                  <span className="font-cinzel text-base font-bold text-[var(--gold-primary)]">
                     ${order.total}
                   </span>
-                  <span className="text-xs text-[#C6A15B] uppercase font-cinzel flex items-center gap-1">
+                  <span className="text-xs text-[var(--gold-primary)] uppercase font-cinzel flex items-center gap-1">
                     <span>View</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </div>
+              </ScrollRevealItem>
             ))}
           </div>
         )}
       </div>
+      </ScrollReveal>
     </div>
   );
 }

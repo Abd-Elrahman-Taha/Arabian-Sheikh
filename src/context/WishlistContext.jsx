@@ -1,37 +1,51 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { userService } from '../services/userService';
+import { wishlistService } from '../services/wishlistService';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
 import { useCart } from './CartContext';
 
 const WishlistContext = createContext();
 
 export function WishlistProvider({ children }) {
-  const [wishlist, setWishlist] = useState(() => userService.getWishlist());
+  const { isAuthenticated } = useAuth();
   const { success, info } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart, openAuthModal } = useCart();
+  const [wishlist, setWishlist] = useState(() => wishlistService.getWishlist());
+  const [heartAnimatedId, setHeartAnimatedId] = useState(null);
 
   const toggleWishlist = (product) => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+
     const isSaved = wishlist.includes(product.id);
-    const updated = userService.toggleWishlist(product.id);
+    const updated = wishlistService.toggleWishlist(product.id);
     setWishlist(updated);
+
+    // Trigger animation for this specific product heart
+    setHeartAnimatedId(product.id);
+    setTimeout(() => setHeartAnimatedId(null), 500);
 
     if (isSaved) {
       info(`Removed ${product.name} from your saved creations.`);
     } else {
-      success(`Saved ${product.name} to your wishlist.`);
+      success(`Saved ${product.name} to your Private Vault.`);
     }
   };
 
   const removeFromWishlist = (productId) => {
-    const updated = userService.removeFromWishlist(productId);
+    const updated = wishlistService.removeFromWishlist(productId);
     setWishlist(updated);
   };
 
   const isInWishlist = (productId) => wishlist.includes(productId);
 
   const moveToCart = (product, size = '100ml') => {
-    addToCart(product, size, 1);
-    removeFromWishlist(product.id);
+    const added = addToCart(product, size, 1);
+    if (added) {
+      removeFromWishlist(product.id);
+    }
   };
 
   return (
@@ -42,7 +56,8 @@ export function WishlistProvider({ children }) {
         toggleWishlist,
         removeFromWishlist,
         isInWishlist,
-        moveToCart
+        moveToCart,
+        heartAnimatedId
       }}
     >
       {children}

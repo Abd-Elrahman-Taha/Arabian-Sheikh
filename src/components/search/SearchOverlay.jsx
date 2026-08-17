@@ -12,8 +12,8 @@ export default function SearchOverlay({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
 
-  const POPULAR_SEARCHES = ['Dehn Al Oud', 'Amber Al Malaki', 'Taif Rose', 'Bakhoor', 'Bergamot', 'Babylon Fig'];
-  const SUGGESTED_NOTES = ['Oud', 'Ambergris', 'Taif Rose', 'Bakhoor Smoke', 'Saffron', 'Bergamot', 'Bourbon Vanilla'];
+  const POPULAR_SEARCHES = ['Dehn Al Oud', 'Amber Al Malaki', 'Taif Rose', 'Bakhoor', 'Bergamot', 'Royal Assamese'];
+  const SUGGESTED_NOTES = ['Oud', 'Ambergris', 'Taif Rose', 'Bakhoor Smoke', 'Saffron Threads', 'Bergamot', 'Bourbon Vanilla'];
 
   useEffect(() => {
     if (isOpen) {
@@ -40,7 +40,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
       } finally {
         setLoading(false);
       }
-    }, 200);
+    }, 180);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -60,19 +60,19 @@ export default function SearchOverlay({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#0F0D0C]/95 backdrop-blur-xl animate-fade-in text-[#F3EEE5] p-4 sm:p-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--bg-primary)]/95 backdrop-blur-2xl animate-fade-in text-[var(--text-primary)] p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Top Bar with Close */}
-        <div className="flex items-center justify-between border-b border-[#C6A15B]/20 pb-4 mb-8">
+        <div className="flex items-center justify-between border-b border-[var(--border-gold-subtle)] pb-4 mb-8">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#C6A15B]" />
-            <span className="font-cinzel text-sm uppercase tracking-[0.25em] text-[#C6A15B]">
+            <Sparkles className="w-5 h-5 text-[var(--gold-primary)]" />
+            <span className="font-cinzel text-sm uppercase tracking-[0.25em] text-[var(--gold-primary)] font-semibold">
               Royal Olfactory Search
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[#C5B8A8] hover:text-[#C6A15B] transition-colors"
+            className="p-2 text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors cursor-pointer"
             aria-label="Close search"
           >
             <X className="w-6 h-6" />
@@ -87,14 +87,14 @@ export default function SearchOverlay({ isOpen, onClose }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('common.searchPlaceholder')}
-            className="w-full bg-[#1C120E] border-b-2 border-[#C6A15B] py-4 pl-12 pr-12 text-lg sm:text-2xl font-cinzel text-[#F3EEE5] placeholder-[#C5B8A8]/40 focus:outline-none focus:bg-[#241712] transition-colors"
+            className="w-full bg-[var(--bg-card)] border-b-2 border-[var(--gold-primary)] py-4 pl-12 pr-12 text-lg sm:text-2xl font-cinzel text-[var(--text-primary)] placeholder-[var(--text-muted)]/60 focus:outline-none focus:bg-[var(--bg-secondary)] transition-colors"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[#C6A15B]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[var(--gold-primary)]" />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#C5B8A8] hover:text-[#F3EEE5]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -105,7 +105,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
         {!query && (
           <div className="space-y-8 animate-fade-in">
             <div>
-              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[#C6A15B] mb-3">
+              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--gold-primary)] mb-3">
                 {t('common.popularSearches')}
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -113,7 +113,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
                   <button
                     key={item}
                     onClick={() => setQuery(item)}
-                    className="px-3.5 py-1.5 bg-[#1C120E] border border-[#C6A15B]/30 hover:border-[#C6A15B] text-xs font-sans text-[#F3EEE5] hover:text-[#C6A15B] transition-all"
+                    className="px-3.5 py-1.5 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-all cursor-pointer shadow-sm"
                   >
                     {item}
                   </button>
@@ -122,7 +122,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
             </div>
 
             <div>
-              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[#C6A15B] mb-3">
+              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--gold-primary)] mb-3">
                 {t('common.suggestedNotes')}
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -130,7 +130,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
                   <button
                     key={note}
                     onClick={() => setQuery(note)}
-                    className="px-3 py-1 bg-[#2B1A12]/50 border border-[#C6A15B]/20 hover:border-[#C6A15B] text-xs font-sans text-[#C5B8A8] hover:text-[#F3EEE5] transition-all"
+                    className="px-3 py-1 bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer shadow-sm"
                   >
                     • {note}
                   </button>
@@ -143,14 +143,14 @@ export default function SearchOverlay({ isOpen, onClose }) {
         {/* Live Search Results */}
         {query && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-[#C5B8A8] border-b border-[#C6A15B]/15 pb-2">
+            <div className="flex items-center justify-between text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
               <span>
-                {loading ? 'Distilling search results...' : `${results.length} fragrances matched`}
+                {loading ? 'Distilling search results...' : `${results.length} creations matched`}
               </span>
               {results.length > 0 && (
                 <button
                   onClick={handleSearchSubmit}
-                  className="text-[#C6A15B] hover:underline flex items-center gap-1 font-cinzel uppercase text-[11px] tracking-wider"
+                  className="text-[var(--gold-primary)] hover:underline flex items-center gap-1 font-cinzel uppercase text-[11px] tracking-wider cursor-pointer"
                 >
                   <span>View All in Boutique</span>
                   <ArrowRight className="w-3 h-3" />
@@ -159,45 +159,41 @@ export default function SearchOverlay({ isOpen, onClose }) {
             </div>
 
             {results.length === 0 && !loading ? (
-              <div className="text-center py-12 text-[#C5B8A8]">
-                <p className="font-cinzel text-base text-[#F3EEE5] mb-1">
-                  {t('shop.noProductsFound')}
-                </p>
-                <p className="text-xs">
-                  Try searching for ingredients like "Oud", "Amber", "Rose", or "Saffron".
-                </p>
+              <div className="text-center py-12 text-[var(--text-muted)] text-sm space-y-2">
+                <p>No bespoke flacons found matching "{query}".</p>
+                <p className="text-xs">Try searching for ingredients such as Oud, Amber, Rose, or Bakhoor.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                {results.map(prod => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {results.slice(0, 6).map(product => (
                   <div
-                    key={prod.id}
-                    onClick={() => handleSelectProduct(prod.id)}
-                    className="flex gap-3 p-3 bg-[#1C120E] border border-[#C6A15B]/20 hover:border-[#C6A15B] cursor-pointer transition-all group"
+                    key={product.id}
+                    onClick={() => handleSelectProduct(product.id)}
+                    className="flex gap-4 p-3 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] cursor-pointer transition-all hover:translate-x-1"
                   >
                     <img
-                      src={prod.images?.[0]}
-                      alt={prod.name}
-                      className="w-16 h-20 object-cover bg-[#0F0D0C] shrink-0 border border-[#C6A15B]/10"
+                      src={product.images?.[0]}
+                      alt={product.name}
+                      className="w-16 h-20 object-cover bg-[var(--bg-primary)] border border-[var(--border-subtle)] shrink-0"
                     />
-                    <div className="flex flex-col justify-between flex-1">
+                    <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <span className="text-[10px] uppercase tracking-wider text-[#C6A15B] font-mono">
-                          {prod.fragranceFamily}
+                        <span className="text-[10px] uppercase tracking-wider text-[var(--gold-primary)] font-mono">
+                          {product.fragranceFamily}
                         </span>
-                        <h5 className="font-cinzel text-sm font-semibold text-[#F3EEE5] group-hover:text-[#C6A15B] transition-colors line-clamp-1">
-                          {prod.name}
-                        </h5>
-                        <p className="font-arabic text-xs text-[#C5B8A8]">{prod.arabicName}</p>
+                        <h4 className="font-cinzel text-sm font-semibold text-[var(--text-primary)]">
+                          {product.name}
+                        </h4>
+                        <p className="font-arabic text-xs text-[var(--text-muted)]">{product.arabicName}</p>
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="font-cinzel text-xs font-bold text-[#C6A15B]">
-                          ${prod.price}
-                        </span>
-                        <div className="flex items-center gap-0.5 text-[#C6A15B] text-[10px]">
+                        <div className="flex items-center gap-1 text-[var(--gold-primary)] text-xs">
                           <Star className="w-3 h-3 fill-current" />
-                          <span>{prod.rating}</span>
+                          <span>{product.rating}</span>
                         </div>
+                        <span className="font-cinzel text-sm font-bold text-[var(--gold-primary)]">
+                          ${product.price}
+                        </span>
                       </div>
                     </div>
                   </div>

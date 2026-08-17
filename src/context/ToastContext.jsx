@@ -29,32 +29,32 @@ export function ToastProvider({ children }) {
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-none border shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in ${
+            className={`pointer-events-auto flex items-start gap-3 p-4 border shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in ${
               toast.type === 'error'
-                ? 'bg-[#1C120E]/95 border-red-500/40 text-[#F3EEE5]'
+                ? 'bg-[var(--bg-card)] border-rose-500/50 text-[var(--text-primary)]'
                 : toast.type === 'info'
-                ? 'bg-[#1C120E]/95 border-[#C6A15B]/50 text-[#F3EEE5]'
-                : 'bg-[#1C120E]/95 border-[#C6A15B] text-[#F3EEE5]'
+                ? 'bg-[var(--bg-card)] border-[var(--gold-primary)]/50 text-[var(--text-primary)]'
+                : 'bg-[var(--bg-card)] border-[var(--gold-primary)] text-[var(--text-primary)]'
             }`}
             style={{
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(198, 161, 91, 0.15)'
+              boxShadow: 'var(--shadow-luxury), var(--shadow-gold)'
             }}
           >
             <div className="mt-0.5 shrink-0">
               {toast.type === 'error' ? (
-                <AlertCircle className="w-5 h-5 text-red-400" />
+                <AlertCircle className="w-5 h-5 text-rose-400" />
               ) : toast.type === 'info' ? (
-                <Info className="w-5 h-5 text-[#C6A15B]" />
+                <Info className="w-5 h-5 text-[var(--gold-primary)]" />
               ) : (
-                <CheckCircle2 className="w-5 h-5 text-[#C6A15B]" />
+                <CheckCircle2 className="w-5 h-5 text-[var(--gold-primary)]" />
               )}
             </div>
-            <div className="flex-1 text-sm font-sans tracking-wide leading-relaxed">
+            <div className="flex-1 text-xs sm:text-sm font-sans tracking-wide leading-relaxed">
               {toast.message}
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-[#C5B8A8] hover:text-[#C6A15B] transition-colors p-0.5"
+              className="text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors p-0.5 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
