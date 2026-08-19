@@ -4,7 +4,6 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-import ArabianLogo from '../common/ArabianLogo';
 import {
   Search,
   ShoppingBag,
@@ -253,10 +252,16 @@ export default function Header({ onOpenSearch }) {
               </Link>
             </nav>
 
-            {/* Center Brand / Logo with Official Vector Crest */}
+            {/* Center Brand — Text-only premium wordmark (no logo in navbar) */}
             <div className="text-left lg:text-center py-1">
-              <Link to="/" className="inline-block group focus:outline-none">
-                <ArabianLogo variant="horizontal" size="navbar" showSubtitle={true} />
+              <Link
+                to="/"
+                className="inline-block focus:outline-none group"
+                aria-label="Arabian Sheikh — Home"
+              >
+                <span className="font-cinzel font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors duration-300 text-sm sm:text-base md:text-lg tracking-[0.25em] uppercase">
+                  ARABIAN SHEIKH
+                </span>
               </Link>
             </div>
 
@@ -364,14 +369,15 @@ export default function Header({ onOpenSearch }) {
           </div>
         </div>
       </header>
-
       {/* Mobile Fullscreen Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-[var(--bg-primary)]/98 backdrop-blur-2xl flex flex-col justify-between p-6 animate-fade-in overflow-y-auto">
           <div>
             {/* Top Close Row */}
             <div className="flex items-center justify-between border-b border-[var(--border-gold-subtle)] pb-4">
-              <ArabianLogo variant="horizontal" size="sm" showSubtitle={true} />
+              <span className="font-cinzel font-bold text-[var(--text-primary)] tracking-[0.2em] uppercase text-base">
+                ARABIAN SHEIKH
+              </span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors cursor-pointer"

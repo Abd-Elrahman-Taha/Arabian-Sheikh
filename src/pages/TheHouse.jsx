@@ -3,6 +3,7 @@ import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollRevea
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
+import CamelCaravan from '../components/motion/CamelCaravan';
 import {
   Crown,
   Trees,
@@ -87,6 +88,11 @@ export default function TheHouse() {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* Panoramic Desert Caravan Horizon Transition */}
+      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -my-8 sm:-my-12 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
+      </div>
 
       {/* 3. THE ART OF OUD & THE RITUAL OF BAKHOOR (Split Editorial) */}
       <section className="bg-[var(--bg-secondary)] border-y border-[var(--border-subtle)] py-20">

@@ -2,12 +2,13 @@ import React from 'react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Sparkles, ShieldCheck, Heart, Award } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+import CamelCaravan from '../components/motion/CamelCaravan';
 
 export default function About() {
   const { t } = useTranslation();
 
   return (
-    <div className="pt-36 sm:pt-40 pb-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--text-primary)]">
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -22,6 +23,11 @@ export default function About() {
           </p>
         </div>
       </ScrollReveal>
+
+      {/* Desert Camel Caravan — Below First Section */}
+      <div className="relative w-full h-32 sm:h-44 md:h-52 overflow-hidden -my-8 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.88} opacity={0.95} scale={1.05} />
+      </div>
 
       {/* Mission Narrative */}
       <ScrollReveal direction="left">

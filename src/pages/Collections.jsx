@@ -5,6 +5,7 @@ import { productService } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+import CamelCaravan from '../components/motion/CamelCaravan';
 import { Crown, Feather, Sun, ArrowRight } from 'lucide-react';
 
 export default function Collections() {
@@ -163,6 +164,11 @@ export default function Collections() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Panoramic Desert Caravan Horizon Transition */}
+      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -mb-12 sm:-mb-16 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.92} opacity={0.95} scale={1.05} />
       </div>
     </div>
   );

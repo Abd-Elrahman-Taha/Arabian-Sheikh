@@ -8,7 +8,6 @@ import AnimatedCounter from '../components/common/AnimatedCounter';
 import TextReveal from '../components/common/TextReveal';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 import ArabianLogo from '../components/common/ArabianLogo';
-import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
 import CamelCaravan from '../components/motion/CamelCaravan';
 import heroPalaceImg from '../assets/hero_arabian_palace.jpg';
 import {
@@ -110,7 +109,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="w-full space-y-24 sm:space-y-36 pb-28 overflow-x-hidden">
+    <div className="w-full pb-0 overflow-x-hidden">
       
       {/* =========================================================================
           1. HERO SECTION: CINEMATIC ARABIAN PALACE BACKGROUND & LOGO
@@ -126,9 +125,6 @@ export default function Home() {
           {/* Multi-layer ambient gradients for contrast and readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/65 to-[var(--bg-primary)]/80" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(210,165,95,0.22)_0%,_transparent_75%)]" />
-
-          {/* Subtle Ambient Smoke & Twinkling Stars BEHIND all content */}
-          <BackgroundAtmosphere starCount={24} smokeIntensity={0.4} />
         </div>
 
         {/* Hero Content */}
@@ -240,26 +236,26 @@ export default function Home() {
       </div>
 
       {/* =========================================================================
-          2. VERTICAL SECTION 1: BEST SELLERS
+          2. BEST SELLERS  ☀️ Warm Bright Sand
           ========================================================================= */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 py-12 sm:py-16">
         <ScrollReveal direction="up">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-primary)] font-cinzel font-semibold mb-1">
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-muted)] font-cinzel font-semibold mb-1">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Acclaimed Masterpieces</span>
               </div>
-              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
                 {t('home.bestSellersTitle')}
               </h2>
-              <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 max-w-xl">
+              <p className="text-xs sm:text-sm text-[var(--text-on-sand-muted)] mt-1 max-w-xl">
                 The most beloved flacons chosen by connoisseurs of Arabian haute perfumery worldwide.
               </p>
             </div>
             <Link
               to="/shop?filter=bestsellers"
-              className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-primary)] hover:text-[var(--gold-light)] flex items-center gap-2 transition-colors self-start md:self-end"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-muted)] hover:text-[var(--gold-primary)] flex items-center gap-2 transition-colors self-start md:self-end"
             >
               <span>{t('shop.exploreAll')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -281,27 +277,27 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          3. VERTICAL SECTION 2: LUXURY COLLECTION
+          3. LUXURY COLLECTION  🌤️ Afternoon Golden Sand
           ========================================================================= */}
-      <section className="relative py-16 sm:py-20 bg-[var(--bg-secondary)] border-y border-[var(--border-gold-subtle)] shadow-inner">
+      <section className="relative py-16 sm:py-20">
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <ScrollReveal direction="up">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-gold-subtle)] pb-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
               <div>
-                <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-primary)] font-cinzel font-semibold mb-1">
-                  <Gem className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
+                <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-muted)] font-cinzel font-semibold mb-1">
+                  <Gem className="w-3.5 h-3.5 text-[var(--gold-muted)]" />
                   <span>Private Reserve Blends</span>
                 </div>
-                <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
+                <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
                   LUXURY COLLECTION
                 </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 max-w-xl">
+                <p className="text-xs sm:text-sm text-[var(--text-on-sand-muted)] mt-1 max-w-xl">
                   Artisanal extracts of Damascene petals, Babylon sun figs, and golden ambergris.
                 </p>
               </div>
               <Link
                 to="/collections"
-                className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-primary)] hover:text-[var(--gold-light)] flex items-center gap-2 transition-colors self-start md:self-end"
+                className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-muted)] hover:text-[var(--gold-primary)] flex items-center gap-2 transition-colors self-start md:self-end"
               >
                 <span>Discover Luxury Reserve</span>
                 <ArrowRight className="w-4 h-4" />
@@ -324,11 +320,9 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          4. VERTICAL SECTION 3: ROYAL COLLECTION
+          4. ROYAL COLLECTION  🌇 Golden Hour → Amber
           ========================================================================= */}
-      <section className="relative py-20 sm:py-24 bg-[var(--bg-dark-section)] text-[var(--bg-dark-section-text)] border-y border-[var(--border-gold-subtle)] shadow-2xl overflow-hidden">
-        {/* Subtle Ambient Smoke & Twinkling Stars BEHIND section cards */}
-        <BackgroundAtmosphere starCount={16} smokeIntensity={0.3} />
+      <section className="relative py-20 sm:py-24 text-[var(--text-primary)] overflow-hidden">
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <ScrollReveal direction="up">
@@ -341,7 +335,7 @@ export default function Home() {
                 <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
                   ROYAL COLLECTION
                 </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 max-w-xl">
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 max-w-xl">
                   The supreme apex of royal agarwood alchemy, aged 60-year wild Assamese Dehn Al Oud and imperial resins.
                 </p>
               </div>
@@ -370,24 +364,25 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          5. THE FIVE OLFACTORY FAMILIES
+          5. THE FIVE OLFACTORY FAMILIES  🌅 Warm Sunset Amber
           ========================================================================= */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section className="relative py-16 sm:py-20 px-4 sm:px-6 lg:px-8 space-y-10">
         <ScrollReveal direction="up">
           <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+            <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] font-semibold">
               Olfactory Classifications
             </span>
             <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
               {t('home.fragranceFamiliesTitle')}
             </h2>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
               {t('home.fragranceFamiliesDesc')}
             </p>
           </div>
         </ScrollReveal>
 
         {/* 5 Cards Grid */}
+        <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
           {FAMILIES_DATA.map((fam, i) => {
             const Icon = fam.icon;
@@ -451,12 +446,13 @@ export default function Home() {
             );
           })}
         </div>
+        </div>
       </section>
 
       {/* =========================================================================
-          6. BRAND STORY & SACRED AGARWOOD HERITAGE
+          6. BRAND STORY & SACRED AGARWOOD HERITAGE  🌃 Maghrib
           ========================================================================= */}
-      <section className="relative bg-[var(--bg-dark-section)] text-[var(--bg-dark-section-text)] py-20 sm:py-24 overflow-hidden border-y border-[var(--border-gold-subtle)]">
+      <section className="relative text-[var(--text-primary)] py-20 sm:py-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <ScrollReveal direction="left">
             <div className="space-y-6">
@@ -518,46 +514,45 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          7. BESPOKE PRIVATE CONCIERGE & SALONS CTA (With Prominent Living Camel Caravan)
+          7. BESPOKE CONCIERGE CTA  🌃 Deep Warm Evening
           ========================================================================= */}
-      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-6">
+      <section className="relative text-center py-16 sm:py-24">
         <ScrollReveal direction="up">
-          <div className="pt-12 sm:pt-16 pb-28 sm:pb-36 px-6 sm:px-14 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-tertiary)] to-[var(--bg-dark-section)] text-[var(--text-primary)] border border-[var(--border-gold-subtle)] shadow-2xl space-y-6 relative overflow-hidden">
-            
-            {/* Highly Visible Endless Desert Camel Caravan Traversing Dunes */}
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+
+            {/* Camel Caravan across the evening dunes */}
             <CamelCaravan speedMultiplier={0.88} opacity={0.95} scale={1.15} />
 
-            <div className="relative z-10 flex justify-center">
-              <div className="w-14 h-14 border-2 border-[var(--gold-primary)] bg-[var(--bg-dark-section)] flex items-center justify-center text-[var(--gold-light)] shadow-xl">
+            {/* Generous space below camel scene before content */}
+            <div className="relative z-10 pt-48 sm:pt-56 flex flex-col items-center gap-6">
+              <div className="w-14 h-14 border-2 border-[var(--gold-primary)] bg-black/40 flex items-center justify-center text-[var(--gold-light)] shadow-xl">
                 <Building className="w-7 h-7" />
               </div>
-            </div>
 
-            <div className="relative z-10 space-y-2">
-              <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] font-semibold">
-                Private Consultation Privileges
-              </span>
-              <h2 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
-                Bespoke Salons & Concierge Fragrance Blending
-              </h2>
-              <p className="font-sans text-xs sm:text-sm text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
-                Experience an intimate olfactory journey in our private salons across Dubai, Riyadh, London, and Paris. Handcrafted bespoke flacons customized for royal houses and private patrons.
-              </p>
-            </div>
+              <div className="space-y-2">
+                <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] font-semibold">
+                  Private Consultation Privileges
+                </span>
+                <h2 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
+                  Bespoke Salons &amp; Concierge Fragrance Blending
+                </h2>
+               
+              </div>
 
-            <div className="relative z-10 pt-3 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/contact"
-                className="luxury-btn-gold px-8 py-3.5 text-xs tracking-widest uppercase w-full sm:w-auto cursor-pointer"
-              >
-                Reserve Private Appointment
-              </Link>
-              <Link
-                to="/the-house"
-                className="luxury-btn-outline px-8 py-3.5 text-xs tracking-widest uppercase w-full sm:w-auto border-[var(--gold-light)] text-[var(--text-primary)] cursor-pointer"
-              >
-                Discover Boutiques
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+                <Link
+                  to="/contact"
+                  className="luxury-btn-gold px-8 py-3.5 text-xs tracking-widest uppercase w-full sm:w-auto cursor-pointer"
+                >
+                  Reserve Private Appointment
+                </Link>
+                <Link
+                  to="/the-house"
+                  className="luxury-btn-outline px-8 py-3.5 text-xs tracking-widest uppercase w-full sm:w-auto border-[var(--gold-light)] text-[var(--text-primary)] cursor-pointer"
+                >
+                  Discover Boutiques
+                </Link>
+              </div>
             </div>
           </div>
         </ScrollReveal>

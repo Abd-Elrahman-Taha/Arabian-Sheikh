@@ -5,6 +5,7 @@ import { productService } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+import CamelCaravan from '../components/motion/CamelCaravan';
 import {
   SlidersHorizontal,
   Grid,
@@ -201,6 +202,11 @@ export default function Shop() {
           </p>
         </div>
       </ScrollReveal>
+
+      {/* Desert Camel Caravan — Below First Section, Above Filters */}
+      <div className="relative w-full h-32 sm:h-44 md:h-52 overflow-hidden -my-4 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
+      </div>
 
       {/* Control Bar */}
       <ScrollReveal direction="up" delay={0.1}>

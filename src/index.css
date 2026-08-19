@@ -24,55 +24,84 @@
 }
 
 /* =========================================================================
-   HYBRID ARABIAN PALACE × LUXURY PERFUMERY DESIGN SYSTEM
-   Unified luxury aesthetic combining dark walnut wood, alabaster cream & gold
+   ARABIAN SHEIKH — DESERT-FIRST DESIGN SYSTEM
+   Background is the foundation. The desert color journey drives all UI.
+   Light (midday) → Warm afternoon → Golden hour → Maghrib → Deep evening
    ========================================================================= */
 
 :root {
-  /* Core Palace Backgrounds */
-  --bg-primary: #130C05;
-  --bg-secondary: #1A1007;
-  --bg-tertiary: #22150A;
-  --bg-card: rgba(26, 17, 8, 0.85);
-  --bg-card-hover: rgba(36, 23, 11, 0.95);
-  --bg-surface: #1C1208;
-  --bg-glass: rgba(19, 12, 5, 0.92);
-  --bg-dark-section: #0B0602;
+  /* ── DESERT COLOR STAGES (6 waypoints) ─────────────────────────────────── */
+  --desert-midday:    #EDD9AD;   /* ☀️  Bright warm sand — top of page       */
+  --desert-afternoon: #DEC48C;   /* 🌤️  Deeper warm sand                     */
+  --desert-golden:    #C9A368;   /* 🌇  Golden hour                          */
+  --desert-amber:     #B08850;   /* 🌅  Amber / sunset                       */
+  --desert-maghrib:   #7A5530;   /* 🌇  Maghrib — warm brown                 */
+  --desert-evening:   #3E2310;   /* 🌃  Deep warm evening                    */
+
+  /* ── SECTION BACKGROUND TOKENS (desert journey) ───────────────────────── */
+  --section-hero:      linear-gradient(160deg, #2A1A0A 0%, #1E1208 100%);
+  --section-sellers:   #E8D4A8;
+  --section-luxury:    #DEC48C;
+  --section-royal:     #D0B07A;
+  --section-families:  #C4A068;
+  --section-story:     #7A5530;
+  --section-cta:       #4A2D12;
+  --section-footer:    #2C1A08;
+
+  /* ── LEGACY PALACE BACKGROUNDS (kept for cards / overlays / dark UI) ──── */
+  --bg-primary:        #2C1A08;
+  --bg-secondary:      #3A2210;
+  --bg-tertiary:       #4A2E18;
+  --bg-card:           rgba(40, 22, 8, 0.90);
+  --bg-card-hover:     rgba(55, 32, 12, 0.97);
+  --bg-surface:        #321E0C;
+  --bg-glass:          rgba(30, 18, 6, 0.94);
+  --bg-dark-section:   #1E1208;
   --bg-dark-section-text: #EADED2;
 
-  /* Cream Alabaster Content Breathing Space */
-  --bg-cream-surface: #F5ECE1;
-  --bg-cream-card: #EADED2;
-  --bg-cream-light: #FAF6F0;
+  /* ── CREAM PARCHMENT (light section cards / breathing space) ───────────── */
+  --bg-cream-surface:  #F8F0E3;
+  --bg-cream-card:     #F0E6D3;
+  --bg-cream-light:    #FBF7F0;
 
-  /* Typography */
-  --text-primary: #EADED2;
-  --text-secondary: #D4C3B2;
-  --text-muted: #9E8C7C;
-  --text-inverse: #130C05;
-  --text-gold: #D2A55F;
+  /* ── TYPOGRAPHY — light sandy sections ────────────────────────────────── */
+  --text-on-sand:      #2C1608;   /* Dark Arabian brown for light backgrounds */
+  --text-on-sand-sec:  #5C3A1E;   /* Secondary text on sandy sections        */
+  --text-on-sand-muted:#8B6040;   /* Muted text on sandy sections            */
 
-  /* Royal Gold Accents */
-  --gold-primary: #D2A55F;
-  --gold-light: #E0B978;
-  --gold-muted: #A97B3F;
-  --gold-dark: #7A5E2E;
+  /* ── TYPOGRAPHY — dark warm sections ─────────────────────────────────── */
+  --text-primary:      #EADED2;
+  --text-secondary:    #D4C3B2;
+  --text-muted:        #9E8C7C;
+  --text-inverse:      #2C1608;
+  --text-gold:         #D2A55F;
 
-  /* Architectural Hairline Borders */
-  --border-subtle: rgba(234, 222, 210, 0.12);
-  --border-card: rgba(210, 165, 95, 0.28);
-  --border-gold: #D2A55F;
-  --border-gold-subtle: rgba(210, 165, 95, 0.22);
-  --border-gold-glow: rgba(210, 165, 95, 0.55);
+  /* ── ROYAL GOLD ACCENTS ─────────────────────────────────────────────── */
+  --gold-primary:      #D2A55F;
+  --gold-light:        #E0B978;
+  --gold-muted:        #A97B3F;
+  --gold-dark:         #7A5E2E;
 
-  /* Shadows & Glows */
-  --shadow-luxury: 0 16px 40px -12px rgba(0, 0, 0, 0.75);
-  --shadow-gold: 0 0 30px rgba(210, 165, 95, 0.25);
-  --input-bg: #1B1108;
-  --input-border: rgba(210, 165, 95, 0.3);
+  /* ── BORDERS ─────────────────────────────────────────────────────────── */
+  --border-subtle:         rgba(234, 222, 210, 0.14);
+  --border-sand:           rgba(160, 110, 55, 0.25);
+  --border-card:           rgba(210, 165, 95, 0.28);
+  --border-gold:           #D2A55F;
+  --border-gold-subtle:    rgba(210, 165, 95, 0.22);
+  --border-gold-glow:      rgba(210, 165, 95, 0.55);
 
-  --skeleton-base: #1C1108;
-  --skeleton-highlight: #2A1A0D;
+  /* ── SHADOWS ─────────────────────────────────────────────────────────── */
+  --shadow-luxury:     0 16px 40px -12px rgba(0, 0, 0, 0.55);
+  --shadow-gold:       0 0 30px rgba(210, 165, 95, 0.25);
+  --shadow-sand:       0 8px 32px rgba(80, 45, 10, 0.18);
+
+  /* ── FORM INPUTS ─────────────────────────────────────────────────────── */
+  --input-bg:          #2A1A0C;
+  --input-border:      rgba(210, 165, 95, 0.3);
+
+  /* ── SKELETON ────────────────────────────────────────────────────────── */
+  --skeleton-base:      #2A1A0C;
+  --skeleton-highlight: #3C2818;
 }
 
 /* =========================================================================
@@ -105,6 +134,33 @@ body {
   width: 100%;
   overflow-x: hidden;
 }
+
+/* ── Desert Section Utilities ──────────────────────────────────────────── */
+/* Smooth cross-fade background transitions between desert stages          */
+
+.desert-section {
+  transition: background-color 0.6s ease, color 0.4s ease;
+}
+
+/* On-sand text helpers */
+.on-sand {
+  color: var(--text-on-sand);
+}
+.on-sand-sec {
+  color: var(--text-on-sand-sec);
+}
+.on-sand-muted {
+  color: var(--text-on-sand-muted);
+}
+.on-sand-gold {
+  color: var(--gold-muted);
+}
+
+/* Gold border on sandy sections */
+.border-sand {
+  border-color: var(--border-sand);
+}
+
 
 /* Custom Luxury Scrollbar */
 ::-webkit-scrollbar {

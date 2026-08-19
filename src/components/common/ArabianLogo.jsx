@@ -3,51 +3,64 @@ import logoSvg from '../../assets/arabian-sheikh-logo.svg';
 
 /**
  * ArabianLogo Component
- * 
- * Official vector brand signature extracted from the royal Arabian Sheikh identity.
- * Proportional crest height visually matches the total height of "ARABIAN SHEIKH" + "HAUTE PARFUMERIE ARABE".
+ *
+ * Official vector brand signature — Arabian Sheikh royal identity.
+ *
+ * Props:
+ *  variant      – 'crest' | 'full' | 'horizontal'
+ *  size         – 'navbar' | 'sm' | 'md' | 'lg' | 'hero' | 'xl'
+ *  showSubtitle – show "Haute Parfumerie Arabe" (or custom subtitle)
+ *  showArabic   – show "الشيخ العربي" Arabic brand name below English
+ *  subtitle     – custom subtitle string
  */
 export default function ArabianLogo({
-  variant = 'full', // 'crest' | 'full' | 'horizontal'
-  size = 'md',      // 'navbar' | 'sm' | 'md' | 'lg' | 'hero' | 'xl'
+  variant = 'full',
+  size = 'md',
   className = '',
-  showSubtitle = true,
+  showSubtitle = false,
+  showArabic = false,
   subtitle = 'Haute Parfumerie Arabe'
 }) {
   const sizeMap = {
     navbar: {
-      crest: 'h-8 sm:h-9 w-auto aspect-[85/113]',
-      text: 'text-sm sm:text-base md:text-lg tracking-[0.2em]',
-      sub: 'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]'
+      crest:  'h-8 sm:h-9 w-auto aspect-[85/113]',
+      text:   'text-sm sm:text-base md:text-lg tracking-[0.2em]',
+      sub:    'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]',
+      arabic: 'text-[11px] sm:text-[13px]'
     },
     sm: {
-      crest: 'h-8 sm:h-9 w-auto aspect-[85/113]',
-      text: 'text-base sm:text-lg tracking-[0.22em]',
-      sub: 'text-[8px] tracking-[0.35em]'
+      crest:  'h-8 sm:h-9 w-auto aspect-[85/113]',
+      text:   'text-base sm:text-lg tracking-[0.22em]',
+      sub:    'text-[8px] tracking-[0.35em]',
+      arabic: 'text-sm'
     },
     md: {
-      crest: 'h-11 sm:h-13 w-auto aspect-[85/113]',
-      text: 'text-lg sm:text-xl tracking-[0.25em]',
-      sub: 'text-[9px] tracking-[0.4em]'
+      crest:  'h-11 sm:h-13 w-auto aspect-[85/113]',
+      text:   'text-lg sm:text-xl tracking-[0.25em]',
+      sub:    'text-[9px] tracking-[0.4em]',
+      arabic: 'text-base'
     },
     lg: {
-      crest: 'h-16 sm:h-20 w-auto aspect-[85/113]',
-      text: 'text-2xl sm:text-3xl tracking-[0.28em]',
-      sub: 'text-xs tracking-[0.45em]'
+      crest:  'h-16 sm:h-20 w-auto aspect-[85/113]',
+      text:   'text-2xl sm:text-3xl tracking-[0.28em]',
+      sub:    'text-xs tracking-[0.45em]',
+      arabic: 'text-lg sm:text-xl'
     },
     hero: {
-      crest: 'h-24 sm:h-32 lg:h-36 w-auto aspect-[85/113]',
-      text: 'text-3xl sm:text-5xl lg:text-6xl tracking-[0.3em]',
-      sub: 'text-xs sm:text-sm tracking-[0.5em]'
+      crest:  'h-24 sm:h-32 lg:h-36 w-auto aspect-[85/113]',
+      text:   'text-3xl sm:text-5xl lg:text-6xl tracking-[0.3em]',
+      sub:    'text-xs sm:text-sm tracking-[0.5em]',
+      arabic: 'text-xl sm:text-2xl'
     },
     xl: {
-      crest: 'h-28 sm:h-40 w-auto aspect-[85/113]',
-      text: 'text-4xl sm:text-6xl tracking-[0.32em]',
-      sub: 'text-sm tracking-[0.52em]'
+      crest:  'h-36 sm:h-52 lg:h-60 w-auto aspect-[85/113]',
+      text:   'text-4xl sm:text-6xl lg:text-7xl tracking-[0.32em]',
+      sub:    'text-sm tracking-[0.52em]',
+      arabic: 'text-2xl sm:text-3xl lg:text-4xl'
     }
   };
 
-  const currentSize = sizeMap[size] || sizeMap.md;
+  const s = sizeMap[size] || sizeMap.md;
 
   if (variant === 'crest') {
     return (
@@ -55,7 +68,7 @@ export default function ArabianLogo({
         <img
           src={logoSvg}
           alt="Arabian Sheikh Royal Crest"
-          className={`${currentSize.crest} object-contain filter drop-shadow-[0_0_20px_rgba(210,165,95,0.45)] transition-transform duration-500 hover:scale-105`}
+          className={`${s.crest} object-contain filter drop-shadow-[0_0_20px_rgba(210,165,95,0.45)] transition-transform duration-500 hover:scale-105`}
         />
       </div>
     );
@@ -67,14 +80,19 @@ export default function ArabianLogo({
         <img
           src={logoSvg}
           alt="Arabian Sheikh Royal Crest"
-          className={`${currentSize.crest} object-contain flex-shrink-0 filter drop-shadow-[0_0_12px_rgba(210,165,95,0.35)] transition-transform duration-300 group-hover:scale-105`}
+          className={`${s.crest} object-contain flex-shrink-0 filter drop-shadow-[0_0_12px_rgba(210,165,95,0.35)] transition-transform duration-300 group-hover:scale-105`}
         />
         <div className="flex flex-col text-left justify-center">
-          <span className={`font-cinzel font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors leading-tight ${currentSize.text}`}>
+          <span className={`font-cinzel font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors leading-tight ${s.text}`}>
             ARABIAN SHEIKH
           </span>
-          {showSubtitle && (
-            <span className={`uppercase font-sans font-semibold text-[var(--gold-primary)] tracking-widest leading-tight mt-0.5 ${currentSize.sub}`}>
+          {showArabic && (
+            <span className={`font-arabic text-[var(--gold-primary)] leading-snug mt-0.5 ${s.arabic}`}>
+              الشيخ العربي
+            </span>
+          )}
+          {showSubtitle && !showArabic && (
+            <span className={`uppercase font-sans font-semibold text-[var(--gold-primary)] tracking-widest leading-tight mt-0.5 ${s.sub}`}>
               {subtitle}
             </span>
           )}
@@ -89,16 +107,24 @@ export default function ArabianLogo({
       <img
         src={logoSvg}
         alt="Arabian Sheikh Royal Crest"
-        className={`${currentSize.crest} object-contain mb-2.5 filter drop-shadow-[0_0_20px_rgba(210,165,95,0.45)] transition-transform duration-500 group-hover:scale-105`}
+        className={`${s.crest} object-contain mb-4 filter drop-shadow-[0_0_32px_rgba(210,165,95,0.55)] transition-transform duration-500 group-hover:scale-105`}
       />
-      <span className={`font-cinzel font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors ${currentSize.text}`}>
+      <span className={`font-cinzel font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors ${s.text}`}>
         ARABIAN SHEIKH
       </span>
-      {showSubtitle && (
-        <span className={`uppercase font-sans font-medium text-[var(--gold-primary)] mt-1 tracking-widest ${currentSize.sub}`}>
+      {showArabic && (
+        <span className={`font-arabic text-[var(--gold-light)] mt-2 leading-snug ${s.arabic}`}>
+          الشيخ العربي
+        </span>
+      )}
+      {showSubtitle && !showArabic && (
+        <span className={`uppercase font-sans font-medium text-[var(--gold-primary)] mt-1 tracking-widest ${s.sub}`}>
           {subtitle}
         </span>
       )}
     </div>
   );
 }
+
+
+

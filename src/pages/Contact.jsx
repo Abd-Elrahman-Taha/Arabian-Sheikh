@@ -3,6 +3,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+import CamelCaravan from '../components/motion/CamelCaravan';
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -27,7 +28,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="pt-36 sm:pt-40 pb-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--text-primary)]">
       {/* Header */}
       <ScrollReveal direction="up" delay={0}>
         <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -43,8 +44,14 @@ export default function Contact() {
         </div>
       </ScrollReveal>
 
+      {/* Desert Camel Caravan — Below First Section */}
+      <div className="relative w-full h-32 sm:h-44 md:h-52 overflow-hidden -my-4 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Left: Concierge Inquiry Form */}
+
         <div className="lg:col-span-7">
           <ScrollReveal direction="right" className="bg-[var(--bg-card)] border border-[var(--border-card)] p-8 sm:p-10 shadow-2xl space-y-6 h-full">
           <h2 className="font-cinzel text-xl font-bold text-[var(--text-primary)] uppercase border-b border-[var(--border-subtle)] pb-3">

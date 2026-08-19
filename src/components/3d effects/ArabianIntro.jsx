@@ -188,7 +188,12 @@ export default function ArabianIntro({ onComplete }) {
 
           {/* Central Brand Reveal in the Smoke */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 animate-fade-in opacity-95">
-            <ArabianLogo variant="full" size="lg" showSubtitle={true} />
+            <ArabianLogo
+              variant="full"
+              size="xl"
+              showArabic={true}
+              showSubtitle={false}
+            />
           </div>
         </div>
       )}
