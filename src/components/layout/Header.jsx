@@ -254,9 +254,9 @@ export default function Header({ onOpenSearch }) {
             </nav>
 
             {/* Center Brand / Logo with Official Vector Crest */}
-            <div className="text-left lg:text-center">
-              <Link to="/" className="inline-block group focus:outline-none py-1">
-                <ArabianLogo variant="horizontal" size="sm" showSubtitle={true} />
+            <div className="text-left lg:text-center py-1">
+              <Link to="/" className="inline-block group focus:outline-none">
+                <ArabianLogo variant="horizontal" size="navbar" showSubtitle={true} />
               </Link>
             </div>
 

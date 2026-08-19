@@ -129,9 +129,9 @@ export default function Home() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 animate-fade-in">
           
-          {/* Royal Crest Emblem */}
+          {/* Royal Crest Emblem in Radiant Light Champagne Gold */}
           <div className="flex justify-center">
-            <ArabianLogo variant="crest" size="lg" className="hover:scale-105 transition-transform duration-500" />
+            <ArabianLogo variant="crest" size="hero" className="hover:scale-105 transition-transform duration-500 mb-2 filter drop-shadow-[0_0_35px_rgba(243,224,184,0.65)]" />
           </div>
 
           {/* Subtitle Pill */}
