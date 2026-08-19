@@ -9,6 +9,7 @@ import TextReveal from '../components/common/TextReveal';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 import ArabianLogo from '../components/common/ArabianLogo';
 import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
+import CamelCaravan from '../components/motion/CamelCaravan';
 import heroPalaceImg from '../assets/hero_arabian_palace.jpg';
 import {
   Sparkles,
@@ -232,6 +233,13 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
+          TRANSITION: PANORAMIC DESERT CARAVAN HORIZON
+          ========================================================================= */}
+      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -my-10 sm:-my-16 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.92} opacity={0.95} scale={1.05} />
+      </div>
+
+      {/* =========================================================================
           2. VERTICAL SECTION 1: BEST SELLERS
           ========================================================================= */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -446,7 +454,7 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          6. BRAND STORY & RITUAL OF BAKHOOR
+          6. BRAND STORY & SACRED AGARWOOD HERITAGE
           ========================================================================= */}
       <section className="relative bg-[var(--bg-dark-section)] text-[var(--bg-dark-section-text)] py-20 sm:py-24 overflow-hidden border-y border-[var(--border-gold-subtle)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -501,7 +509,7 @@ export default function Home() {
                   « العطر لغة الملوك وذاكرة الأرواح النبيلة »
                 </p>
                 <p className="font-cinzel text-xs text-[var(--text-muted)] uppercase tracking-widest mt-2">
-                  The Eternal Ritual of Arabian Bakhoor
+                  The Eternal Ritual of Arabian Haute Perfumery
                 </p>
               </div>
             </div>
@@ -510,11 +518,15 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          7. BESPOKE PRIVATE CONCIERGE & SALONS CTA
+          7. BESPOKE PRIVATE CONCIERGE & SALONS CTA (With Prominent Living Camel Caravan)
           ========================================================================= */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-6">
         <ScrollReveal direction="up">
-          <div className="p-8 sm:p-14 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-tertiary)] to-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-gold-subtle)] shadow-2xl space-y-6 relative overflow-hidden">
+          <div className="pt-12 sm:pt-16 pb-28 sm:pb-36 px-6 sm:px-14 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-tertiary)] to-[var(--bg-dark-section)] text-[var(--text-primary)] border border-[var(--border-gold-subtle)] shadow-2xl space-y-6 relative overflow-hidden">
+            
+            {/* Highly Visible Endless Desert Camel Caravan Traversing Dunes */}
+            <CamelCaravan speedMultiplier={0.88} opacity={0.95} scale={1.15} />
+
             <div className="relative z-10 flex justify-center">
               <div className="w-14 h-14 border-2 border-[var(--gold-primary)] bg-[var(--bg-dark-section)] flex items-center justify-center text-[var(--gold-light)] shadow-xl">
                 <Building className="w-7 h-7" />

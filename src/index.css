@@ -326,6 +326,77 @@ body {
   animation: heartBeat 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* =========================================================================
+   LIVING ARABIAN MOTION & ATMOSPHERIC KEYFRAMES
+   ========================================================================= */
+
+@keyframes caravanWalk {
+  0% {
+    transform: translate3d(-35vw, 0, 0);
+  }
+  100% {
+    transform: translate3d(115vw, 0, 0);
+  }
+}
+
+.animate-caravan-walk {
+  animation: caravanWalk linear infinite;
+  will-change: transform;
+}
+
+@keyframes camelGait {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2.5px) rotate(-0.8deg);
+  }
+  50% {
+    transform: translateY(-1px) rotate(0.4deg);
+  }
+  75% {
+    transform: translateY(-3.2px) rotate(0.8deg);
+  }
+}
+
+.animate-camel-gait {
+  animation: camelGait 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes abayaSway {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  33% {
+    transform: rotate(-0.7deg) skewX(-1.2deg) translateY(-2px);
+  }
+  66% {
+    transform: rotate(0.5deg) skewX(0.8deg) translateY(1px);
+  }
+}
+
+.animate-abaya-sway {
+  animation: abayaSway 7s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+@keyframes lanternPulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.15);
+  }
+}
+
+.animate-lantern-pulse {
+  animation: lanternPulse 6s ease-in-out infinite;
+}
+
 /* Accessibility: Prefers Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
