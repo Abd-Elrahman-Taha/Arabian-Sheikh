@@ -8,6 +8,7 @@ import AnimatedCounter from '../components/common/AnimatedCounter';
 import TextReveal from '../components/common/TextReveal';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 import ArabianLogo from '../components/common/ArabianLogo';
+import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
 import heroPalaceImg from '../assets/hero_arabian_palace.jpg';
 import {
   Sparkles,
@@ -124,6 +125,9 @@ export default function Home() {
           {/* Multi-layer ambient gradients for contrast and readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/65 to-[var(--bg-primary)]/80" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(210,165,95,0.22)_0%,_transparent_75%)]" />
+
+          {/* Subtle Ambient Smoke & Twinkling Stars BEHIND all content */}
+          <BackgroundAtmosphere starCount={24} smokeIntensity={0.4} />
         </div>
 
         {/* Hero Content */}
@@ -315,6 +319,9 @@ export default function Home() {
           4. VERTICAL SECTION 3: ROYAL COLLECTION
           ========================================================================= */}
       <section className="relative py-20 sm:py-24 bg-[var(--bg-dark-section)] text-[var(--bg-dark-section-text)] border-y border-[var(--border-gold-subtle)] shadow-2xl overflow-hidden">
+        {/* Subtle Ambient Smoke & Twinkling Stars BEHIND section cards */}
+        <BackgroundAtmosphere starCount={16} smokeIntensity={0.3} />
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <ScrollReveal direction="up">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-gold-subtle)] pb-4">

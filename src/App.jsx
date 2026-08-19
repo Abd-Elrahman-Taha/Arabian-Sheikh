@@ -13,6 +13,7 @@ import Footer from './components/layout/Footer';
 import CartDrawer from './components/cart/CartDrawer';
 import SearchOverlay from './components/search/SearchOverlay';
 import PageTransition from './components/common/PageTransition';
+import BackgroundAtmosphere from './components/motion/BackgroundAtmosphere';
 
 // Public Pages
 import Home from './pages/Home';
@@ -178,8 +179,11 @@ function MainRouter() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-400">
+    <div className="relative flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-400 overflow-x-hidden">
       
+      {/* Global Ambient Smoke & Twinkling Stars Layer BEHIND EVERYTHING */}
+      <BackgroundAtmosphere starCount={30} smokeIntensity={0.35} className="fixed inset-0 pointer-events-none z-0" />
+
       {/* Standalone Cinematic Bakhoor Smoke Intro (unmounts automatically after intro) */}
       {showIntro && !isAdminRoute && (
         <ArabianIntro onComplete={() => setShowIntro(false)} />
@@ -189,7 +193,7 @@ function MainRouter() {
       {!isAdminRoute && <Header onOpenSearch={() => setSearchOpen(true)} />}
 
       {/* Main Page Body with PageTransition */}
-      <main className="flex-1 w-full">
+      <main className="relative z-10 flex-1 w-full">
         <PageTransition key={currentPath}>
           {renderContent()}
         </PageTransition>

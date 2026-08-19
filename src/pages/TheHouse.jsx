@@ -2,6 +2,7 @@ import React from 'react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
+import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
 import {
   Crown,
   Trees,
@@ -25,6 +26,8 @@ export default function TheHouse() {
             className="w-full h-full object-cover object-center opacity-25 scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/75 to-[var(--bg-primary)]/90" />
+          {/* Subtle Ambient Smoke & Twinkling Stars BEHIND content */}
+          <BackgroundAtmosphere starCount={22} smokeIntensity={0.35} />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-6">

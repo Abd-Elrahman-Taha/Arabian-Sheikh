@@ -3,18 +3,21 @@ import { Canvas } from "@react-three/fiber";
 import { gsap } from "gsap";
 import BakhoorSmoke from "./BakhoorSmoke";
 import ArabianLogo from "../common/ArabianLogo";
+import introVideo from "../../assets/intro.mp4";
 
 /**
  * ArabianIntro Component
  *
- * Standalone cinematic Bakhoor smoke intro effect.
- * Plays immediately upon page load for ~3.5s, smoothly fades out over 1.3s (ending at ~4.8s),
- * and completely unmounts from the DOM to release all GPU/WebGL resources.
+ * Cinematic multi-stage intro sequence:
+ * 1. Stage 1 (Video): High-quality intro video plays first with sleek Skip button.
+ * 2. Stage 2 (Smoke): When video ends (or on skip), transitions seamlessly to the 3D Bakhoor smoke atmosphere.
+ * 3. Stage 3 (Complete): Smoothly dissolves to reveal the website, then unmounts to free GPU resources.
  */
 export default function ArabianIntro({ onComplete }) {
   const containerRef = useRef(null);
-  const timelineRef = useRef(null);
-  const [isFinished, setIsFinished] = useState(false);
+  const videoRef = useRef(null);
+  const smokeContainerRef = useRef(null);
+  const [stage, setStage] = useState('video'); // 'video' | 'smoke' | 'finished'
   const [reducedMotion, setReducedMotion] = useState(false);
 
   // Check for prefers-reduced-motion
@@ -24,60 +27,35 @@ export default function ArabianIntro({ onComplete }) {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches) {
       setReducedMotion(true);
-      setIsFinished(true);
+      setStage('finished');
       onComplete?.();
     }
   }, [onComplete]);
 
-  // Master GSAP Intro Timeline (0.0s -> 3.5s -> 4.8s)
-  useEffect(() => {
-    if (reducedMotion || isFinished) return;
+  // Transition from Video to Smoke
+  const transitionToSmoke = () => {
+    if (stage !== 'video') return;
+    
+    // Pause video
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (e) {
+        // ignore
+      }
+    }
 
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          setIsFinished(true);
-          onComplete?.();
-        },
-      });
+    setStage('smoke');
+  };
 
-      timelineRef.current = tl;
-
-      // 0.0s -> 0.7s: Smooth initial fade-in of the smoke atmosphere
-      tl.fromTo(
-        containerRef.current,
-        { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 0.7,
-          ease: "power2.out",
-        },
-        0
-      );
-
-      // 0.7s -> 3.5s: Smoke is visible, actively moving, swirling and rising
-
-      // 3.5s -> 4.8s: Smooth cinematic fade-out / dissolve
-      tl.to(
-        containerRef.current,
-        {
-          opacity: 0,
-          duration: 1.3,
-          ease: "power2.inOut",
-        },
-        3.5
-      );
-    }, containerRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, [reducedMotion, isFinished, onComplete]);
-
-  // Graceful user skip handler
-  const handleSkip = () => {
-    if (timelineRef.current) {
-      timelineRef.current.kill();
+  // Skip Everything immediately
+  const handleFullSkip = () => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (e) {
+        // ignore
+      }
     }
 
     if (containerRef.current) {
@@ -86,74 +64,144 @@ export default function ArabianIntro({ onComplete }) {
         duration: 0.4,
         ease: "power2.out",
         onComplete: () => {
-          setIsFinished(true);
+          setStage('finished');
           onComplete?.();
         },
       });
     } else {
-      setIsFinished(true);
+      setStage('finished');
       onComplete?.();
     }
   };
 
-  // Do not render anything once finished or if reduced motion is enabled
-  if (isFinished || reducedMotion) {
+  // Smoke Stage GSAP Animation Timeline
+  useEffect(() => {
+    if (stage !== 'smoke' || reducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setStage('finished');
+          onComplete?.();
+        },
+      });
+
+      // 0.0s -> 0.6s: Smooth fade-in of smoke & crest
+      tl.fromTo(
+        smokeContainerRef.current,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 0.6,
+          ease: "power2.out",
+        },
+        0
+      );
+
+      // 3.0s -> 4.2s: Smooth dissolve into website
+      tl.to(
+        containerRef.current,
+        {
+          opacity: 0,
+          duration: 1.2,
+          ease: "power2.inOut",
+        },
+        3.0
+      );
+    }, containerRef);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [stage, reducedMotion, onComplete]);
+
+  if (stage === 'finished' || reducedMotion) {
     return null;
   }
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[9999] pointer-events-none select-none overflow-hidden bg-radial from-[#130C05]/40 via-[#130C05]/75 to-[#0B0602]/95 backdrop-blur-[2px]"
-      style={{ opacity: 0 }}
-      aria-label="Arabian Bakhoor Smoke Intro"
+      className="fixed inset-0 z-[9999] select-none overflow-hidden bg-black"
+      aria-label="Arabian Sheikh Intro Experience"
     >
-      {/* Three.js Canvas */}
-      <Canvas
-        camera={{
-          position: [0, 0, 500],
-          fov: 55,
-          near: 1,
-          far: 3000,
-        }}
-        dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2)]}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance",
-        }}
-      >
-        {/* Warm Palace & Incense Lighting */}
-        <ambientLight intensity={1.6} color="#F5ECE2" />
-        <directionalLight
-          position={[100, 300, 150]}
-          intensity={2.2}
-          color="#FCEFD5"
-        />
-        <pointLight
-          position={[0, -60, -80]}
-          intensity={3.8}
-          distance={850}
-          color="#D2A55F"
-        />
+      {/* =========================================================================
+          STAGE 1: HIGH QUALITY INTRO VIDEO
+          ========================================================================= */}
+      {stage === 'video' && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black animate-fade-in">
+          <video
+            ref={videoRef}
+            src={introVideo || "/intro.mp4"}
+            autoPlay
+            muted
+            playsInline
+            onEnded={transitionToSmoke}
+            onError={transitionToSmoke}
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
+      )}
 
-        <Suspense fallback={null}>
-          <BakhoorSmoke visible={true} opacity={0.35} />
-        </Suspense>
-      </Canvas>
+      {/* =========================================================================
+          STAGE 2: 3D BAKHOOR SMOKE & BRAND CREST REVEAL
+          ========================================================================= */}
+      {stage === 'smoke' && (
+        <div
+          ref={smokeContainerRef}
+          className="absolute inset-0 z-10 pointer-events-none bg-radial from-[#130C05]/40 via-[#130C05]/75 to-[#0B0602]/95 backdrop-blur-[2px]"
+          style={{ opacity: 0 }}
+        >
+          {/* Three.js Canvas */}
+          <Canvas
+            camera={{
+              position: [0, 0, 500],
+              fov: 55,
+              near: 1,
+              far: 3000,
+            }}
+            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2)]}
+            gl={{
+              antialias: true,
+              alpha: true,
+              powerPreference: "high-performance",
+            }}
+          >
+            {/* Warm Palace & Incense Lighting */}
+            <ambientLight intensity={1.6} color="#F5ECE2" />
+            <directionalLight
+              position={[100, 300, 150]}
+              intensity={2.2}
+              color="#FCEFD5"
+            />
+            <pointLight
+              position={[0, -60, -80]}
+              intensity={3.8}
+              distance={850}
+              color="#D2A55F"
+            />
 
-      {/* Subtle Central Brand Reveal in the Smoke */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 animate-fade-in opacity-90">
-        <ArabianLogo variant="full" size="lg" showSubtitle={true} />
-      </div>
+            <Suspense fallback={null}>
+              <BakhoorSmoke visible={true} opacity={0.35} />
+            </Suspense>
+          </Canvas>
 
-      {/* Elegant Minimalist Skip Button */}
+          {/* Central Brand Reveal in the Smoke */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 animate-fade-in opacity-95">
+            <ArabianLogo variant="full" size="lg" showSubtitle={true} />
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          GLOBAL SKIP BUTTON (Always available in top-right)
+          ========================================================================= */}
       <div className="absolute top-6 right-6 z-[10000] pointer-events-auto">
         <button
           type="button"
-          onClick={handleSkip}
-          className="group flex items-center gap-2 rounded-full border border-[#D2A55F]/40 bg-[#130C05]/60 px-4 py-1.5 text-xs font-cinzel tracking-[0.25em] uppercase text-[#EADED2] backdrop-blur-md transition-all duration-300 hover:border-[#D2A55F] hover:bg-[#D2A55F]/20 hover:text-[#FFF5EB] focus:outline-none focus:ring-1 focus:ring-[#D2A55F]"
-          title="Skip Intro"
+          onClick={stage === 'video' ? transitionToSmoke : handleFullSkip}
+          className="group flex items-center gap-2 rounded-full border border-[#D2A55F]/50 bg-[#130C05]/70 px-5 py-2 text-xs font-cinzel tracking-[0.25em] uppercase text-[#EADED2] backdrop-blur-md transition-all duration-300 hover:border-[#D2A55F] hover:bg-[#D2A55F]/25 hover:text-[#FFF5EB] shadow-2xl focus:outline-none focus:ring-1 focus:ring-[#D2A55F] cursor-pointer"
+          title="Skip to next step"
         >
           <span>Skip</span>
         </button>
