@@ -259,9 +259,7 @@ export default function Header({ onOpenSearch }) {
                 <span className="block font-cinzel text-xl sm:text-2xl lg:text-3xl font-bold tracking-[0.28em] text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors">
                   ARABIAN SHEIKH
                 </span>
-                <span className="block text-[9px] uppercase tracking-[0.45em] text-[var(--gold-primary)] font-sans font-medium mt-0.5">
-                  Haute Parfumerie Arabe
-                </span>
+                
               </Link>
             </div>
 
@@ -416,7 +414,7 @@ export default function Header({ onOpenSearch }) {
                   {t('nav.women')}
                 </Link>
                 <Link to="/unisex" className="block text-sm text-[var(--text-secondary)] hover:text-[var(--gold-primary)]">
-                  {t('nav.unisex')}
+         
                 </Link>
               </div>
               <Link
