@@ -7,14 +7,15 @@
   --color-gold-dark: #7A5E2E;
 
   --color-arabian-black: #130C05;
-  --color-arabian-darkest: #0D0804;
-  --color-arabian-deep: #1B1009;
-  --color-arabian-brown: #2A180D;
-  --color-arabian-warm: #3A2415;
+  --color-arabian-darkest: #0B0602;
+  --color-arabian-deep: #180F07;
+  --color-arabian-brown: #24160B;
+  --color-arabian-warm: #362212;
 
   --color-cream-offwhite: #EADED2;
-  --color-cream-light: #F3EAE1;
-  --color-cream-muted: #6F6258;
+  --color-cream-light: #F5ECE1;
+  --color-cream-soft: #FAF5EE;
+  --color-cream-muted: #8E7D6F;
 
   --font-serif: 'Cinzel', serif;
   --font-editorial: 'Cormorant Garamond', Georgia, serif;
@@ -23,79 +24,55 @@
 }
 
 /* =========================================================================
-   THEME TOKENS: LIGHT MODE (DEFAULT) & DARK MODE
+   HYBRID ARABIAN PALACE × LUXURY PERFUMERY DESIGN SYSTEM
+   Unified luxury aesthetic combining dark walnut wood, alabaster cream & gold
    ========================================================================= */
 
 :root {
-  /* LIGHT MODE (Default) */
-  --bg-primary: #EADED2;
-  --bg-secondary: #F3EAE1;
-  --bg-card: #F7EFE7;
-  --bg-card-hover: #E8DACB;
-  --bg-surface: #FFFFFF;
-  --bg-glass: rgba(234, 222, 210, 0.92);
-  --bg-dark-section: #1C1009;
+  /* Core Palace Backgrounds */
+  --bg-primary: #130C05;
+  --bg-secondary: #1A1007;
+  --bg-tertiary: #22150A;
+  --bg-card: rgba(26, 17, 8, 0.85);
+  --bg-card-hover: rgba(36, 23, 11, 0.95);
+  --bg-surface: #1C1208;
+  --bg-glass: rgba(19, 12, 5, 0.92);
+  --bg-dark-section: #0B0602;
   --bg-dark-section-text: #EADED2;
 
-  --text-primary: #130C05;
-  --text-secondary: #3D2C21;
-  --text-muted: #6F6258;
-  --text-inverse: #EADED2;
+  /* Cream Alabaster Content Breathing Space */
+  --bg-cream-surface: #F5ECE1;
+  --bg-cream-card: #EADED2;
+  --bg-cream-light: #FAF6F0;
 
+  /* Typography */
+  --text-primary: #EADED2;
+  --text-secondary: #D4C3B2;
+  --text-muted: #9E8C7C;
+  --text-inverse: #130C05;
+  --text-gold: #D2A55F;
+
+  /* Royal Gold Accents */
   --gold-primary: #D2A55F;
   --gold-light: #E0B978;
   --gold-muted: #A97B3F;
   --gold-dark: #7A5E2E;
 
-  --border-subtle: rgba(19, 12, 5, 0.12);
-  --border-card: rgba(210, 165, 95, 0.3);
+  /* Architectural Hairline Borders */
+  --border-subtle: rgba(234, 222, 210, 0.12);
+  --border-card: rgba(210, 165, 95, 0.28);
   --border-gold: #D2A55F;
-  --border-gold-subtle: rgba(210, 165, 95, 0.25);
+  --border-gold-subtle: rgba(210, 165, 95, 0.22);
   --border-gold-glow: rgba(210, 165, 95, 0.55);
 
-  --shadow-luxury: 0 10px 30px -10px rgba(19, 12, 5, 0.12);
-  --shadow-gold: 0 0 25px rgba(210, 165, 95, 0.25);
-  --input-bg: #F7EFE7;
-  --input-border: rgba(19, 12, 5, 0.2);
-
-  --skeleton-base: #E3D4C5;
-  --skeleton-highlight: #F0E4D8;
-}
-
-.dark {
-  /* DARK MODE */
-  --bg-primary: #130C05;
-  --bg-secondary: #1C1009;
-  --bg-card: #25150C;
-  --bg-card-hover: #2E1B10;
-  --bg-surface: #1B1009;
-  --bg-glass: rgba(19, 12, 5, 0.92);
-  --bg-dark-section: #0D0804;
-  --bg-dark-section-text: #EADED2;
-
-  --text-primary: #EADED2;
-  --text-secondary: #CDBEAE;
-  --text-muted: #9E8E7E;
-  --text-inverse: #130C05;
-
-  --gold-primary: #D2A55F;
-  --gold-light: #E0B978;
-  --gold-muted: #A97B3F;
-  --gold-dark: #7A5E2E;
-
-  --border-subtle: rgba(234, 222, 210, 0.1);
-  --border-card: rgba(210, 165, 95, 0.25);
-  --border-gold: #D2A55F;
-  --border-gold-subtle: rgba(210, 165, 95, 0.2);
-  --border-gold-glow: rgba(210, 165, 95, 0.5);
-
-  --shadow-luxury: 0 12px 35px -10px rgba(0, 0, 0, 0.7);
-  --shadow-gold: 0 0 25px rgba(210, 165, 95, 0.3);
-  --input-bg: #1B1009;
+  /* Shadows & Glows */
+  --shadow-luxury: 0 16px 40px -12px rgba(0, 0, 0, 0.75);
+  --shadow-gold: 0 0 30px rgba(210, 165, 95, 0.25);
+  --input-bg: #1B1108;
   --input-border: rgba(210, 165, 95, 0.3);
 
-  --skeleton-base: #1C1009;
-  --skeleton-highlight: #2A180D;
+  --skeleton-base: #1C1108;
+  --skeleton-highlight: #2A1A0D;
 }
 
 /* =========================================================================
@@ -108,6 +85,7 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--bg-primary);
 }
 
 body {
@@ -118,7 +96,6 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 #root {
@@ -126,26 +103,36 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* Custom Luxury Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: #130C05;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #3A2415;
   border-radius: 4px;
-  border: 1px solid rgba(210, 165, 95, 0.25);
+  border: 1px solid rgba(210, 165, 95, 0.3);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #D2A55F;
+}
+
+/* Hidden Scrollbar Utility for Horizontal Product Carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Typography Helpers */
@@ -153,7 +140,7 @@ body {
   font-family: 'Cinzel', serif;
 }
 
-.font-cormorant {
+.font-editorial {
   font-family: 'Cormorant Garamond', Georgia, serif;
 }
 
@@ -174,9 +161,23 @@ body {
 }
 
 .text-gold-gradient {
-  background: linear-gradient(135deg, #E0B978 0%, #D2A55F 50%, #A97B3F 100%);
+  background: linear-gradient(135deg, #F3EAE1 0%, #E0B978 40%, #D2A55F 80%, #A97B3F 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.text-gold-shine {
+  background: linear-gradient(110deg, #D2A55F 20%, #FFF5EB 50%, #D2A55F 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
 }
 
 /* Luxury Cards */
@@ -184,32 +185,33 @@ body {
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
   color: var(--text-primary);
+  backdrop-filter: blur(12px);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .luxury-card:hover {
   border-color: var(--border-gold);
   box-shadow: var(--shadow-luxury), var(--shadow-gold);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 /* Luxury Buttons */
 .luxury-btn-gold {
   position: relative;
-  background-color: #D2A55F;
+  background: linear-gradient(135deg, #D2A55F 0%, #E0B978 50%, #C49247 100%);
   color: #130C05;
   font-family: 'Cinzel', serif;
-  font-weight: 600;
-  letter-spacing: 0.15em;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .luxury-btn-gold:hover {
-  background-color: #E0B978;
-  box-shadow: 0 0 24px rgba(210, 165, 95, 0.45);
+  background: linear-gradient(135deg, #E0B978 0%, #F5ECE1 50%, #D2A55F 100%);
+  box-shadow: 0 0 28px rgba(210, 165, 95, 0.55);
   transform: translateY(-1px);
 }
 
@@ -222,16 +224,18 @@ body {
   border: 1px solid var(--gold-primary);
   color: var(--text-primary);
   font-family: 'Cinzel', serif;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  background: transparent;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(19, 12, 5, 0.4);
+  backdrop-filter: blur(8px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .luxury-btn-outline:hover {
   border-color: var(--gold-light);
-  background-color: rgba(210, 165, 95, 0.12);
-  color: var(--gold-primary);
+  background-color: rgba(210, 165, 95, 0.18);
+  color: #FFF5EB;
+  box-shadow: 0 0 20px rgba(210, 165, 95, 0.3);
   transform: translateY(-1px);
 }
 
@@ -247,7 +251,7 @@ body {
 .luxury-input:focus {
   outline: none;
   border-color: var(--gold-primary);
-  box-shadow: 0 0 0 1px var(--gold-primary), 0 0 12px rgba(210, 165, 95, 0.2);
+  box-shadow: 0 0 0 1px var(--gold-primary), 0 0 14px rgba(210, 165, 95, 0.25);
 }
 
 .luxury-input::placeholder {

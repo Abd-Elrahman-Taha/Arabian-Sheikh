@@ -1,29 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
-const THEME_STORAGE_KEY = 'arabian_sheikh_theme';
-
+/**
+ * ThemeProvider
+ * 
+ * Unified Hybrid Arabian Palace Luxury Theme (Combining Dark Wood, Cream Marble & Gold)
+ * Light/Dark switcher has been removed in favor of a single master luxury aesthetic.
+ */
 export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(() => {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved === 'dark' || saved === 'light') {
-      return saved;
-    }
-    // Default to dark mode
-    return 'dark';
-  });
+  const theme = 'hybrid-palace';
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.style.colorScheme = 'dark';
-    } else {
-      root.classList.remove('dark');
-      root.style.colorScheme = 'light';
-    }
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    root.classList.remove('light');
+    root.style.colorScheme = 'dark';
 
     // Update browser address bar / theme color meta tag
     let metaTheme = document.querySelector('meta[name="theme-color"]');
@@ -32,26 +23,16 @@ export function ThemeProvider({ children }) {
       metaTheme.name = 'theme-color';
       document.head.appendChild(metaTheme);
     }
-    metaTheme.content = theme === 'dark' ? '#130C05' : '#EADED2';
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setThemeState(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  const setTheme = (newTheme) => {
-    if (newTheme === 'dark' || newTheme === 'light') {
-      setThemeState(newTheme);
-    }
-  };
+    metaTheme.content = '#130C05';
+  }, []);
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
-        isDark: theme === 'dark',
-        toggleTheme,
-        setTheme
+        isDark: true,
+        toggleTheme: () => {},
+        setTheme: () => {}
       }}
     >
       {children}

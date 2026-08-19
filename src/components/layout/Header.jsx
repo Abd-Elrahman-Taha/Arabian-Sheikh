@@ -4,7 +4,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-import ThemeToggle from '../common/ThemeToggle';
+import ArabianLogo from '../common/ArabianLogo';
 import {
   Search,
   ShoppingBag,
@@ -253,22 +253,15 @@ export default function Header({ onOpenSearch }) {
               </Link>
             </nav>
 
-            {/* Center Brand / Logo */}
+            {/* Center Brand / Logo with Official Vector Crest */}
             <div className="text-left lg:text-center">
-              <Link to="/" className="inline-block group focus:outline-none">
-                <span className="block font-cinzel text-xl sm:text-2xl lg:text-3xl font-bold tracking-[0.28em] text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors">
-                  ARABIAN SHEIKH
-                </span>
-                
+              <Link to="/" className="inline-block group focus:outline-none py-1">
+                <ArabianLogo variant="horizontal" size="sm" showSubtitle={true} />
               </Link>
             </div>
 
-            {/* Right Action Icons, Theme Toggle, Language Selector & Mobile Toggle */}
+            {/* Right Action Icons, Language Selector & Mobile Toggle */}
             <div className="flex items-center space-x-2 sm:space-x-4 text-[var(--text-primary)]">
-              {/* Theme Toggle (Desktop) */}
-              <div className="hidden sm:flex items-center">
-                <ThemeToggle />
-              </div>
 
               {/* Search Trigger */}
               <button
@@ -376,26 +369,16 @@ export default function Header({ onOpenSearch }) {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-[var(--bg-primary)]/98 backdrop-blur-2xl flex flex-col justify-between p-6 animate-fade-in overflow-y-auto">
           <div>
-            {/* Top Close Row & Theme Toggle */}
+            {/* Top Close Row */}
             <div className="flex items-center justify-between border-b border-[var(--border-gold-subtle)] pb-4">
-              <div>
-                <span className="font-cinzel text-lg font-bold tracking-[0.2em] text-[var(--text-primary)]">
-                  ARABIAN SHEIKH
-                </span>
-                <p className="text-[8px] uppercase tracking-[0.3em] text-[var(--gold-primary)]">
-                  Haute Parfumerie Arabe
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <ThemeToggle />
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors cursor-pointer"
-                  aria-label="Close Navigation"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+              <ArabianLogo variant="horizontal" size="sm" showSubtitle={true} />
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors cursor-pointer"
+                aria-label="Close Navigation"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
 
             {/* Navigation List */}

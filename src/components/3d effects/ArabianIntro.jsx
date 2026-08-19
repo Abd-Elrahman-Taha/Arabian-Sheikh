@@ -141,6 +141,23 @@ export default function ArabianIntro({ onComplete }) {
         </Suspense>
       </Canvas>
 
+      {/* Subtle Central Brand Reveal in the Smoke */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 animate-fade-in opacity-80">
+        <div className="w-16 h-20 sm:w-20 sm:h-28 mb-3 filter drop-shadow-[0_0_25px_rgba(210,165,95,0.6)]">
+          <img
+            src="/arabian-sheikh-logo.svg"
+            alt="Arabian Sheikh Crest"
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <span className="font-cinzel text-lg sm:text-2xl font-bold tracking-[0.3em] text-[#EADED2] drop-shadow-lg">
+          ARABIAN SHEIKH
+        </span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.45em] text-[#D2A55F] font-sans mt-1">
+          Haute Parfumerie Arabe
+        </span>
+      </div>
+
       {/* Elegant Minimalist Skip Button */}
       <div className="absolute top-6 right-6 z-[10000] pointer-events-auto">
         <button

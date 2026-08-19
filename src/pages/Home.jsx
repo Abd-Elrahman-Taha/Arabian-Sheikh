@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
-import ProductCard from '../components/common/ProductCard';
+import ProductSlider from '../components/common/ProductSlider';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import TextReveal from '../components/common/TextReveal';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
+import ArabianLogo from '../components/common/ArabianLogo';
 import heroPalaceImg from '../assets/hero_arabian_palace.jpg';
 import {
   Sparkles,
@@ -19,28 +20,33 @@ import {
   Droplets,
   Trees,
   Star,
+  Crown,
   Compass,
   Check,
   Clock,
-  Crown
+  Gem,
+  Building
 } from 'lucide-react';
 
 export default function Home() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
-  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
+  const [luxuryProducts, setLuxuryProducts] = useState([]);
+  const [royalProducts, setRoyalProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadHomeData() {
       try {
-        const [featured, best] = await Promise.all([
-          productService.getFeaturedProducts(),
-          productService.getBestSellers()
+        const [best, luxury, royal] = await Promise.all([
+          productService.getBestSellers(),
+          productService.getLuxuryCollection(),
+          productService.getRoyalCollection()
         ]);
-        setFeaturedProducts(featured);
         setBestSellers(best);
+        setLuxuryProducts(luxury);
+        setRoyalProducts(royal);
       } catch (err) {
         console.error(err);
       } finally {
@@ -50,10 +56,7 @@ export default function Home() {
     loadHomeData();
   }, []);
 
-  const spotlight = featuredProducts[0];
-  const stackedSpotlights = featuredProducts.slice(1, 3);
-
-  // 5 Explicit Fragrance Families
+  // 5 Explicit Fragrance Families with Luxury Palace Visuals
   const FAMILIES_DATA = [
     {
       id: 'woody',
@@ -105,9 +108,12 @@ export default function Home() {
   ];
 
   return (
-    <div className="space-y-24 sm:space-y-32 pb-20">
-      {/* 1. HERO SECTION WITH CINEMATIC ARABIAN PALACE BACKGROUND */}
-      <section className="relative min-h-[94vh] flex items-center justify-center overflow-hidden pt-36 sm:pt-44 lg:pt-48 pb-16">
+    <div className="w-full space-y-24 sm:space-y-36 pb-28 overflow-x-hidden">
+      
+      {/* =========================================================================
+          1. HERO SECTION: CINEMATIC ARABIAN PALACE BACKGROUND & LOGO
+          ========================================================================= */}
+      <section className="relative min-h-[96vh] flex items-center justify-center overflow-hidden pt-36 sm:pt-44 lg:pt-48 pb-20">
         {/* Arabian Palace Background Image with Rich Dark Gradient Masks */}
         <div className="absolute inset-0 z-0">
           <img
@@ -116,28 +122,34 @@ export default function Home() {
             className="w-full h-full object-cover object-center scale-102 transform transition-transform duration-1000 ease-out"
           />
           {/* Subtle multi-layer ambient gradients for contrast and readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-black/60 to-black/70" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(210,165,95,0.18)_0%,_transparent_75%)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#130C05] via-[#130C05]/65 to-[#130C05]/80" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(210,165,95,0.22)_0%,_transparent_75%)]" />
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 animate-fade-in">
+          
+          {/* Royal Crest Emblem */}
+          <div className="flex justify-center">
+            <ArabianLogo variant="crest" size="lg" className="hover:scale-105 transition-transform duration-500" />
+          </div>
+
           {/* Subtitle Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-[#D2A55F]/50 bg-black/60 backdrop-blur-md shadow-lg">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-[#D2A55F]/60 bg-black/60 backdrop-blur-md shadow-2xl">
             <Sparkles className="w-3.5 h-3.5 text-[#D2A55F]" />
             <span className="font-cinzel text-xs uppercase tracking-[0.3em] text-[#E0B978] font-semibold">
-              {t('home.heroSubtitle')}
+              КРАЛСКИЯТ ДВОРЕЦ НА ПАРФЮМИТЕ • THE ROYAL PALACE OF PERFUMES
             </span>
           </div>
 
           {/* Title with TextReveal */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <TextReveal
               as="h1"
-              text="THE ART OF ARABIAN PERFUMERY"
-              className="font-cinzel text-4xl sm:text-6xl lg:text-7xl font-bold tracking-[0.12em] text-[#F3EAE1] leading-[1.1] uppercase drop-shadow-lg"
+              text="THE ART OF ARABIAN HAUTE PERFUMERY"
+              className="font-cinzel text-3xl sm:text-5xl lg:text-6xl font-bold tracking-[0.14em] text-[#F3EAE1] leading-[1.12] uppercase drop-shadow-2xl"
             />
-            <p className="font-arabic text-xl sm:text-2xl text-[#E0B978] tracking-wider">
+            <p className="font-arabic text-xl sm:text-2xl text-[#E0B978] tracking-wider drop-shadow-md">
               فن صناعة العطور العربية الفاخرة
             </p>
           </div>
@@ -148,7 +160,7 @@ export default function Home() {
           </p>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
               to="/shop"
               className="luxury-btn-gold px-8 py-4 text-xs tracking-[0.25em] flex items-center justify-center gap-3 w-full sm:w-auto shadow-2xl group"
@@ -158,14 +170,14 @@ export default function Home() {
             </Link>
             <Link
               to="/the-house"
-              className="luxury-btn-outline px-8 py-4 text-xs tracking-[0.25em] w-full sm:w-auto text-center border-[#E0B978] text-[#F3EAE1] bg-black/40 hover:bg-[#D2A55F]/20"
+              className="luxury-btn-outline px-8 py-4 text-xs tracking-[0.25em] w-full sm:w-auto text-center border-[#D2A55F] text-[#F3EAE1] bg-black/50 hover:bg-[#D2A55F]/20"
             >
               {t('home.discoverHouse')}
             </Link>
           </div>
 
           {/* Animated Statistics Numbers */}
-          <div className="pt-10 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto border-t border-[#D2A55F]/25 text-center text-[#EADED2]">
+          <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto border-t border-[#D2A55F]/30 text-center text-[#EADED2]">
             <div className="space-y-1">
               <span className="font-cinzel text-[#D2A55F] font-bold text-2xl sm:text-3xl block">
                 <AnimatedCounter target={500} suffix="+" />
@@ -195,17 +207,144 @@ export default function Home() {
 
             <div className="space-y-1">
               <span className="font-cinzel text-[#D2A55F] font-bold text-2xl sm:text-3xl block">
-                <AnimatedCounter target={98} suffix="%" />
+                <AnimatedCounter target={38} suffix="%" />
               </span>
               <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#E0B978]">
-                Satisfaction Rating
+                Pure Extrait Concentration
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. FIVE EXPLICIT FRAGRANCE FAMILIES */}
+      {/* =========================================================================
+          2. VERTICAL SECTION 1: BEST SELLERS (Horizontal Product Slider)
+          ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <ScrollReveal direction="up">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-gold-subtle)] pb-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-primary)] font-cinzel font-semibold mb-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Acclaimed Masterpieces</span>
+              </div>
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
+                {t('home.bestSellersTitle')}
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 max-w-xl">
+                The most beloved flacons chosen by connoisseurs of Arabian haute perfumery worldwide.
+              </p>
+            </div>
+            <Link
+              to="/shop?filter=bestsellers"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-primary)] hover:text-[var(--gold-light)] flex items-center gap-2 transition-colors self-start md:self-end"
+            >
+              <span>{t('shop.exploreAll')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </ScrollReveal>
+
+        {loading ? (
+          <div className="flex gap-6 overflow-hidden py-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="w-[280px] sm:w-[320px] flex-shrink-0">
+                <ProductSkeleton />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ProductSlider products={bestSellers} collectionTheme="best-sellers" />
+        )}
+      </section>
+
+      {/* =========================================================================
+          3. VERTICAL SECTION 2: LUXURY COLLECTION (Horizontal Product Slider)
+          ========================================================================= */}
+      <section className="relative py-16 sm:py-20 bg-gradient-to-b from-[#130C05] via-[#1A1108] to-[#130C05] border-y border-[var(--border-gold-subtle)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <ScrollReveal direction="up">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-gold-subtle)] pb-4">
+              <div>
+                <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[#E0B978] font-cinzel font-semibold mb-1">
+                  <Gem className="w-3.5 h-3.5 text-[#D2A55F]" />
+                  <span>Private Reserve Blends</span>
+                </div>
+                <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[#FAF5EE] tracking-wide">
+                  LUXURY COLLECTION
+                </h2>
+                <p className="text-xs sm:text-sm text-[#C8B9A6] mt-1 max-w-xl">
+                  Artisanal extracts of Damascene petals, Babylon sun figs, and golden ambergris.
+                </p>
+              </div>
+              <Link
+                to="/collections"
+                className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-primary)] hover:text-[var(--gold-light)] flex items-center gap-2 transition-colors self-start md:self-end"
+              >
+                <span>Discover Luxury Reserve</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </ScrollReveal>
+
+          {loading ? (
+            <div className="flex gap-6 overflow-hidden py-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-[280px] sm:w-[320px] flex-shrink-0">
+                  <ProductSkeleton />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ProductSlider products={luxuryProducts} collectionTheme="luxury" />
+          )}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          4. VERTICAL SECTION 3: ROYAL COLLECTION (Horizontal Product Slider)
+          ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <ScrollReveal direction="up">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-gold-subtle)] pb-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-primary)] font-cinzel font-semibold mb-1">
+                <Crown className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
+                <span>Crown Reserve • 40% Extraits de Parfum</span>
+              </div>
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
+                ROYAL COLLECTION
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 max-w-xl">
+                The supreme apex of royal agarwood alchemy, aged 60-year wild Assamese Dehn Al Oud and imperial resins.
+              </p>
+            </div>
+            <Link
+              to="/collections?c=royal-oud"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-primary)] hover:text-[var(--gold-light)] flex items-center gap-2 transition-colors self-start md:self-end"
+            >
+              <span>Explore Royal Vault</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </ScrollReveal>
+
+        {loading ? (
+          <div className="flex gap-6 overflow-hidden py-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="w-[280px] sm:w-[320px] flex-shrink-0">
+                <ProductSkeleton />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ProductSlider products={royalProducts} collectionTheme="royal" />
+        )}
+      </section>
+
+      {/* =========================================================================
+          5. THE FIVE OLFACTORY FAMILIES (Interactive Architectural Cards)
+          ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ScrollReveal direction="up">
           <div className="text-center max-w-2xl mx-auto space-y-2">
@@ -242,7 +381,7 @@ export default function Home() {
 
                   <div className="relative z-10 space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 border border-[var(--gold-primary)]/40 bg-[var(--bg-primary)] flex items-center justify-center text-[var(--gold-primary)]">
+                      <div className="w-10 h-10 border border-[var(--gold-primary)]/40 bg-[var(--bg-primary)] flex items-center justify-center text-[var(--gold-primary)] shadow-md">
                         <Icon className="w-5 h-5" />
                       </div>
                       {fam.isCore && (
@@ -273,7 +412,7 @@ export default function Home() {
                       {fam.notes.slice(0, 3).map((note, idx) => (
                         <span
                           key={idx}
-                          className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] font-sans"
+                          className="text-[10px] px-2 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] font-sans"
                         >
                           {note}
                         </span>
@@ -287,47 +426,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. FEATURED ROYAL CREATIONS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <ScrollReveal direction="up">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
-            <div>
-              <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
-                Atelier Highlights
-              </span>
-              <h2 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase text-[var(--text-primary)] mt-1">
-                {t('home.featuredTitle')}
-              </h2>
-            </div>
-            <Link
-              to="/shop"
-              className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-primary)] hover:text-[var(--gold-light)] flex items-center gap-1.5 transition-colors"
-            >
-              <span>{t('shop.exploreAll')}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </ScrollReveal>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <ProductSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.slice(0, 4).map((product, i) => (
-              <ScrollRevealItem key={product.id} index={i} desktopDirection="up">
-                <ProductCard product={product} />
-              </ScrollRevealItem>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 4. HERITAGE & ARTISANAL EXTRACTION BANNER */}
-      <section className="relative bg-[var(--bg-dark-section)] text-[var(--bg-dark-section-text)] py-20 overflow-hidden border-y border-[var(--border-gold-subtle)]">
+      {/* =========================================================================
+          6. HERITAGE & ARTISANAL EXTRACTION / RITUAL OF BAKHOOR
+          ========================================================================= */}
+      <section className="relative bg-[#0B0602] text-[var(--text-primary)] py-20 sm:py-24 overflow-hidden border-y border-[var(--border-gold-subtle)]">
         <div className="absolute inset-0 opacity-15">
           <img
             src="https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1600&q=80"
@@ -342,21 +444,21 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#D2A55F]/40 bg-black/40">
                 <Crown className="w-3.5 h-3.5 text-[#D2A55F]" />
                 <span className="font-cinzel text-[11px] uppercase tracking-widest text-[#D2A55F]">
-                  Centuries of Alchemy
+                  Centuries of Arabian Alchemy
                 </span>
               </div>
-              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase tracking-wide leading-tight text-[#F3EAE1]">
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase tracking-wide leading-tight text-[#FAF5EE]">
                 Wild Assamese Agarwood & Sacred Resins
               </h2>
               <p className="font-sans text-sm text-[#CDBEAE] leading-relaxed">
                 Every creation within Arabian Sheikh begins with sustainable distillations from 50 to 80-year-old wild agarwood trees. Matured in obsidian clay amphorae and hand-bottled at royal extrait concentrations of 35% to 40%.
               </p>
               <div className="grid grid-cols-2 gap-4 pt-2 font-cinzel text-xs uppercase tracking-wider text-[#EADED2]">
-                <div className="p-4 border border-[#D2A55F]/30 bg-black/50 space-y-1">
+                <div className="p-4 border border-[#D2A55F]/30 bg-black/60 space-y-1 shadow-lg">
                   <span className="text-[#D2A55F] font-bold text-lg block">38% Extrait</span>
                   <span className="text-[#CDBEAE] text-[11px]">Unrivaled Sillage & Longevity</span>
                 </div>
-                <div className="p-4 border border-[#D2A55F]/30 bg-black/50 space-y-1">
+                <div className="p-4 border border-[#D2A55F]/30 bg-black/60 space-y-1 shadow-lg">
                   <span className="text-[#D2A55F] font-bold text-lg block">Single Batch</span>
                   <span className="text-[#CDBEAE] text-[11px]">Numbered Flacon Registers</span>
                 </div>
@@ -364,7 +466,7 @@ export default function Home() {
               <div className="pt-2">
                 <Link
                   to="/the-house"
-                  className="luxury-btn-gold px-8 py-3.5 text-xs inline-flex items-center gap-2"
+                  className="luxury-btn-gold px-8 py-3.5 text-xs inline-flex items-center gap-2 shadow-2xl"
                 >
                   <span>Read The House Monograph</span>
                   <ArrowRight className="w-4 h-4" />
@@ -380,8 +482,8 @@ export default function Home() {
                 alt="Arabian Fragrance Flacon"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                <p className="font-arabic text-xl text-[#E0B978]">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex items-end p-6">
+                <p className="font-arabic text-xl sm:text-2xl text-[#E0B978] leading-relaxed">
                   « العطر لغة الملوك وذاكرة الأرواح النبيلة »
                 </p>
               </div>
@@ -390,38 +492,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. BEST SELLERS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      {/* =========================================================================
+          7. BESPOKE PRIVATE CONCIERGE & SALONS CTA
+          ========================================================================= */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <ScrollReveal direction="up">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
-              Acclaimed Treasures
-            </span>
-            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
-              {t('home.bestSellersTitle')}
-            </h2>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)]">
-              The most coveted creations adorning private vanity suites globally.
-            </p>
+          <div className="p-8 sm:p-14 bg-gradient-to-b from-[#1C1208] via-[#24170B] to-[#1C1208] border border-[var(--border-gold)] shadow-2xl space-y-6 relative overflow-hidden">
+            <div className="flex justify-center">
+              <div className="w-14 h-14 border-2 border-[var(--gold-primary)] bg-[var(--bg-primary)] flex items-center justify-center text-[var(--gold-primary)] shadow-xl">
+                <Building className="w-7 h-7" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+                Private Consultation Privileges
+              </span>
+              <h2 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
+                Bespoke Salons & Concierge Fragrance Blending
+              </h2>
+              <p className="font-sans text-xs sm:text-sm text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
+                Experience an intimate olfactory journey in our private salons across Dubai, Riyadh, London, and Paris. Handcrafted bespoke flacons customized for royal houses and private patrons.
+              </p>
+            </div>
+
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/contact"
+                className="luxury-btn-gold px-8 py-3.5 text-xs tracking-widest uppercase w-full sm:w-auto"
+              >
+                Reserve Private Appointment
+              </Link>
+              <Link
+                to="/the-house"
+                className="luxury-btn-outline px-8 py-3.5 text-xs tracking-widest uppercase w-full sm:w-auto"
+              >
+                Discover Boutiques
+              </Link>
+            </div>
           </div>
         </ScrollReveal>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <ProductSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestSellers.slice(0, 4).map((product, i) => (
-              <ScrollRevealItem key={product.id} index={i} desktopDirection="up">
-                <ProductCard product={product} />
-              </ScrollRevealItem>
-            ))}
-          </div>
-        )}
       </section>
+
     </div>
   );
 }

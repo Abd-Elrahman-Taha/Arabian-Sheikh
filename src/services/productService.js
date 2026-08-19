@@ -118,7 +118,17 @@ export const productService = {
 
   async getBestSellers() {
     const products = loadProducts();
-    return products.filter(p => p.isBestSeller && p.status === 'ACTIVE');
+    return products.filter(p => (p.isBestSeller || p.featured) && p.status === 'ACTIVE');
+  },
+
+  async getLuxuryCollection() {
+    const products = loadProducts();
+    return products.filter(p => (p.collection === 'Desert Gold' || p.collection === 'Imperial Silk' || p.collection === 'Luxury Collection' || (p.price >= 300 && p.price < 400)) && p.status === 'ACTIVE');
+  },
+
+  async getRoyalCollection() {
+    const products = loadProducts();
+    return products.filter(p => (p.collection === 'Royal Oud Reserve' || p.collection === 'Royal Collection' || p.price >= 390) && p.status === 'ACTIVE');
   },
 
   async getRelatedProducts(currentId, limit = 4) {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import ArabianLogo from '../common/ArabianLogo';
 import { Sparkles, ArrowRight, ShieldCheck, Truck, Award, CheckCircle2 } from 'lucide-react';
 
 export default function Footer() {
@@ -80,13 +81,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
-            <Link to="/" className="inline-block">
-              <span className="block font-cinzel text-2xl font-bold tracking-[0.25em] text-[var(--text-primary)]">
-                ARABIAN SHEIKH
-              </span>
-              <span className="block text-[10px] uppercase tracking-[0.45em] text-[var(--gold-primary)] font-sans font-medium mt-0.5">
-                Haute Parfumerie Arabe
-              </span>
+            <Link to="/" className="inline-block py-1">
+              <ArabianLogo variant="horizontal" size="md" showSubtitle={true} />
             </Link>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed max-w-sm font-sans">
               An eternal sanctuary of Arabian olfactory nobility. Distilling wild aged Dehn Al Oud, sacred Bakhoor, and crystalline Amber for discerning connoisseurs worldwide.
