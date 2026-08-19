@@ -32,13 +32,13 @@ export default function Contact() {
       {/* Header */}
       <ScrollReveal direction="up" delay={0}>
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--text-on-sand-gold)] font-bold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] font-bold">
             Concierge Services & Private Salons
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-on-sand)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] uppercase tracking-wider">
             {t('contact.title')}
           </h1>
-          <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)]">
+          <p className="text-xs sm:text-sm text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)] max-w-2xl mx-auto">
             {t('contact.subtitle')}
           </p>
         </div>

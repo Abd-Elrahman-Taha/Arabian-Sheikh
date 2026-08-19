@@ -39,7 +39,7 @@ export default function TheHouse() {
             </span>
           </div>
 
-          <h1 className="font-cinzel text-4xl sm:text-6xl font-bold tracking-[0.1em] text-[var(--text-primary)] uppercase leading-tight">
+          <h1 className="font-cinzel text-4xl sm:text-6xl font-bold tracking-[0.1em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] uppercase leading-tight">
             {t('theHouse.title')}
           </h1>
 
@@ -67,7 +67,7 @@ export default function TheHouse() {
             <span className="font-cinzel text-xs uppercase tracking-[0.3em] text-[var(--gold-primary)] font-semibold block">
               Chapter I • The Heritage
             </span>
-            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold text-[var(--text-primary)] uppercase">
+            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] uppercase">
               {t('theHouse.storyTitle')}
             </h2>
             <p className="text-sm sm:text-base text-[var(--text-secondary)] font-sans leading-relaxed">

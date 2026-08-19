@@ -242,20 +242,20 @@ export default function Home() {
         <ScrollReveal direction="up">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--text-on-sand-gold)] font-cinzel font-bold mb-1">
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] font-cinzel font-bold mb-1">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Acclaimed Masterpieces</span>
               </div>
-              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] tracking-wide">
                 {t('home.bestSellersTitle')}
               </h2>
-              <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)] mt-1 max-w-xl">
+              <p className="text-xs sm:text-sm text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)] mt-1 max-w-xl">
                 The most beloved flacons chosen by connoisseurs of Arabian haute perfumery worldwide.
               </p>
             </div>
             <Link
               to="/shop?filter=bestsellers"
-              className="text-xs uppercase tracking-[0.2em] font-cinzel font-bold text-[var(--text-on-sand-gold)] hover:text-[var(--text-on-sand)] flex items-center gap-2 transition-colors self-start md:self-end"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-bold text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] hover:text-white flex items-center gap-2 transition-colors self-start md:self-end"
             >
               <span>{t('shop.exploreAll')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -283,20 +283,20 @@ export default function Home() {
         <ScrollReveal direction="up">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--text-on-sand-gold)] font-cinzel font-bold mb-1">
-                <Gem className="w-3.5 h-3.5 text-[var(--text-on-sand-gold)]" />
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] font-cinzel font-bold mb-1">
+                <Gem className="w-3.5 h-3.5 text-[var(--gold-light)]" />
                 <span>Private Reserve Blends</span>
               </div>
-              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] tracking-wide">
                 LUXURY COLLECTION
               </h2>
-              <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)] mt-1 max-w-xl">
+              <p className="text-xs sm:text-sm text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)] mt-1 max-w-xl">
                 Artisanal extracts of Damascene petals, Babylon sun figs, and golden ambergris.
               </p>
             </div>
             <Link
               to="/collections"
-              className="text-xs uppercase tracking-[0.2em] font-cinzel font-bold text-[var(--text-on-sand-gold)] hover:text-[var(--text-on-sand)] flex items-center gap-2 transition-colors self-start md:self-end"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-bold text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] hover:text-white flex items-center gap-2 transition-colors self-start md:self-end"
             >
               <span>Discover Luxury Reserve</span>
               <ArrowRight className="w-4 h-4" />
@@ -330,7 +330,7 @@ export default function Home() {
                   <Crown className="w-3.5 h-3.5 text-[var(--gold-light)]" />
                   <span>Crown Reserve • 40% Extraits de Parfum</span>
                 </div>
-                <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
+                <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] tracking-wide">
                   ROYAL COLLECTION
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 max-w-xl">
@@ -370,7 +370,7 @@ export default function Home() {
             <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] font-semibold">
               Olfactory Classifications
             </span>
-            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
+            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]">
               {t('home.fragranceFamiliesTitle')}
             </h2>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
@@ -460,8 +460,8 @@ export default function Home() {
                   Centuries of Arabian Alchemy
                 </span>
               </div>
-              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase tracking-wide leading-tight text-[var(--text-primary)]">
-                Wild Assamese Agarwood & Sacred Resins
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase tracking-wide leading-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]">
+                Wild Assamese Agarwood &amp; Sacred Resins
               </h2>
               <p className="font-sans text-sm text-[var(--text-secondary)] leading-relaxed">
                 Every creation within Arabian Sheikh begins with sustainable distillations from 50 to 80-year-old wild agarwood trees. Matured in obsidian clay amphorae and hand-bottled at royal extrait concentrations of 35% to 40%.
@@ -469,7 +469,7 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-4 pt-2 font-cinzel text-xs uppercase tracking-wider text-[var(--text-primary)]">
                 <div className="p-4 border border-[var(--border-gold-subtle)] bg-black/60 space-y-1 shadow-md">
                   <span className="text-[var(--gold-light)] font-bold text-lg block">38% Extrait</span>
-                  <span className="text-[var(--text-muted)] text-[11px]">Unrivaled Sillage & Longevity</span>
+                  <span className="text-[var(--text-muted)] text-[11px]">Unrivaled Sillage &amp; Longevity</span>
                 </div>
                 <div className="p-4 border border-[var(--border-gold-subtle)] bg-black/60 space-y-1 shadow-md">
                   <span className="text-[var(--gold-light)] font-bold text-lg block">Single Batch</span>
@@ -531,7 +531,7 @@ export default function Home() {
                 <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] font-semibold">
                   Private Consultation Privileges
                 </span>
-                <h2 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
+                <h2 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]">
                   Bespoke Salons &amp; Concierge Fragrance Blending
                 </h2>
                
