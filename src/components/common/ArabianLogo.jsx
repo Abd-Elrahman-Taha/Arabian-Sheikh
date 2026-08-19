@@ -5,7 +5,7 @@ import logoSvg from '../../assets/arabian-sheikh-logo.svg';
  * ArabianLogo Component
  * 
  * Official vector brand signature extracted from the royal Arabian Sheikh identity.
- * Proportional crest height aligned with luxury typography, using theme variables.
+ * Proportional crest height visually matches the total height of "ARABIAN SHEIKH" + "HAUTE PARFUMERIE ARABE".
  */
 export default function ArabianLogo({
   variant = 'full', // 'crest' | 'full' | 'horizontal'
@@ -16,17 +16,17 @@ export default function ArabianLogo({
 }) {
   const sizeMap = {
     navbar: {
-      crest: 'h-6 sm:h-7 w-auto aspect-[85/113]',
-      text: 'text-sm sm:text-base md:text-lg tracking-[0.22em]',
-      sub: 'text-[7.5px] sm:text-[8.5px] tracking-[0.35em]'
+      crest: 'h-8 sm:h-9 w-auto aspect-[85/113]',
+      text: 'text-sm sm:text-base md:text-lg tracking-[0.2em]',
+      sub: 'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]'
     },
     sm: {
-      crest: 'h-7 sm:h-8 w-auto aspect-[85/113]',
+      crest: 'h-8 sm:h-9 w-auto aspect-[85/113]',
       text: 'text-base sm:text-lg tracking-[0.22em]',
       sub: 'text-[8px] tracking-[0.35em]'
     },
     md: {
-      crest: 'h-10 sm:h-12 w-auto aspect-[85/113]',
+      crest: 'h-11 sm:h-13 w-auto aspect-[85/113]',
       text: 'text-lg sm:text-xl tracking-[0.25em]',
       sub: 'text-[9px] tracking-[0.4em]'
     },
@@ -74,7 +74,7 @@ export default function ArabianLogo({
             ARABIAN SHEIKH
           </span>
           {showSubtitle && (
-            <span className={`uppercase font-sans font-medium text-[var(--gold-primary)] tracking-widest leading-tight mt-0.5 ${currentSize.sub}`}>
+            <span className={`uppercase font-sans font-semibold text-[var(--gold-primary)] tracking-widest leading-tight mt-0.5 ${currentSize.sub}`}>
               {subtitle}
             </span>
           )}

@@ -127,97 +127,101 @@ export default function Home() {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 animate-fade-in">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-between space-y-12 animate-fade-in">
           
-          {/* Royal Crest Emblem in Radiant Light Champagne Gold */}
-          <div className="flex justify-center">
-            <ArabianLogo variant="crest" size="hero" className="hover:scale-105 transition-transform duration-500 mb-2 filter drop-shadow-[0_0_35px_rgba(210,165,95,0.55)]" />
-          </div>
+          <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center">
+            {/* Royal Crest Emblem in Radiant Light Champagne Gold */}
+            <div className="flex justify-center">
+              <ArabianLogo variant="crest" size="hero" className="hover:scale-105 transition-transform duration-500 mb-2 filter drop-shadow-[0_0_35px_rgba(210,165,95,0.55)]" />
+            </div>
 
-          {/* Subtitle Pill with Dedicated Separate Mobile Lines */}
-          <div className="inline-flex flex-col sm:flex-row items-center gap-1 sm:gap-2.5 px-4 sm:px-5 py-2 border border-[var(--gold-primary)]/60 bg-black/60 backdrop-blur-md shadow-2xl">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
-              <span className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-[var(--gold-light)] font-semibold block">
-                {t('home.heroSubtitle')}
+            {/* Subtitle Pill with Dedicated Separate Mobile Lines */}
+            <div className="inline-flex flex-col sm:flex-row items-center gap-1 sm:gap-2.5 px-4 sm:px-5 py-2 border border-[var(--gold-primary)]/60 bg-black/60 backdrop-blur-md shadow-2xl">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
+                <span className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-[var(--gold-light)] font-semibold block">
+                  {t('home.heroSubtitle')}
+                </span>
+              </div>
+              <span className="hidden sm:inline text-[var(--gold-primary)]/40">•</span>
+              <span className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-[var(--text-primary)] font-semibold block">
+                THE ROYAL PALACE OF PERFUMES
               </span>
             </div>
-            <span className="hidden sm:inline text-[var(--gold-primary)]/40">•</span>
-            <span className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-[var(--text-primary)] font-semibold block">
-              THE ROYAL PALACE OF PERFUMES
-            </span>
-          </div>
 
-          {/* Title with TextReveal */}
-          <div className="space-y-3">
-            <TextReveal
-              as="h1"
-              text="THE ART OF ARABIAN HAUTE PERFUMERY"
-              className="font-cinzel text-3xl sm:text-5xl lg:text-6xl font-bold tracking-[0.14em] text-[var(--text-primary)] leading-[1.12] uppercase drop-shadow-2xl"
-            />
-            <p className="font-arabic text-xl sm:text-2xl text-[var(--gold-light)] tracking-wider drop-shadow-md">
-              فن صناعة العطور العربية الفاخرة
+            {/* Title with TextReveal */}
+            <div className="space-y-3">
+              <TextReveal
+                as="h1"
+                text="THE ART OF ARABIAN HAUTE PERFUMERY"
+                className="font-cinzel text-3xl sm:text-5xl lg:text-6xl font-bold tracking-[0.14em] text-[var(--text-primary)] leading-[1.12] uppercase drop-shadow-2xl"
+              />
+              <p className="font-arabic text-xl sm:text-2xl text-[var(--gold-light)] tracking-wider drop-shadow-md">
+                فن صناعة العطور العربية الفاخرة
+              </p>
+            </div>
+
+            {/* Supporting Text */}
+            <p className="font-sans text-sm sm:text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed font-light drop-shadow">
+              {t('home.heroDesc')}
             </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <Link
+                to="/shop"
+                className="luxury-btn-gold px-8 py-4 text-xs tracking-[0.25em] flex items-center justify-center gap-3 w-full sm:w-auto shadow-2xl group cursor-pointer"
+              >
+                <span>{t('home.exploreCollection')}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
+              </Link>
+              <Link
+                to="/the-house"
+                className="luxury-btn-outline px-8 py-4 text-xs tracking-[0.25em] w-full sm:w-auto text-center border-[var(--gold-primary)] text-[var(--text-primary)] bg-black/50 hover:bg-[var(--gold-primary)]/20 cursor-pointer"
+              >
+                {t('home.discoverHouse')}
+              </Link>
+            </div>
           </div>
 
-          {/* Supporting Text */}
-          <p className="font-sans text-sm sm:text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed font-light drop-shadow">
-            {t('home.heroDesc')}
-          </p>
+          {/* Animated Statistics Numbers Taking FULL WIDTH */}
+          <div className="w-full pt-10 sm:pt-12 border-t border-[var(--gold-primary)]/30 text-center text-[var(--text-primary)]">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 w-full">
+              <div className="space-y-1">
+                <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-4xl block">
+                  <AnimatedCounter target={500} suffix="+" />
+                </span>
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                  Signature Fragrances
+                </span>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              to="/shop"
-              className="luxury-btn-gold px-8 py-4 text-xs tracking-[0.25em] flex items-center justify-center gap-3 w-full sm:w-auto shadow-2xl group cursor-pointer"
-            >
-              <span>{t('home.exploreCollection')}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
-            </Link>
-            <Link
-              to="/the-house"
-              className="luxury-btn-outline px-8 py-4 text-xs tracking-[0.25em] w-full sm:w-auto text-center border-[var(--gold-primary)] text-[var(--text-primary)] bg-black/50 hover:bg-[var(--gold-primary)]/20 cursor-pointer"
-            >
-              {t('home.discoverHouse')}
-            </Link>
-          </div>
+              <div className="space-y-1">
+                <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-4xl block">
+                  <AnimatedCounter target={10000} suffix="+" />
+                </span>
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                  Happy Patrons
+                </span>
+              </div>
 
-          {/* Animated Statistics Numbers */}
-          <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto border-t border-[var(--gold-primary)]/30 text-center text-[var(--text-primary)]">
-            <div className="space-y-1">
-              <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-3xl block">
-                <AnimatedCounter target={500} suffix="+" />
-              </span>
-              <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                Signature Fragrances
-              </span>
-            </div>
+              <div className="space-y-1">
+                <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-4xl block">
+                  <AnimatedCounter target={20} suffix="+" />
+                </span>
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                  Years of Craft
+                </span>
+              </div>
 
-            <div className="space-y-1">
-              <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-3xl block">
-                <AnimatedCounter target={10000} suffix="+" />
-              </span>
-              <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                Happy Patrons
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-3xl block">
-                <AnimatedCounter target={20} suffix="+" />
-              </span>
-              <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                Years of Craft
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-3xl block">
-                <AnimatedCounter target={38} suffix="%" />
-              </span>
-              <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                Pure Extrait Concentration
-              </span>
+              <div className="space-y-1">
+                <span className="font-cinzel text-[var(--gold-light)] font-bold text-2xl sm:text-4xl block">
+                  <AnimatedCounter target={38} suffix="%" />
+                </span>
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                  Pure Extrait Concentration
+                </span>
+              </div>
             </div>
           </div>
         </div>
