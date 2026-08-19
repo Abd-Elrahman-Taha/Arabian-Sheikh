@@ -12,13 +12,13 @@ export default function About() {
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--text-on-sand-gold)] font-bold">
             High Perfumery Heritage
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-on-sand)] uppercase tracking-wider">
             {t('about.title')}
           </h1>
-          <p className="font-editorial italic text-lg sm:text-xl text-[var(--gold-light)]">
+          <p className="font-editorial italic text-lg sm:text-xl text-[var(--text-on-sand-gold)]">
             "{t('about.subtitle')}"
           </p>
         </div>

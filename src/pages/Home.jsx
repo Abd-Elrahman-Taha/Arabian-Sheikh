@@ -242,20 +242,20 @@ export default function Home() {
         <ScrollReveal direction="up">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-muted)] font-cinzel font-semibold mb-1">
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--text-on-sand-gold)] font-cinzel font-bold mb-1">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Acclaimed Masterpieces</span>
               </div>
               <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
                 {t('home.bestSellersTitle')}
               </h2>
-              <p className="text-xs sm:text-sm text-[var(--text-on-sand-muted)] mt-1 max-w-xl">
+              <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)] mt-1 max-w-xl">
                 The most beloved flacons chosen by connoisseurs of Arabian haute perfumery worldwide.
               </p>
             </div>
             <Link
               to="/shop?filter=bestsellers"
-              className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-muted)] hover:text-[var(--gold-primary)] flex items-center gap-2 transition-colors self-start md:self-end"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-bold text-[var(--text-on-sand-gold)] hover:text-[var(--text-on-sand)] flex items-center gap-2 transition-colors self-start md:self-end"
             >
               <span>{t('shop.exploreAll')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -279,31 +279,30 @@ export default function Home() {
       {/* =========================================================================
           3. LUXURY COLLECTION  🌤️ Afternoon Golden Sand
           ========================================================================= */}
-      <section className="relative py-16 sm:py-20">
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <ScrollReveal direction="up">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
-              <div>
-                <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--gold-muted)] font-cinzel font-semibold mb-1">
-                  <Gem className="w-3.5 h-3.5 text-[var(--gold-muted)]" />
-                  <span>Private Reserve Blends</span>
-                </div>
-                <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
-                  LUXURY COLLECTION
-                </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-on-sand-muted)] mt-1 max-w-xl">
-                  Artisanal extracts of Damascene petals, Babylon sun figs, and golden ambergris.
-                </p>
+      <section className="relative py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <ScrollReveal direction="up">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-sand)] pb-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-[var(--text-on-sand-gold)] font-cinzel font-bold mb-1">
+                <Gem className="w-3.5 h-3.5 text-[var(--text-on-sand-gold)]" />
+                <span>Private Reserve Blends</span>
               </div>
-              <Link
-                to="/collections"
-                className="text-xs uppercase tracking-[0.2em] font-cinzel font-semibold text-[var(--gold-muted)] hover:text-[var(--gold-primary)] flex items-center gap-2 transition-colors self-start md:self-end"
-              >
-                <span>Discover Luxury Reserve</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <h2 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-on-sand)] tracking-wide">
+                LUXURY COLLECTION
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)] mt-1 max-w-xl">
+                Artisanal extracts of Damascene petals, Babylon sun figs, and golden ambergris.
+              </p>
             </div>
-          </ScrollReveal>
+            <Link
+              to="/collections"
+              className="text-xs uppercase tracking-[0.2em] font-cinzel font-bold text-[var(--text-on-sand-gold)] hover:text-[var(--text-on-sand)] flex items-center gap-2 transition-colors self-start md:self-end"
+            >
+              <span>Discover Luxury Reserve</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </ScrollReveal>
 
           {loading ? (
             <div className="flex gap-6 overflow-hidden py-4">
@@ -316,7 +315,6 @@ export default function Home() {
           ) : (
             <ProductSlider products={luxuryProducts} collectionTheme="luxury" />
           )}
-        </div>
       </section>
 
       {/* =========================================================================

@@ -191,13 +191,13 @@ export default function Shop() {
       {/* Page Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--text-on-sand-gold)] font-bold">
             Haute Parfumerie Flacons
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-on-sand)] uppercase tracking-wider">
             {t('shop.title')}
           </h1>
-          <p className="text-xs sm:text-sm text-[var(--text-muted)] font-sans">
+          <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)] font-sans">
             {t('shop.subtitle')}
           </p>
         </div>

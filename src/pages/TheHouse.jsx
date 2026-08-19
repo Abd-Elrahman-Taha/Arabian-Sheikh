@@ -55,6 +55,11 @@ export default function TheHouse() {
         </div>
       </section>
 
+      {/* Panoramic Desert Caravan Horizon Transition — Below First Section */}
+      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -my-8 sm:-my-12 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
+      </div>
+
       {/* 2. OUR ROYAL STORY */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -88,11 +93,6 @@ export default function TheHouse() {
           </ScrollReveal>
         </div>
       </section>
-
-      {/* Panoramic Desert Caravan Horizon Transition */}
-      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -my-8 sm:-my-12 pointer-events-none">
-        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
-      </div>
 
       {/* 3. THE ART OF OUD & THE RITUAL OF BAKHOOR (Split Editorial) */}
       <section className="bg-[var(--bg-secondary)] border-y border-[var(--border-subtle)] py-20">

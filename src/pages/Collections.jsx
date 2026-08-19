@@ -74,17 +74,22 @@ export default function Collections() {
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--text-on-sand-gold)] font-bold">
             Curated Private Reserves
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-on-sand)] uppercase tracking-wider">
             {t('nav.collections')}
           </h1>
-          <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+          <p className="text-xs sm:text-sm text-[var(--text-on-sand-sec)]">
             Explore the three sovereign collections distilled by our master perfumers in limited batches.
           </p>
         </div>
       </ScrollReveal>
+
+      {/* Desert Camel Caravan — Below First Header Section */}
+      <div className="relative w-full h-32 sm:h-44 md:h-52 overflow-hidden -my-4 pointer-events-none">
+        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
+      </div>
 
       {/* Collection Tab Selector */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -164,11 +169,6 @@ export default function Collections() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Panoramic Desert Caravan Horizon Transition */}
-      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -mb-12 sm:-mb-16 pointer-events-none">
-        <CamelCaravan speedMultiplier={0.92} opacity={0.95} scale={1.05} />
       </div>
     </div>
   );

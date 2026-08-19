@@ -64,10 +64,11 @@
   --bg-cream-card:     #F0E6D3;
   --bg-cream-light:    #FBF7F0;
 
-  /* ── TYPOGRAPHY — light sandy sections ────────────────────────────────── */
-  --text-on-sand:      #2C1608;   /* Dark Arabian brown for light backgrounds */
-  --text-on-sand-sec:  #5C3A1E;   /* Secondary text on sandy sections        */
-  --text-on-sand-muted:#8B6040;   /* Muted text on sandy sections            */
+  /* ── TYPOGRAPHY — light sandy sections (High contrast, crystal clear) ─── */
+  --text-on-sand:      #1A0C03;   /* Deep Arabian espresso/wood - highest contrast on sand */
+  --text-on-sand-sec:  #4A2810;   /* Rich warm mocha secondary text                        */
+  --text-on-sand-muted:#6E4220;   /* Warm cedar muted text                                 */
+  --text-on-sand-gold: #8B5A1A;   /* Deep royal antique gold for badges & links on sand    */
 
   /* ── TYPOGRAPHY — dark warm sections ─────────────────────────────────── */
   --text-primary:      #EADED2;
