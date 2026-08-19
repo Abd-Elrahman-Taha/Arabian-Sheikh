@@ -165,39 +165,39 @@ export default function TheHouse() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ScrollRevealItem index={0} desktopDirection="up">
-          <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-sm">
-            <Award className="w-8 h-8 text-[var(--gold-primary)]" />
-            <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] uppercase">
-              Aged Extraction
-            </h3>
-            <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed">
-              Every wild Dehn Al Oud oil is matured for a minimum of five years in temperature-controlled dark chambers to eliminate sharp edges and unlock balsamic warmth.
-            </p>
-          </div>
+            <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-sm">
+              <Award className="w-8 h-8 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] uppercase">
+                Aged Extraction
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed">
+                Every wild Dehn Al Oud oil is matured for a minimum of five years in temperature-controlled dark chambers to eliminate sharp edges and unlock balsamic warmth.
+              </p>
+            </div>
           </ScrollRevealItem>
 
           <ScrollRevealItem index={1} desktopDirection="up">
-          <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] space-y-4 shadow-md">
-            <Crown className="w-8 h-8 text-[var(--gold-primary)]" />
-            <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] uppercase">
-              Extrait Concentration
-            </h3>
-            <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed">
-              All creations are formulated at a minimum 30% pure oil concentrate, ensuring extraordinary longevity that lingers seamlessly on skin and silk.
-            </p>
-          </div>
+            <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] space-y-4 shadow-md">
+              <Crown className="w-8 h-8 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] uppercase">
+                Extrait Concentration
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed">
+                All creations are formulated at a minimum 30% pure oil concentrate, ensuring extraordinary longevity that lingers seamlessly on skin and silk.
+              </p>
+            </div>
           </ScrollRevealItem>
 
           <ScrollRevealItem index={2} desktopDirection="up">
-          <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-sm">
-            <Trees className="w-8 h-8 text-[var(--gold-primary)]" />
-            <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] uppercase">
-              Ethical Sourcing
-            </h3>
-            <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed">
-              We partner exclusively with sustainable certified agarwood plantations in Assam and wild Taif rose families who harvest at dawn before the morning heat rises.
-            </p>
-          </div>
+            <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-sm">
+              <Trees className="w-8 h-8 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] uppercase">
+                Ethical Sourcing
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed">
+                We partner exclusively with sustainable certified agarwood plantations in Assam and wild Taif rose families who harvest at dawn before the morning heat rises.
+              </p>
+            </div>
           </ScrollRevealItem>
         </div>
       </section>
