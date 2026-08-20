@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import performanceManager from '../../utils/performanceManager';
 
 /**
  * BackgroundAtmosphere Component
@@ -6,13 +7,13 @@ import React, { useRef, useEffect } from 'react';
  * Sits in the atmosphere (pointer-events-none).
  * Features:
  * - Radiant, luminous twinkling celestial stars with diamond sparkle rays and glowing halos
- * - Warm golden (#F2D675, #F2D675) and crystalline diamond white (#F3E6D0) stars with dynamic shine pulses
- * - Soft diffuse ethereal desert smoke/mist curling slowly in the background
- * - 60fps performance with auto-pause when off-screen
+ * - Warm golden and crystalline diamond white stars with dynamic shine pulses
+ * - Auto-pauses when off-screen or tab is hidden to preserve battery & 60fps performance
+ * - Adaptive particle count based on device hardware tier
  */
 export default function BackgroundAtmosphere({
   starCount = 30,
-  smokeIntensity = 0.1,
+  smokeIntensity = 0.08,
   className = ''
 }) {
   const canvasRef = useRef(null);
@@ -24,21 +25,31 @@ export default function BackgroundAtmosphere({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
     if (prefersReducedMotion) return;
 
     const ctx = canvas.getContext('2d', { alpha: true });
-    let width = (canvas.width = canvas.offsetWidth);
-    let height = (canvas.height = canvas.offsetHeight);
+    if (!ctx) return;
+
+    let width = (canvas.width = canvas.offsetWidth || window.innerWidth);
+    let height = (canvas.height = canvas.offsetHeight || window.innerHeight);
+
+    // Adaptive star count for low/balanced devices
+    let effectiveStarCount = starCount;
+    if (performanceManager.tier === 'low') {
+      effectiveStarCount = Math.min(starCount, 12);
+    } else if (performanceManager.tier === 'balanced' || performanceManager.isMobile) {
+      effectiveStarCount = Math.min(starCount, 20);
+    }
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = canvas.offsetWidth;
-      height = canvas.height = canvas.offsetHeight;
+      width = canvas.width = canvas.offsetWidth || window.innerWidth;
+      height = canvas.height = canvas.offsetHeight || window.innerHeight;
       initElements();
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     const STAR_PALETTES = [
       { core: '#F3E6D0', glow: 'rgba(255, 230, 150, 0.95)', ray: 'rgba(255, 245, 220, 0.9)' },
@@ -47,7 +58,6 @@ export default function BackgroundAtmosphere({
       { core: '#F3E6D0', glow: 'rgba(180, 86, 37, 0.85)',  ray: 'rgba(255, 235, 180, 0.8)' },
     ];
 
-    // Star Class with dynamic shine, rotation, and lens-flare rays
     class Star {
       constructor() {
         this.reset(true);
@@ -56,15 +66,15 @@ export default function BackgroundAtmosphere({
       reset(randomize = false) {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.size = Math.random() * 2.2 + 0.9;
-        this.baseAlpha = Math.random() * 0.45 + 0.45; // Higher visibility
+        this.size = Math.random() * 2.0 + 0.8;
+        this.baseAlpha = Math.random() * 0.45 + 0.45;
         this.twinkleSpeed = Math.random() * 0.035 + 0.015;
         this.twinkleVal = randomize ? Math.random() * Math.PI * 2 : 0;
-        this.vx = (Math.random() - 0.5) * 0.12;
-        this.vy = -(Math.random() * 0.12 + 0.04);
+        this.vx = (Math.random() - 0.5) * 0.1;
+        this.vy = -(Math.random() * 0.1 + 0.03);
         this.palette = STAR_PALETTES[Math.floor(Math.random() * STAR_PALETTES.length)];
-        this.hasRays = Math.random() > 0.45; // 55% of stars have sparkling diffraction rays
-        this.rayLength = this.size * (Math.random() * 3.5 + 3.0);
+        this.hasRays = performanceManager.tier !== 'low' && Math.random() > 0.5;
+        this.rayLength = this.size * (Math.random() * 3.0 + 2.5);
         this.rotation = Math.random() * Math.PI;
         this.rotSpeed = (Math.random() - 0.5) * 0.008;
       }
@@ -81,8 +91,7 @@ export default function BackgroundAtmosphere({
       }
 
       draw(context) {
-        // Dynamic shine intensity with exponential peak for radiant twinkling
-        const sinVal = (Math.sin(this.twinkleVal) + 1) / 2; // 0..1
+        const sinVal = (Math.sin(this.twinkleVal) + 1) / 2;
         const shineFactor = Math.pow(sinVal, 1.8);
         const alpha = Math.max(0.2, Math.min(1.0, this.baseAlpha * 0.6 + shineFactor * 0.55));
         const currentSize = this.size * (0.8 + shineFactor * 0.5);
@@ -90,112 +99,40 @@ export default function BackgroundAtmosphere({
         context.save();
         context.translate(this.x, this.y);
 
-        // 1. Radiant Outer Glow Halo
-        const glowRadius = currentSize * 4.5;
-        const radialGrad = context.createRadialGradient(0, 0, 0, 0, 0, glowRadius);
-        radialGrad.addColorStop(0, this.palette.glow);
-        radialGrad.addColorStop(0.4, `rgba(235, 170, 98, ${alpha * 0.4})`);
-        radialGrad.addColorStop(1, 'rgba(93, 29, 1, 0)');
-        context.fillStyle = radialGrad;
-        context.beginPath();
-        context.arc(0, 0, glowRadius, 0, Math.PI * 2);
-        context.fill();
-
-        // 2. Shining Diamond Sparkle Rays (4-point or 8-point lens flare)
-        if (this.hasRays && alpha > 0.35) {
-          context.rotate(this.rotation);
-          const rayLen = this.rayLength * (0.7 + shineFactor * 0.6);
-          const rayAlpha = alpha * 0.85;
-
-          // Main vertical & horizontal diamond rays
-          context.strokeStyle = this.palette.ray.replace(/[\d.]+\)$/, `${rayAlpha})`);
-          context.lineWidth = Math.max(0.8, currentSize * 0.45);
-          
+        // 1. Radiant Outer Glow Halo (Only on balanced/high tiers)
+        if (performanceManager.tier !== 'low') {
+          const glowRadius = currentSize * 4.0;
+          const radialGrad = context.createRadialGradient(0, 0, 0, 0, 0, glowRadius);
+          radialGrad.addColorStop(0, this.palette.glow);
+          radialGrad.addColorStop(0.4, `rgba(235, 170, 98, ${alpha * 0.35})`);
+          radialGrad.addColorStop(1, 'rgba(93, 29, 1, 0)');
+          context.fillStyle = radialGrad;
           context.beginPath();
-          context.moveTo(-rayLen, 0);
-          context.lineTo(rayLen, 0);
-          context.moveTo(0, -rayLen);
-          context.lineTo(0, rayLen);
+          context.arc(0, 0, glowRadius, 0, Math.PI * 2);
+          context.fill();
+        }
+
+        // 2. Sparkling Diffraction Rays
+        if (this.hasRays && shineFactor > 0.4) {
+          const rayAlpha = (shineFactor - 0.4) * 1.6 * alpha;
+          context.rotate(this.rotation);
+          context.strokeStyle = this.palette.ray;
+          context.lineWidth = 1.0;
+          context.globalAlpha = rayAlpha;
+
+          context.beginPath();
+          context.moveTo(-this.rayLength, 0);
+          context.lineTo(this.rayLength, 0);
+          context.moveTo(0, -this.rayLength);
+          context.lineTo(0, this.rayLength);
           context.stroke();
-
-          // Diagonal micro-spikes for extra brilliance
-          if (this.size > 1.8) {
-            const diagLen = rayLen * 0.55;
-            context.beginPath();
-            context.moveTo(-diagLen, -diagLen);
-            context.lineTo(diagLen, diagLen);
-            context.moveTo(diagLen, -diagLen);
-            context.lineTo(-diagLen, diagLen);
-            context.stroke();
-          }
         }
 
-        // 3. Crisp Brilliant Star Core
-        context.beginPath();
-        context.arc(0, 0, Math.max(0.8, currentSize * 0.8), 0, Math.PI * 2);
+        // 3. Crisp Diamond Core
+        context.globalAlpha = alpha;
         context.fillStyle = this.palette.core;
-        context.shadowBlur = currentSize * 8;
-        context.shadowColor = this.palette.glow;
-        context.fill();
-
-        context.restore();
-      }
-    }
-
-    // Soft Mist / Smoke Puff Class
-    class SmokePuff {
-      constructor() {
-        this.reset(true);
-      }
-
-      reset(randomize = false) {
-        this.x = Math.random() * width;
-        this.y = randomize ? Math.random() * height : height + 60;
-        this.radius = Math.random() * 90 + 60;
-        this.growth = Math.random() * 0.2 + 0.1;
-        this.vx = (Math.random() - 0.5) * 0.25;
-        this.vy = -(Math.random() * 0.35 + 0.2);
-        this.maxLife = Math.random() * 260 + 200;
-        this.life = randomize ? Math.random() * this.maxLife : 0;
-        this.angle = Math.random() * Math.PI * 2;
-        this.angularSpeed = (Math.random() - 0.5) * 0.004;
-      }
-
-      update() {
-        this.life++;
-        this.x += this.vx + Math.sin(this.life * 0.015) * 0.5;
-        this.y += this.vy;
-        this.radius += this.growth;
-        this.angle += this.angularSpeed;
-
-        if (this.life >= this.maxLife || this.y < -this.radius) {
-          this.reset(false);
-        }
-      }
-
-      draw(context) {
-        const progress = this.life / this.maxLife;
-        let alpha = 0;
-        if (progress < 0.25) {
-          alpha = (progress / 0.25) * 0.12;
-        } else {
-          alpha = (1 - (progress - 0.25) / 0.75) * 0.12;
-        }
-        alpha = alpha * smokeIntensity;
-        if (alpha <= 0.002) return;
-
-        context.save();
-        context.translate(this.x, this.y);
-        context.rotate(this.angle);
-
-        const grad = context.createRadialGradient(0, 0, 0, 0, 0, this.radius);
-        grad.addColorStop(0, `rgba(248, 209, 136, ${alpha})`);
-        grad.addColorStop(0.5, `rgba(235, 170, 98, ${alpha * 0.4})`);
-        grad.addColorStop(1, 'rgba(93, 29, 1, 0)');
-
-        context.fillStyle = grad;
         context.beginPath();
-        context.arc(0, 0, this.radius, 0, Math.PI * 2);
+        context.arc(0, 0, currentSize * 0.9, 0, Math.PI * 2);
         context.fill();
 
         context.restore();
@@ -203,69 +140,65 @@ export default function BackgroundAtmosphere({
     }
 
     let stars = [];
-    let smokePuffs = [];
-
-    function initElements() {
+    const initElements = () => {
       stars = [];
-      for (let i = 0; i < starCount; i++) {
+      for (let i = 0; i < effectiveStarCount; i++) {
         stars.push(new Star());
       }
-      smokePuffs = [];
-      const puffCount = 10;
-      for (let i = 0; i < puffCount; i++) {
-        smokePuffs.push(new SmokePuff());
-      }
-    }
+    };
 
     initElements();
 
+    // IntersectionObserver to auto-pause when out of viewport
     const observer = new IntersectionObserver(
       ([entry]) => {
         isVisibleRef.current = entry.isIntersecting;
       },
-      { threshold: 0.05 }
+      { threshold: 0.01 }
     );
 
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }
 
-    const render = () => {
-      if (isVisibleRef.current && ctx) {
-        ctx.clearRect(0, 0, width, height);
+    // Animation Loop with visibility sleep
+    let lastRenderTime = 0;
+    const animate = (timestamp) => {
+      animFrameRef.current = requestAnimationFrame(animate);
 
-        // Draw soft background smoke mist
-        for (let i = 0; i < smokePuffs.length; i++) {
-          smokePuffs[i].update();
-          smokePuffs[i].draw(ctx);
-        }
+      if (!isVisibleRef.current || !performanceManager.isTabVisible) return;
 
-        // Draw twinkling & shining stars
-        for (let i = 0; i < stars.length; i++) {
-          stars[i].update();
-          stars[i].draw(ctx);
-        }
+      // Throttle background particle frame rate on low/mobile devices
+      if (performanceManager.tier === 'low' && timestamp - lastRenderTime < 30) return;
+      lastRenderTime = timestamp;
+
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < stars.length; i++) {
+        stars[i].update();
+        stars[i].draw(ctx);
       }
-
-      animFrameRef.current = requestAnimationFrame(render);
     };
 
-    animFrameRef.current = requestAnimationFrame(render);
+    animFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      cancelAnimationFrame(animFrameRef.current);
+      observer.disconnect();
       window.removeEventListener('resize', handleResize);
-      if (containerRef.current) observer.disconnect();
     };
   }, [starCount, smokeIntensity]);
 
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 pointer-events-none select-none overflow-hidden ${className}`}
+      className={`fixed inset-0 pointer-events-none select-none ${className}`}
       aria-hidden="true"
     >
-      <canvas ref={canvasRef} className="w-full h-full block" />
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full block pointer-events-none"
+      />
     </div>
   );
 }

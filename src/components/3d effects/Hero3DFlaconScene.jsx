@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
+import performanceManager from '../../utils/performanceManager';
 
 export default function Hero3DFlaconScene({
   activeProductIndex = 0, // 0: Luxury (Black Diamond), 1: Royal (Millionaire), 2: Classic (Ana Sukkar)
@@ -54,20 +55,21 @@ export default function Hero3DFlaconScene({
     camera.position.set(0, 0, 6.2);
     cameraRef.current = camera;
 
-    // 3. Renderer
+    // 3. Renderer with Optimal DPR
+    const dpr = performanceManager.getOptimalDpr(1.5);
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
-      antialias: true,
+      antialias: performanceManager.tier !== 'low',
       powerPreference: 'high-performance'
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(dpr);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
     rendererRef.current = renderer;
 
-    // 4. Lighting Rig (Dark Luxury Haute Parfumerie)
+    // 4. Lighting Rig
     const ambientLight = new THREE.AmbientLight(0xffeedd, 0.9);
     scene.add(ambientLight);
 
@@ -84,7 +86,7 @@ export default function Hero3DFlaconScene({
     scene.add(goldPointLight);
     lightSweepRef.current = goldPointLight;
 
-    // 5. Texture Loader for the 3 real flacons
+    // 5. Texture Loader
     const textureLoader = new THREE.TextureLoader();
     const textures = flaconImages.map(src => {
       const tex = textureLoader.load(src, () => {
@@ -97,11 +99,12 @@ export default function Hero3DFlaconScene({
     });
     texturesRef.current = textures;
 
-    // 6. Bottle Plane Mesh (Floating Flacon with realistic aspect ratio)
-    const bottleGeometry = new THREE.PlaneGeometry(2.4, 4.2);
+    // 6. Bottle Plane Mesh
+    const bottleGeometry = new THREE.PlaneGeometry(2.4, 3.4);
     const bottleMaterial = new THREE.MeshStandardMaterial({
-      map: textures[activeProductIndex] || textures[0],
+      map: textures[0],
       transparent: true,
+      alphaTest: 0.05,
       roughness: 0.25,
       metalness: 0.15,
       side: THREE.DoubleSide
@@ -111,34 +114,33 @@ export default function Hero3DFlaconScene({
     scene.add(bottleMesh);
     bottleMeshRef.current = bottleMesh;
 
-    // 7. Ambient Ground Shadow
+    // 7. Ground Contact Shadow
     const shadowCanvas = document.createElement('canvas');
-    shadowCanvas.width = 256;
-    shadowCanvas.height = 256;
-    const sCtx = shadowCanvas.getContext('2d');
-    const radGrad = sCtx.createRadialGradient(128, 128, 10, 128, 128, 120);
-    radGrad.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
-    radGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0.45)');
-    radGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.15)');
-    radGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    sCtx.fillStyle = radGrad;
-    sCtx.fillRect(0, 0, 256, 256);
+    shadowCanvas.width = 128;
+    shadowCanvas.height = 128;
+    const ctx = shadowCanvas.getContext('2d');
+    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 60);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+    grad.addColorStop(0.5, 'rgba(33, 19, 13, 0.35)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 128);
 
     const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-    const shadowGeo = new THREE.PlaneGeometry(3.0, 1.2);
-    const shadowMat = new THREE.MeshBasicMaterial({
+    const shadowGeometry = new THREE.PlaneGeometry(2.8, 1.2);
+    const shadowMaterial = new THREE.MeshBasicMaterial({
       map: shadowTexture,
       transparent: true,
       opacity: 0.65,
       depthWrite: false
     });
-    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
-    shadowMesh.rotation.x = -Math.PI / 2;
-    shadowMesh.position.set(0, -2.15, 0);
+    const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
+    shadowMesh.rotation.x = -Math.PI / 2.2;
+    shadowMesh.position.set(0, -1.65, 0.2);
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
-    // 8. Mouse Tilt & Parallax (Desktop Only)
+    // 8. Interactive Mouse Movement Tracking
     let targetRotX = 0;
     let targetRotY = 0;
     let targetLightX = 0;
@@ -147,9 +149,9 @@ export default function Hero3DFlaconScene({
       const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      targetRotY = x * 0.18;
-      targetRotX = -y * 0.12;
-      targetLightX = x * 2.5;
+      targetRotY = x * 0.16;
+      targetRotX = -y * 0.10;
+      targetLightX = x * 2.2;
     };
 
     const handleMouseLeave = () => {
@@ -161,12 +163,23 @@ export default function Hero3DFlaconScene({
     container.addEventListener('mousemove', handleMouseMove, { passive: true });
     container.addEventListener('mouseleave', handleMouseLeave, { passive: true });
 
-    // 9. Render & Floating Animation Loop
+    // 9. Intersection Observer to Pause Loop when Offscreen
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    observer.observe(container);
+
+    // 10. Render & Floating Animation Loop
     let animationFrameId;
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Sleep loop if offscreen or tab hidden (Huge performance boost for rest of page)
+      if (!isVisible || !performanceManager.isTabVisible) return;
+
       const elapsedTime = clock.getElapsedTime();
 
       // Subtle levitation hover
@@ -198,7 +211,7 @@ export default function Hero3DFlaconScene({
 
     animate();
 
-    // 10. Resize handler
+    // 11. Resize handler
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
       const w = container.clientWidth || 500;
@@ -208,56 +221,70 @@ export default function Hero3DFlaconScene({
       renderer.setSize(w, h);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      observer.disconnect();
       window.removeEventListener('resize', handleResize);
       container.removeEventListener('mousemove', handleMouseMove);
       container.removeEventListener('mouseleave', handleMouseLeave);
+      
+      // Full resource disposal
+      bottleGeometry.dispose();
+      bottleMaterial.dispose();
+      shadowGeometry.dispose();
+      shadowMaterial.dispose();
+      shadowTexture.dispose();
+      textures.forEach(t => t.dispose());
       renderer.dispose();
     };
   }, []);
 
-  // Handle active slide change
+  // Smooth Flacon Transition when activeProductIndex changes
   useEffect(() => {
-    if (!bottleMeshRef.current || !texturesRef.current[activeProductIndex]) return;
+    if (!bottleMeshRef.current || !texturesRef.current.length) return;
 
-    const mesh = bottleMeshRef.current;
-    const newTex = texturesRef.current[activeProductIndex];
+    const currentTexture = texturesRef.current[activeProductIndex];
+    if (!currentTexture) return;
 
-    gsap.to(mesh.material, {
-      opacity: 0,
+    gsap.to(bottleMeshRef.current.scale, {
+      x: 0.88,
+      y: 0.88,
       duration: 0.25,
       ease: 'power2.in',
       onComplete: () => {
-        mesh.material.map = newTex;
-        mesh.material.needsUpdate = true;
-        gsap.to(mesh.material, {
-          opacity: 1,
-          duration: 0.45,
-          ease: 'power2.out'
-        });
+        if (bottleMeshRef.current) {
+          bottleMeshRef.current.material.map = currentTexture;
+          bottleMeshRef.current.material.needsUpdate = true;
+        }
+
+        gsap.fromTo(
+          bottleMeshRef.current.scale,
+          { x: 0.88, y: 0.88 },
+          { x: 1, y: 1, duration: 0.45, ease: 'back.out(1.4)' }
+        );
       }
     });
 
-    gsap.fromTo(
-      mesh.scale,
-      { x: 0.94, y: 0.94, z: 0.94 },
-      { x: 1, y: 1, z: 1, duration: 0.6, ease: 'back.out(1.4)' }
-    );
+    if (lightSweepRef.current) {
+      gsap.fromTo(
+        lightSweepRef.current,
+        { intensity: 3.5 },
+        { intensity: 2.0, duration: 0.6, ease: 'power2.out' }
+      );
+    }
   }, [activeProductIndex]);
 
-  // Fallback for non-WebGL devices
   if (!webglSupported) {
     return (
-      <div className="relative w-full h-[460px] sm:h-[620px] flex items-center justify-center pointer-events-none">
+      <div className="w-full h-full flex items-center justify-center p-6">
         <img
           src={flaconImages[activeProductIndex] || flaconImages[0]}
-          alt="Arabian Sheikh Flacon"
-          className="max-h-[85%] w-auto object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.85)] animate-fade-in transition-all duration-500 pointer-events-none"
+          alt="Arabian Sheikh Perfume Flacon"
+          className="max-h-[80%] max-w-[80%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter"
+          loading="eager"
         />
-        <div className="absolute bottom-6 w-56 h-6 bg-black/60 rounded-full blur-xl pointer-events-none" />
       </div>
     );
   }
@@ -265,18 +292,12 @@ export default function Hero3DFlaconScene({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[460px] sm:h-[620px] lg:h-[680px] flex items-center justify-center select-none pointer-events-none sm:pointer-events-auto"
-      style={{ touchAction: 'pan-y' }}
-      title="3D Floating Flacon"
+      className="relative w-full h-full flex items-center justify-center select-none"
     >
       <canvas
         ref={canvasRef}
-        className="w-full h-full block pointer-events-none sm:pointer-events-auto"
-        style={{ touchAction: 'pan-y' }}
+        className="w-full h-full cursor-grab active:cursor-grabbing block"
       />
-
-      {/* Ambient Gold Glow Behind Flacon */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] bg-[radial-gradient(ellipse_at_center,_rgba(212,175,55,0.22)_0%,_rgba(140,109,55,0.08)_45%,_transparent_70%)] blur-3xl pointer-events-none -z-10" />
     </div>
   );
 }

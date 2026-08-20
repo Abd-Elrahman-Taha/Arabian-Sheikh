@@ -410,6 +410,18 @@ body {
   animation: tierProgress 3.5s linear forwards;
 }
 
+/* Performance & GPU Compositing Optimizations */
+canvas {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
 /* Accessibility: Prefers Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -421,3 +433,4 @@ body {
     scroll-behavior: auto !important;
   }
 }
+

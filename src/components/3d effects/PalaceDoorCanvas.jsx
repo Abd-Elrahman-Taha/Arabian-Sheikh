@@ -2,17 +2,19 @@ import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import gsap from 'gsap';
+import performanceManager from '../../utils/performanceManager';
 
 /**
  * PalaceDoorCanvas Component
  * 
+ * - Adaptive performance for high/balanced/low mobile & desktop devices
  * - Large screens (Desktop/Laptop): Immersive full-screen zoom taking the entire width & height
  * - Mobile Phones: Balanced proportional view fitting the vertical viewport
  * - 3D Palace Door (Door.glb) directly facing the camera with 90° Y rotation
  * - Warm Andalusian gold and amber studio lighting
  * - Plays embedded door opening animations via THREE.AnimationMixer on click
  * - Camera goes inside (dollies forward through opening portal)
- * - Door smoothly dissolves as camera passes through
+ * - Complete VRAM & resource disposal when unmounted
  */
 export default function PalaceDoorCanvas({
   isOpening = false,
@@ -40,7 +42,7 @@ export default function PalaceDoorCanvas({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera Setup (Zoomed in on large screens to fill width & height, fitted on phones)
+    // 2. Camera Setup
     const initialFov = isDesktop ? 46 : 42;
     const initialCameraZ = isDesktop ? 4.2 : 7.6;
     const initialCameraY = isDesktop ? 0.05 : 0;
@@ -49,19 +51,25 @@ export default function PalaceDoorCanvas({
     camera.position.set(0, initialCameraY, initialCameraZ);
     cameraRef.current = camera;
 
-    // 3. WebGL Renderer
+    // 3. WebGL Renderer with Optimal DPR
+    const dpr = performanceManager.getOptimalDpr(1.25);
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: performanceManager.tier !== 'low',
       alpha: true,
       powerPreference: 'high-performance'
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(dpr);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.45;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Enable shadows only on non-low tiers
+    if (performanceManager.tier !== 'low') {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+    
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -75,17 +83,17 @@ export default function PalaceDoorCanvas({
     scene.add(frontLight);
 
     // Left fill light
-    const leftFill = new THREE.DirectionalLight(0xD8BE99, 2.0);
+    const leftFill = new THREE.DirectionalLight(0xD8BE99, 1.8);
     leftFill.position.set(-4.0, 1.5, 4.0);
     scene.add(leftFill);
 
     // Right fill light
-    const rightFill = new THREE.DirectionalLight(0xD8BE99, 2.0);
+    const rightFill = new THREE.DirectionalLight(0xD8BE99, 1.8);
     rightFill.position.set(4.0, 1.5, 4.0);
     scene.add(rightFill);
 
     // Center focal point light on golden door carvings
-    const centerPointLight = new THREE.PointLight(0xD4AF37, 4.0, 14);
+    const centerPointLight = new THREE.PointLight(0xD4AF37, 3.8, 14);
     centerPointLight.position.set(0, 0, 2.0);
     scene.add(centerPointLight);
 
@@ -101,46 +109,47 @@ export default function PalaceDoorCanvas({
     doorGroupRef.current = doorRoot;
 
     // 6. Load Door.glb with Embedded Animations & Rotate to Face Camera
+    let loadedModel = null;
     const loader = new GLTFLoader();
     loader.load(
       '/models/Door.glb',
       (gltf) => {
         const model = gltf.scene;
+        loadedModel = model;
 
-        // Rotate 90° (Math.PI / 2) so wide front face (5.04m) faces the camera directly!
+        // Rotate 90° (Math.PI / 2) so wide front face (5.04m) faces camera directly!
         model.rotation.y = Math.PI / 2;
         model.updateMatrixWorld(true);
 
-        // Auto-scale and center the door model
+        // Auto-scale and center
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y);
         
-        // Scale appropriately for desktop zoom vs mobile fit
         const baseScale = isDesktop ? 5.6 : 5.1;
         const scale = baseScale / maxDim;
 
         model.scale.set(scale, scale, scale);
-        // Center horizontally on X, position comfortably on Y, offset Z
         model.position.x = -center.x * scale;
         model.position.y = -center.y * scale - 0.05;
         model.position.z = -center.z * scale;
 
-        // Enhance gold luster & wood texture
+        // Optimize materials for smooth rendering
         model.traverse((child) => {
           if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
+            if (performanceManager.tier !== 'low') {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
             if (child.material) {
               child.material.roughness = Math.min(child.material.roughness, 0.38);
               child.material.metalness = Math.max(child.material.metalness, 0.72);
-              child.material.envMapIntensity = 1.7;
             }
           }
         });
 
-        // Initialize AnimationMixer with all embedded clips
+        // Initialize AnimationMixer with embedded clips
         if (gltf.animations && gltf.animations.length > 0) {
           const mixer = new THREE.AnimationMixer(model);
           mixerRef.current = mixer;
@@ -162,8 +171,8 @@ export default function PalaceDoorCanvas({
       }
     );
 
-    // 7. Subtle floating gold dust particle field
-    const particleCount = 55;
+    // 7. Subtle floating gold dust particle field (reduced on low tier)
+    const particleCount = performanceManager.tier === 'low' ? 20 : 45;
     const particleGeometry = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount * 3; i += 3) {
@@ -192,43 +201,42 @@ export default function PalaceDoorCanvas({
       const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      mouseX = x * 0.08;
-      mouseY = y * 0.05;
+      mouseX = x * 0.07;
+      mouseY = y * 0.04;
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // 9. Animation Loop
+    // 9. Animation Loop with Tab Sleep
     let animationFrameId;
     const clock = new THREE.Clock();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      if (!performanceManager.isTabVisible) return;
+
       const delta = clock.getDelta();
       const time = clock.getElapsedTime();
 
-      // Update Three.js AnimationMixer for door model animation
       if (mixerRef.current) {
         mixerRef.current.update(delta);
       }
 
-      // Smooth mouse parallax lerp
       targetRotX += (mouseY - targetRotX) * 0.05;
       targetRotY += (mouseX - targetRotY) * 0.05;
 
       if (doorRoot) {
         doorRoot.rotation.x = targetRotX;
-        doorRoot.rotation.y = targetRotY + Math.sin(time * 0.3) * 0.006;
+        doorRoot.rotation.y = targetRotY + Math.sin(time * 0.3) * 0.005;
       }
 
-      // Drift gold embers
       particleSystem.rotation.y = time * 0.015;
-      particleSystem.rotation.x = Math.sin(time * 0.02) * 0.04;
 
       renderer.render(scene, camera);
     };
     animate();
 
-    // 10. Resize handler (keeps large screen zoom & mobile fitting in sync)
+    // 10. Resize handler
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
       const w = container.clientWidth || window.innerWidth;
@@ -242,19 +250,37 @@ export default function PalaceDoorCanvas({
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
 
+      // Deep resource cleanup
+      if (loadedModel) {
+        loadedModel.traverse((obj) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach(m => m.dispose());
+            } else {
+              obj.material.dispose();
+            }
+          }
+        });
+      }
+
+      particleGeometry.dispose();
+      particleMaterial.dispose();
+
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
-      particleGeometry.dispose();
-      particleMaterial.dispose();
+      if (renderer.forceContextLoss) {
+        renderer.forceContextLoss();
+      }
     };
   }, []);
 
@@ -262,7 +288,6 @@ export default function PalaceDoorCanvas({
   useEffect(() => {
     if (!isOpening) return;
 
-    // 1. Play all embedded animation clips on the model
     if (mixerRef.current) {
       const mixer = mixerRef.current;
       mixer.timeScale = 1.0;
@@ -284,17 +309,15 @@ export default function PalaceDoorCanvas({
       }
     });
 
-    // 2. Radiant Gold Light Eruption from Inside (0.0s -> 1.0s)
     if (glow) {
       tl.to(glow, {
-        intensity: 10.0,
+        intensity: 9.5,
         distance: 40,
         duration: 1.1,
         ease: 'power2.in'
       }, 0);
     }
 
-    // 3. Camera Goes Inside (Dollies forward through opening door) (0.2s -> 1.8s)
     if (camera) {
       const targetZ = isDesktop ? -1.0 : 0.2;
       tl.to(camera.position, {
@@ -305,7 +328,6 @@ export default function PalaceDoorCanvas({
       }, 0.2);
     }
 
-    // 4. Subtle door group forward push as camera traverses (0.2s -> 1.8s)
     if (doorGroup) {
       tl.to(doorGroup.position, {
         z: 1.4,
@@ -321,7 +343,6 @@ export default function PalaceDoorCanvas({
       className={`w-full h-full relative ${className}`}
       style={{ touchAction: 'none' }}
     >
-      {/* Loading Spinner */}
       {!isLoaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
           <div className="w-10 h-10 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin shadow-lg" />
