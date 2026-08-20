@@ -31,17 +31,17 @@ export default function AdminSettings() {
   };
 
   return (
-    <div className="space-y-6 text-[#F8F5F0] max-w-4xl">
+    <div className="space-y-6 text-[#F3E6D0] max-w-4xl">
       <div className="border-b border-[#D4AF37]/20 pb-4">
-        <h1 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+        <h1 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
           House Configuration & API Integrations
         </h1>
-        <p className="text-xs text-[#8C6D37]">
+        <p className="text-xs text-[#D8BE99]">
           Manage Stripe payments, DHL shipping logistics, and multi-language controls.
         </p>
       </div>
 
-      <form onSubmit={handleSave} className="bg-[#121010] border border-[#D4AF37]/20 p-8 space-y-8 shadow-2xl text-xs">
+      <form onSubmit={handleSave} className="bg-[#0B0A08] border border-[#D4AF37]/20 p-8 space-y-8 shadow-2xl text-xs">
         
         {/* Stripe Section */}
         <div className="space-y-4">
@@ -65,21 +65,21 @@ export default function AdminSettings() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[#8C6D37] uppercase">Publishable Key</label>
+              <label className="text-[#D8BE99] uppercase">Publishable Key</label>
               <input
                 type="text"
                 value={settings.stripePublishableKey}
                 onChange={(e) => setSettings({ ...settings, stripePublishableKey: e.target.value })}
-                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F8F5F0]"
+                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F3E6D0]"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[#8C6D37] uppercase">Secret Key (Server Token)</label>
+              <label className="text-[#D8BE99] uppercase">Secret Key (Server Token)</label>
               <input
                 type="password"
                 value={settings.stripeSecretKey}
                 onChange={(e) => setSettings({ ...settings, stripeSecretKey: e.target.value })}
-                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F8F5F0]"
+                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F3E6D0]"
               />
             </div>
           </div>
@@ -107,30 +107,30 @@ export default function AdminSettings() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label className="text-[#8C6D37] uppercase">DHL Account Number</label>
+              <label className="text-[#D8BE99] uppercase">DHL Account Number</label>
               <input
                 type="text"
                 value={settings.dhlAccountNumber}
                 onChange={(e) => setSettings({ ...settings, dhlAccountNumber: e.target.value })}
-                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F8F5F0]"
+                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F3E6D0]"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[#8C6D37] uppercase">Free Shipping Threshold (€)</label>
+              <label className="text-[#D8BE99] uppercase">Free Shipping Threshold (€)</label>
               <input
                 type="number"
                 value={settings.freeShippingThreshold}
                 onChange={(e) => setSettings({ ...settings, freeShippingThreshold: Number(e.target.value) })}
-                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F8F5F0]"
+                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F3E6D0]"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[#8C6D37] uppercase">Standard DHL Rate (€)</label>
+              <label className="text-[#D8BE99] uppercase">Standard DHL Rate (€)</label>
               <input
                 type="number"
                 value={settings.expressShippingFee}
                 onChange={(e) => setSettings({ ...settings, expressShippingFee: Number(e.target.value) })}
-                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F8F5F0]"
+                className="w-full bg-black/60 border border-white/10 p-2.5 rounded font-mono text-xs text-[#F3E6D0]"
               />
             </div>
           </div>
@@ -147,11 +147,11 @@ export default function AdminSettings() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[#8C6D37] uppercase block mb-1">Primary Currency</label>
+              <label className="text-[#D8BE99] uppercase block mb-1">Primary Currency</label>
               <select
                 value={settings.currency}
                 onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-                className="w-full bg-black/60 border border-white/10 p-2.5 rounded text-xs text-[#F8F5F0]"
+                className="w-full bg-black/60 border border-white/10 p-2.5 rounded text-xs text-[#F3E6D0]"
               >
                 <option value="EUR">EUR (€) — Official Default</option>
                 <option value="USD">USD ($)</option>
@@ -159,8 +159,8 @@ export default function AdminSettings() {
               </select>
             </div>
             <div>
-              <label className="text-[#8C6D37] uppercase block mb-1">Supported Languages</label>
-              <div className="p-2.5 bg-black/60 border border-white/10 rounded text-xs text-[#A69E94]">
+              <label className="text-[#D8BE99] uppercase block mb-1">Supported Languages</label>
+              <div className="p-2.5 bg-black/60 border border-white/10 rounded text-xs text-[#D8BE99]">
                 English (EN), Spanish (ES), Bulgarian (BG)
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function AdminSettings() {
         <div className="pt-4 flex justify-end">
           <button
             type="submit"
-            className="px-8 py-3 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center gap-2"
+            className="px-8 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
             <span>Save Store Parameters</span>

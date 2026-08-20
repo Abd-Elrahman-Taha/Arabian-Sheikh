@@ -105,7 +105,7 @@ export default function AccountPaymentMethods() {
                   </p>
                 </div>
                 {card.isDefault && (
-                  <span className="px-2 py-0.5 text-[10px] bg-[var(--color-terracotta)] text-[#F8D188] font-mono font-bold">
+                  <span className="px-2 py-0.5 text-[10px] bg-[var(--color-terracotta)] text-[#F2D675] font-mono font-bold">
                     Default
                   </span>
                 )}
@@ -211,7 +211,7 @@ export default function AccountPaymentMethods() {
                   id="defaultCard"
                   checked={formData.isDefault}
                   onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
-                  className="accent-[#B45625] cursor-pointer"
+                  className="accent-[#3A2116] cursor-pointer"
                 />
                 <label htmlFor="defaultCard" className="text-xs text-[var(--color-terracotta-deep)] font-medium cursor-pointer">
                   Set as default payment method

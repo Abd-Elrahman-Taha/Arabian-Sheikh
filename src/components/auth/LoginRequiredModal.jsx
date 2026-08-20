@@ -47,10 +47,10 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
         }}
       >
         {/* Top Gold Corner Accents */}
-        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#B45625]" />
-        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#B45625]" />
-        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#B45625]" />
-        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#B45625]" />
+        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#3A2116]" />
+        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#3A2116]" />
+        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#3A2116]" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#3A2116]" />
 
         {/* Close Button */}
         <button
@@ -113,7 +113,7 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
             type="button"
             onClick={handleQuickDemoLogin}
             disabled={quickLoginLoading}
-            className="w-full py-2 bg-[var(--color-desert-light)] hover:bg-[var(--color-terracotta)] hover:text-[#F8D188] text-[var(--color-earth-dark)] border border-[var(--color-terracotta)]/40 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            className="w-full py-2 bg-[var(--color-desert-light)] hover:bg-[var(--color-terracotta)] hover:text-[#F2D675] text-[var(--color-earth-dark)] border border-[var(--color-terracotta)]/40 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
             <Sparkles className="w-3.5 h-3.5 text-[var(--color-terracotta)] group-hover:text-inherit" />
             <span>{quickLoginLoading ? 'Connecting...' : 'One-Click Demo Sign In & Add to Bag'}</span>

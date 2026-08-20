@@ -100,7 +100,7 @@ export default function CustomCursor() {
       {/* Precision Inner Dot */}
       <div
         ref={dotRef}
-        className={`absolute -top-1 -left-1 w-2 h-2 rounded-full bg-[#E5C07B] transition-opacity duration-200 ${
+        className={`absolute -top-1 -left-1 w-2 h-2 rounded-full bg-[#F2D675] transition-opacity duration-200 ${
           isExpanded ? 'opacity-0' : 'opacity-100'
         }`}
         style={{ willChange: 'transform' }}
@@ -111,9 +111,9 @@ export default function CustomCursor() {
         ref={ringRef}
         className={`absolute -top-4 -left-4 flex items-center justify-center rounded-full border transition-all duration-300 ${
           isExpanded
-            ? 'w-16 h-16 -top-8 -left-8 bg-[#141210]/90 border-[#C9A15C] shadow-[0_0_20px_rgba(201,161,92,0.45)] backdrop-blur-sm'
+            ? 'w-16 h-16 -top-8 -left-8 bg-[#21130D]/90 border-[#D4AF37] shadow-[0_0_20px_rgba(201,161,92,0.45)] backdrop-blur-sm'
             : isHovered
-            ? 'w-10 h-10 -top-5 -left-5 bg-[#C9A15C]/15 border-[#C9A15C]/80 scale-110'
+            ? 'w-10 h-10 -top-5 -left-5 bg-[#D4AF37]/15 border-[#D4AF37]/80 scale-110'
             : 'w-8 h-8 bg-transparent border-white/20'
         }`}
         style={{ willChange: 'transform' }}
@@ -121,7 +121,7 @@ export default function CustomCursor() {
         {cursorText && (
           <span
             ref={textRef}
-            className="text-[10px] font-sans font-bold text-[#E5C07B] tracking-wider uppercase select-none animate-fadeIn"
+            className="text-[10px] font-sans font-bold text-[#F2D675] tracking-wider uppercase select-none animate-fadeIn"
           >
             {cursorText}
           </span>

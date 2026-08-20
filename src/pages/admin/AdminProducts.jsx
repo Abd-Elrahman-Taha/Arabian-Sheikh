@@ -59,21 +59,21 @@ export default function AdminProducts() {
   };
 
   return (
-    <div className="space-y-6 text-[#F8F5F0]">
+    <div className="space-y-6 text-[#F3E6D0]">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-4 gap-4">
         <div>
-          <h1 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+          <h1 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
             Product Catalog Management
           </h1>
-          <p className="text-xs text-[#8C6D37]">
+          <p className="text-xs text-[#D8BE99]">
             Manage all 60ml perfume tiers, pure oils, incense bakhoor, and cosmetic lines.
           </p>
         </div>
 
         <Link
           to="/admin/products/new"
-          className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 shadow-md"
+          className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 shadow-md"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Product</span>
@@ -81,14 +81,14 @@ export default function AdminProducts() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-[#121010] border border-[#D4AF37]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm text-xs">
+      <div className="bg-[#0B0A08] border border-[#D4AF37]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm text-xs">
         <div className="relative w-full sm:w-80">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, notes..."
-            className="w-full bg-black/60 border border-white/10 pl-9 pr-3 py-2 text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none rounded"
+            className="w-full bg-black/60 border border-white/10 pl-9 pr-3 py-2 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none rounded"
           />
           <Search className="w-4 h-4 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
@@ -97,7 +97,7 @@ export default function AdminProducts() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-black/60 border border-white/10 px-3 py-2 text-xs text-[#F8F5F0] rounded"
+            className="bg-black/60 border border-white/10 px-3 py-2 text-xs text-[#F3E6D0] rounded"
           >
             <option value="all">All Categories</option>
             <option value="perfumes">Perfumes</option>
@@ -110,7 +110,7 @@ export default function AdminProducts() {
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value)}
-            className="bg-black/60 border border-white/10 px-3 py-2 text-xs text-[#F8F5F0] rounded"
+            className="bg-black/60 border border-white/10 px-3 py-2 text-xs text-[#F3E6D0] rounded"
           >
             <option value="all">All Tiers</option>
             <option value="Luxury">Luxury Tier (€50)</option>
@@ -121,10 +121,10 @@ export default function AdminProducts() {
       </div>
 
       {/* Product List Table */}
-      <div className="bg-[#121010] border border-[#D4AF37]/20 shadow-2xl overflow-x-auto">
+      <div className="bg-[#0B0A08] border border-[#D4AF37]/20 shadow-2xl overflow-x-auto">
         <table className="w-full text-left rtl:text-right border-collapse text-xs">
           <thead>
-            <tr className="bg-[#181515] border-b border-[#D4AF37]/20 font-cinzel text-[11px] uppercase tracking-wider text-[#8C6D37]">
+            <tr className="bg-[#0B0A08] border-b border-[#D4AF37]/20 font-cinzel text-[11px] uppercase tracking-wider text-[#D8BE99]">
               <th className="p-4">Flacon</th>
               <th className="p-4">Product Name</th>
               <th className="p-4">Tier / Category</th>
@@ -154,9 +154,9 @@ export default function AdminProducts() {
                     />
                   </td>
                   <td className="p-4">
-                    <div className="font-cinzel font-bold text-[#F8F5F0]">{p.name}</div>
+                    <div className="font-cinzel font-bold text-[#F3E6D0]">{p.name}</div>
                     {p.arabicName && <div className="font-arabic text-[#D4AF37] text-[11px]">{p.arabicName}</div>}
-                    <div className="text-[10px] text-[#8C6D37]">{p.size || '60 ml'}</div>
+                    <div className="text-[10px] text-[#D8BE99]">{p.size || '60 ml'}</div>
                   </td>
                   <td className="p-4">
                     {p.tier ? (
@@ -164,7 +164,7 @@ export default function AdminProducts() {
                         {p.tier} Tier
                       </span>
                     ) : (
-                      <span className="text-[#A69E94] uppercase tracking-wider text-[10px]">
+                      <span className="text-[#D8BE99] uppercase tracking-wider text-[10px]">
                         {p.category}
                       </span>
                     )}
@@ -192,7 +192,7 @@ export default function AdminProducts() {
                     </Link>
                     <button
                       onClick={() => handleDelete(p.id, p.name)}
-                      className="p-1.5 bg-white/5 hover:bg-red-600 hover:text-white rounded text-[#8C6D37] transition-colors cursor-pointer"
+                      className="p-1.5 bg-white/5 hover:bg-red-600 hover:text-white rounded text-[#D8BE99] transition-colors cursor-pointer"
                       title="Delete Product"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

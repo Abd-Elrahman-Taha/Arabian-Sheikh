@@ -85,14 +85,14 @@ export default function Header({ onOpenSearch }) {
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
           isScrolled
-            ? 'bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#D4AF37]/20 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)]'
-            : 'bg-gradient-to-b from-[#0A0A0B]/95 via-[#0A0A0B]/60 to-transparent py-4'
+            ? 'bg-[#0B0A08]/95 backdrop-blur-md border-b border-[#D4AF37]/20 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)]'
+            : 'bg-gradient-to-b from-[#0B0A08]/95 via-[#0B0A08]/60 to-transparent py-4'
         }`}
       >
         {/* Top VIP Announcement Bar */}
         {!isScrolled && (
           <div className="hidden lg:block border-b border-[#D4AF37]/15 pb-2 mb-2">
-            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#C5A059]">
+            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#D4AF37]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3 h-3 text-[#D4AF37]" />
                 <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
@@ -132,7 +132,7 @@ export default function Header({ onOpenSearch }) {
             </div>
 
             {/* 2. CENTER: CATEGORY NAVIGATION WITH ACTIVE UNDERLINE INDICATOR */}
-            <nav className="hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#E5E0D8]">
+            <nav className="hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#F3E6D0]">
               {navCategories.map((item) => {
                 const active = isItemActive(item.path);
                 return (
@@ -140,7 +140,7 @@ export default function Header({ onOpenSearch }) {
                     key={item.path}
                     to={item.path}
                     className={`transition-colors duration-300 relative py-1.5 hover:text-[#D4AF37] ${
-                      active ? 'text-[#D4AF37] font-semibold' : 'text-[#E5E0D8]'
+                      active ? 'text-[#D4AF37] font-semibold' : 'text-[#F3E6D0]'
                     }`}
                   >
                     <span>{item.name}</span>
@@ -153,21 +153,21 @@ export default function Header({ onOpenSearch }) {
             </nav>
 
             {/* 3. RIGHT: UTILITIES & ACTIONS */}
-            <div className="flex items-center space-x-4 sm:space-x-5 text-[#E5E0D8]">
+            <div className="flex items-center space-x-4 sm:space-x-5 text-[#F3E6D0]">
               {/* Language Switcher */}
               <div className="relative hidden md:block">
                 <button
                   onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className="flex items-center gap-1.5 text-xs tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1 px-2.5 rounded border border-[#D4AF37]/25 bg-black/40 text-[#E5E0D8]"
+                  className="flex items-center gap-1.5 text-xs tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1 px-2.5 rounded border border-[#D4AF37]/25 bg-black/40 text-[#F3E6D0]"
                   aria-label="Select Language"
                 >
                   <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
                   <span>{language.toUpperCase()}</span>
-                  <ChevronDown className="w-3 h-3 text-[#C5A059]" />
+                  <ChevronDown className="w-3 h-3 text-[#D4AF37]" />
                 </button>
 
                 {langDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-36 bg-[#121010] border border-[#D4AF37]/30 rounded-md shadow-2xl py-1 z-50 animate-fade-in">
+                  <div className="absolute right-0 mt-2 w-36 bg-[#0B0A08] border border-[#D4AF37]/30 rounded-md shadow-2xl py-1 z-50 animate-fade-in">
                     {languages.map((l) => (
                       <button
                         key={l.code}
@@ -176,7 +176,7 @@ export default function Header({ onOpenSearch }) {
                           setLangDropdownOpen(false);
                         }}
                         className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[#D4AF37]/15 transition-colors ${
-                          language === l.code ? 'text-[#D4AF37] font-bold bg-[#D4AF37]/10' : 'text-[#E5E0D8]'
+                          language === l.code ? 'text-[#D4AF37] font-bold bg-[#D4AF37]/10' : 'text-[#F3E6D0]'
                         }`}
                       >
                         <span>{l.label}</span>
@@ -225,7 +225,7 @@ export default function Header({ onOpenSearch }) {
                 className="relative p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer group"
                 aria-label="Shopping Bag"
               >
-                <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#E5E0D8] group-hover:text-[#D4AF37] transition-colors" />
+                <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors" />
                 {totals.itemCount > 0 && (
                   <span className={`absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-lg ${
                     cartBadgeAnimated ? 'animate-bounce' : ''
@@ -250,7 +250,7 @@ export default function Header({ onOpenSearch }) {
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden bg-[#0A0A0B]/98 backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-50 lg:hidden bg-[#0B0A08]/98 backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto">
           <div className="space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#D4AF37]/20">
               <ArabianLogo variant="header" size="navbar" showSubtitle={true} subtitle="Andalusia" />
@@ -272,7 +272,7 @@ export default function Header({ onOpenSearch }) {
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block py-2 transition-colors border-b border-white/5 flex items-center justify-between relative ${
-                      active ? 'text-[#D4AF37] font-bold' : 'text-[#F8F5F0] hover:text-[#D4AF37]'
+                      active ? 'text-[#D4AF37] font-bold' : 'text-[#F3E6D0] hover:text-[#D4AF37]'
                     }`}
                   >
                     <span className="relative inline-block">
@@ -306,7 +306,7 @@ export default function Header({ onOpenSearch }) {
           {/* Mobile Bottom Utilities */}
           <div className="pt-6 border-t border-[#D4AF37]/20 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-widest text-[#8C6D37]">Language:</span>
+              <span className="text-xs uppercase tracking-widest text-[#D8BE99]">Language:</span>
               <div className="flex gap-2">
                 {languages.map((l) => (
                   <button
@@ -315,7 +315,7 @@ export default function Header({ onOpenSearch }) {
                     className={`px-2.5 py-1 text-xs rounded border ${
                       language === l.code
                         ? 'border-[#D4AF37] bg-[#D4AF37] text-black font-bold'
-                        : 'border-white/20 text-[#E5E0D8]'
+                        : 'border-white/20 text-[#F3E6D0]'
                     }`}
                   >
                     {l.code.toUpperCase()}
@@ -328,7 +328,7 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/account"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F8F5F0]"
+                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F3E6D0]"
               >
                 <User className="w-4 h-4 text-[#D4AF37]" />
                 <span>Account</span>
@@ -336,7 +336,7 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/account/wishlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F8F5F0]"
+                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F3E6D0]"
               >
                 <Heart className="w-4 h-4 text-[#D4AF37]" />
                 <span>Wishlist ({wishlistCount})</span>

@@ -57,14 +57,14 @@ export default function EditorialSection() {
       {/* Editorial Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4 border-b border-white/[0.08] pb-6">
         <div className="space-y-2">
-          <span className="text-[10px] font-sans font-bold uppercase tracking-[0.28em] text-[#C9A15C]">
+          <span className="text-[10px] font-sans font-bold uppercase tracking-[0.28em] text-[#D4AF37]">
             {isArabic ? 'الإصدارات التوثيقية' : 'EDITORIAL ARCHIVE'}
           </span>
-          <h2 className="font-arabic font-light text-2xl sm:text-4xl text-[#F4F1EA] tracking-wide">
+          <h2 className="font-arabic font-light text-2xl sm:text-4xl text-[#F3E6D0] tracking-wide">
             {isArabic ? 'كيمياء الإتقان والتراث' : 'Craftsmanship, Alchemy & Heritage'}
           </h2>
         </div>
-        <p className="text-xs text-[#8E8880] max-w-sm font-sans">
+        <p className="text-xs text-[#D8BE99] max-w-sm font-sans">
           {isArabic
             ? 'نظرة معمقة داخل كواليس المشاغل الملكية ودفاتر الوصفات السرية لدار سَـراب.'
             : 'An intimate chronicle of our private ateliers, rare extractions, and sacred royal formulations.'}
@@ -77,7 +77,7 @@ export default function EditorialSection() {
           <ScrollRevealItem key={tile.id} index={index}>
             <Link
               to={tile.link}
-              className="group block relative h-[460px] sm:h-[520px] lg:h-[560px] rounded-3xl overflow-hidden bg-[#0D0C0A] border border-white/[0.08] shadow-2xl transition-all duration-500 hover:border-[#C9A15C]/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
+              className="group block relative h-[460px] sm:h-[520px] lg:h-[560px] rounded-3xl overflow-hidden bg-[#0B0A08] border border-white/[0.08] shadow-2xl transition-all duration-500 hover:border-[#D4AF37]/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
               data-cursor="view"
             >
               {/* Image with 1.04x smooth zoom */}
@@ -91,32 +91,32 @@ export default function EditorialSection() {
               </div>
 
               {/* Dark Luxury Gradient Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/45 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/45 to-transparent" />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-500" />
 
               {/* Top Tag Pill */}
               <div className="absolute top-6 start-6 z-10">
-                <span className="px-3.5 py-1 rounded-full border border-white/20 bg-black/50 backdrop-blur-md text-[10px] font-sans font-bold uppercase tracking-[0.22em] text-[#E5C07B] shadow-sm">
+                <span className="px-3.5 py-1 rounded-full border border-white/20 bg-black/50 backdrop-blur-md text-[10px] font-sans font-bold uppercase tracking-[0.22em] text-[#F2D675] shadow-sm">
                   {isArabic ? tile.tagAr : tile.tagEn}
                 </span>
               </div>
 
               {/* Bottom Content Area */}
               <div className="absolute bottom-0 inset-x-0 p-6 sm:p-8 space-y-2.5 z-10">
-                <span className="text-[10px] uppercase font-sans font-bold tracking-[0.25em] text-[#C9A15C]">
+                <span className="text-[10px] uppercase font-sans font-bold tracking-[0.25em] text-[#D4AF37]">
                   {isArabic ? tile.tagEn : tile.tagAr}
                 </span>
                 
-                <h3 className="font-arabic font-semibold text-xl sm:text-2xl text-[#F4F1EA] tracking-wide leading-tight group-hover:text-[#E5C07B] transition-colors">
+                <h3 className="font-arabic font-semibold text-xl sm:text-2xl text-[#F3E6D0] tracking-wide leading-tight group-hover:text-[#F2D675] transition-colors">
                   {isArabic ? tile.titleAr : tile.titleEn}
                 </h3>
                 
-                <p className="text-xs text-[#8E8880] line-clamp-2 leading-relaxed font-sans font-normal">
+                <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans font-normal">
                   {isArabic ? tile.descAr : tile.descEn}
                 </p>
 
                 {/* Elegant Arrow CTA */}
-                <div className="pt-3 flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-[#C9A15C] group-hover:text-[#E6C587] transition-all">
+                <div className="pt-3 flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-[#D4AF37] group-hover:text-[#F2D675] transition-all">
                   <span>{isArabic ? tile.ctaAr : tile.ctaEn}</span>
                   <ArrowIcon className="w-3.5 h-3.5 transition-transform group-hover:translate-x-[-4px] rtl:group-hover:translate-x-[-4px]" />
                 </div>

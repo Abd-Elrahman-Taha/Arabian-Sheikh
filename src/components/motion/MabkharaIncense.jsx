@@ -51,36 +51,36 @@ export default function MabkharaIncense({
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center z-10">
           <svg
             viewBox="0 0 50 65"
-            className={`${current.base} text-[#D2A55F] filter drop-shadow-[0_4px_16px_rgba(210,165,95,0.45)]`}
+            className={`${current.base} text-[#D4AF37] filter drop-shadow-[0_4px_16px_rgba(210,165,95,0.45)]`}
             fill="currentColor"
           >
             {/* Crown / Top Lip of Burner */}
-            <path d="M10 18 Q25 24 40 18 L44 14 Q25 8 6 14 Z" fill="#E0B978" />
-            <polygon points="12,18 16,10 20,18 25,8 30,18 34,10 38,18" fill="#D2A55F" />
+            <path d="M10 18 Q25 24 40 18 L44 14 Q25 8 6 14 Z" fill="#D4AF37" />
+            <polygon points="12,18 16,10 20,18 25,8 30,18 34,10 38,18" fill="#D4AF37" />
 
             {/* Glowing Burning Charcoal Core */}
-            <ellipse cx="25" cy="18" rx="11" ry="3.5" fill="#B8945A" />
-            <ellipse cx="25" cy="18" rx="6" ry="2" fill="#E0B978" opacity="0.9" />
+            <ellipse cx="25" cy="18" rx="11" ry="3.5" fill="#D4AF37" />
+            <ellipse cx="25" cy="18" rx="6" ry="2" fill="#D4AF37" opacity="0.9" />
 
             {/* Upper Cup Bowl */}
             <path d="M12 18 L18 36 L32 36 L38 18 Z" opacity="0.95" />
             {/* Ornate Cutouts on Bowl */}
-            <polygon points="21,24 25,20 29,24 25,28" fill="#130C05" opacity="0.6" />
-            <polygon points="17,28 20,25 23,28 20,31" fill="#130C05" opacity="0.6" />
-            <polygon points="27,28 30,25 33,28 30,31" fill="#130C05" opacity="0.6" />
+            <polygon points="21,24 25,20 29,24 25,28" fill="#21130D" opacity="0.6" />
+            <polygon points="17,28 20,25 23,28 20,31" fill="#21130D" opacity="0.6" />
+            <polygon points="27,28 30,25 33,28 30,31" fill="#21130D" opacity="0.6" />
 
             {/* Central Stem Pillar */}
-            <path d="M22 36 L22 46 L28 46 L28 36 Z" fill="#E0B978" />
+            <path d="M22 36 L22 46 L28 46 L28 36 Z" fill="#D4AF37" />
 
             {/* Flared Base */}
             <path d="M20 46 L10 60 L40 60 L30 46 Z" opacity="0.95" />
-            <path d="M16 60 Q25 54 34 60 Z" fill="#130C05" opacity="0.4" />
-            <rect x="8" y="60" width="34" height="3" rx="1.5" fill="#E0B978" />
+            <path d="M16 60 Q25 54 34 60 Z" fill="#21130D" opacity="0.4" />
+            <rect x="8" y="60" width="34" height="3" rx="1.5" fill="#D4AF37" />
           </svg>
 
           {/* Warm Ember Glow Shimmer */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#E0B978] animate-ping opacity-40 filter blur-xs" />
-          <div className="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-[#D2A55F]/30 filter blur-md animate-lantern-pulse" />
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#D4AF37] animate-ping opacity-40 filter blur-xs" />
+          <div className="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-[#D4AF37]/30 filter blur-md animate-lantern-pulse" />
         </div>
       )}
 

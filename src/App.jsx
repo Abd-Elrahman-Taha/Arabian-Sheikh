@@ -187,7 +187,7 @@ function MainRouter() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen text-[#F8F5F0] bg-[#0A0A0B] transition-colors duration-400 overflow-x-hidden">
+    <div className="relative flex flex-col min-h-screen text-[#F3E6D0] bg-[#0B0A08] transition-colors duration-400 overflow-x-hidden">
 
       {/* Desert Background — subtle obsidian/espresso depth */}
       <DesertBackground />
@@ -195,8 +195,8 @@ function MainRouter() {
       {/* Global Fluid Golden Amber GLSL WebGL Shader (Active across every page) */}
       <LuxuryBackgroundShader
         color1="#D4AF37"
-        color2="#3D2411"
-        color3="#070605"
+        color2="#3A2116"
+        color3="#0B0A08"
         opacity={0.65}
         className="fixed inset-0 pointer-events-none z-[1]"
       />

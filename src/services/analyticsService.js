@@ -28,11 +28,11 @@ export const analyticsService = {
 
     // Family sales distribution
     const familySales = [
-      { family: 'Woody (Wild Oud)', revenue: Math.round(totalRevenue * 0.42), percentage: 42, color: '#D2A55F' },
-      { family: 'Oriental / Amber', revenue: Math.round(totalRevenue * 0.28), percentage: 28, color: '#E0B978' },
-      { family: 'Floral (Taif Rose)', revenue: Math.round(totalRevenue * 0.16), percentage: 16, color: '#A97B3F' },
-      { family: 'Fresh (Oasis Dew)', revenue: Math.round(totalRevenue * 0.08), percentage: 8, color: '#6F6258' },
-      { family: 'Fruity & Exotic', revenue: Math.round(totalRevenue * 0.06), percentage: 6, color: '#3A2415' }
+      { family: 'Woody (Wild Oud)', revenue: Math.round(totalRevenue * 0.42), percentage: 42, color: '#D4AF37' },
+      { family: 'Oriental / Amber', revenue: Math.round(totalRevenue * 0.28), percentage: 28, color: '#D4AF37' },
+      { family: 'Floral (Taif Rose)', revenue: Math.round(totalRevenue * 0.16), percentage: 16, color: '#D4AF37' },
+      { family: 'Fresh (Oasis Dew)', revenue: Math.round(totalRevenue * 0.08), percentage: 8, color: '#D8BE99' },
+      { family: 'Fruity & Exotic', revenue: Math.round(totalRevenue * 0.06), percentage: 6, color: '#3A2116' }
     ];
 
     // Top VIP Geographic Markets

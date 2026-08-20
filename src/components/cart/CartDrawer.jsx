@@ -75,13 +75,13 @@ export default function CartDrawer() {
       />
 
       <div className="fixed inset-y-0 right-0 rtl:right-auto rtl:left-0 max-w-full flex">
-        <div className="w-screen max-w-md bg-[#0F0E0E] border-l rtl:border-l-0 rtl:border-r border-[#D4AF37]/30 text-[#F8F5F0] shadow-2xl flex flex-col justify-between">
+        <div className="w-screen max-w-md bg-[#0B0A08] border-l rtl:border-l-0 rtl:border-r border-[#D4AF37]/30 text-[#F3E6D0] shadow-2xl flex flex-col justify-between">
           
           {/* Header */}
-          <div className="p-5 border-b border-[#D4AF37]/20 flex items-center justify-between bg-[#141212]">
+          <div className="p-5 border-b border-[#D4AF37]/20 flex items-center justify-between bg-[#0B0A08]">
             <div className="flex items-center gap-2.5">
               <ShoppingBag className="w-5 h-5 text-[#D4AF37]" />
-              <h2 className="font-cinzel text-base font-bold tracking-widest uppercase text-[#F8F5F0]">
+              <h2 className="font-cinzel text-base font-bold tracking-widest uppercase text-[#F3E6D0]">
                 {t('cart.title') || 'Shopping Bag'}
               </h2>
               <span className="text-xs text-[#D4AF37] font-mono font-bold">
@@ -90,7 +90,7 @@ export default function CartDrawer() {
             </div>
             <button
               onClick={closeDrawer}
-              className="p-1.5 text-[#8C6D37] hover:text-[#D4AF37] transition-colors cursor-pointer"
+              className="p-1.5 text-[#D8BE99] hover:text-[#D4AF37] transition-colors cursor-pointer"
               aria-label="Close Cart"
             >
               <X className="w-5 h-5" />
@@ -106,7 +106,7 @@ export default function CartDrawer() {
               </div>
             ) : (
               <div className="space-y-1.5">
-                <div className="flex justify-between text-[11px] text-[#A69E94]">
+                <div className="flex justify-between text-[11px] text-[#D8BE99]">
                   <span>Add <strong>€{(freeShippingThreshold - totals.subtotal).toFixed(2)}</strong> for Free DHL Express</span>
                   <span className="font-mono text-[#D4AF37] font-bold">{freeShippingProgress}%</span>
                 </div>
@@ -127,10 +127,10 @@ export default function CartDrawer() {
                 <div className="w-16 h-16 rounded-full border border-[#D4AF37]/30 flex items-center justify-center mx-auto text-[#D4AF37] bg-[#D4AF37]/10">
                   <ShoppingBag className="w-8 h-8 opacity-70" />
                 </div>
-                <h3 className="font-cinzel text-base font-bold text-[#F8F5F0]">
+                <h3 className="font-cinzel text-base font-bold text-[#F3E6D0]">
                   Your Bag is Empty
                 </h3>
-                <p className="text-xs text-[#A69E94] max-w-xs mx-auto leading-relaxed">
+                <p className="text-xs text-[#D8BE99] max-w-xs mx-auto leading-relaxed">
                   Discover our royal Andalusian signature extraits and flacons.
                 </p>
                 <button
@@ -138,7 +138,7 @@ export default function CartDrawer() {
                     closeDrawer();
                     navigate('/shop');
                   }}
-                  className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider inline-block cursor-pointer hover:bg-[#E5C07B]"
+                  className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider inline-block cursor-pointer hover:bg-[#F2D675]"
                 >
                   Explore Boutique
                 </button>
@@ -147,7 +147,7 @@ export default function CartDrawer() {
               items.map((item, idx) => (
                 <div
                   key={`${item.productId}-${item.size}-${idx}`}
-                  className="flex gap-3.5 p-3.5 bg-[#141212] border border-[#D4AF37]/15 relative group transition-all"
+                  className="flex gap-3.5 p-3.5 bg-[#0B0A08] border border-[#D4AF37]/15 relative group transition-all"
                 >
                   {/* Flacon Image */}
                   <img
@@ -160,12 +160,12 @@ export default function CartDrawer() {
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between">
-                        <h4 className="font-cinzel text-xs font-bold text-[#F8F5F0] line-clamp-1">
+                        <h4 className="font-cinzel text-xs font-bold text-[#F3E6D0] line-clamp-1">
                           {item.name}
                         </h4>
                         <button
                           onClick={() => removeFromCart(item.productId, item.size)}
-                          className="text-[#8C6D37] hover:text-red-400 p-1 transition-colors cursor-pointer"
+                          className="text-[#D8BE99] hover:text-red-400 p-1 transition-colors cursor-pointer"
                           aria-label="Remove item"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -174,7 +174,7 @@ export default function CartDrawer() {
                       {item.arabicName && (
                         <p className="font-arabic text-[11px] text-[#D4AF37]">{item.arabicName}</p>
                       )}
-                      <p className="text-[10px] text-[#8C6D37] font-mono mt-0.5">Size: {item.size || '60 ml'}</p>
+                      <p className="text-[10px] text-[#D8BE99] font-mono mt-0.5">Size: {item.size || '60 ml'}</p>
                     </div>
 
                     {/* Quantity & Item Total */}
@@ -182,7 +182,7 @@ export default function CartDrawer() {
                       <div className="flex items-center border border-[#D4AF37]/30 bg-black/60 rounded-xs">
                         <button
                           onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-                          className="p-1 text-[#E5E0D8] hover:text-[#D4AF37] cursor-pointer"
+                          className="p-1 text-[#F3E6D0] hover:text-[#D4AF37] cursor-pointer"
                           aria-label="Decrease quantity"
                         >
                           <Minus className="w-3 h-3" />
@@ -192,7 +192,7 @@ export default function CartDrawer() {
                         </span>
                         <button
                           onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-                          className="p-1 text-[#E5E0D8] hover:text-[#D4AF37] cursor-pointer"
+                          className="p-1 text-[#F3E6D0] hover:text-[#D4AF37] cursor-pointer"
                           aria-label="Increase quantity"
                         >
                           <Plus className="w-3 h-3" />
@@ -211,10 +211,10 @@ export default function CartDrawer() {
 
           {/* Footer Summary & Checkout Actions */}
           {items.length > 0 && (
-            <div className="p-5 bg-[#141212] border-t border-[#D4AF37]/30 space-y-4">
+            <div className="p-5 bg-[#0B0A08] border-t border-[#D4AF37]/30 space-y-4">
               {/* Gift Wrap Toggle */}
               <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
-                <div className="flex items-center gap-2 text-[#E5E0D8]">
+                <div className="flex items-center gap-2 text-[#F3E6D0]">
                   <Gift className="w-4 h-4 text-[#D4AF37]" />
                   <span>Palace Silk Keepsake Gift Wrap</span>
                 </div>
@@ -233,12 +233,12 @@ export default function CartDrawer() {
                   value={promoInput}
                   onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
                   placeholder="Privilege Code (e.g. SHEIKH10)"
-                  className="flex-1 bg-black/60 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono uppercase text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+                  className="flex-1 bg-black/60 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono uppercase text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={promoLoading || !promoInput}
-                  className="px-4 py-2 bg-white/5 hover:bg-[#D4AF37] text-[#F8F5F0] hover:text-black border border-[#D4AF37]/40 text-xs font-cinzel font-bold uppercase transition-colors"
+                  className="px-4 py-2 bg-white/5 hover:bg-[#D4AF37] text-[#F3E6D0] hover:text-black border border-[#D4AF37]/40 text-xs font-cinzel font-bold uppercase transition-colors"
                 >
                   {promoLoading ? 'Validating...' : 'Apply'}
                 </button>
@@ -246,9 +246,9 @@ export default function CartDrawer() {
 
               {/* Subtotal & Total */}
               <div className="space-y-1.5 pt-2 text-xs">
-                <div className="flex justify-between text-[#A69E94]">
+                <div className="flex justify-between text-[#D8BE99]">
                   <span>Subtotal</span>
-                  <span className="font-mono text-[#F8F5F0] font-bold">€{totals.subtotal.toFixed(2)}</span>
+                  <span className="font-mono text-[#F3E6D0] font-bold">€{totals.subtotal.toFixed(2)}</span>
                 </div>
                 {totals.discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-400">
@@ -256,7 +256,7 @@ export default function CartDrawer() {
                     <span>-€{totals.discountAmount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-base font-cinzel font-bold text-[#F8F5F0] pt-2 border-t border-white/10">
+                <div className="flex justify-between text-base font-cinzel font-bold text-[#F3E6D0] pt-2 border-t border-white/10">
                   <span>Estimated Total</span>
                   <span className="text-[#D4AF37]">€{totals.total.toFixed(2)}</span>
                 </div>
@@ -265,7 +265,7 @@ export default function CartDrawer() {
               {/* Checkout Button */}
               <button
                 onClick={handleCheckout}
-                className="w-full py-3.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Proceed to Stripe Checkout</span>
                 <ArrowRight className="w-4 h-4 rtl:rotate-180" />
@@ -274,7 +274,7 @@ export default function CartDrawer() {
               <div className="text-center">
                 <button
                   onClick={handleViewBag}
-                  className="text-[11px] text-[#8C6D37] hover:text-[#D4AF37] underline font-cinzel uppercase tracking-wider"
+                  className="text-[11px] text-[#D8BE99] hover:text-[#D4AF37] underline font-cinzel uppercase tracking-wider"
                 >
                   View Full Cart Details
                 </button>

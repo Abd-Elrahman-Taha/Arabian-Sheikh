@@ -123,8 +123,8 @@ const ctxMap = new WeakMap();
 
 const WebThreads = ({
   color1 = '#D4AF37',
-  color2 = '#8C6D37',
-  color3 = '#FFFFFF',
+  color2 = '#D8BE99',
+  color3 = '#F3E6D0',
   speed = 0.2,
   threadCount = 6,
   frequency = 5.0,

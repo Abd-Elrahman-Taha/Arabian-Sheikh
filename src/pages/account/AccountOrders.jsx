@@ -29,23 +29,23 @@ export default function AccountOrders() {
   ];
 
   return (
-    <div className="space-y-6 text-[#F5ECE3]">
-      <div className="border-b border-[#5C3D28]/40 pb-4">
-        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+    <div className="space-y-6 text-[#F3E6D0]">
+      <div className="border-b border-[#3A2116]/40 pb-4">
+        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
           Acquisition History
         </h2>
-        <p className="text-xs text-[#BFA893]">
+        <p className="text-xs text-[#D8BE99]">
           Track and review all royal distillations dispatched to your palace residence.
         </p>
       </div>
 
       <div className="space-y-4">
         {orders.map((o) => (
-          <div key={o.id} className="bg-[#2D1F14] border border-[#5C3D28]/60 p-6 space-y-4 shadow-md">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#5C3D28]/30 gap-2 text-xs">
+          <div key={o.id} className="bg-[#21130D] border border-[#3A2116]/60 p-6 space-y-4 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#3A2116]/30 gap-2 text-xs">
               <div>
                 <span className="font-cinzel font-bold text-[#D4AF37] text-sm">{o.id}</span>
-                <span className="text-[#BFA893] ml-3 font-mono">{o.date}</span>
+                <span className="text-[#D8BE99] ml-3 font-mono">{o.date}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-2.5 py-0.5 text-[10px] font-mono ${
@@ -53,20 +53,20 @@ export default function AccountOrders() {
                 }`}>
                   {o.status}
                 </span>
-                <span className="font-cinzel font-bold text-[#F8F5F0] text-sm">€{o.total.toFixed(2)}</span>
+                <span className="font-cinzel font-bold text-[#F3E6D0] text-sm">€{o.total.toFixed(2)}</span>
               </div>
             </div>
 
             <div className="space-y-2 text-xs">
               {o.items.map((it, idx) => (
-                <div key={idx} className="flex justify-between text-[#BFA893]">
+                <div key={idx} className="flex justify-between text-[#D8BE99]">
                   <span>{it.name} × {it.qty}</span>
-                  <span className="font-mono text-[#F8F5F0]">€{it.price * it.qty}</span>
+                  <span className="font-mono text-[#F3E6D0]">€{it.price * it.qty}</span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-3 border-t border-[#5C3D28]/30 flex items-center justify-between text-xs text-[#D4AF37]">
+            <div className="pt-3 border-t border-[#3A2116]/30 flex items-center justify-between text-xs text-[#D4AF37]">
               <div className="flex items-center gap-1.5 font-mono text-[11px]">
                 <Truck className="w-3.5 h-3.5" />
                 <span>Tracking: {o.tracking}</span>

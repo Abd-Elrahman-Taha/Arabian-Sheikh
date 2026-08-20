@@ -107,7 +107,7 @@ export default function CartPage() {
                   </div>
                   <div className="w-full h-1.5 bg-[var(--color-desert-primary)]/40 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-[#B45625] to-[#80300D] transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-[#3A2116] to-[#3A2116] transition-all duration-500"
                       style={{ width: `${freeShippingProgress}%` }}
                     />
                   </div>
@@ -236,7 +236,7 @@ export default function CartPage() {
                 type="checkbox"
                 checked={cart.giftWrap || false}
                 onChange={toggleGiftWrap}
-                className="accent-[#B45625] w-4 h-4 cursor-pointer"
+                className="accent-[#3A2116] w-4 h-4 cursor-pointer"
               />
             </div>
 

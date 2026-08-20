@@ -84,13 +84,13 @@ export default function IngredientsSection({ onSelectIngredient }) {
 
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-3">
-        <span className="text-[10px] font-sans font-bold uppercase tracking-[0.3em] text-[#C9A15C]">
+        <span className="text-[10px] font-sans font-bold uppercase tracking-[0.3em] text-[#D4AF37]">
           {isArabic ? 'المصادر والتقطير النقي' : 'RAW NOBLE INGREDIENTS'}
         </span>
-        <h2 className="font-arabic font-light text-3xl sm:text-5xl text-[#F4F1EA] tracking-wide">
+        <h2 className="font-arabic font-light text-3xl sm:text-5xl text-[#F3E6D0] tracking-wide">
           {isArabic ? 'أندر خلاصات الشرق الطبيعية' : 'The Four Sacred Arabian Essences'}
         </h2>
-        <p className="text-xs sm:text-sm text-[#8E8880] leading-relaxed font-sans">
+        <p className="text-xs sm:text-sm text-[#D8BE99] leading-relaxed font-sans">
           {isArabic
             ? 'لا نستخدم المركبات الصناعية. كل نوتة عطرية في دار سَـراب تُستخلص من مصادر برية معمرة ومزارع ملكية خاصة.'
             : 'Uncompromising purity. Every botanical resin and distilled drop is sourced sustainably from ancient wild reserves.'}
@@ -102,7 +102,7 @@ export default function IngredientsSection({ onSelectIngredient }) {
         
         {/* Left Column: Big Showcase Card */}
         <div className="lg:col-span-7">
-          <div className="relative h-[380px] sm:h-[480px] lg:h-[540px] rounded-3xl overflow-hidden bg-[#0A0A09] border border-white/[0.12] shadow-2xl group">
+          <div className="relative h-[380px] sm:h-[480px] lg:h-[540px] rounded-3xl overflow-hidden bg-[#0B0A08] border border-white/[0.12] shadow-2xl group">
             
             <img
               src={currentIng.image}
@@ -110,27 +110,27 @@ export default function IngredientsSection({ onSelectIngredient }) {
               className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
             />
             
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
 
             {/* Inset Metadata */}
             <div className="absolute top-6 start-6 z-10 flex items-center gap-2">
-              <span className="px-3.5 py-1 rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-[10px] font-mono font-bold tracking-widest text-[#E5C07B] uppercase">
+              <span className="px-3.5 py-1 rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-[10px] font-mono font-bold tracking-widest text-[#F2D675] uppercase">
                 {isArabic ? currentIng.categoryAr : currentIng.categoryEn}
               </span>
             </div>
 
             {/* Bottom Content Card */}
             <div className="absolute bottom-0 inset-x-0 p-6 sm:p-10 space-y-3 z-10">
-              <div className="flex items-center gap-2 text-xs font-mono text-[#C9A15C]">
+              <div className="flex items-center gap-2 text-xs font-mono text-[#D4AF37]">
                 <Compass className="w-3.5 h-3.5" />
                 <span>{isArabic ? currentIng.originAr : currentIng.originEn}</span>
               </div>
               
-              <h3 className="font-arabic font-bold text-2xl sm:text-3xl text-[#F4F1EA]">
+              <h3 className="font-arabic font-bold text-2xl sm:text-3xl text-[#F3E6D0]">
                 {isArabic ? currentIng.nameAr : currentIng.nameEn}
               </h3>
               
-              <p className="text-xs sm:text-sm text-[#C8C2BA] max-w-xl leading-relaxed font-sans">
+              <p className="text-xs sm:text-sm text-[#D8BE99] max-w-xl leading-relaxed font-sans">
                 {isArabic ? currentIng.descAr : currentIng.descEn}
               </p>
 
@@ -139,7 +139,7 @@ export default function IngredientsSection({ onSelectIngredient }) {
                 {(isArabic ? currentIng.notesAr : currentIng.notesEn).map((note, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 rounded-full bg-white/[0.08] border border-white/10 text-[10px] font-sans font-medium text-[#F4F1EA]"
+                    className="px-3 py-1 rounded-full bg-white/[0.08] border border-white/10 text-[10px] font-sans font-medium text-[#F3E6D0]"
                   >
                     ✦ {note}
                   </span>
@@ -163,8 +163,8 @@ export default function IngredientsSection({ onSelectIngredient }) {
                 }}
                 className={`w-full text-start p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer group ${
                   isActive
-                    ? 'bg-[#141210] border-[#C9A15C] shadow-[0_8px_30px_rgba(201,161,92,0.2)]'
-                    : 'bg-[#0A0A09]/70 border-white/[0.06] hover:border-white/20 hover:bg-[#100F0D]'
+                    ? 'bg-[#21130D] border-[#D4AF37] shadow-[0_8px_30px_rgba(201,161,92,0.2)]'
+                    : 'bg-[#0B0A08]/70 border-white/[0.06] hover:border-white/20 hover:bg-[#0B0A08]'
                 }`}
                 data-cursor="view"
               >
@@ -179,12 +179,12 @@ export default function IngredientsSection({ onSelectIngredient }) {
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-[9px] font-mono tracking-widest text-[#8E8880] uppercase block">
+                    <span className="text-[9px] font-mono tracking-widest text-[#D8BE99] uppercase block">
                       {isArabic ? ing.categoryAr : ing.categoryEn}
                     </span>
                     <h4
                       className={`font-arabic text-base sm:text-lg font-bold transition-colors ${
-                        isActive ? 'text-[#C9A15C]' : 'text-[#F4F1EA] group-hover:text-[#E5C07B]'
+                        isActive ? 'text-[#D4AF37]' : 'text-[#F3E6D0] group-hover:text-[#F2D675]'
                       }`}
                     >
                       {isArabic ? ing.nameAr : ing.nameEn}
@@ -195,8 +195,8 @@ export default function IngredientsSection({ onSelectIngredient }) {
                 <div
                   className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs transition-colors ${
                     isActive
-                      ? 'border-[#C9A15C] bg-[#C9A15C] text-[#0A0A0A] font-bold'
-                      : 'border-white/20 text-[#8E8880] group-hover:border-white/40'
+                      ? 'border-[#D4AF37] bg-[#D4AF37] text-[#0B0A08] font-bold'
+                      : 'border-white/20 text-[#D8BE99] group-hover:border-white/40'
                   }`}
                 >
                   {idx + 1}

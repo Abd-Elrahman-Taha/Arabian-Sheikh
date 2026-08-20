@@ -99,13 +99,13 @@ export default function ArabianIntro({ onComplete }) {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[99999] select-none overflow-hidden bg-[#0A0A0B] flex items-center justify-center"
+      className="fixed inset-0 z-[99999] select-none overflow-hidden bg-[#0B0A08] flex items-center justify-center"
       aria-label="Arabian Sheikh Royal Prologue"
     >
       {/* 3D Bakhoor Incense Smoke Layer */}
       <div
         ref={smokeContainerRef}
-        className="absolute inset-0 z-0 bg-radial from-[#1A140E]/60 via-[#100C09]/90 to-[#0A0A0B]"
+        className="absolute inset-0 z-0 bg-radial from-[#21130D]/60 via-[#21130D]/90 to-[#0B0A08]"
         style={{ opacity: 0 }}
       >
         <Canvas
@@ -123,7 +123,7 @@ export default function ArabianIntro({ onComplete }) {
           }}
         >
           {/* Warm Amber Incense Lighting */}
-          <ambientLight intensity={1.8} color="#FFF5E8" />
+          <ambientLight intensity={1.8} color="#F3E6D0" />
           <directionalLight
             position={[100, 300, 150]}
             intensity={2.4}
@@ -133,7 +133,7 @@ export default function ArabianIntro({ onComplete }) {
             position={[0, -60, -80]}
             intensity={4.2}
             distance={850}
-            color="#C5A059"
+            color="#D4AF37"
           />
 
           <Suspense fallback={null}>
@@ -163,7 +163,7 @@ export default function ArabianIntro({ onComplete }) {
         <button
           type="button"
           onClick={handleSkip}
-          className="group flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-black/60 px-5 py-2 text-xs font-cinzel tracking-[0.25em] uppercase text-[#F8F5F0] backdrop-blur-md transition-all duration-300 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black shadow-2xl focus:outline-none cursor-pointer"
+          className="group flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-black/60 px-5 py-2 text-xs font-cinzel tracking-[0.25em] uppercase text-[#F3E6D0] backdrop-blur-md transition-all duration-300 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black shadow-2xl focus:outline-none cursor-pointer"
         >
           <span>Skip</span>
         </button>

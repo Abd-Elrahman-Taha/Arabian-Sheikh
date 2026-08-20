@@ -6,7 +6,7 @@ import React, { useRef, useEffect } from 'react';
  * Sits in the atmosphere (pointer-events-none).
  * Features:
  * - Radiant, luminous twinkling celestial stars with diamond sparkle rays and glowing halos
- * - Warm golden (#FFE082, #F8D188) and crystalline diamond white (#FFFDF5) stars with dynamic shine pulses
+ * - Warm golden (#F2D675, #F2D675) and crystalline diamond white (#F3E6D0) stars with dynamic shine pulses
  * - Soft diffuse ethereal desert smoke/mist curling slowly in the background
  * - 60fps performance with auto-pause when off-screen
  */
@@ -41,10 +41,10 @@ export default function BackgroundAtmosphere({
     window.addEventListener('resize', handleResize);
 
     const STAR_PALETTES = [
-      { core: '#FFFFFF', glow: 'rgba(255, 230, 150, 0.95)', ray: 'rgba(255, 245, 220, 0.9)' },
-      { core: '#FFF8E7', glow: 'rgba(248, 209, 136, 0.95)', ray: 'rgba(248, 209, 136, 0.85)' },
-      { core: '#FFE8A3', glow: 'rgba(235, 170, 98, 0.9)',  ray: 'rgba(255, 215, 130, 0.85)' },
-      { core: '#FFFDF0', glow: 'rgba(180, 86, 37, 0.85)',  ray: 'rgba(255, 235, 180, 0.8)' },
+      { core: '#F3E6D0', glow: 'rgba(255, 230, 150, 0.95)', ray: 'rgba(255, 245, 220, 0.9)' },
+      { core: '#F3E6D0', glow: 'rgba(248, 209, 136, 0.95)', ray: 'rgba(248, 209, 136, 0.85)' },
+      { core: '#F2D675', glow: 'rgba(235, 170, 98, 0.9)',  ray: 'rgba(255, 215, 130, 0.85)' },
+      { core: '#F3E6D0', glow: 'rgba(180, 86, 37, 0.85)',  ray: 'rgba(255, 235, 180, 0.8)' },
     ];
 
     // Star Class with dynamic shine, rotation, and lens-flare rays

@@ -7,7 +7,7 @@ import { Smoke, getMultiColorParticleMaterialGenerator } from "react-smoke";
  * BakhoorSmoke Component
  * 
  * Renders a soft, organic, multi-tonal Arabian incense (Bakhoor) smoke plume.
- * Uses warm champagne (#EADED2), soft ivory (#F4ECE1), and subtle golden amber (#DFCAA0)
+ * Uses warm champagne (#F3E6D0), soft ivory (#F3E6D0), and subtle golden amber (#D8BE99)
  * color harmonies to reflect luxury Arabian perfumery heritage.
  */
 export default function BakhoorSmoke({
@@ -30,10 +30,10 @@ export default function BakhoorSmoke({
   // Multi-color palette reflecting sacred Bakhoor incense & warm amber
   const materialGenerator = useMemo(() => {
     return getMultiColorParticleMaterialGenerator([
-      new THREE.Color("#EADED2"), // Signature warm off-white / Bakhoor
-      new THREE.Color("#F5EDE3"), // Ethereal incense veil highlight
-      new THREE.Color("#E6D8C6"), // Soft warm champagne body
-      new THREE.Color("#DFCAA0"), // Subtle golden majlis amber accent
+      new THREE.Color("#F3E6D0"), // Signature warm off-white / Bakhoor
+      new THREE.Color("#F3E6D0"), // Ethereal incense veil highlight
+      new THREE.Color("#F3E6D0"), // Soft warm champagne body
+      new THREE.Color("#D8BE99"), // Subtle golden majlis amber accent
     ]);
   }, []);
 

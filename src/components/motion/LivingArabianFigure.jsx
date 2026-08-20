@@ -35,7 +35,7 @@ export default function LivingArabianFigure({
           }}
         />
         {/* Subtle Warm Light Shimmer */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#D2A55F]/20 via-transparent to-transparent mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#D4AF37]/20 via-transparent to-transparent mix-blend-screen" />
       </div>
     </div>
   );

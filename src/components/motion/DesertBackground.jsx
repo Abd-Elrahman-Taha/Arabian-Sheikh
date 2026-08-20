@@ -4,14 +4,14 @@ import React, { useEffect, useRef } from 'react';
  * DesertBackground
  *
  * Calibrated dark luxury background transition:
- * Deep obsidian (#0A0A0B) → Rich espresso (#0F0D0C) → Royal bronze ember (#14100D) → Obsidian night (#0A0A0B)
+ * Deep obsidian (#0B0A08) → Rich espresso (#0B0A08) → Royal bronze ember (#21130D) → Obsidian night (#0B0A08)
  */
 
 const STAGES = [
-  { at: 0.00, bg: '#0A0A0B', vignette: 'rgba(0,0,0,0.6)' },
-  { at: 0.35, bg: '#0E0C0B', vignette: 'rgba(0,0,0,0.5)' },
-  { at: 0.70, bg: '#14100D', vignette: 'rgba(0,0,0,0.55)' },
-  { at: 1.00, bg: '#0A0A0B', vignette: 'rgba(0,0,0,0.7)' },
+  { at: 0.00, bg: '#0B0A08', vignette: 'rgba(0,0,0,0.6)' },
+  { at: 0.35, bg: '#0B0A08', vignette: 'rgba(0,0,0,0.5)' },
+  { at: 0.70, bg: '#21130D', vignette: 'rgba(0,0,0,0.55)' },
+  { at: 1.00, bg: '#0B0A08', vignette: 'rgba(0,0,0,0.7)' },
 ];
 
 function lerp(a, b, t) {
@@ -89,7 +89,7 @@ export default function DesertBackground() {
   return (
     <div
       ref={bgRef}
-      className="fixed inset-0 pointer-events-none -z-20 transition-colors duration-700 bg-[#0A0A0B]"
+      className="fixed inset-0 pointer-events-none -z-20 transition-colors duration-700 bg-[#0B0A08]"
     />
   );
 }

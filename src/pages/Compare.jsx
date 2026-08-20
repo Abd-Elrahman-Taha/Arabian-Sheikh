@@ -19,30 +19,30 @@ export default function Compare() {
   }, []);
 
   if (loading) {
-    return <div className="pt-36 pb-20 text-center text-xs text-[#8C6D37]">Loading comparison matrix...</div>;
+    return <div className="pt-36 pb-20 text-center text-xs text-[#D8BE99]">Loading comparison matrix...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F8F5F0] pt-32 pb-24">
+    <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-32 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
             Analytical Flacon Matrix
           </span>
-          <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
+          <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0]">
             The Three Flacons Comparison
           </h1>
-          <p className="text-xs sm:text-sm text-[#A69E94]">
+          <p className="text-xs sm:text-sm text-[#D8BE99]">
             Analyze notes, longevity, sillage, and pricing side-by-side.
           </p>
         </div>
 
-        <div className="overflow-x-auto bg-[#121010] border border-[#D4AF37]/20 shadow-2xl">
+        <div className="overflow-x-auto bg-[#0B0A08] border border-[#D4AF37]/20 shadow-2xl">
           <table className="w-full text-left rtl:text-right border-collapse text-xs">
             <thead>
-              <tr className="bg-[#181515] border-b border-[#D4AF37]/20">
-                <th className="p-4 font-cinzel uppercase text-[#8C6D37] w-1/4">Specification</th>
+              <tr className="bg-[#0B0A08] border-b border-[#D4AF37]/20">
+                <th className="p-4 font-cinzel uppercase text-[#D8BE99] w-1/4">Specification</th>
                 {products.map((p) => (
                   <th key={p.id} className="p-4 font-cinzel text-sm font-bold text-[#D4AF37] text-center w-1/4">
                     {p.name} ({p.tier})
@@ -52,7 +52,7 @@ export default function Compare() {
             </thead>
             <tbody className="divide-y divide-white/5">
               <tr>
-                <td className="p-4 font-semibold text-[#A69E94]">Bottle Silhouette</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Bottle Silhouette</td>
                 {products.map((p) => (
                   <td key={p.id} className="p-4 text-center">
                     <img
@@ -64,23 +64,23 @@ export default function Compare() {
                 ))}
               </tr>
               <tr className="bg-white/2">
-                <td className="p-4 font-semibold text-[#A69E94]">Price / Size</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Price / Size</td>
                 {products.map((p) => (
                   <td key={p.id} className="p-4 text-center font-cinzel font-bold text-[#D4AF37] text-sm">
-                    €{p.price} <span className="text-xs text-[#A69E94] font-normal">/ {p.size}</span>
+                    €{p.price} <span className="text-xs text-[#D8BE99] font-normal">/ {p.size}</span>
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 font-semibold text-[#A69E94]">Tier Category</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Tier Category</td>
                 {products.map((p) => (
-                  <td key={p.id} className="p-4 text-center font-cinzel text-[#F8F5F0]">
+                  <td key={p.id} className="p-4 text-center font-cinzel text-[#F3E6D0]">
                     {p.tier} Tier
                   </td>
                 ))}
               </tr>
               <tr className="bg-white/2">
-                <td className="p-4 font-semibold text-[#A69E94]">Longevity Meter</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Longevity Meter</td>
                 {products.map((p) => (
                   <td key={p.id} className="p-4 text-center font-semibold text-[#D4AF37]">
                     {p.longevity}
@@ -88,44 +88,44 @@ export default function Compare() {
                 ))}
               </tr>
               <tr>
-                <td className="p-4 font-semibold text-[#A69E94]">Sillage Profile</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Sillage Profile</td>
                 {products.map((p) => (
-                  <td key={p.id} className="p-4 text-center text-[#E5E0D8]">
+                  <td key={p.id} className="p-4 text-center text-[#F3E6D0]">
                     {p.sillage}
                   </td>
                 ))}
               </tr>
               <tr className="bg-white/2">
-                <td className="p-4 font-semibold text-[#A69E94]">Top Notes</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Top Notes</td>
                 {products.map((p) => (
-                  <td key={p.id} className="p-4 text-center text-[#E5E0D8]">
+                  <td key={p.id} className="p-4 text-center text-[#F3E6D0]">
                     {p.notes?.top?.join(', ')}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 font-semibold text-[#A69E94]">Heart Notes</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Heart Notes</td>
                 {products.map((p) => (
-                  <td key={p.id} className="p-4 text-center text-[#E5E0D8]">
+                  <td key={p.id} className="p-4 text-center text-[#F3E6D0]">
                     {p.notes?.heart?.join(', ')}
                   </td>
                 ))}
               </tr>
               <tr className="bg-white/2">
-                <td className="p-4 font-semibold text-[#A69E94]">Base Notes</td>
+                <td className="p-4 font-semibold text-[#D8BE99]">Base Notes</td>
                 {products.map((p) => (
-                  <td key={p.id} className="p-4 text-center text-[#E5E0D8]">
+                  <td key={p.id} className="p-4 text-center text-[#F3E6D0]">
                     {p.notes?.base?.join(', ')}
                   </td>
                 ))}
               </tr>
-              <tr className="bg-[#181515]">
-                <td className="p-4 font-semibold text-[#A69E94]">Action</td>
+              <tr className="bg-[#0B0A08]">
+                <td className="p-4 font-semibold text-[#D8BE99]">Action</td>
                 {products.map((p) => (
                   <td key={p.id} className="p-4 text-center">
                     <button
                       onClick={() => addToCart(p, '60 ml', 1)}
-                      className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors"
+                      className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors"
                     >
                       Add to Bag (€{p.price})
                     </button>

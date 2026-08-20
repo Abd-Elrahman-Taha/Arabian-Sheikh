@@ -80,9 +80,9 @@ export default function ProductSlider({
         onClick={() => scrollBy('left')}
         disabled={!canScrollLeft}
         aria-label="Previous products"
-        className={`hidden md:flex absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full border border-[#D2A55F]/50 bg-[#130C05]/90 text-[#EADED2] backdrop-blur-md transition-all duration-300 shadow-xl cursor-pointer ${
+        className={`hidden md:flex absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#21130D]/90 text-[#F3E6D0] backdrop-blur-md transition-all duration-300 shadow-xl cursor-pointer ${
           canScrollLeft
-            ? 'opacity-80 hover:opacity-100 hover:border-[#D2A55F] hover:bg-[#D2A55F] hover:text-[#130C05] hover:scale-110'
+            ? 'opacity-80 hover:opacity-100 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#21130D] hover:scale-110'
             : 'opacity-0 pointer-events-none'
         }`}
       >
@@ -94,9 +94,9 @@ export default function ProductSlider({
         onClick={() => scrollBy('right')}
         disabled={!canScrollRight}
         aria-label="Next products"
-        className={`hidden md:flex absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full border border-[#D2A55F]/50 bg-[#130C05]/90 text-[#EADED2] backdrop-blur-md transition-all duration-300 shadow-xl cursor-pointer ${
+        className={`hidden md:flex absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#21130D]/90 text-[#F3E6D0] backdrop-blur-md transition-all duration-300 shadow-xl cursor-pointer ${
           canScrollRight
-            ? 'opacity-80 hover:opacity-100 hover:border-[#D2A55F] hover:bg-[#D2A55F] hover:text-[#130C05] hover:scale-110'
+            ? 'opacity-80 hover:opacity-100 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#21130D] hover:scale-110'
             : 'opacity-0 pointer-events-none'
         }`}
       >

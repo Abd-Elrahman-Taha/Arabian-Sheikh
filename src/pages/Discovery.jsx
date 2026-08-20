@@ -112,7 +112,7 @@ export default function Discovery() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F8F5F0] pt-32 pb-24">
+    <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-32 pb-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
@@ -120,10 +120,10 @@ export default function Discovery() {
           <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] mb-2">
             <Compass className="w-6 h-6" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
+          <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0]">
             The Olfactory Discovery Journey
           </h1>
-          <p className="text-xs sm:text-sm text-[#A69E94]">
+          <p className="text-xs sm:text-sm text-[#D8BE99]">
             Answer four curated questions to reveal your perfect Andalusian signature flacon.
           </p>
         </div>
@@ -131,7 +131,7 @@ export default function Discovery() {
         {/* Progress Bar */}
         {step <= 4 && (
           <div className="mb-8">
-            <div className="flex justify-between text-xs text-[#8C6D37] font-cinzel uppercase mb-2">
+            <div className="flex justify-between text-xs text-[#D8BE99] font-cinzel uppercase mb-2">
               <span>Step {step} of 4</span>
               <span>{Math.round((step / 4) * 100)}% Completed</span>
             </div>
@@ -146,8 +146,8 @@ export default function Discovery() {
 
         {/* Quiz Steps */}
         {step <= 4 && (
-          <div className="bg-[#121010] border border-[#D4AF37]/30 p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in">
-            <h2 className="text-xl font-cinzel font-bold text-[#F8F5F0] text-center">
+          <div className="bg-[#0B0A08] border border-[#D4AF37]/30 p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in">
+            <h2 className="text-xl font-cinzel font-bold text-[#F3E6D0] text-center">
               {steps[step - 1].title}
             </h2>
 
@@ -159,13 +159,13 @@ export default function Discovery() {
                   className="p-5 bg-black/60 border border-white/10 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 text-left rtl:text-right rounded transition-all duration-300 group flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="font-cinzel font-bold text-sm text-[#F8F5F0] group-hover:text-[#D4AF37]">
+                    <span className="font-cinzel font-bold text-sm text-[#F3E6D0] group-hover:text-[#D4AF37]">
                       {opt.label}
                     </span>
-                    <ArrowRight className="w-4 h-4 text-[#8C6D37] group-hover:text-[#D4AF37] transition-colors rtl:rotate-180" />
+                    <ArrowRight className="w-4 h-4 text-[#D8BE99] group-hover:text-[#D4AF37] transition-colors rtl:rotate-180" />
                   </div>
                   {opt.desc && (
-                    <p className="text-xs text-[#A69E94] mt-1 font-sans">{opt.desc}</p>
+                    <p className="text-xs text-[#D8BE99] mt-1 font-sans">{opt.desc}</p>
                   )}
                 </button>
               ))}
@@ -175,7 +175,7 @@ export default function Discovery() {
 
         {/* Results Screen */}
         {step === 5 && result && (
-          <div className="bg-[#121010] border border-[#D4AF37]/50 p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in">
+          <div className="bg-[#0B0A08] border border-[#D4AF37]/50 p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in">
             <div className="inline-flex px-3.5 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
               Your Olfactory Signature Match
             </div>
@@ -189,10 +189,10 @@ export default function Discovery() {
             </div>
 
             <div className="space-y-2">
-              <span className="text-xs uppercase tracking-widest text-[#8C6D37] font-cinzel">{result.tier}</span>
+              <span className="text-xs uppercase tracking-widest text-[#D8BE99] font-cinzel">{result.tier}</span>
               <h2 className="text-3xl font-cinzel font-bold text-[#D4AF37]">{result.name}</h2>
-              <p className="text-xs sm:text-sm text-[#E5E0D8] max-w-md mx-auto">{result.reason}</p>
-              <p className="text-xl font-cinzel font-bold text-[#F8F5F0] pt-2">€{result.price} / {result.size}</p>
+              <p className="text-xs sm:text-sm text-[#F3E6D0] max-w-md mx-auto">{result.reason}</p>
+              <p className="text-xl font-cinzel font-bold text-[#F3E6D0] pt-2">€{result.price} / {result.size}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -201,7 +201,7 @@ export default function Discovery() {
                   const prod = await productService.getProductById(result.slug);
                   if (prod) addToCart(prod, '60 ml', 1);
                 }}
-                className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2"
+                className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Add to Bag (€{result.price})</span>
@@ -209,7 +209,7 @@ export default function Discovery() {
 
               <Link
                 to={`/product/${result.slug}`}
-                className="px-8 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#F8F5F0] font-cinzel text-xs uppercase tracking-wider transition-colors flex items-center justify-center"
+                className="px-8 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#F3E6D0] font-cinzel text-xs uppercase tracking-wider transition-colors flex items-center justify-center"
               >
                 View Creation Details
               </Link>
@@ -218,7 +218,7 @@ export default function Discovery() {
             <div className="pt-6 border-t border-white/10">
               <button
                 onClick={handleReset}
-                className="text-xs text-[#8C6D37] hover:text-[#D4AF37] flex items-center gap-1.5 mx-auto transition-colors"
+                className="text-xs text-[#D8BE99] hover:text-[#D4AF37] flex items-center gap-1.5 mx-auto transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Retake Olfactory Journey</span>

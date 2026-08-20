@@ -4,7 +4,7 @@ import gsap from 'gsap';
 
 export default function PerfumeBottleCanvas({
   activeProductIndex = 0,
-  liquidColor = '#C67A28',
+  liquidColor = '#D4AF37',
   className = '',
   enableInteractiveRotation = true
 }) {
@@ -19,11 +19,11 @@ export default function PerfumeBottleCanvas({
 
   // Fragrance color palettes for liquid & internal highlights
   const LIQUID_COLORS = [
-    { liquid: '#B87A28', glow: '#FFD799', cap: '#D4AF37' }, // 01 Dehn Al Oud Royal
-    { liquid: '#C48A2C', glow: '#FFE2A8', cap: '#E5C07B' }, // 02 Amber Al Malaki
-    { liquid: '#B84558', glow: '#FFB3C2', cap: '#E8D29F' }, // 03 Rose de Taif
-    { liquid: '#2D283E', glow: '#9A8CB8', cap: '#C0B08C' }, // 04 Misk Al Layl
-    { liquid: '#A8602E', glow: '#FFC899', cap: '#D8A850' }, // 05 Sarab Bakhoor
+    { liquid: '#D4AF37', glow: '#F2D675', cap: '#D4AF37' }, // 01 Dehn Al Oud Royal
+    { liquid: '#D4AF37', glow: '#F2D675', cap: '#F2D675' }, // 02 Amber Al Malaki
+    { liquid: '#3A2116', glow: '#D8BE99', cap: '#D4AF37' }, // 03 Rose de Taif
+    { liquid: '#21130D', glow: '#D8BE99', cap: '#D8BE99' }, // 04 Misk Al Layl
+    { liquid: '#3A2116', glow: '#F2D675', cap: '#D4AF37' }, // 05 Sarab Bakhoor
   ];
 
   useEffect(() => {
@@ -205,7 +205,7 @@ export default function PerfumeBottleCanvas({
     labelCanvas.width = 512;
     labelCanvas.height = 384;
     const ctx = labelCanvas.getContext('2d');
-    ctx.fillStyle = '#12100E';
+    ctx.fillStyle = '#21130D';
     ctx.fillRect(0, 0, 512, 384);
     ctx.strokeStyle = '#D4AF37';
     ctx.lineWidth = 6;
@@ -213,7 +213,7 @@ export default function PerfumeBottleCanvas({
     ctx.lineWidth = 1.5;
     ctx.strokeRect(26, 26, 460, 332);
     
-    ctx.fillStyle = '#E8C87A';
+    ctx.fillStyle = '#F2D675';
     ctx.font = 'bold 44px "IBM Plex Sans Arabic", "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -224,7 +224,7 @@ export default function PerfumeBottleCanvas({
     ctx.letterSpacing = '6px';
     ctx.fillText('SARAB', 256, 195);
     
-    ctx.fillStyle = '#8E8880';
+    ctx.fillStyle = '#D8BE99';
     ctx.font = '13px "Inter", sans-serif';
     ctx.fillText('EXTRAIT DE PARFUM', 256, 245);
     ctx.fillText('60 ML • 2.0 FL. OZ', 256, 280);
@@ -387,7 +387,7 @@ export default function PerfumeBottleCanvas({
       </div>
 
       {/* Subtle 3D Tag Indicator */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/40 border border-white/10 backdrop-blur-md text-[9px] font-mono tracking-widest text-[#8E8880] uppercase pointer-events-none opacity-60 hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/40 border border-white/10 backdrop-blur-md text-[9px] font-mono tracking-widest text-[#D8BE99] uppercase pointer-events-none opacity-60 hover:opacity-100 transition-opacity">
         3D INTERACTIVE FLACON • 360°
       </div>
     </div>

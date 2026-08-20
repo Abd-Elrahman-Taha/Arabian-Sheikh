@@ -106,7 +106,7 @@ export default function OrderTracking() {
                   <div
                     className={`absolute -left-6 sm:-left-8 w-6 h-6 sm:w-8 sm:h-8 rounded-none border-2 flex items-center justify-center transition-all ${
                       isCurrent
-                        ? 'border-[var(--color-terracotta)] bg-[var(--color-terracotta)] text-[#F8D188] ring-4 ring-[var(--color-terracotta)]/20 shadow-lg'
+                        ? 'border-[var(--color-terracotta)] bg-[var(--color-terracotta)] text-[#F2D675] ring-4 ring-[var(--color-terracotta)]/20 shadow-lg'
                         : isCompleted
                         ? 'border-[var(--color-terracotta)] bg-[var(--color-desert-primary)]/30 text-[var(--color-terracotta)]'
                         : 'border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-primary)]/10 text-[var(--color-terracotta-deep)]/40'

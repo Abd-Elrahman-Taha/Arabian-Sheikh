@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-desert-primary: #EBAA62;
-  --color-desert-light: #F8D188;
-  --color-terracotta: #B45625;
-  --color-terracotta-deep: #80300D;
-  --color-earth-dark: #5D1D01;
+  --color-desert-primary: #D4AF37;
+  --color-desert-light: #F2D675;
+  --color-terracotta: #3A2116;
+  --color-terracotta-deep: #3A2116;
+  --color-earth-dark: #3A2116;
 
   --font-serif: 'Cinzel', serif;
   --font-editorial: 'Cormorant Garamond', Georgia, serif;
@@ -15,64 +15,64 @@
 
 /* =========================================================================
    ARABIAN SHEIKH — FINAL WARM DESERT COLOR SYSTEM
-   Primary: Warm Desert Sand (#EBAA62)
-   Light: Light Sand (#F8D188)
-   Secondary: Terracotta (#B45625)
-   Deep Accent: Deep Terracotta (#80300D)
-   Dark Contrast: Darkest Earth (#5D1D01)
+   Primary: Warm Desert Sand (#D4AF37)
+   Light: Light Sand (#F2D675)
+   Secondary: Terracotta (#3A2116)
+   Deep Accent: Deep Terracotta (#3A2116)
+   Dark Contrast: Darkest Earth (#3A2116)
    ========================================================================= */
 
 :root {
   /* ── CORE PALETTE ──────────────────────────────────────────────────────── */
-  --color-desert-primary:  #EBAA62; /* Warm Desert Sand — Main brand color   */
-  --color-desert-light:    #F8D188; /* Light Sand — Lightest shade & cards   */
-  --color-terracotta:      #B45625; /* Terracotta — Primary CTA & accent     */
-  --color-terracotta-deep: #80300D; /* Deep Terracotta — Strong contrast     */
-  --color-earth-dark:      #5D1D01; /* Darkest Earth — Main text & footer    */
+  --color-desert-primary:  #D4AF37; /* Warm Desert Sand — Main brand color   */
+  --color-desert-light:    #F2D675; /* Light Sand — Lightest shade & cards   */
+  --color-terracotta:      #3A2116; /* Terracotta — Primary CTA & accent     */
+  --color-terracotta-deep: #3A2116; /* Deep Terracotta — Strong contrast     */
+  --color-earth-dark:      #3A2116; /* Darkest Earth — Main text & footer    */
 
   /* ── DERIVED SHADES ────────────────────────────────────────────────────── */
-  --sand-card:             #F8D188;
-  --sand-card-light:       #FBE5B8;
-  --terracotta-hover:      #80300D;
+  --sand-card:             #F2D675;
+  --sand-card-light:       #F2D675;
+  --terracotta-hover:      #3A2116;
   --terracotta-soft:       rgba(180, 86, 37, 0.15);
-  --earth-muted:           #80300D;
-  --earth-subtle:          #9E4D1B;
+  --earth-muted:           #3A2116;
+  --earth-subtle:          #D8BE99;
 
   /* ── SEMANTIC BACKGROUNDS ──────────────────────────────────────────────── */
-  --bg-primary:            #EBAA62; /* Primary warm desert sand page base    */
-  --bg-surface:            #F8D188; /* Light sand surfaces & inputs          */
-  --bg-card:               #F8D188; /* Light sand card base                 */
-  --bg-card-hover:         #FBE5B8; /* Elevated warm sand card               */
-  --bg-secondary:          #E39F54; /* Slightly deeper desert sand           */
-  --bg-tertiary:           #B45625; /* Terracotta architectural neutral     */
+  --bg-primary:            #D4AF37; /* Primary warm desert sand page base    */
+  --bg-surface:            #F2D675; /* Light sand surfaces & inputs          */
+  --bg-card:               #F2D675; /* Light sand card base                 */
+  --bg-card-hover:         #F2D675; /* Elevated warm sand card               */
+  --bg-secondary:          #D4AF37; /* Slightly deeper desert sand           */
+  --bg-tertiary:           #3A2116; /* Terracotta architectural neutral     */
   --bg-glass:              rgba(235, 170, 98, 0.94); /* Warm sand glass navbar */
-  --bg-dark-section:       #5D1D01; /* Dark Earth section/footer             */
-  --bg-dark-section-text:  #F8D188;
+  --bg-dark-section:       #3A2116; /* Dark Earth section/footer             */
+  --bg-dark-section-text:  #F2D675;
 
   /* ── TYPOGRAPHY ────────────────────────────────────────────────────────── */
-  --text-primary:          #5D1D01; /* Darkest Earth for primary headings/text */
-  --text-secondary:        #80300D; /* Deep Terracotta secondary text       */
-  --text-muted:            #9E4D1B; /* Muted desert earth                   */
-  --text-inverse:          #F8D188; /* Light Sand on dark backgrounds       */
-  --text-accent:           #B45625; /* Terracotta price & highlights        */
-  --text-on-sand:          #5D1D01;
-  --text-on-sand-sec:      #80300D;
-  --text-on-sand-muted:    #9E4D1B;
-  --text-on-sand-gold:     #B45625;
+  --text-primary:          #3A2116; /* Darkest Earth for primary headings/text */
+  --text-secondary:        #3A2116; /* Deep Terracotta secondary text       */
+  --text-muted:            #D8BE99; /* Muted desert earth                   */
+  --text-inverse:          #F2D675; /* Light Sand on dark backgrounds       */
+  --text-accent:           #3A2116; /* Terracotta price & highlights        */
+  --text-on-sand:          #3A2116;
+  --text-on-sand-sec:      #3A2116;
+  --text-on-sand-muted:    #D8BE99;
+  --text-on-sand-gold:     #3A2116;
 
   /* ── ACCENT COMPATIBILITY ──────────────────────────────────────────────── */
-  --gold-primary:          #B45625; /* Terracotta replaces legacy gold       */
-  --gold-light:            #EBAA62;
-  --gold-muted:            #80300D;
-  --gold-dark:             #5D1D01;
+  --gold-primary:          #3A2116; /* Terracotta replaces legacy gold       */
+  --gold-light:            #D4AF37;
+  --gold-muted:            #3A2116;
+  --gold-dark:             #3A2116;
 
   /* ── BORDERS ───────────────────────────────────────────────────────────── */
   --border-subtle:         rgba(93, 29, 1, 0.18);
   --border-sand:           rgba(128, 48, 13, 0.25);
   --border-card:           rgba(128, 48, 13, 0.22);
-  --border-clay:           #B45625;
-  --border-terracotta:     #B45625;
-  --border-gold:           #B45625;
+  --border-clay:           #3A2116;
+  --border-terracotta:     #3A2116;
+  --border-gold:           #3A2116;
   --border-gold-subtle:    rgba(180, 86, 37, 0.25);
   --border-gold-glow:      rgba(180, 86, 37, 0.45);
 
@@ -82,12 +82,12 @@
   --shadow-sand:           0 8px 24px rgba(93, 29, 1, 0.09);
 
   /* ── FORM INPUTS ───────────────────────────────────────────────────────── */
-  --input-bg:              #F8D188;
-  --input-border:          #B45625;
+  --input-bg:              #F2D675;
+  --input-border:          #3A2116;
 
   /* ── SKELETON ──────────────────────────────────────────────────────────── */
-  --skeleton-base:         #E39F54;
-  --skeleton-highlight:    #F8D188;
+  --skeleton-base:         #D4AF37;
+  --skeleton-highlight:    #F2D675;
 }
 
 /* =========================================================================
@@ -150,17 +150,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #EBAA62;
+  background: #D4AF37;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B45625;
+  background: #3A2116;
   border-radius: 4px;
   border: 1px solid rgba(93, 29, 1, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #80300D;
+  background: #3A2116;
 }
 
 /* Hidden Scrollbar Utility */
@@ -208,24 +208,24 @@ body {
   transform: translateY(-3px);
 }
 
-/* Primary CTA Button — Terracotta (#B45625) */
+/* Primary CTA Button — Terracotta (#3A2116) */
 .luxury-btn-gold {
   position: relative;
-  background-color: #B45625;
-  color: #F8D188;
+  background-color: #3A2116;
+  color: #F2D675;
   font-family: 'Cinzel', serif;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-  border: 1px solid #80300D;
+  border: 1px solid #3A2116;
   box-shadow: 0 4px 14px rgba(180, 86, 37, 0.28);
 }
 
 .luxury-btn-gold:hover {
-  background-color: #80300D;
-  color: #F8D188;
+  background-color: #3A2116;
+  color: #F2D675;
   box-shadow: 0 6px 20px rgba(128, 48, 13, 0.45);
   transform: translateY(-1px);
 }
@@ -234,11 +234,11 @@ body {
   transform: translateY(0);
 }
 
-/* Secondary Button — Deep Terracotta (#80300D) Outline */
+/* Secondary Button — Deep Terracotta (#3A2116) Outline */
 .luxury-btn-outline {
   position: relative;
-  border: 1.5px solid #80300D;
-  color: #5D1D01;
+  border: 1.5px solid #3A2116;
+  color: #3A2116;
   font-family: 'Cinzel', serif;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -247,9 +247,9 @@ body {
 }
 
 .luxury-btn-outline:hover {
-  border-color: #80300D;
-  background-color: #80300D;
-  color: #F8D188;
+  border-color: #3A2116;
+  background-color: #3A2116;
+  color: #F2D675;
   box-shadow: 0 4px 16px rgba(128, 48, 13, 0.25);
   transform: translateY(-1px);
 }

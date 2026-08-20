@@ -98,8 +98,8 @@ void main() {
 
 export default function LuxuryBackgroundShader({
   color1 = '#D4AF37', // Gold
-  color2 = '#3D2817', // Roasted Amber / Mahogany
-  color3 = '#090706', // Obsidian Dark
+  color2 = '#3A2116', // Roasted Amber / Mahogany
+  color3 = '#0B0A08', // Obsidian Dark
   opacity = 0.65,
   className = ''
 }) {

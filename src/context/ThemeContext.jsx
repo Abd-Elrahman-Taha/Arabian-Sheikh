@@ -23,7 +23,7 @@ export function ThemeProvider({ children }) {
       metaTheme.name = 'theme-color';
       document.head.appendChild(metaTheme);
     }
-    metaTheme.content = '#130C05';
+    metaTheme.content = '#21130D';
   }, []);
 
   return (

@@ -350,7 +350,7 @@ export const PERFUME_TIERS = [
     price: 40,
     size: '60 ml / 2.0 fl oz',
     bottle: 'Millionaire',
-    color: '#2A2A2A',
+    color: '#0B0A08',
     image: '/products/millionaire_black.png?v=5',
     description: 'Commanding obsidian elegance with intense woods, spice, and magnetic masculine charisma.',
     filterParam: 'Royal'
@@ -363,7 +363,7 @@ export const PERFUME_TIERS = [
     price: 30,
     size: '60 ml / 2.0 fl oz',
     bottle: 'Ana Sukkar',
-    color: '#E8D29F',
+    color: '#D4AF37',
     image: '/products/ana_sukkar_white.png?v=5',
     description: 'Pristine porcelain-white flacon offering gourmand sweetness, delicate floral petals, and comforting creamy vanilla.',
     filterParam: 'Classic'

@@ -135,7 +135,7 @@ export default function Login({ returnPath }) {
               id="remember"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="accent-[#B45625] cursor-pointer"
+              className="accent-[#3A2116] cursor-pointer"
             />
             <label htmlFor="remember" className="text-xs text-[var(--color-terracotta-deep)] font-medium cursor-pointer">
               {t('auth.rememberMe')}

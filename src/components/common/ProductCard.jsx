@@ -38,15 +38,15 @@ export default function ProductCard({ product, onCompare }) {
 
   // Tier color styling
   const tierBadges = {
-    Luxury: 'bg-[#D4AF37] text-black font-bold border border-[#FFDF73]',
-    Royal: 'bg-[#1A1A1C] text-[#E5E0D8] border border-[#D4AF37]/50',
-    Classic: 'bg-[#F8F5F0] text-black border border-[#D4AF37]/40'
+    Luxury: 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]',
+    Royal: 'bg-[#0B0A08] text-[#F3E6D0] border border-[#D4AF37]/50',
+    Classic: 'bg-[#F3E6D0] text-black border border-[#D4AF37]/40'
   };
 
   return (
     <div
       onClick={() => navigate(`/product/${product.slug || product.id}`)}
-      className="group cursor-pointer relative bg-[#121010]/80 border border-[#D4AF37]/15 hover:border-[#D4AF37]/60 transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-lg hover:shadow-[0_15px_35px_rgba(0,0,0,0.85)] hover:-translate-y-1 rounded-sm"
+      className="group cursor-pointer relative bg-[#0B0A08]/80 border border-[#D4AF37]/15 hover:border-[#D4AF37]/60 transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-lg hover:shadow-[0_15px_35px_rgba(0,0,0,0.85)] hover:-translate-y-1 rounded-sm"
     >
       {/* Top Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
@@ -76,14 +76,14 @@ export default function ProductCard({ product, onCompare }) {
         } ${
           isSaved
             ? 'bg-[#D4AF37] text-black shadow-md scale-105'
-            : 'bg-black/60 text-[#E5E0D8] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/20 shadow-sm'
+            : 'bg-black/60 text-[#F3E6D0] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/20 shadow-sm'
         }`}
       >
         <Heart className={`w-3.5 h-3.5 transition-transform duration-200 ${isSaved ? 'fill-current' : ''}`} />
       </button>
 
       {/* Flacon Image Container with Soft Ambient Dark Background */}
-      <div className="relative aspect-[3/4] bg-gradient-to-b from-[#181515] to-[#0D0B0B] overflow-hidden flex items-center justify-center p-6">
+      <div className="relative aspect-[3/4] bg-gradient-to-b from-[#0B0A08] to-[#0B0A08] overflow-hidden flex items-center justify-center p-6">
         <img
           src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
           alt={displayName}
@@ -102,7 +102,7 @@ export default function ProductCard({ product, onCompare }) {
             className={`w-full py-2.5 text-[11px] uppercase tracking-[0.2em] font-cinzel font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               isOutOfStock
                 ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                : 'bg-[#D4AF37] text-black hover:bg-[#E5C07B] shadow-lg font-bold'
+                : 'bg-[#D4AF37] text-black hover:bg-[#F2D675] shadow-lg font-bold'
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
@@ -112,21 +112,21 @@ export default function ProductCard({ product, onCompare }) {
       </div>
 
       {/* Details Area */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between bg-[#121010]/95 border-t border-[#D4AF37]/10">
+      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between bg-[#0B0A08]/95 border-t border-[#D4AF37]/10">
         <div>
           {/* Scent family / volume */}
-          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-[#8C6D37] mb-1.5">
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-[#D8BE99] mb-1.5">
             <span>{product.fragranceFamily || product.scentFamily || 'Haute Parfumerie'}</span>
             <span>{product.size || '60 ml'}</span>
           </div>
 
           {/* Title */}
-          <h3 className="font-cinzel font-semibold text-[#F8F5F0] group-hover:text-[#D4AF37] transition-colors text-sm sm:text-base leading-snug line-clamp-1">
+          <h3 className="font-cinzel font-semibold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors text-sm sm:text-base leading-snug line-clamp-1">
             {displayName}
           </h3>
 
           {/* Tagline / short description */}
-          <p className="text-[12px] text-[#A69E94] line-clamp-2 mt-1 font-sans leading-relaxed">
+          <p className="text-[12px] text-[#D8BE99] line-clamp-2 mt-1 font-sans leading-relaxed">
             {product.tagline || product.description}
           </p>
         </div>
@@ -146,7 +146,7 @@ export default function ProductCard({ product, onCompare }) {
 
           <div className="flex items-center gap-1 text-[#D4AF37] text-xs">
             <Star className="w-3.5 h-3.5 fill-current" />
-            <span className="font-medium text-[#E5E0D8]">{product.rating || '5.0'}</span>
+            <span className="font-medium text-[#F3E6D0]">{product.rating || '5.0'}</span>
           </div>
         </div>
       </div>

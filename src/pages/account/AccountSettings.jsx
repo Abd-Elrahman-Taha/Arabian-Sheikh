@@ -17,12 +17,12 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="space-y-6 text-[#F5ECE3] max-w-2xl">
-      <div className="border-b border-[#5C3D28]/40 pb-4">
-        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+    <div className="space-y-6 text-[#F3E6D0] max-w-2xl">
+      <div className="border-b border-[#3A2116]/40 pb-4">
+        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
           Profile Settings & Security
         </h2>
-        <p className="text-xs text-[#BFA893]">
+        <p className="text-xs text-[#D8BE99]">
           Update your contact credentials and Palace concierge details.
         </p>
       </div>
@@ -34,7 +34,7 @@ export default function AccountSettings() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-[#160F0A] border border-[#5C3D28]/60 p-2.5 rounded text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+            className="w-full bg-[#21130D] border border-[#3A2116]/60 p-2.5 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
           />
         </div>
 
@@ -44,7 +44,7 @@ export default function AccountSettings() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-[#160F0A] border border-[#5C3D28]/60 p-2.5 rounded text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+            className="w-full bg-[#21130D] border border-[#3A2116]/60 p-2.5 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
           />
         </div>
 
@@ -54,14 +54,14 @@ export default function AccountSettings() {
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full bg-[#160F0A] border border-[#5C3D28]/60 p-2.5 rounded text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+            className="w-full bg-[#21130D] border border-[#3A2116]/60 p-2.5 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
           />
         </div>
 
         <div className="pt-4">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-colors"
+            className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-colors"
           >
             <Save className="w-4 h-4" />
             <span>Save Profile</span>

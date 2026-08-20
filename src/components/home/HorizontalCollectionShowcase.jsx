@@ -165,7 +165,7 @@ export default function HorizontalCollectionShowcase({
     <section
       ref={sectionRef}
       className={`relative min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center py-20 lg:py-26 border-t border-[#D4AF37]/20 overflow-hidden ${
-        isEven ? 'bg-[#0E0B09]/75 backdrop-blur-[2px]' : 'bg-[#0A0A0B]/70 backdrop-blur-[2px]'
+        isEven ? 'bg-[#0B0A08]/75 backdrop-blur-[2px]' : 'bg-[#0B0A08]/70 backdrop-blur-[2px]'
       }`}
     >
       {/* Ambient background aura */}
@@ -180,32 +180,32 @@ export default function HorizontalCollectionShowcase({
         <div ref={titleRef} className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-4 border-b border-white/15">
           <div className="space-y-3 max-w-2xl">
             <div className="flex items-center gap-3">
-              <span className="font-mono text-xs text-[#E5C07B] font-bold tracking-widest px-3 py-1 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 shadow-sm">
+              <span className="font-mono text-xs text-[#F2D675] font-bold tracking-widest px-3 py-1 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 shadow-sm">
                 COLLECTION {collectionNumber}
               </span>
               {collection.tag && (
-                <span className="font-cinzel text-xs font-bold uppercase tracking-[0.25em] text-[#E5C07B]">
+                <span className="font-cinzel text-xs font-bold uppercase tracking-[0.25em] text-[#F2D675]">
                   {collection.tag}
                 </span>
               )}
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#FFFFFF] tracking-[0.04em] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
               {title}
             </h2>
 
-            <p className="text-sm sm:text-base text-[#F5ECE3] font-sans font-medium leading-relaxed">
+            <p className="text-sm sm:text-base text-[#F3E6D0] font-sans font-medium leading-relaxed">
               {description}
             </p>
           </div>
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-4 shrink-0 self-start lg:self-end">
-            <div className="hidden sm:flex flex-col items-end gap-1 text-[11px] font-mono text-[#E5C07B] font-bold">
+            <div className="hidden sm:flex flex-col items-end gap-1 text-[11px] font-mono text-[#F2D675] font-bold">
               <span>EXPLORE HORIZONTALLY</span>
               <div className="w-32 h-1.5 bg-white/15 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#8C6D37] via-[#D4AF37] to-[#FFFFFF] transition-all duration-200"
+                  className="h-full bg-gradient-to-r from-[#D8BE99] via-[#D4AF37] to-[#F3E6D0] transition-all duration-200"
                   style={{ width: `${Math.max(15, scrollProgress)}%` }}
                 />
               </div>
@@ -268,7 +268,7 @@ export default function HorizontalCollectionShowcase({
             return (
               <div
                 key={product.id || pIdx}
-                className="collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] bg-[#16120E] border border-[#D4AF37]/30 hover:border-[#D4AF37] p-6 flex flex-col justify-between transition-all duration-500 shadow-2xl hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)] group"
+                className="collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] bg-[#21130D] border border-[#D4AF37]/30 hover:border-[#D4AF37] p-6 flex flex-col justify-between transition-all duration-500 shadow-2xl hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)] group"
                 style={{ scrollSnapAlign: 'start' }}
               >
                 <div>
@@ -279,7 +279,7 @@ export default function HorizontalCollectionShowcase({
                         {product.tier} Tier
                       </span>
                     ) : (
-                      <span className="px-3 py-1 rounded text-[11px] font-cinzel font-bold uppercase tracking-wider bg-black/60 text-[#E5C07B] border border-[#D4AF37]/40">
+                      <span className="px-3 py-1 rounded text-[11px] font-cinzel font-bold uppercase tracking-wider bg-black/60 text-[#F2D675] border border-[#D4AF37]/40">
                         {product.category || 'Palace Reserve'}
                       </span>
                     )}
@@ -316,25 +316,25 @@ export default function HorizontalCollectionShowcase({
                   <div className="space-y-2.5">
                     <h3
                       onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                      className="font-cinzel text-lg font-bold text-[#FFFFFF] group-hover:text-[#E5C07B] transition-colors cursor-pointer line-clamp-1 drop-shadow-sm"
+                      className="font-cinzel text-lg font-bold text-[#F3E6D0] group-hover:text-[#F2D675] transition-colors cursor-pointer line-clamp-1 drop-shadow-sm"
                     >
                       {displayName}
                     </h3>
 
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#E8DACB] font-mono text-xs font-semibold">
+                      <span className="text-[#F3E6D0] font-mono text-xs font-semibold">
                         {product.size || '60 ml'} • {product.fragranceFamily || 'Oriental'}
                       </span>
-                      <span className="font-cinzel font-bold text-[#E5C07B] text-lg">
+                      <span className="font-cinzel font-bold text-[#F2D675] text-lg">
                         €{product.price}
                       </span>
                     </div>
 
                     {/* Scent Notes Highlights */}
-                    <div className="py-2 px-3 bg-black/60 border border-white/10 text-xs text-[#F5ECE3] space-y-0.5">
+                    <div className="py-2 px-3 bg-black/60 border border-white/10 text-xs text-[#F3E6D0] space-y-0.5">
                       <div className="flex justify-between items-center">
-                        <span className="text-[#E5C07B] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
-                        <span className="text-right truncate ml-2 text-[11px] font-medium text-[#F8F5F0]">{topNote} • {heartNote}</span>
+                        <span className="text-[#F2D675] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
+                        <span className="text-right truncate ml-2 text-[11px] font-medium text-[#F3E6D0]">{topNote} • {heartNote}</span>
                       </div>
                     </div>
                   </div>
@@ -345,7 +345,7 @@ export default function HorizontalCollectionShowcase({
                   <button
                     onClick={() => addToCart(product, product.size || '60 ml', 1)}
                     disabled={isOutOfStock}
-                    className="py-3 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-lg"
+                    className="py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-lg"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
                     <span>{isOutOfStock ? 'Sold Out' : 'Add to Bag'}</span>
@@ -353,7 +353,7 @@ export default function HorizontalCollectionShowcase({
 
                   <Link
                     to={`/product/${product.slug || product.id}`}
-                    className="py-3 bg-black/60 hover:bg-white/10 border border-[#D4AF37]/50 text-[#FFFFFF] hover:text-[#E5C07B] font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1 text-center"
+                    className="py-3 bg-black/60 hover:bg-white/10 border border-[#D4AF37]/50 text-[#F3E6D0] hover:text-[#F2D675] font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1 text-center"
                   >
                     <span>Discover</span>
                     <ArrowRight className="w-3.5 h-3.5" />
