@@ -38,7 +38,6 @@ export default function Header({ onOpenSearch }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu and dropdowns on route changes
   useEffect(() => {
     setMobileMenuOpen(false);
     setLangDropdownOpen(false);
@@ -68,7 +67,7 @@ export default function Header({ onOpenSearch }) {
             : 'bg-gradient-to-b from-[#0A0A0B]/95 via-[#0A0A0B]/60 to-transparent py-4'
         }`}
       >
-        {/* Top VIP Announcement Bar (when not scrolled) */}
+        {/* Top VIP Announcement Bar */}
         {!isScrolled && (
           <div className="hidden lg:block border-b border-[#D4AF37]/15 pb-2 mb-2">
             <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#C5A059]">
@@ -92,10 +91,27 @@ export default function Header({ onOpenSearch }) {
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            {/* Left Desktop Category Navigation */}
-            <nav className="hidden lg:flex items-center space-x-6 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#E5E0D8]">
-              {navCategories.slice(0, 3).map((item) => (
+          <div className="flex items-center justify-between gap-6">
+            
+            {/* 1. FIRST IN NAVBAR: OFFICIAL ARABIAN SHEIKH LOGO */}
+            <div className="flex items-center shrink-0 py-0.5">
+              <Link
+                to="/"
+                className="inline-block focus:outline-none"
+                aria-label="Arabian Sheikh Homepage"
+              >
+                <ArabianLogo
+                  variant="header"
+                  size="navbar"
+                  showSubtitle={true}
+                  subtitle="Andalusia"
+                />
+              </Link>
+            </div>
+
+            {/* 2. CENTER: CATEGORY NAVIGATION */}
+            <nav className="hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#E5E0D8]">
+              {navCategories.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
@@ -111,43 +127,9 @@ export default function Header({ onOpenSearch }) {
               ))}
             </nav>
 
-            {/* Center Logo — Round 1 Fix #3: Perfect container crop with zero top whitespace */}
-            <div className="flex items-center justify-center py-0.5">
-              <Link
-                to="/"
-                className="inline-block focus:outline-none"
-                aria-label="Arabian Sheikh Homepage"
-              >
-                <ArabianLogo
-                  variant="header"
-                  size="navbar"
-                  showSubtitle={true}
-                  subtitle="Andalusia"
-                />
-              </Link>
-            </div>
-
-            {/* Right Desktop Nav + Actions */}
-            <div className="flex items-center space-x-4 sm:space-x-6 text-[#E5E0D8]">
-              {/* Right secondary categories */}
-              <nav className="hidden lg:flex items-center space-x-6 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium">
-                {navCategories.slice(3).map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`transition-colors duration-300 relative py-1 hover:text-[#D4AF37] ${
-                      currentPath === item.path ? 'text-[#D4AF37] font-semibold' : ''
-                    }`}
-                  >
-                    {item.name}
-                    {currentPath === item.path && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#D4AF37] animate-fade-in" />
-                    )}
-                  </Link>
-                ))}
-              </nav>
-
-              {/* Language Switcher (English, Spanish, Bulgarian) */}
+            {/* 3. RIGHT: UTILITIES & ACTIONS */}
+            <div className="flex items-center space-x-4 sm:space-x-5 text-[#E5E0D8]">
+              {/* Language Switcher */}
               <div className="relative hidden md:block">
                 <button
                   onClick={() => setLangDropdownOpen(!langDropdownOpen)}
@@ -281,7 +263,6 @@ export default function Header({ onOpenSearch }) {
 
           {/* Mobile Bottom Utilities */}
           <div className="pt-6 border-t border-[#D4AF37]/20 space-y-4">
-            {/* Language Selection */}
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-widest text-[#8C6D37]">Language:</span>
               <div className="flex gap-2">
@@ -301,7 +282,6 @@ export default function Header({ onOpenSearch }) {
               </div>
             </div>
 
-            {/* Account & Wishlist */}
             <div className="grid grid-cols-2 gap-3 pt-2">
               <Link
                 to="/account"

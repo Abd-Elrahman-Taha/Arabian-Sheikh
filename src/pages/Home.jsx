@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import ProductCard from '../components/common/ProductCard';
 import ArabianLogo from '../components/common/ArabianLogo';
 import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
 import WebThreads from '../components/motion/WebThreads';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
+import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
+import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
 import {
   Sparkles,
   ArrowRight,
@@ -23,13 +24,19 @@ import {
   ShoppingBag,
   Heart,
   ChevronRight,
+  ChevronDown,
   Flame,
   Feather,
   Sun,
   Truck,
   RotateCcw,
-  Lock
+  Lock,
+  Layers
 } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
   const { navigate } = useRouter();
@@ -40,8 +47,7 @@ export default function Home() {
   // Round 1 Fix #2: Luxury tier (Black Diamond at index 0) is explicit initial default
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [allProducts, setAllProducts] = useState([]);
-  const [perfumeTiers, setPerfumeTiers] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fragrance discovery quick filter state
@@ -49,19 +55,97 @@ export default function Home() {
   const [selectedFamily, setSelectedFamily] = useState('all');
   const [selectedOccasion, setSelectedOccasion] = useState('all');
 
+  const firstCollectionRef = useRef(null);
+
   useEffect(() => {
     async function loadData() {
       try {
-        const [prods, tiers, cats] = await Promise.all([
-          productService.getAllProducts(),
-          productService.getTiers(),
-          productService.getCategories()
-        ]);
+        const prods = await productService.getAllProducts();
         setAllProducts(prods);
-        setPerfumeTiers(tiers);
-        setCategories(cats);
+
+        // Group products into 5 rich curated Collections
+        const imperialTiersProducts = prods.filter(p => p.tier === 'Luxury' || p.tier === 'Royal' || p.tier === 'Classic');
+        const oudAmberProducts = prods.filter(p => 
+          p.fragranceFamily?.toLowerCase().includes('woody') || 
+          p.fragranceFamily?.toLowerCase().includes('amber') || 
+          p.scentFamily?.toLowerCase().includes('oriental') ||
+          p.topNotes?.some(n => n.toLowerCase().includes('oud') || n.toLowerCase().includes('amber'))
+        );
+        const bakhoorProducts = prods.filter(p => p.category === 'bakhoor' || p.scentFamily?.toLowerCase().includes('incense'));
+        const oilsProducts = prods.filter(p => p.category === 'oils' || p.size?.includes('12 ml') || p.name?.toLowerCase().includes('oil') || p.name?.toLowerCase().includes('attar'));
+        const bundlesProducts = prods.filter(p => p.category === 'bundles' || p.size?.includes('Set') || p.size?.includes('Full Set'));
+
+        const curatedCollections = [
+          {
+            id: 'col-imperial-tiers',
+            number: 1,
+            title: 'The Imperial Tiers Collection',
+            spanishTitle: 'Colección de Gamas Imperiales',
+            bulgarianTitle: 'Колекция Имперски Нива',
+            tag: 'SOVEREIGN EXTRAITS • 60ML FLACONS',
+            description: 'Our hallmark extraits de parfum, bottled in numbered 60ml flacons with pure gold and obsidian silhouettes.',
+            spanishDescription: 'Nuestros extraits de parfum emblemáticos, embotellados en frascos numerados de 60 ml con acabados en oro puro y obsidiana.',
+            bulgarianDescription: 'Нашите емблематични екстракти, бутилирани в номерирани флакони от 60 мл със силуети от злато и обсидиан.',
+            accentColor: '#D4AF37',
+            products: imperialTiersProducts.length > 0 ? imperialTiersProducts : prods.slice(0, 3)
+          },
+          {
+            id: 'col-oud-amber',
+            number: 2,
+            title: 'The Royal Oud & Amber Reserve',
+            spanishTitle: 'Reserva Real de Oud y Ámbar',
+            bulgarianTitle: 'Кралска Селекция Уд и Кехлибар',
+            tag: 'PRECIOUS AGARWOOD & DEHN AL OUD',
+            description: 'Deep, resinous compositions distilled from rare Assamese and Cambodian agarwood aged over 18 years.',
+            spanishDescription: 'Composiciones profundas y resinosas destiladas de madera de agar rara de Assam y Camboya con más de 18 años de maduración.',
+            bulgarianDescription: 'Дълбоки, смолисти композиции, дестилирани от рядък агарово дърво от Асам и Камбоджа, отлежавало над 18 години.',
+            accentColor: '#C5A059',
+            products: oudAmberProducts.length > 0 ? oudAmberProducts : prods.slice(0, 4)
+          },
+          {
+            id: 'col-bakhoor',
+            number: 3,
+            title: 'Sacred Bakhoor & Incense Rituals',
+            spanishTitle: 'Rituales Sagrados de Bakhoor e Incienso',
+            bulgarianTitle: 'Свещени Ритуали с Бахур и Тамян',
+            tag: 'PALACE MAJLIS CEREMONIES',
+            description: 'Hand-soaked natural wood chips infused with Taif rose nectars, dark amber resins, and essential oils.',
+            spanishDescription: 'Virutas de madera natural infusionadas a mano con néctar de rosa de Taif, resinas de ámbar oscuro y aceites esenciales.',
+            bulgarianDescription: 'Ръчно напоени дървесни частици с нектар от роза Таиф, тъмен кехлибар и етерични масла.',
+            accentColor: '#E5C07B',
+            products: bakhoorProducts.length > 0 ? bakhoorProducts : prods.slice(1, 4)
+          },
+          {
+            id: 'col-pure-oils',
+            number: 4,
+            title: 'Prestige Concentrated Oils & Attars',
+            spanishTitle: 'Aceites Puros Concentrados y Attars',
+            bulgarianTitle: 'Престижни Чисти Масла и Атари',
+            tag: 'ALCOHOL-FREE PURE EXTRACTS',
+            description: '100% pure alcohol-free concentrated oils offering an unbroken sillage that unfolds intimately over 24+ hours.',
+            spanishDescription: 'Aceites concentrados 100% puros sin alcohol que ofrecen una estela íntima y continua durante más de 24 horas.',
+            bulgarianDescription: '100% чисти концентрирани масла без алкохол, осигуряващи непрекъснато излъчване за повече от 24 часа.',
+            accentColor: '#8C6D37',
+            products: oilsProducts.length > 0 ? oilsProducts : prods.slice(0, 3)
+          },
+          {
+            id: 'col-palace-bundles',
+            number: 5,
+            title: 'The Palace Signature Coffrets & Sets',
+            spanishTitle: 'Estuches y Colecciones Exclusivas',
+            bulgarianTitle: 'Ексклузивни Комплекти и Сетове',
+            tag: 'LIMITED EDITION PRESENTATION BOXES',
+            description: 'Bespoke gift presentations encased in velvet-lined lacquer coffrets, crowned with palace seals.',
+            spanishDescription: 'Presentaciones exclusivas de regalo en estuches lacados forrados de terciopelo con sellos palaciegos.',
+            bulgarianDescription: 'Специални подаръчни сетове в лакирани кутии с кадифена подплата и кралски печати.',
+            accentColor: '#D4AF37',
+            products: bundlesProducts.length > 0 ? bundlesProducts : prods.slice(0, 3)
+          }
+        ];
+
+        setCollections(curatedCollections);
       } catch (err) {
-        console.error('Error loading home data:', err);
+        console.error('Error loading home collections data:', err);
       } finally {
         setLoading(false);
       }
@@ -113,9 +197,6 @@ export default function Home() {
 
   const currentHeroFlacon = heroFlacons[activeHeroIndex];
 
-  // Best sellers
-  const bestSellers = allProducts.filter(p => p.isBestSeller || p.category === 'perfumes').slice(0, 4);
-
   // Discovery filtered list
   const discoveryMatches = allProducts.filter(p => {
     if (selectedGender !== 'all' && p.gender?.toLowerCase() !== selectedGender.toLowerCase() && p.gender !== 'Unisex') return false;
@@ -128,6 +209,12 @@ export default function Home() {
     if (language === 'bg' && flacon.bulgarianName) return flacon.bulgarianName;
     if (language === 'es' && flacon.spanishName) return flacon.spanishName;
     return flacon.name;
+  };
+
+  const scrollToCollections = () => {
+    if (firstCollectionRef.current) {
+      firstCollectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -192,7 +279,7 @@ export default function Home() {
                   {getDisplayName(currentHeroFlacon)}
                 </h1>
                 <p className="text-sm sm:text-base text-[#D0C7B8] font-sans font-light tracking-wide max-w-xl mx-auto lg:mx-0">
-                  {language === 'es' ? 'Descubra una firma olfativa creada para ser recordada siempre.' : 'Discover a signature made to be remembered.'}
+                  {language === 'es' ? 'Descubra colecciones legendarias creadas para trascender el tiempo.' : 'Discover legendary collections crafted to transcend time.'}
                 </p>
               </div>
 
@@ -203,13 +290,14 @@ export default function Home() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-                <Link
-                  to="/shop?category=perfumes"
-                  className="w-full sm:w-auto px-8 py-3.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-300 shadow-[0_10px_25px_rgba(212,175,55,0.3)] hover:scale-102 flex items-center justify-center gap-2"
+                <button
+                  onClick={scrollToCollections}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-300 shadow-[0_10px_25px_rgba(212,175,55,0.3)] hover:scale-102 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>{language === 'es' ? 'Explorar Perfumes' : 'Explore Perfumes'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                  <Layers className="w-4 h-4" />
+                  <span>{language === 'es' ? 'Explorar Colecciones' : 'Explore Collections'}</span>
+                  <ChevronDown className="w-4 h-4 animate-bounce" />
+                </button>
 
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
@@ -222,7 +310,7 @@ export default function Home() {
               {/* Tier Slide Switcher Controls */}
               <div className="pt-6 border-t border-white/10 flex items-center justify-center lg:justify-start gap-3">
                 <span className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
-                  {language === 'es' ? 'Seleccionar Gama:' : 'Select Tier:'}
+                  {language === 'es' ? 'Gama Hero:' : 'Hero Tier:'}
                 </span>
                 {heroFlacons.map((flacon, idx) => (
                   <button
@@ -254,595 +342,385 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          2. FEATURED PERFUME SPOTLIGHT (ASYMMETRICAL LUXURY EDITORIAL)
+          ATMOSPHERIC TWINKLING CELESTIAL STARS (ACTIVE AFTER HERO SECTION)
           ========================================================================= */}
-      <section className="py-24 border-t border-[#D4AF37]/15 bg-gradient-to-b from-[#0A0A0B] via-[#120E0C] to-[#0A0A0B] relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Spotlight Image */}
-            <div className="lg:col-span-5 relative flex items-center justify-center p-8 bg-[#141212] border border-[#D4AF37]/20 shadow-2xl">
-              <img
-                src="/products/black_diamond_gold.png"
-                alt="Black Diamond Flacon"
-                className="max-h-[460px] w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.9)] hover:scale-105 transition-transform duration-700"
+      <div className="relative overflow-hidden">
+        <BackgroundAtmosphere
+          starCount={45}
+          smokeIntensity={0.06}
+          className="absolute inset-0 pointer-events-none z-0"
+        />
+
+        <div className="relative z-10">
+
+          {/* =========================================================================
+              2. CURATED COLLECTIONS EXPERIENCE (VERTICAL STACK + HORIZONTAL PRODUCTS)
+              ========================================================================= */}
+          <div ref={firstCollectionRef} className="space-y-0">
+            {collections.map((col, idx) => (
+              <HorizontalCollectionShowcase
+                key={col.id}
+                collection={col}
+                index={idx}
+                isEven={idx % 2 === 1}
               />
-              <div className="absolute top-4 left-4 px-3 py-1 bg-[#D4AF37] text-black font-cinzel font-bold text-[10px] uppercase tracking-widest">
-                Imperial Spotlight
-              </div>
-            </div>
-
-            {/* Spotlight Details */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="space-y-2">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel">
-                  Haute Parfumerie • Luxury Tier
-                </span>
-                <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0] tracking-wide">
-                  Black Diamond — €50 (60 ml)
-                </h2>
-                <p className="text-sm text-[#C5A059] font-serif italic">
-                  "Distilled in the noble tradition of Andalusian royal courtiers."
-                </p>
-              </div>
-
-              <p className="text-sm text-[#D0C7B8] leading-relaxed font-sans">
-                The signature sovereign of Arabian Sheikh. Enclosed in a lustrous golden vessel and crowned with our signature royal finial. Delivers a profound sillage of aged Assamese agarwood, golden fossilized amber, and smoky saffron.
-              </p>
-
-              {/* Fragrance Specifications Matrix */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-white/10 text-xs">
-                <div>
-                  <span className="block text-[#8C6D37] uppercase tracking-wider text-[10px]">Gender</span>
-                  <span className="font-semibold text-[#F8F5F0]">Unisex Sovereign</span>
-                </div>
-                <div>
-                  <span className="block text-[#8C6D37] uppercase tracking-wider text-[10px]">Longevity</span>
-                  <span className="font-semibold text-[#D4AF37]">14+ Hours</span>
-                </div>
-                <div>
-                  <span className="block text-[#8C6D37] uppercase tracking-wider text-[10px]">Season</span>
-                  <span className="font-semibold text-[#F8F5F0]">Autumn / Winter</span>
-                </div>
-                <div>
-                  <span className="block text-[#8C6D37] uppercase tracking-wider text-[10px]">Availability</span>
-                  <span className="font-semibold text-emerald-400">In Stock (25 Left)</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                <button
-                  onClick={() => {
-                    const blackDiamond = allProducts.find(p => p.slug === 'black-diamond-luxury');
-                    if (blackDiamond) addToCart(blackDiamond, '60 ml', 1);
-                  }}
-                  className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-lg flex items-center gap-2"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>{language === 'es' ? 'Añadir a la Bolsa (€50)' : 'Add to Bag (€50)'}</span>
-                </button>
-
-                <Link
-                  to="/product/black-diamond-luxury"
-                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 text-[#F8F5F0] border border-white/20 font-cinzel text-xs uppercase tracking-[0.2em] transition-colors"
-                >
-                  {language === 'es' ? 'Ver Detalles Completos' : 'View Product Details'}
-                </Link>
-              </div>
-
-            </div>
-
+            ))}
           </div>
 
-        </div>
-      </section>
+          {/* =========================================================================
+              3. CINEMATIC VIDEO: SCENT AS LIVING MEMORY
+              ========================================================================= */}
+          <PalaceMemoryVideo
+            videoSrc="/intro.mp4"
+            posterSrc="/hero_arabian_palace.jpg"
+          />
 
-      {/* =========================================================================
-          3. THREE PERFUME TIERS (CLASSIC €30, ROYAL €40, LUXURY €50)
-          ========================================================================= */}
-      <section className="py-24 bg-[#0D0B0B] border-t border-[#D4AF37]/15">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
-              Exquisite Hierarchy
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
-              The Three Perfume Tiers
-            </h2>
-            <p className="text-xs sm:text-sm text-[#A69E94] font-sans">
-              Fixed 60 ml flacons crafted with distinct concentrations and artistic expressions.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {perfumeTiers.map((tier) => (
-              <div
-                key={tier.id}
-                className="group relative bg-[#121010] border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all duration-500 p-8 flex flex-col justify-between shadow-xl hover:-translate-y-2"
-              >
-                <div>
-                  {/* Tier Header */}
-                  <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-                    <span className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-cinzel font-bold">
-                      {tier.name}
-                    </span>
-                    <span className="font-cinzel text-xl font-bold text-[#D4AF37]">
-                      €{tier.price}
-                    </span>
+          {/* =========================================================================
+              4. INTERACTIVE FRAGRANCE FINDER / SCENT FINDER QUIZ
+              ========================================================================= */}
+          <section className="py-24 bg-gradient-to-b from-[#0A0A0B]/90 via-[#14100D]/85 to-[#0A0A0B]/90 border-t border-[#D4AF37]/15">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              
+              <div className="bg-[#121010]/95 border border-[#D4AF37]/30 p-8 sm:p-12 shadow-2xl space-y-8">
+                <div className="text-center space-y-3">
+                  <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] mb-2">
+                    <Compass className="w-6 h-6" />
                   </div>
-
-                  {/* Flacon Image */}
-                  <div className="aspect-[4/5] flex items-center justify-center p-4 mb-6 bg-black/40 relative overflow-hidden">
-                    <img
-                      src={tier.image}
-                      alt={tier.name}
-                      className="max-h-[85%] w-auto object-contain filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] group-hover:scale-108 transition-transform duration-700"
-                    />
-                  </div>
-
-                  <h3 className="font-cinzel text-lg font-bold text-[#F8F5F0] mb-1">
-                    {tier.bottle}
-                  </h3>
-                  <p className="text-xs text-[#8C6D37] mb-3 font-mono">{tier.size}</p>
-                  <p className="text-xs text-[#A69E94] font-sans leading-relaxed">
-                    {tier.description}
+                  <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F8F5F0]">
+                    Interactive Fragrance Finder
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#A69E94] max-w-xl mx-auto">
+                    Filter by your preferred atmosphere, olfactory family, and occasion to find your signature Andalusian creation.
                   </p>
                 </div>
 
-                <div className="pt-6 mt-6 border-t border-white/10">
-                  <Link
-                    to={`/shop?tier=${tier.filterParam}`}
-                    className="w-full py-3 bg-white/5 hover:bg-[#D4AF37] text-[#F8F5F0] hover:text-black font-cinzel text-xs uppercase tracking-[0.2em] font-semibold flex items-center justify-center gap-2 transition-all duration-300"
-                  >
-                    <span>Browse {tier.id} Flacons</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* =========================================================================
-          4. SHOP BY CATEGORY (PERFUMES, OILS, BAKHOOR, COSMETICS, BUNDLES)
-          ========================================================================= */}
-      <section className="py-24 border-t border-[#D4AF37]/15 bg-[#0A0A0B]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
-              Prestige Catalog
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
-              Shop by Category
-            </h2>
-            <p className="text-xs sm:text-sm text-[#A69E94]">
-              Explore handcrafted creations spanning pure extracts, oils, incense, and coffrets.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/shop?category=${cat.slug}`}
-                className="group relative bg-[#121010] border border-[#D4AF37]/15 hover:border-[#D4AF37]/60 p-6 flex flex-col justify-between transition-all duration-400 hover:-translate-y-1 shadow-lg"
-              >
-                <div className="aspect-square flex items-center justify-center p-4 bg-black/50 mb-4 overflow-hidden">
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="max-h-[85%] w-auto object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-cinzel text-sm font-bold text-[#F8F5F0] group-hover:text-[#D4AF37] transition-colors">
-                    {language === 'bg' ? cat.bulgarianName : cat.name}
-                  </h3>
-                  <p className="text-[11px] text-[#8C6D37] mt-1 line-clamp-2">
-                    {cat.description}
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-xs text-[#D4AF37] font-cinzel">
-                  <span>Explore</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </Link>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* =========================================================================
-          CINEMATIC VIDEO: SCENT AS LIVING MEMORY
-          ========================================================================= */}
-      <PalaceMemoryVideo
-        videoSrc="/intro.mp4"
-        posterSrc="/hero_arabian_palace.jpg"
-      />
-
-      {/* =========================================================================
-          5. BESTSELLERS & SIGNATURE COLLECTION
-          ========================================================================= */}
-      <section className="py-24 bg-[#0D0B0B] border-t border-[#D4AF37]/15">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-12">
-            <div className="space-y-2 text-center sm:text-left">
-              <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel">
-                Curated Prestige
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F8F5F0]">
-                Signature Flacons & Bestsellers
-              </h2>
-            </div>
-
-            <Link
-              to="/shop"
-              className="px-6 py-2.5 bg-white/5 hover:bg-[#D4AF37] text-[#F8F5F0] hover:text-black border border-[#D4AF37]/30 text-xs font-cinzel uppercase tracking-[0.2em] transition-all duration-300"
-            >
-              View Full Catalog
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestSellers.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* =========================================================================
-          6. FRAGRANCE DISCOVERY / SCENT FINDER QUIZ
-          ========================================================================= */}
-      <section className="py-24 bg-gradient-to-b from-[#0A0A0B] via-[#14100D] to-[#0A0A0B] border-t border-[#D4AF37]/15">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="bg-[#121010]/95 border border-[#D4AF37]/30 p-8 sm:p-12 shadow-2xl space-y-8">
-            <div className="text-center space-y-3">
-              <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] mb-2">
-                <Compass className="w-6 h-6" />
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F8F5F0]">
-                Interactive Fragrance Finder
-              </h2>
-              <p className="text-xs sm:text-sm text-[#A69E94] max-w-xl mx-auto">
-                Filter by your preferred atmosphere, olfactory family, and occasion to find your signature Andalusian creation.
-              </p>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
-              {/* Gender */}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
-                  Gender Preference:
-                </label>
-                <select
-                  value={selectedGender}
-                  onChange={(e) => setSelectedGender(e.target.value)}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
-                >
-                  <option value="all">All Genders</option>
-                  <option value="Unisex">Unisex Sovereign</option>
-                  <option value="Masculine">Masculine Strength</option>
-                  <option value="Feminine">Feminine Elegance</option>
-                </select>
-              </div>
-
-              {/* Olfactory Family */}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
-                  Fragrance Family:
-                </label>
-                <select
-                  value={selectedFamily}
-                  onChange={(e) => setSelectedFamily(e.target.value)}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
-                >
-                  <option value="all">All Families</option>
-                  <option value="Oriental">Oriental / Amber</option>
-                  <option value="Woody">Woody / Oud</option>
-                  <option value="Floral">Floral / Gourmand</option>
-                </select>
-              </div>
-
-              {/* Occasion */}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
-                  Occasion:
-                </label>
-                <select
-                  value={selectedOccasion}
-                  onChange={(e) => setSelectedOccasion(e.target.value)}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
-                >
-                  <option value="all">All Occasions</option>
-                  <option value="Evening">Evening / Gala</option>
-                  <option value="Daily">Daily Luxury</option>
-                  <option value="Royal">Royal Celebrations</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Filtered Matches Preview */}
-            <div className="pt-6 border-t border-white/10">
-              <div className="flex items-center justify-between mb-4 text-xs">
-                <span className="text-[#A69E94]">
-                  Found <strong className="text-[#D4AF37]">{discoveryMatches.length}</strong> matching creations:
-                </span>
-                <Link
-                  to="/discovery"
-                  className="text-[#D4AF37] hover:underline font-cinzel uppercase tracking-wider text-[11px] flex items-center gap-1"
-                >
-                  <span>Take Guided Scent Journey</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {discoveryMatches.slice(0, 3).map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => navigate(`/product/${item.slug || item.id}`)}
-                    className="p-4 bg-black/40 border border-white/10 hover:border-[#D4AF37]/60 cursor-pointer transition-colors flex items-center gap-3"
-                  >
-                    <img
-                      src={item.cutoutImage || item.images?.[0]}
-                      alt={item.name}
-                      className="w-12 h-16 object-contain"
-                    />
-                    <div>
-                      <h4 className="font-cinzel text-xs font-bold text-[#F8F5F0] line-clamp-1">{item.name}</h4>
-                      <p className="text-[11px] text-[#D4AF37] font-semibold">€{item.price}</p>
-                      <span className="text-[9px] uppercase tracking-wider text-[#8C6D37]">{item.tier || item.category}</span>
-                    </div>
+                {/* Quick Filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
+                  {/* Gender */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
+                      Gender Preference:
+                    </label>
+                    <select
+                      value={selectedGender}
+                      onChange={(e) => setSelectedGender(e.target.value)}
+                      className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+                    >
+                      <option value="all">All Genders</option>
+                      <option value="Unisex">Unisex Sovereign</option>
+                      <option value="Masculine">Masculine Strength</option>
+                      <option value="Feminine">Feminine Elegance</option>
+                    </select>
                   </div>
-                ))}
-              </div>
-            </div>
 
-          </div>
+                  {/* Olfactory Family */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
+                      Fragrance Family:
+                    </label>
+                    <select
+                      value={selectedFamily}
+                      onChange={(e) => setSelectedFamily(e.target.value)}
+                      className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+                    >
+                      <option value="all">All Families</option>
+                      <option value="Oriental">Oriental / Amber</option>
+                      <option value="Woody">Woody / Oud</option>
+                      <option value="Floral">Floral / Gourmand</option>
+                    </select>
+                  </div>
 
-        </div>
-      </section>
+                  {/* Occasion */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] uppercase tracking-widest text-[#8C6D37] font-cinzel">
+                      Occasion:
+                    </label>
+                    <select
+                      value={selectedOccasion}
+                      onChange={(e) => setSelectedOccasion(e.target.value)}
+                      className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none"
+                    >
+                      <option value="all">All Occasions</option>
+                      <option value="Evening">Evening / Gala</option>
+                      <option value="Daily">Daily Luxury</option>
+                      <option value="Royal">Royal Celebrations</option>
+                    </select>
+                  </div>
+                </div>
 
-      {/* =========================================================================
-          7. PRODUCT COMPARISON MATRIX
-          ========================================================================= */}
-      <section className="py-24 bg-[#0D0B0B] border-t border-[#D4AF37]/15">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
-              Side-by-Side Analysis
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
-              The Three Flacons Comparison
-            </h2>
-            <p className="text-xs sm:text-sm text-[#A69E94]">
-              Compare our official signature creations in detail.
-            </p>
-          </div>
+                {/* Filtered Matches Preview */}
+                <div className="pt-6 border-t border-white/10">
+                  <div className="flex items-center justify-between mb-4 text-xs">
+                    <span className="text-[#A69E94]">
+                      Found <strong className="text-[#D4AF37]">{discoveryMatches.length}</strong> matching creations:
+                    </span>
+                    <Link
+                      to="/discovery"
+                      className="text-[#D4AF37] hover:underline font-cinzel uppercase tracking-wider text-[11px] flex items-center gap-1"
+                    >
+                      <span>Take Guided Scent Journey</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-[#D4AF37]/20 text-xs">
-              <thead>
-                <tr className="bg-[#181515] border-b border-[#D4AF37]/20">
-                  <th className="p-4 font-cinzel text-xs uppercase tracking-widest text-[#8C6D37] w-1/4">Metric</th>
-                  {heroFlacons.map((f) => (
-                    <th key={f.id} className="p-4 font-cinzel text-sm font-bold text-[#D4AF37] text-center w-1/4">
-                      {f.name} ({f.tier})
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {/* Flacon Image */}
-                <tr>
-                  <td className="p-4 font-semibold text-[#A69E94]">Flacon Silhouette</td>
-                  {heroFlacons.map((f) => (
-                    <td key={f.id} className="p-4 text-center">
-                      <img
-                        src={f.tier === 'Luxury' ? '/products/black_diamond_gold.png' : f.tier === 'Royal' ? '/products/millionaire_black.png' : '/products/ana_sukkar_white.png'}
-                        alt={f.name}
-                        className="h-28 mx-auto object-contain filter drop-shadow-md"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                {/* Price & Size */}
-                <tr className="bg-white/2">
-                  <td className="p-4 font-semibold text-[#A69E94]">Price & Volume</td>
-                  {heroFlacons.map((f) => (
-                    <td key={f.id} className="p-4 text-center font-cinzel font-bold text-[#D4AF37] text-sm">
-                      €{f.price} <span className="text-xs text-[#A69E94] font-normal">/ {f.size}</span>
-                    </td>
-                  ))}
-                </tr>
-                {/* Olfactory Notes */}
-                <tr>
-                  <td className="p-4 font-semibold text-[#A69E94]">Key Scent Notes</td>
-                  {heroFlacons.map((f) => (
-                    <td key={f.id} className="p-4 text-center text-[#E5E0D8]">
-                      {f.notes}
-                    </td>
-                  ))}
-                </tr>
-                {/* Longevity */}
-                <tr className="bg-white/2">
-                  <td className="p-4 font-semibold text-[#A69E94]">Longevity Profile</td>
-                  <td className="p-4 text-center text-[#D4AF37] font-semibold">14+ Hours (Ultra Long)</td>
-                  <td className="p-4 text-center text-[#D4AF37] font-semibold">10-12 Hours</td>
-                  <td className="p-4 text-center text-[#D4AF37] font-semibold">8-10 Hours</td>
-                </tr>
-                {/* Gender */}
-                <tr>
-                  <td className="p-4 font-semibold text-[#A69E94]">Gender Archetype</td>
-                  <td className="p-4 text-center text-[#F8F5F0]">Unisex Sovereign</td>
-                  <td className="p-4 text-center text-[#F8F5F0]">Masculine Strength</td>
-                  <td className="p-4 text-center text-[#F8F5F0]">Feminine Elegance</td>
-                </tr>
-                {/* Add to Cart Action */}
-                <tr className="bg-[#181515]">
-                  <td className="p-4 font-semibold text-[#A69E94]">Action</td>
-                  {heroFlacons.map((f) => (
-                    <td key={f.id} className="p-4 text-center">
-                      <button
-                        onClick={() => {
-                          const item = allProducts.find(p => p.slug === f.slug);
-                          if (item) addToCart(item, '60 ml', 1);
-                        }}
-                        className="px-4 py-2 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-[11px] uppercase tracking-wider rounded-xs transition-colors"
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {discoveryMatches.slice(0, 3).map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => navigate(`/product/${item.slug || item.id}`)}
+                        className="p-4 bg-black/40 border border-white/10 hover:border-[#D4AF37]/60 cursor-pointer transition-colors flex items-center gap-3"
                       >
-                        Add to Bag (€{f.price})
-                      </button>
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-      </section>
-
-      {/* =========================================================================
-          8. REVIEWS & SOCIAL PROOF
-          ========================================================================= */}
-      <section className="py-24 bg-[#0A0A0B] border-t border-[#D4AF37]/15">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
-              Authentic Patron Testimonials
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
-              Verified Royal Acclaim
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-[#121010] border border-[#D4AF37]/20 p-8 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex gap-1 text-[#D4AF37]">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                        <img
+                          src={item.cutoutImage || item.images?.[0]}
+                          alt={item.name}
+                          className="w-12 h-16 object-contain"
+                        />
+                        <div>
+                          <h4 className="font-cinzel text-xs font-bold text-[#F8F5F0] line-clamp-1">{item.name}</h4>
+                          <p className="text-[11px] text-[#D4AF37] font-semibold">€{item.price}</p>
+                          <span className="text-[9px] uppercase tracking-wider text-[#8C6D37]">{item.tier || item.category}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <h4 className="font-cinzel font-bold text-[#F8F5F0] text-sm">"Pure Royalty in a Bottle"</h4>
-                <p className="text-xs text-[#A69E94] leading-relaxed">
-                  "The Black Diamond gold flacon has an incredible weight and presence. The projection lasts well past 14 hours with amber and oud notes that develop magnificently."
+
+              </div>
+
+            </div>
+          </section>
+
+          {/* =========================================================================
+              5. PRODUCT COMPARISON MATRIX
+              ========================================================================= */}
+          <section className="py-24 bg-[#0D0B0B]/90 border-t border-[#D4AF37]/15">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              
+              <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
+                  Side-by-Side Analysis
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
+                  The Three Flacons Comparison
+                </h2>
+                <p className="text-xs sm:text-sm text-[#A69E94]">
+                  Compare our official signature creations in detail.
                 </p>
               </div>
-              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#F8F5F0]">Tariq Al-Hashemi</span>
-                <span className="text-emerald-400 text-[10px] flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Verified Patron
-                </span>
-              </div>
-            </div>
 
-            <div className="bg-[#121010] border border-[#D4AF37]/20 p-8 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex gap-1 text-[#D4AF37]">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                </div>
-                <h4 className="font-cinzel font-bold text-[#F8F5F0] text-sm">"Masterpiece of Modern Luxury"</h4>
-                <p className="text-xs text-[#A69E94] leading-relaxed">
-                  "Millionaire has this commanding leather and spiced cardamom resonance. I wear it to international board meetings and galas. Highly recommended."
-                </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse border border-[#D4AF37]/20 text-xs">
+                  <thead>
+                    <tr className="bg-[#181515] border-b border-[#D4AF37]/20">
+                      <th className="p-4 font-cinzel text-xs uppercase tracking-widest text-[#8C6D37] w-1/4">Metric</th>
+                      {heroFlacons.map((f) => (
+                        <th key={f.id} className="p-4 font-cinzel text-sm font-bold text-[#D4AF37] text-center w-1/4">
+                          {f.name} ({f.tier})
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {/* Flacon Image */}
+                    <tr>
+                      <td className="p-4 font-semibold text-[#A69E94]">Flacon Silhouette</td>
+                      {heroFlacons.map((f) => (
+                        <td key={f.id} className="p-4 text-center">
+                          <img
+                            src={f.tier === 'Luxury' ? '/products/black_diamond_gold.png' : f.tier === 'Royal' ? '/products/millionaire_black.png' : '/products/ana_sukkar_white.png'}
+                            alt={f.name}
+                            className="h-28 mx-auto object-contain filter drop-shadow-md"
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Price & Size */}
+                    <tr className="bg-white/2">
+                      <td className="p-4 font-semibold text-[#A69E94]">Price & Volume</td>
+                      {heroFlacons.map((f) => (
+                        <td key={f.id} className="p-4 text-center font-cinzel font-bold text-[#D4AF37] text-sm">
+                          €{f.price} <span className="text-xs text-[#A69E94] font-normal">/ {f.size}</span>
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Olfactory Notes */}
+                    <tr>
+                      <td className="p-4 font-semibold text-[#A69E94]">Key Scent Notes</td>
+                      {heroFlacons.map((f) => (
+                        <td key={f.id} className="p-4 text-center text-[#E5E0D8]">
+                          {f.notes}
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Longevity */}
+                    <tr className="bg-white/2">
+                      <td className="p-4 font-semibold text-[#A69E94]">Longevity Profile</td>
+                      <td className="p-4 text-center text-[#D4AF37] font-semibold">14+ Hours (Ultra Long)</td>
+                      <td className="p-4 text-center text-[#D4AF37] font-semibold">10-12 Hours</td>
+                      <td className="p-4 text-center text-[#D4AF37] font-semibold">8-10 Hours</td>
+                    </tr>
+                    {/* Gender */}
+                    <tr>
+                      <td className="p-4 font-semibold text-[#A69E94]">Gender Archetype</td>
+                      <td className="p-4 text-center text-[#F8F5F0]">Unisex Sovereign</td>
+                      <td className="p-4 text-center text-[#F8F5F0]">Masculine Strength</td>
+                      <td className="p-4 text-center text-[#F8F5F0]">Feminine Elegance</td>
+                    </tr>
+                    {/* Add to Cart Action */}
+                    <tr className="bg-[#181515]">
+                      <td className="p-4 font-semibold text-[#A69E94]">Action</td>
+                      {heroFlacons.map((f) => (
+                        <td key={f.id} className="p-4 text-center">
+                          <button
+                            onClick={() => {
+                              const item = allProducts.find(p => p.slug === f.slug);
+                              if (item) addToCart(item, '60 ml', 1);
+                            }}
+                            className="px-4 py-2 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-[11px] uppercase tracking-wider rounded-xs transition-colors"
+                          >
+                            Add to Bag (€{f.price})
+                          </button>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#F8F5F0]">Alexander D.</span>
-                <span className="text-emerald-400 text-[10px] flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Verified Patron
-                </span>
-              </div>
-            </div>
 
-            <div className="bg-[#121010] border border-[#D4AF37]/20 p-8 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex gap-1 text-[#D4AF37]">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                </div>
-                <h4 className="font-cinzel font-bold text-[#F8F5F0] text-sm">"Irresistibly Delicious & Elegant"</h4>
-                <p className="text-xs text-[#A69E94] leading-relaxed">
-                  "Ana Sukkar is sweet without being synthetic. The spun sugar and white musk blend is heavenly and comforting. The porcelain bottle is gorgeous."
-                </p>
-              </div>
-              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#F8F5F0]">Layla K.</span>
-                <span className="text-emerald-400 text-[10px] flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Verified Patron
-                </span>
-              </div>
             </div>
-          </div>
+          </section>
+
+          {/* =========================================================================
+              6. REVIEWS & SOCIAL PROOF
+              ========================================================================= */}
+          <section className="py-24 bg-[#0A0A0B]/90 border-t border-[#D4AF37]/15">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              
+              <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
+                  Authentic Patron Testimonials
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F8F5F0]">
+                  Verified Royal Acclaim
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-[#121010] border border-[#D4AF37]/20 p-8 flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex gap-1 text-[#D4AF37]">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                    </div>
+                    <h4 className="font-cinzel font-bold text-[#F8F5F0] text-sm">"Pure Royalty in a Bottle"</h4>
+                    <p className="text-xs text-[#A69E94] leading-relaxed">
+                      "The Black Diamond gold flacon has an incredible weight and presence. The projection lasts well past 14 hours with amber and oud notes that develop magnificently."
+                    </p>
+                  </div>
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#F8F5F0]">Tariq Al-Hashemi</span>
+                    <span className="text-emerald-400 text-[10px] flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Verified Patron
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#121010] border border-[#D4AF37]/20 p-8 flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex gap-1 text-[#D4AF37]">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                    </div>
+                    <h4 className="font-cinzel font-bold text-[#F8F5F0] text-sm">"Masterpiece of Modern Luxury"</h4>
+                    <p className="text-xs text-[#A69E94] leading-relaxed">
+                      "Millionaire has this commanding leather and spiced cardamom resonance. I wear it to international board meetings and galas. Highly recommended."
+                    </p>
+                  </div>
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#F8F5F0]">Alexander D.</span>
+                    <span className="text-emerald-400 text-[10px] flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Verified Patron
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#121010] border border-[#D4AF37]/20 p-8 flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex gap-1 text-[#D4AF37]">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                    </div>
+                    <h4 className="font-cinzel font-bold text-[#F8F5F0] text-sm">"Irresistibly Delicious & Elegant"</h4>
+                    <p className="text-xs text-[#A69E94] leading-relaxed">
+                      "Ana Sukkar is sweet without being synthetic. The spun sugar and white musk blend is heavenly and comforting. The porcelain bottle is gorgeous."
+                    </p>
+                  </div>
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#F8F5F0]">Layla K.</span>
+                    <span className="text-emerald-400 text-[10px] flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Verified Patron
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          {/* =========================================================================
+              7. TRUST & NEWSLETTER LAYER
+              ========================================================================= */}
+          <section className="py-20 border-t border-[#D4AF37]/15 bg-[#080707]/95">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              
+              {/* 3 Pillars */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-16 border-b border-white/10 text-center">
+                <div className="space-y-2 flex flex-col items-center">
+                  <Truck className="w-7 h-7 text-[#D4AF37] mb-1" />
+                  <h4 className="font-cinzel font-bold text-sm text-[#F8F5F0]">DHL Express Global Delivery</h4>
+                  <p className="text-xs text-[#A69E94]">Complimentary tracked royal shipping on orders over €100.</p>
+                </div>
+                <div className="space-y-2 flex flex-col items-center">
+                  <Lock className="w-7 h-7 text-[#D4AF37] mb-1" />
+                  <h4 className="font-cinzel font-bold text-sm text-[#F8F5F0]">Encrypted Stripe Checkout</h4>
+                  <p className="text-xs text-[#A69E94]">Full 3D-Secure 256-bit encrypted global payment processing.</p>
+                </div>
+                <div className="space-y-2 flex flex-col items-center">
+                  <Award className="w-7 h-7 text-[#D4AF37] mb-1" />
+                  <h4 className="font-cinzel font-bold text-sm text-[#F8F5F0]">100% Authentic Andalusian Distillates</h4>
+                  <p className="text-xs text-[#A69E94]">Meticulously matured extraits in certified numbered flacons.</p>
+                </div>
+              </div>
+
+              {/* Newsletter Box */}
+              <div className="max-w-2xl mx-auto text-center pt-16 space-y-4">
+                <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel">
+                  The Sovereign Society
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F8F5F0]">
+                  Enter the world of Arabian Sheikh
+                </h3>
+                <p className="text-xs text-[#A69E94]">
+                  Receive private invitations to limited flacon reserves, private salon releases, and olfactory monographs.
+                </p>
+                <form onSubmit={(e) => { e.preventDefault(); alert('Thank you for subscribing to Arabian Sheikh Private Society.'); }} className="flex max-w-md mx-auto gap-2 pt-2">
+                  <input
+                    type="email"
+                    placeholder="Enter your email address"
+                    required
+                    className="flex-1 bg-black/60 border border-[#D4AF37]/30 px-4 py-3 text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none rounded-xs"
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors"
+                  >
+                    Join
+                  </button>
+                </form>
+              </div>
+
+            </div>
+          </section>
 
         </div>
-      </section>
-
-      {/* =========================================================================
-          9. TRUST & NEWSLETTER LAYER
-          ========================================================================= */}
-      <section className="py-20 border-t border-[#D4AF37]/15 bg-[#080707]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* 3 Pillars */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-16 border-b border-white/10 text-center">
-            <div className="space-y-2 flex flex-col items-center">
-              <Truck className="w-7 h-7 text-[#D4AF37] mb-1" />
-              <h4 className="font-cinzel font-bold text-sm text-[#F8F5F0]">DHL Express Global Delivery</h4>
-              <p className="text-xs text-[#A69E94]">Complimentary tracked royal shipping on orders over €100.</p>
-            </div>
-            <div className="space-y-2 flex flex-col items-center">
-              <Lock className="w-7 h-7 text-[#D4AF37] mb-1" />
-              <h4 className="font-cinzel font-bold text-sm text-[#F8F5F0]">Encrypted Stripe Checkout</h4>
-              <p className="text-xs text-[#A69E94]">Full 3D-Secure 256-bit encrypted global payment processing.</p>
-            </div>
-            <div className="space-y-2 flex flex-col items-center">
-              <Award className="w-7 h-7 text-[#D4AF37] mb-1" />
-              <h4 className="font-cinzel font-bold text-sm text-[#F8F5F0]">100% Authentic Andalusian Distillates</h4>
-              <p className="text-xs text-[#A69E94]">Meticulously matured extraits in certified numbered flacons.</p>
-            </div>
-          </div>
-
-          {/* Newsletter Box */}
-          <div className="max-w-2xl mx-auto text-center pt-16 space-y-4">
-            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel">
-              The Sovereign Society
-            </span>
-            <h3 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F8F5F0]">
-              Enter the world of Arabian Sheikh
-            </h3>
-            <p className="text-xs text-[#A69E94]">
-              Receive private invitations to limited flacon reserves, private salon releases, and olfactory monographs.
-            </p>
-            <form onSubmit={(e) => { e.preventDefault(); alert('Thank you for subscribing to Arabian Sheikh Private Society.'); }} className="flex max-w-md mx-auto gap-2 pt-2">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                required
-                className="flex-1 bg-black/60 border border-[#D4AF37]/30 px-4 py-3 text-xs text-[#F8F5F0] focus:border-[#D4AF37] focus:outline-none rounded-xs"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors"
-              >
-                Join
-              </button>
-            </form>
-          </div>
-
-        </div>
-      </section>
+      </div>
 
     </div>
   );
