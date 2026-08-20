@@ -1,4 +1,6 @@
 import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
+import { productApi } from '../api/product.api';
+import { apiClient } from '../api/client';
 
 const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v9';
 
@@ -31,6 +33,14 @@ function saveProducts(products) {
 
 export const productService = {
   async getAllProducts(filters = {}) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.getProducts(filters);
+      } catch (e) {
+        console.warn('Real API unavailable, falling back to local catalog data:', e.message);
+      }
+    }
+
     const products = loadProducts();
     let result = [...products];
 
@@ -138,23 +148,47 @@ export const productService = {
   },
 
   async getProductById(idOrSlug) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.getProductById(idOrSlug);
+      } catch (e) {
+        console.warn('Real API product detail unavailable, using local cache:', e.message);
+      }
+    }
+
     const products = loadProducts();
     return products.find(p => p.id === idOrSlug || p.slug === idOrSlug) || null;
   },
 
   async getFeaturedProducts() {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.getFeaturedProducts();
+      } catch (e) {
+        console.warn('Real API featured products fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     return products.filter(p => p.featured && p.status === 'ACTIVE');
   },
 
   async getBestSellers() {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.getBestSellers();
+      } catch (e) {
+        console.warn('Real API bestsellers fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     return products.filter(p => (p.isBestSeller || p.featured) && p.status === 'ACTIVE');
   },
 
   async getPerfumes() {
-    const products = loadProducts();
-    return products.filter(p => p.category === 'perfumes' && p.status === 'ACTIVE');
+    const products = await this.getAllProducts({ category: 'perfumes' });
+    return products.filter(p => p.status === 'ACTIVE');
   },
 
   async getTiers() {
@@ -166,6 +200,14 @@ export const productService = {
   },
 
   async getRelatedProducts(currentId, limit = 4) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.getRelatedProducts(currentId, limit);
+      } catch (e) {
+        console.warn('Real API related products fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     const current = products.find(p => p.id === currentId || p.slug === currentId);
     if (!current) return products.slice(0, limit);
@@ -181,6 +223,14 @@ export const productService = {
   },
 
   async addReview(productId, review) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.addReview(productId, review);
+      } catch (e) {
+        console.warn('Real API add review fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     const index = products.findIndex(p => p.id === productId || p.slug === productId);
     if (index === -1) throw new Error('Product not found');
@@ -214,6 +264,14 @@ export const productService = {
 
   // Admin methods
   async createProduct(productData) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.createProduct(productData);
+      } catch (e) {
+        console.warn('Real API create product fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     const newProduct = {
       ...productData,
@@ -230,6 +288,14 @@ export const productService = {
   },
 
   async updateProduct(id, productData) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.updateProduct(id, productData);
+      } catch (e) {
+        console.warn('Real API update product fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     const index = products.findIndex(p => p.id === id || p.slug === id);
     if (index === -1) throw new Error('Product not found');
@@ -243,6 +309,14 @@ export const productService = {
   },
 
   async deleteProduct(id) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.deleteProduct(id);
+      } catch (e) {
+        console.warn('Real API delete product fallback:', e.message);
+      }
+    }
+
     let products = loadProducts();
     products = products.filter(p => p.id !== id && p.slug !== id);
     saveProducts(products);
@@ -250,6 +324,14 @@ export const productService = {
   },
 
   async updateStock(id, newStock) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await productApi.updateStock(id, newStock);
+      } catch (e) {
+        console.warn('Real API stock update fallback:', e.message);
+      }
+    }
+
     const products = loadProducts();
     const index = products.findIndex(p => p.id === id || p.slug === id);
     if (index === -1) throw new Error('Product not found');
@@ -264,3 +346,5 @@ export const productService = {
     return products[index];
   }
 };
+
+export default productService;

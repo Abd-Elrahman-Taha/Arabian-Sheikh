@@ -1,12 +1,16 @@
 import { INITIAL_USERS } from './mockData';
+import { authApi } from '../api/auth.api';
+import { apiClient } from '../api/client';
 
 const USERS_STORAGE_KEY = 'arabian_sheikh_users';
 const CURRENT_USER_KEY = 'arabian_sheikh_current_user';
 
 function loadUsers() {
-  const data = localStorage.getItem(USERS_STORAGE_KEY);
+  const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
   if (!data) {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
+    }
     return INITIAL_USERS;
   }
   try {
@@ -17,11 +21,27 @@ function loadUsers() {
 }
 
 function saveUsers(users) {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }
 }
 
 export const authService = {
   async login(email, password) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const user = await authApi.login(email, password);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        return user;
+      } catch (e) {
+        // If it's an API validation error or invalid credentials, throw it directly
+        if (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 422) {
+          throw e;
+        }
+        console.warn('Real Auth API network issue, falling back to local credentials:', e.message);
+      }
+    }
+
     // Simulate brief network delay
     await new Promise(resolve => setTimeout(resolve, 350));
     
@@ -62,6 +82,19 @@ export const authService = {
   },
 
   async signup({ name, email, password }) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const user = await authApi.signup({ name, email, password });
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        return user;
+      } catch (e) {
+        if (e.status === 400 || e.status === 409 || e.status === 422) {
+          throw e;
+        }
+        console.warn('Real Auth API signup network issue, falling back to local register:', e.message);
+      }
+    }
+
     await new Promise(resolve => setTimeout(resolve, 350));
     const users = loadUsers();
     const cleanEmail = email.toLowerCase().trim();
@@ -90,6 +123,7 @@ export const authService = {
   },
 
   getCurrentUser() {
+    if (typeof window === 'undefined') return null;
     const data = localStorage.getItem(CURRENT_USER_KEY);
     if (!data) return null;
     try {
@@ -100,6 +134,16 @@ export const authService = {
   },
 
   async updateProfile(updates) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const updated = await authApi.updateProfile(updates);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updated));
+        return updated;
+      } catch (e) {
+        console.warn('Real API update profile fallback:', e.message);
+      }
+    }
+
     const current = this.getCurrentUser();
     if (!current) throw new Error('Not authenticated');
 
@@ -115,6 +159,14 @@ export const authService = {
   },
 
   async forgotPassword(email) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await authApi.forgotPassword(email);
+      } catch (e) {
+        console.warn('Real API forgotPassword fallback:', e.message);
+      }
+    }
+
     await new Promise(resolve => setTimeout(resolve, 300));
     const users = loadUsers();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
@@ -125,11 +177,24 @@ export const authService = {
   },
 
   async resetPassword(token, newPassword) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await authApi.resetPassword(token, newPassword);
+      } catch (e) {
+        console.warn('Real API resetPassword fallback:', e.message);
+      }
+    }
+
     await new Promise(resolve => setTimeout(resolve, 300));
     return { success: true, message: 'Your password has been successfully updated.' };
   },
 
   logout() {
-    localStorage.removeItem(CURRENT_USER_KEY);
+    authApi.logout().catch(() => {});
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
   }
 };
+
+export default authService;

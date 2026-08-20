@@ -1,11 +1,15 @@
 import { INITIAL_DISCOUNTS } from './mockData';
+import { discountApi } from '../api/discount.api';
+import { apiClient } from '../api/client';
 
 const DISCOUNTS_STORAGE_KEY = 'arabian_sheikh_discounts';
 
 function loadDiscounts() {
-  const data = localStorage.getItem(DISCOUNTS_STORAGE_KEY);
+  const data = typeof window !== 'undefined' ? localStorage.getItem(DISCOUNTS_STORAGE_KEY) : null;
   if (!data) {
-    localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(INITIAL_DISCOUNTS));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(INITIAL_DISCOUNTS));
+    }
     return INITIAL_DISCOUNTS;
   }
   try {
@@ -16,16 +20,37 @@ function loadDiscounts() {
 }
 
 function saveDiscounts(discounts) {
-  localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(discounts));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(discounts));
+  }
 }
 
 export const discountService = {
   async getAllDiscounts() {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await discountApi.getDiscounts();
+      } catch (e) {
+        console.warn('Real API discounts fallback:', e.message);
+      }
+    }
     return loadDiscounts();
   },
 
   async validateCode(codeStr, subtotal = 0) {
     if (!codeStr) throw new Error('Please enter a promotional code');
+
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await discountApi.validateCoupon(codeStr, subtotal);
+      } catch (e) {
+        if (e.status === 400 || e.status === 404 || e.status === 422) {
+          throw e;
+        }
+        console.warn('Real API validate coupon fallback:', e.message);
+      }
+    }
+
     const discounts = loadDiscounts();
     const discount = discounts.find(
       d => d.code.toUpperCase() === codeStr.toUpperCase().trim() && d.status === 'ACTIVE'
@@ -36,13 +61,21 @@ export const discountService = {
     }
 
     if (discount.minSpend && subtotal < discount.minSpend) {
-      throw new Error(`This privilege code requires a minimum spend of $${discount.minSpend}.`);
+      throw new Error(`This privilege code requires a minimum spend of €${discount.minSpend}.`);
     }
 
     return discount;
   },
 
   async createDiscount(discountData) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await discountApi.createDiscount(discountData);
+      } catch (e) {
+        console.warn('Real API create discount fallback:', e.message);
+      }
+    }
+
     const discounts = loadDiscounts();
     const cleanCode = discountData.code.toUpperCase().trim();
 
@@ -74,9 +107,19 @@ export const discountService = {
   },
 
   async deleteDiscount(code) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await discountApi.deleteDiscount(code);
+      } catch (e) {
+        console.warn('Real API delete discount fallback:', e.message);
+      }
+    }
+
     let discounts = loadDiscounts();
     discounts = discounts.filter(d => d.code !== code);
     saveDiscounts(discounts);
     return true;
   }
 };
+
+export default discountService;

@@ -1,9 +1,22 @@
 import { productService } from './productService';
 import { orderService } from './orderService';
 import { userService } from './userService';
+import { analyticsApi } from '../api/analytics.api';
+import { apiClient } from '../api/client';
 
 export const analyticsService = {
   async getDetailedAnalytics() {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const remote = await analyticsApi.getOverview();
+        if (remote && remote.totalRevenue !== undefined) {
+          return remote;
+        }
+      } catch (e) {
+        console.warn('Real API analytics fallback:', e.message);
+      }
+    }
+
     const products = await productService.getAllProducts({ includeDrafts: true });
     const orders = await orderService.getAllOrders();
     const users = await userService.getAllUsers();
@@ -58,3 +71,5 @@ export const analyticsService = {
     };
   }
 };
+
+export default analyticsService;

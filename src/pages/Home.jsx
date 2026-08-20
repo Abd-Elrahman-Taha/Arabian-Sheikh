@@ -311,20 +311,29 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-transparent to-[#0B0A08]/80 pointer-events-none z-1" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-12 items-center">
             
-            {/* Left Hero Editorial Content */}
-            <div className="lg:col-span-6 text-center lg:text-left space-y-6">
+            {/* Center/Top Flacon for Mobile (order-1 on mobile, col-span-6 on desktop) */}
+            <div className="w-full lg:col-span-6 order-1 lg:order-2 relative flex items-center justify-center h-[46vh] sm:h-[52vh] lg:h-[580px]">
+              <Hero3DFlaconScene
+                activeProductIndex={activeHeroIndex}
+                onSlideChange={setActiveHeroIndex}
+                products={heroFlacons}
+              />
+            </div>
+
+            {/* Editorial Content: Minimalist & Clean on Mobile, Rich on Desktop */}
+            <div className="w-full lg:col-span-6 order-2 lg:order-1 text-center lg:text-left space-y-3 sm:space-y-4 lg:space-y-6">
               
-              {/* Clean Badge (No Price) */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#0B0A08]/90 backdrop-blur-md text-xs uppercase tracking-[0.25em] text-[#F2D675] font-bold shadow-md">
-                <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
+              {/* Clean Badge */}
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#0B0A08]/90 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#F2D675] font-bold shadow-md">
+                <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37]" />
                 <span>{currentHeroFlacon.tier} Tier • 60ml Extrait</span>
               </div>
 
               {/* Minimal Headlines */}
-              <div className="space-y-2.5">
-                <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold drop-shadow-md">
+              <div className="space-y-1.5 sm:space-y-2.5">
+                <p className="hidden sm:block text-xs sm:text-sm uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold drop-shadow-md">
                   HAUTE PARFUMERIE • ANDALUSIA
                 </p>
                 <BlurText
@@ -333,53 +342,45 @@ export default function Home() {
                   delay={70}
                   animateBy="words"
                   direction="top"
-                  className="text-4xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-lg justify-center lg:justify-start"
+                  className="text-3xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-lg justify-center lg:justify-start"
                   as="h1"
                 />
-                <p className="text-sm sm:text-base text-[#F3E6D0] font-sans font-medium tracking-wide max-w-xl mx-auto lg:mx-0">
+                {/* Descriptive tagline: hidden on small mobile to keep UI clean and product-focused */}
+                <p className="hidden md:block text-sm sm:text-base text-[#F3E6D0] font-sans font-medium tracking-wide max-w-xl mx-auto lg:mx-0">
                   {getTagline(currentHeroFlacon)}
                 </p>
               </div>
 
-              {/* Scent Notes */}
-              <div className="text-xs sm:text-sm uppercase tracking-widest text-[#F2D675] font-mono font-semibold">
+              {/* Scent Notes: shown on desktop / tablet, simplified on mobile */}
+              <div className="hidden sm:block text-xs sm:text-sm uppercase tracking-widest text-[#F2D675] font-mono font-semibold">
                 {currentHeroFlacon.notes}
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+              <div className="flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1 sm:pt-2">
                 <button
                   onClick={scrollToCollections}
-                  className="w-full sm:w-auto px-8 py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-300 shadow-xl hover:scale-102 flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 sm:flex-initial px-5 sm:px-8 py-3 sm:py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.22em] transition-all duration-300 shadow-xl hover:scale-102 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer"
                 >
-                  <Layers className="w-4 h-4" />
-                  <span>{language === 'es' ? 'Explorar Colecciones' : 'Explore Collections'}</span>
-                  <ChevronDown className="w-4 h-4 animate-bounce" />
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>{language === 'es' ? 'Colecciones' : 'Collections'}</span>
+                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />
                 </button>
 
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
-                  className="w-full sm:w-auto px-8 py-3.5 bg-black/60 hover:bg-white/10 text-[#F3E6D0] border border-[#D4AF37]/50 hover:border-[#D4AF37] font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-300 flex items-center justify-center gap-2 shadow-md"
+                  className="flex-1 sm:flex-initial px-5 sm:px-8 py-3 sm:py-3.5 bg-black/60 hover:bg-white/10 text-[#F3E6D0] border border-[#D4AF37]/50 hover:border-[#D4AF37] font-cinzel font-bold text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.22em] transition-all duration-300 flex items-center justify-center gap-1.5 sm:gap-2 shadow-md"
                 >
-                  <span>{language === 'es' ? 'Descubrir Frasco' : 'Discover Flacon'}</span>
+                  <span>{language === 'es' ? 'Descubrir' : 'Discover'}</span>
                 </Link>
               </div>
 
             </div>
 
-            {/* Right Hero: 3D Floating Flacon */}
-            <div className="lg:col-span-6 relative flex items-center justify-center">
-              <Hero3DFlaconScene
-                activeProductIndex={activeHeroIndex}
-                onSlideChange={setActiveHeroIndex}
-                products={heroFlacons}
-              />
-            </div>
-
           </div>
 
-          {/* Horological Precision Ruler Pagination (Inspired by Haute Horlogerie / Chronoswiss) */}
-          <div className="mt-8 sm:mt-12 pt-4 border-t border-[#D4AF37]/15">
+          {/* Horological Precision Ruler Pagination */}
+          <div className="mt-4 sm:mt-8 lg:mt-12 pt-2 sm:pt-4 border-t border-[#D4AF37]/15">
             <HeroRulerPagination
               activeIndex={activeHeroIndex}
               onSelectIndex={setActiveHeroIndex}

@@ -1,11 +1,15 @@
 import { INITIAL_ORDERS } from './mockData';
+import { orderApi } from '../api/order.api';
+import { apiClient } from '../api/client';
 
 const ORDERS_STORAGE_KEY = 'arabian_sheikh_orders';
 
 function loadOrders() {
-  const data = localStorage.getItem(ORDERS_STORAGE_KEY);
+  const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
   if (!data) {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
+    }
     return INITIAL_ORDERS;
   }
   try {
@@ -16,7 +20,9 @@ function loadOrders() {
 }
 
 function saveOrders(orders) {
-  localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+  }
 }
 
 export const ORDER_STATUSES = [
@@ -31,6 +37,14 @@ export const ORDER_STATUSES = [
 
 export const orderService = {
   async getAllOrders(filters = {}) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.getOrders(filters);
+      } catch (e) {
+        console.warn('Real API orders fallback:', e.message);
+      }
+    }
+
     const orders = loadOrders();
     let result = [...orders];
 
@@ -52,6 +66,14 @@ export const orderService = {
   },
 
   async getOrdersByUser(userId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.getUserOrders(userId);
+      } catch (e) {
+        console.warn('Real API user orders fallback:', e.message);
+      }
+    }
+
     const orders = loadOrders();
     return orders
       .filter(o => o.userId === userId)
@@ -59,11 +81,27 @@ export const orderService = {
   },
 
   async getOrderById(id) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.getOrderById(id);
+      } catch (e) {
+        console.warn('Real API get order fallback:', e.message);
+      }
+    }
+
     const orders = loadOrders();
     return orders.find(o => o.id === id || o.id === `ORD-${id}`) || null;
   },
 
   async createOrder(orderPayload) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.createOrder(orderPayload);
+      } catch (e) {
+        console.warn('Real API create order fallback:', e.message);
+      }
+    }
+
     await new Promise(resolve => setTimeout(resolve, 400));
     const orders = loadOrders();
 
@@ -86,6 +124,14 @@ export const orderService = {
   },
 
   async updateOrderStatus(orderId, newStatus) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.updateOrderStatus(orderId, newStatus);
+      } catch (e) {
+        console.warn('Real API update order status fallback:', e.message);
+      }
+    }
+
     const orders = loadOrders();
     const index = orders.findIndex(o => o.id === orderId);
     if (index === -1) throw new Error('Order not found');
@@ -93,5 +139,20 @@ export const orderService = {
     orders[index].status = newStatus;
     saveOrders(orders);
     return orders[index];
+  },
+
+  async trackOrder(trackingCode) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.trackOrder(trackingCode);
+      } catch (e) {
+        console.warn('Real API track order fallback:', e.message);
+      }
+    }
+
+    const orders = loadOrders();
+    return orders.find(o => o.trackingCode === trackingCode || o.id === trackingCode) || null;
   }
 };
+
+export default orderService;

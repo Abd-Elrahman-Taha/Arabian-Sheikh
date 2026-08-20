@@ -54,9 +54,10 @@ export default function Hero3DFlaconScene({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera
+    // 2. Camera with Mobile-Optimized Closer Perspective
+    const isMobile = width < 640;
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 0, 6.2);
+    camera.position.set(0, isMobile ? 0.05 : 0, isMobile ? 4.6 : 6.2);
     cameraRef.current = camera;
 
     // 3. Renderer with Optimal DPR
@@ -220,7 +221,10 @@ export default function Hero3DFlaconScene({
       if (!container || !renderer || !camera) return;
       const w = container.clientWidth || 500;
       const h = container.clientHeight || 650;
+      const isMob = w < 640;
       camera.aspect = w / h;
+      camera.position.z = isMob ? 4.6 : 6.2;
+      camera.position.y = isMob ? 0.05 : 0;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
@@ -282,11 +286,11 @@ export default function Hero3DFlaconScene({
 
   if (!webglSupported) {
     return (
-      <div className="w-full h-full flex items-center justify-center p-6">
+      <div className="w-full h-full flex items-center justify-center p-2 sm:p-6">
         <img
           src={flaconImages[activeProductIndex] || flaconImages[0]}
           alt="Arabian Sheikh Perfume Flacon"
-          className="max-h-[80%] max-w-[80%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter"
+          className="h-[48vh] sm:h-[58vh] max-h-[500px] w-auto max-w-[90%] object-contain drop-shadow-[0_20px_50px_rgba(212,175,55,0.4)] filter"
           loading="eager"
         />
       </div>

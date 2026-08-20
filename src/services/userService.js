@@ -1,12 +1,17 @@
 import { INITIAL_USERS } from './mockData';
+import { userApi } from '../api/user.api';
+import { wishlistApi } from '../api/wishlist.api';
+import { apiClient } from '../api/client';
 
 const USERS_STORAGE_KEY = 'arabian_sheikh_users';
 const WISHLIST_STORAGE_KEY = 'arabian_sheikh_wishlist';
 
 function loadUsers() {
-  const data = localStorage.getItem(USERS_STORAGE_KEY);
+  const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
   if (!data) {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
+    }
     return INITIAL_USERS;
   }
   try {
@@ -17,12 +22,15 @@ function loadUsers() {
 }
 
 function saveUsers(users) {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }
 }
 
 export const userService = {
   // Wishlist
   getWishlist() {
+    if (typeof window === 'undefined') return [];
     const data = localStorage.getItem(WISHLIST_STORAGE_KEY);
     if (!data) return ['as-oud-royal-01', 'as-amber-malaki-02'];
     try {
@@ -32,7 +40,17 @@ export const userService = {
     }
   },
 
-  toggleWishlist(productId) {
+  async toggleWishlist(productId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const remote = await wishlistApi.toggleWishlist(productId);
+        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(remote));
+        return remote;
+      } catch (e) {
+        console.warn('Real API toggle wishlist fallback:', e.message);
+      }
+    }
+
     const current = this.getWishlist();
     let updated;
     if (current.includes(productId)) {
@@ -53,12 +71,28 @@ export const userService = {
 
   // Addresses
   async getAddresses(userId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await userApi.getAddresses();
+      } catch (e) {
+        console.warn('Real API get addresses fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     const user = users.find(u => u.id === userId);
     return user?.addresses || [];
   },
 
   async addAddress(userId, addressData) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await userApi.addAddress(addressData);
+      } catch (e) {
+        console.warn('Real API add address fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     if (userIndex === -1) throw new Error('User not found');
@@ -90,12 +124,28 @@ export const userService = {
 
   // Payment Methods
   async getPaymentMethods(userId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await userApi.getPaymentMethods();
+      } catch (e) {
+        console.warn('Real API get payment methods fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     const user = users.find(u => u.id === userId);
     return user?.paymentMethods || [];
   },
 
   async addPaymentMethod(userId, cardData) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await userApi.addPaymentMethod(cardData);
+      } catch (e) {
+        console.warn('Real API add payment method fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     if (userIndex === -1) throw new Error('User not found');
@@ -130,6 +180,14 @@ export const userService = {
 
   // Admin user management
   async getAllUsers(filters = {}) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await userApi.getUsers(filters);
+      } catch (e) {
+        console.warn('Real API get all users fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     let result = [...users];
 
@@ -146,6 +204,14 @@ export const userService = {
   },
 
   async updateUserRole(userId, newRole) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await userApi.updateUserRole(userId, newRole);
+      } catch (e) {
+        console.warn('Real API update role fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     const user = users.find(u => u.id === userId);
     if (!user) throw new Error('User not found');
@@ -155,6 +221,16 @@ export const userService = {
   },
 
   async toggleUserBlock(userId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const user = users.find(u => u.id === userId);
+        const nextStatus = user?.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
+        return await userApi.updateUserStatus(userId, nextStatus);
+      } catch (e) {
+        console.warn('Real API toggle block fallback:', e.message);
+      }
+    }
+
     const users = loadUsers();
     const user = users.find(u => u.id === userId);
     if (!user) throw new Error('User not found');
@@ -170,3 +246,5 @@ export const userService = {
     return true;
   }
 };
+
+export default userService;
