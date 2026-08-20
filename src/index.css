@@ -397,19 +397,17 @@ body {
   will-change: transform;
 }
 
-@keyframes lanternPulse {
-  0%, 100% {
-    opacity: 0.35;
-    transform: scale(1);
+@keyframes tierProgress {
+  0% {
+    width: 0%;
   }
-  50% {
-    opacity: 0.75;
-    transform: scale(1.15);
+  100% {
+    width: 100%;
   }
 }
 
-.animate-lantern-pulse {
-  animation: lanternPulse 6s ease-in-out infinite;
+.animate-tier-progress {
+  animation: tierProgress 3.5s linear forwards;
 }
 
 /* Accessibility: Prefers Reduced Motion */

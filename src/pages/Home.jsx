@@ -334,21 +334,88 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* Tier Slide Switcher Controls (No Price in Buttons) */}
-              <div className="pt-6 border-t border-white/15 flex items-center justify-center lg:justify-start gap-2.5">
-                {heroFlacons.map((flacon, idx) => (
-                  <button
-                    key={flacon.id}
-                    onClick={() => setActiveHeroIndex(idx)}
-                    className={`px-4 py-2 rounded text-xs font-cinzel tracking-wider uppercase transition-all duration-300 cursor-pointer ${
-                      activeHeroIndex === idx
-                        ? 'bg-[#D4AF37] text-black font-bold shadow-lg scale-105'
-                        : 'bg-black/60 text-[#F3E6D0] hover:bg-white/15 border border-white/20'
-                    }`}
-                  >
-                    {flacon.tier}
-                  </button>
-                ))}
+              {/* Bespoke Haute Parfumerie Tier Selector */}
+              <div className="pt-6 border-t border-[#D4AF37]/25 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span className="text-[10px] sm:text-[11px] font-cinzel uppercase tracking-[0.25em] text-[#D8BE99] font-bold">
+                      {language === 'es' ? 'Seleccionar Nivel Imperial' : 'Select Flacon Tier'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-mono text-[#F2D675] font-bold tracking-widest">
+                    0{activeHeroIndex + 1} / 03
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+                  {heroFlacons.map((flacon, idx) => {
+                    const isActive = activeHeroIndex === idx;
+                    return (
+                      <button
+                        key={flacon.id}
+                        onClick={() => setActiveHeroIndex(idx)}
+                        className={`group relative text-left p-2.5 sm:p-3 transition-all duration-500 rounded-sm cursor-pointer overflow-hidden border ${
+                          isActive
+                            ? 'bg-[#21130D]/95 border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.3)] scale-[1.02]'
+                            : 'bg-[#0B0A08]/80 hover:bg-[#3A2116]/50 border-[#3A2116]/80 hover:border-[#D4AF37]/50'
+                        }`}
+                      >
+                        {/* Active 3.5s Filling Gold Progress Bar */}
+                        {isActive && (
+                          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-[#3A2116] overflow-hidden">
+                            <div
+                              key={`progress-${activeHeroIndex}`}
+                              className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F2D675] animate-tier-progress"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          {/* Miniature Flacon Thumbnail */}
+                          <div className={`w-8 h-10 sm:w-10 sm:h-12 shrink-0 flex items-center justify-center rounded p-0.5 transition-all duration-300 ${
+                            isActive
+                              ? 'bg-[#3A2116] ring-1 ring-[#D4AF37]/80 shadow-[0_0_10px_rgba(212,175,55,0.4)]'
+                              : 'bg-black/50 opacity-65 group-hover:opacity-100 group-hover:scale-105'
+                          }`}>
+                            <img
+                              src={flacon.image}
+                              alt={flacon.name}
+                              className="w-full h-full object-contain filter drop-shadow-md"
+                            />
+                          </div>
+
+                          {/* Tier Meta */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className={`text-[9px] sm:text-[10px] font-mono tracking-widest ${
+                                isActive ? 'text-[#F2D675] font-bold' : 'text-[#D8BE99]/60'
+                              }`}>
+                                0{idx + 1}
+                              </span>
+                              {isActive && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37] animate-pulse" />
+                              )}
+                            </div>
+                            <p className={`font-cinzel text-xs sm:text-sm font-bold uppercase tracking-wider truncate transition-colors ${
+                              isActive ? 'text-[#F3E6D0]' : 'text-[#D8BE99] group-hover:text-[#F3E6D0]'
+                            }`}>
+                              {flacon.tier}
+                            </p>
+                            <p className="text-[10px] text-[#D8BE99] truncate font-sans font-medium hidden sm:block">
+                              {flacon.name}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Subtle gold corner ornament for active tier */}
+                        {isActive && (
+                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-gradient-to-tl from-[#D4AF37] to-transparent rotate-45 opacity-75" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
