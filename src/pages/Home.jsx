@@ -9,6 +9,7 @@ import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
 import WebThreads from '../components/motion/WebThreads';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
 import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
+import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
 import {
   Sparkles,
@@ -237,7 +238,7 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full bg-[#0A0A0B] text-[#F8F5F0] overflow-x-hidden">
+    <div className="w-full bg-transparent text-[#F8F5F0] overflow-x-hidden">
       
       {/* =========================================================================
           1. HERO SECTION: 3.5s AUTO-CYCLING 3D FLACON (PRICE-FREE & ULTRA LUXURY)
@@ -358,11 +359,21 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          ATMOSPHERIC TWINKLING CELESTIAL STARS
+          ATMOSPHERIC WEBGL SHADERS & TWINKLING CELESTIAL STARS
           ========================================================================= */}
       <div className="relative overflow-hidden">
+        {/* Organic Golden Amber Fluid GLSL WebGL Shader */}
+        <LuxuryBackgroundShader
+          color1="#D4AF37"
+          color2="#362214"
+          color3="#080605"
+          opacity={0.55}
+          className="absolute inset-0 pointer-events-none z-0"
+        />
+
+        {/* Twinkling Celestial Diamond Stars & Mist */}
         <BackgroundAtmosphere
-          starCount={45}
+          starCount={40}
           smokeIntensity={0.06}
           className="absolute inset-0 pointer-events-none z-0"
         />

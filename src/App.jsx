@@ -14,6 +14,7 @@ import CartDrawer from './components/cart/CartDrawer';
 import SearchOverlay from './components/search/SearchOverlay';
 import PageTransition from './components/common/PageTransition';
 import BackgroundAtmosphere from './components/motion/BackgroundAtmosphere';
+import LuxuryBackgroundShader from './components/motion/LuxuryBackgroundShader';
 import DesertBackground from './components/motion/DesertBackground';
 
 // Public Pages
@@ -191,8 +192,23 @@ function MainRouter() {
       {/* Desert Background — subtle obsidian/espresso depth */}
       <DesertBackground />
 
-      {/* Global Ambient Stars Layer */}
-      <BackgroundAtmosphere starCount={25} smokeIntensity={0.08} className="fixed inset-0 pointer-events-none z-[5]" />
+      {/* Global Fluid Golden Amber GLSL WebGL Shader (Active across every page) */}
+      <LuxuryBackgroundShader
+        color1="#D4AF37"
+        color2="#3D2411"
+        color3="#070605"
+        opacity={0.65}
+        className="fixed inset-0 pointer-events-none z-[1]"
+      />
+
+      {/* Global Radiant Twinkling Celestial Stars (Active across other pages; Homepage starts stars strictly after Section 1) */}
+      {currentPath !== '/' && (
+        <BackgroundAtmosphere
+          starCount={45}
+          smokeIntensity={0.06}
+          className="fixed inset-0 pointer-events-none z-[2]"
+        />
+      )}
 
       {/* Standalone Cinematic Intro */}
       {showIntro && !isAdminRoute && (
@@ -203,7 +219,7 @@ function MainRouter() {
       {!isAdminRoute && <Header onOpenSearch={() => setSearchOpen(true)} />}
 
       {/* Main Page Body with PageTransition */}
-      <main className="relative z-10 flex-1 w-full">
+      <main className="relative z-10 flex-1 w-full bg-transparent">
         <PageTransition key={currentPath}>
           {renderContent()}
         </PageTransition>

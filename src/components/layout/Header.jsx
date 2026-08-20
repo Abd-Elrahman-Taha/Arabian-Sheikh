@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function Header({ onOpenSearch }) {
-  const { currentPath } = useRouter();
+  const { currentPath, queryParams } = useRouter();
   const { t, language, setLanguage } = useTranslation();
   const { totals, openDrawer, cartBadgeAnimated } = useCart();
   const { wishlistCount } = useWishlist();
@@ -51,6 +51,28 @@ export default function Header({ onOpenSearch }) {
     { name: t('nav.bundles') || 'Bundles', path: '/shop?category=bundles' },
     { name: t('nav.thePalace') || t('nav.about') || 'The Palace', path: '/the-palace' }
   ];
+
+  const isItemActive = (itemPath) => {
+    if (!itemPath) return false;
+    const [basePath, queryString] = itemPath.split('?');
+
+    if (queryString) {
+      const targetParams = new URLSearchParams(queryString);
+      const targetCategory = targetParams.get('category');
+      const currentCategory = queryParams?.get('category');
+
+      if (currentPath === basePath && currentCategory === targetCategory) {
+        return true;
+      }
+      return false;
+    }
+
+    if (basePath === '/') {
+      return currentPath === '/';
+    }
+
+    return currentPath === basePath || currentPath.startsWith(basePath + '/');
+  };
 
   const languages = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -109,22 +131,25 @@ export default function Header({ onOpenSearch }) {
               </Link>
             </div>
 
-            {/* 2. CENTER: CATEGORY NAVIGATION */}
+            {/* 2. CENTER: CATEGORY NAVIGATION WITH ACTIVE UNDERLINE INDICATOR */}
             <nav className="hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#E5E0D8]">
-              {navCategories.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`transition-colors duration-300 relative py-1 hover:text-[#D4AF37] ${
-                    currentPath === item.path ? 'text-[#D4AF37] font-semibold' : ''
-                  }`}
-                >
-                  {item.name}
-                  {currentPath === item.path && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#D4AF37] animate-fade-in" />
-                  )}
-                </Link>
-              ))}
+              {navCategories.map((item) => {
+                const active = isItemActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`transition-colors duration-300 relative py-1.5 hover:text-[#D4AF37] ${
+                      active ? 'text-[#D4AF37] font-semibold' : 'text-[#E5E0D8]'
+                    }`}
+                  >
+                    <span>{item.name}</span>
+                    {active && (
+                      <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full animate-fade-in" />
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* 3. RIGHT: UTILITIES & ACTIONS */}
@@ -239,23 +264,40 @@ export default function Header({ onOpenSearch }) {
 
             {/* Mobile Nav Links */}
             <div className="space-y-4 font-cinzel text-base tracking-[0.18em] uppercase">
-              {navCategories.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block py-2 text-[#F8F5F0] hover:text-[#D4AF37] transition-colors border-b border-white/5 flex items-center justify-between"
-                >
-                  <span>{item.name}</span>
-                  <ArrowRight className="w-4 h-4 text-[#D4AF37]/60" />
-                </Link>
-              ))}
+              {navCategories.map((item) => {
+                const active = isItemActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block py-2 transition-colors border-b border-white/5 flex items-center justify-between relative ${
+                      active ? 'text-[#D4AF37] font-bold' : 'text-[#F8F5F0] hover:text-[#D4AF37]'
+                    }`}
+                  >
+                    <span className="relative inline-block">
+                      {item.name}
+                      {active && (
+                        <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full" />
+                      )}
+                    </span>
+                    <ArrowRight className={`w-4 h-4 ${active ? 'text-[#D4AF37]' : 'text-[#D4AF37]/60'}`} />
+                  </Link>
+                );
+              })}
               <Link
                 to="/discovery"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[#D4AF37] font-semibold flex items-center justify-between"
+                className={`block py-2 font-semibold flex items-center justify-between relative ${
+                  isItemActive('/discovery') ? 'text-[#D4AF37] font-bold' : 'text-[#D4AF37]'
+                }`}
               >
-                <span>Fragrance Finder Quiz</span>
+                <span className="relative inline-block">
+                  Fragrance Finder Quiz
+                  {isItemActive('/discovery') && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full" />
+                  )}
+                </span>
                 <Sparkles className="w-4 h-4 text-[#D4AF37]" />
               </Link>
             </div>

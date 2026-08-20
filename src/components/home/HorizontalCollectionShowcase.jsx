@@ -165,7 +165,7 @@ export default function HorizontalCollectionShowcase({
     <section
       ref={sectionRef}
       className={`relative min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center py-20 lg:py-26 border-t border-[#D4AF37]/20 overflow-hidden ${
-        isEven ? 'bg-[#0E0B09]' : 'bg-[#0A0A0B]'
+        isEven ? 'bg-[#0E0B09]/75 backdrop-blur-[2px]' : 'bg-[#0A0A0B]/70 backdrop-blur-[2px]'
       }`}
     >
       {/* Ambient background aura */}

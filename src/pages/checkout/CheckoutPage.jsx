@@ -113,7 +113,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-[#F8F5F0] pt-28 sm:pt-32 pb-24">
+    <div className="min-h-screen bg-transparent text-[#F8F5F0] pt-28 sm:pt-32 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

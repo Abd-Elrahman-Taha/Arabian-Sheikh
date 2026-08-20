@@ -112,7 +112,7 @@ export default function Discovery() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-[#F8F5F0] pt-32 pb-24">
+    <div className="min-h-screen bg-transparent text-[#F8F5F0] pt-32 pb-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Header */}

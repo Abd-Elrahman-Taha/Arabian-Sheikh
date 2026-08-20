@@ -21,7 +21,7 @@ export default function ThePalace() {
   const { t, language } = useTranslation();
 
   return (
-    <div className="space-y-24 sm:space-y-32 pb-24 animate-fade-in bg-[#0A0A0B] text-[#F8F5F0]">
+    <div className="space-y-24 sm:space-y-32 pb-24 animate-fade-in bg-transparent text-[#F8F5F0]">
       
       {/* 1. Grand Palace Hero */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-36 sm:pt-44 pb-20">
