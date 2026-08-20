@@ -19,6 +19,7 @@ export default function ArabianLogo({
   className = '',
   showSubtitle = false,
   showArabic = false,
+  arabicText = 'اربيان شيخ',
   subtitle = 'Haute Parfumerie Arabe'
 }) {
   const sizeMap = {
@@ -88,7 +89,7 @@ export default function ArabianLogo({
           </span>
           {showArabic && (
             <span className={`font-arabic text-[var(--color-terracotta)] font-semibold leading-snug mt-0.5 ${s.arabic}`}>
-              الشيخ العربي
+              {arabicText}
             </span>
           )}
           {showSubtitle && !showArabic && (
@@ -114,7 +115,7 @@ export default function ArabianLogo({
       </span>
       {showArabic && (
         <span className={`font-arabic text-[var(--color-terracotta)] font-bold mt-2 leading-snug ${s.arabic}`}>
-          الشيخ العربي
+          {arabicText}
         </span>
       )}
       {showSubtitle && !showArabic && (
