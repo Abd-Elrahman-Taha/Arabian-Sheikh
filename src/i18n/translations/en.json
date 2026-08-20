@@ -5,8 +5,8 @@
     "women": "Women",
     "unisex": "Unisex",
     "collections": "Collections",
-    "theHouse": "The House",
-    "about": "About Us",
+    "theHouse": "The Palace",
+    "about": "The Palace",
     "contact": "Concierge & Boutiques",
     "search": "Search",
     "wishlist": "Wishlist",
@@ -21,7 +21,14 @@
     "silkRoadCollection": "Imperial Silk Collection",
     "desertGoldCollection": "Desert Gold Collection",
     "pureBakhoor": "Pure Bakhoor & Incense",
-    "perfumeOils": "Attars & Concentrated Oils"
+    "perfumeOils": "Attars & Concentrated Oils",
+    "perfumes": "Perfumes",
+    "oils": "Oils",
+    "bakhoor": "Bakhoor",
+    "cosmetics": "Cosmetics",
+    "bundles": "Bundles",
+    "discovery": "Fragrance Finder",
+    "thePalace": "The Palace"
   },
   "home": {
     "heroSubtitle": "HAUTE PARFUMERIE ARABE",
@@ -359,5 +366,10 @@
     "popularSearches": "Popular Inquiries",
     "recentSearches": "Recent Searches",
     "suggestedNotes": "Explore by Notes"
+  },
+  "tiers": {
+    "luxury": "Luxury Tier (€50)",
+    "royal": "Royal Tier (€40)",
+    "classic": "Classic Tier (€30)"
   }
 }

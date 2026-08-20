@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { orderService } from '../../services/orderService';
 import { useWishlist } from '../../context/WishlistContext';
-import AnimatedCounter from '../../components/common/AnimatedCounter';
 import {
   ShoppingBag,
-  DollarSign,
   Heart,
-  ArrowRight
+  MapPin,
+  CreditCard,
+  ArrowRight,
+  Clock,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
-import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
 
 export default function AccountOverview() {
   const { navigate } = useRouter();
@@ -19,130 +20,119 @@ export default function AccountOverview() {
   const { user } = useAuth();
   const { wishlistCount } = useWishlist();
 
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadOrders() {
-      if (!user) return;
-      try {
-        const userOrders = await orderService.getOrdersByUser(user.id);
-        setOrders(userOrders);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  const recentOrders = [
+    {
+      id: 'ORD-98214',
+      date: '2026-08-14',
+      total: 120.00,
+      status: 'DELIVERED',
+      itemsCount: 2,
+      tier: 'Luxury'
+    },
+    {
+      id: 'ORD-97450',
+      date: '2026-07-28',
+      total: 50.00,
+      status: 'IN_TRANSIT',
+      itemsCount: 1,
+      tier: 'Royal'
     }
-    loadOrders();
-  }, [user]);
-
-  const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+  ];
 
   return (
-    <div className="space-y-8 animate-fade-in text-[var(--color-earth-dark)]">
-      <ScrollReveal direction="up">
-        <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--color-earth-dark)] border-b border-[var(--color-terracotta-deep)]/20 pb-3">
-          {t('account.dashboard')}
+    <div className="space-y-8 animate-fade-in text-[#F5ECE3]">
+      {/* Header */}
+      <div className="border-b border-[#5C3D28]/40 pb-4">
+        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+          Patron Profile Overview
         </h2>
-      </ScrollReveal>
+        <p className="text-xs text-[#BFA893]">
+          Manage your personal acquisitions, shipping addresses, and bespoke preferences.
+        </p>
+      </div>
 
-      {/* KPI Metrics */}
-      <ScrollReveal direction="up" delay={0.1}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-1 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
-            <span className="text-xs uppercase tracking-wider font-cinzel font-bold">Total Orders</span>
+      {/* Quick Stat Cards in Dark Brown */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 bg-[#2D1F14] border border-[#5C3D28]/60 space-y-1">
+          <div className="flex items-center justify-between text-[#D4AF37]">
+            <span className="text-[11px] font-cinzel uppercase tracking-wider">Total Acquisitions</span>
             <ShoppingBag className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--color-earth-dark)]">
-            <AnimatedCounter end={orders.length} />
-          </p>
+          <p className="font-cinzel text-2xl font-bold text-[#F8F5F0]">4 Flacons</p>
+          <span className="text-[10px] text-[#BFA893]">€260 lifetime value</span>
         </div>
 
-        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-1 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
-            <span className="text-xs uppercase tracking-wider font-cinzel font-bold">Total Invested</span>
-            <DollarSign className="w-4 h-4" />
-          </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--color-terracotta)]">
-            $<AnimatedCounter end={totalSpent} />
-          </p>
-        </div>
-
-        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-1 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
-            <span className="text-xs uppercase tracking-wider font-cinzel font-bold">{t('account.savedItems')}</span>
+        <div className="p-5 bg-[#2D1F14] border border-[#5C3D28]/60 space-y-1">
+          <div className="flex items-center justify-between text-[#D4AF37]">
+            <span className="text-[11px] font-cinzel uppercase tracking-wider">Vault Wishlist</span>
             <Heart className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--color-earth-dark)]">
-            <AnimatedCounter end={wishlistCount} />
-          </p>
+          <p className="font-cinzel text-2xl font-bold text-[#F8F5F0]">{wishlistCount} Creations</p>
+          <Link to="/account/wishlist" className="text-[10px] text-[#D4AF37] hover:underline">
+            View Wishlist
+          </Link>
+        </div>
+
+        <div className="p-5 bg-[#2D1F14] border border-[#5C3D28]/60 space-y-1">
+          <div className="flex items-center justify-between text-[#D4AF37]">
+            <span className="text-[11px] font-cinzel uppercase tracking-wider">Palace Privilege Tier</span>
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <p className="font-cinzel text-2xl font-bold text-[#D4AF37]">Sovereign Gold</p>
+          <span className="text-[10px] text-emerald-400">Complimentary DHL Air on all orders</span>
         </div>
       </div>
-      </ScrollReveal>
 
-      {/* Recent Orders Section */}
-      <ScrollReveal direction="up" delay={0.2}>
-      <div className="space-y-4">
+      {/* Recent Acquisitions Section */}
+      <div className="space-y-4 pt-4 border-t border-[#5C3D28]/40">
         <div className="flex items-center justify-between">
-          <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)]">
-            {t('account.recentOrders')}
+          <h3 className="font-cinzel text-sm font-bold uppercase text-[#D4AF37] tracking-wider">
+            Recent Acquisitions
           </h3>
-          <Link to="/account/orders" className="text-xs text-[var(--color-terracotta)] font-bold hover:underline flex items-center gap-1">
-            <span>{t('account.viewAll')}</span>
+          <Link to="/account/orders" className="text-xs text-[#BFA893] hover:text-[#D4AF37] flex items-center gap-1 font-cinzel uppercase tracking-wider">
+            <span>View All</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        {loading ? (
-          <div className="p-8 text-center text-xs text-[var(--color-terracotta-deep)] font-medium">Loading palace transactions...</div>
-        ) : orders.length === 0 ? (
-          <div className="p-8 bg-[var(--color-desert-primary)]/20 border border-[var(--color-terracotta-deep)]/20 text-center space-y-3">
-            <ShoppingBag className="w-8 h-8 text-[var(--color-terracotta)] mx-auto opacity-70" />
-            <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">{t('account.noOrders')}</p>
-            <Link to="/shop" className="luxury-btn-gold px-5 py-2 text-xs inline-block cursor-pointer">
-              {t('cart.startShopping')}
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {orders.slice(0, 3).map((order, index) => (
-              <ScrollRevealItem key={order.id} index={index}>
-              <div
-                onClick={() => navigate(`/account/orders/${order.id}`)}
-                className="cursor-pointer p-4 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 hover:border-[var(--color-terracotta)] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-cinzel font-bold text-sm text-[var(--color-earth-dark)]">
-                      {order.id}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 bg-[var(--color-desert-light)] border border-[var(--color-terracotta)]/40 text-[var(--color-terracotta)] font-mono font-bold">
-                      {order.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
-                    {new Date(order.date).toLocaleDateString()} • {order.items?.length} flacon(s)
-                  </p>
+        <div className="space-y-3">
+          {recentOrders.map((order) => (
+            <div
+              key={order.id}
+              className="p-4 bg-[#2D1F14] border border-[#5C3D28]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-cinzel font-bold text-[#F8F5F0]">{order.id}</span>
+                  <span className="px-2 py-0.5 text-[9px] font-mono rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30">
+                    {order.tier} Tier
+                  </span>
                 </div>
-
-                <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                  <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)]">
-                    ${order.total}
-                  </span>
-                  <span className="text-xs text-[var(--color-terracotta)] font-bold uppercase font-cinzel flex items-center gap-1">
-                    <span>View</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
+                <div className="text-[11px] text-[#BFA893] mt-0.5 flex items-center gap-2">
+                  <Clock className="w-3 h-3" />
+                  <span>Placed on {order.date}</span>
+                  <span>•</span>
+                  <span>{order.itemsCount} item(s)</span>
                 </div>
               </div>
-              </ScrollRevealItem>
-            ))}
-          </div>
-        )}
+
+              <div className="flex items-center justify-between sm:justify-end gap-4">
+                <span className="font-cinzel font-bold text-[#D4AF37] text-sm">
+                  €{order.total.toFixed(2)}
+                </span>
+                <span className={`px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider ${
+                  order.status === 'DELIVERED'
+                    ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
+                    : 'bg-amber-950/80 text-amber-300 border border-amber-500/40'
+                }`}>
+                  {order.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      </ScrollReveal>
+
     </div>
   );
 }

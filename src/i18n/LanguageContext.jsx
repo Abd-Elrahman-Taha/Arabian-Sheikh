@@ -1,20 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import en from './translations/en.json';
-import bg from './translations/bg.json';
 import es from './translations/es.json';
+import bg from './translations/bg.json';
 
-const translations = { en, bg, es };
+const translations = { en, es, bg };
 
 const LanguageContext = createContext();
 
 export const AVAILABLE_LANGUAGES = [
-  { code: 'en', name: 'English', short: 'EN', flag: 'EN' },
-  { code: 'bg', name: 'Български', short: 'BG', flag: 'BG' },
-  { code: 'es', name: 'Español', short: 'ES', flag: 'ES' },
+  { code: 'en', name: 'English', short: 'EN', flag: '🇬🇧', dir: 'ltr' },
+  { code: 'es', name: 'Español', short: 'ES', flag: '🇪🇸', dir: 'ltr' },
+  { code: 'bg', name: 'Български', short: 'BG', flag: '🇧🇬', dir: 'ltr' },
 ];
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
+    if (typeof window === 'undefined') return 'en';
     const saved = localStorage.getItem('arabian_sheikh_lang');
     return saved && translations[saved] ? saved : 'en';
   });
@@ -22,17 +23,24 @@ export function LanguageProvider({ children }) {
   const setLanguage = (lang) => {
     if (translations[lang]) {
       setLanguageState(lang);
-      localStorage.setItem('arabian_sheikh_lang', lang);
-      document.documentElement.lang = lang;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('arabian_sheikh_lang', lang);
+        document.documentElement.lang = lang;
+        document.documentElement.dir = 'ltr';
+      }
     }
   };
 
   useEffect(() => {
-    document.documentElement.lang = language;
+    if (typeof window !== 'undefined') {
+      document.documentElement.lang = language;
+      document.documentElement.dir = 'ltr';
+    }
   }, [language]);
 
   // Translation function t('section.key', { param: 'value' })
   const t = (path, params = {}) => {
+    if (!path) return '';
     const keys = path.split('.');
     let current = translations[language] || translations['en'];
 
@@ -40,7 +48,7 @@ export function LanguageProvider({ children }) {
       if (current && typeof current === 'object' && key in current) {
         current = current[key];
       } else {
-        // Fallback to english if not found
+        // Fallback to English
         let fallback = translations['en'];
         for (const fbKey of keys) {
           if (fallback && typeof fallback === 'object' && fbKey in fallback) {
@@ -67,7 +75,7 @@ export function LanguageProvider({ children }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, availableLanguages: AVAILABLE_LANGUAGES }}>
+    <LanguageContext.Provider value={{ language, setLanguage, isRtl: false, t, availableLanguages: AVAILABLE_LANGUAGES }}>
       {children}
     </LanguageContext.Provider>
   );

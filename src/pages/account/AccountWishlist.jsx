@@ -1,108 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from '../../router/RouterContext';
+import React from 'react';
+import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { productService } from '../../services/productService';
-import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
-import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
+import { useCart } from '../../context/CartContext';
+import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 
 export default function AccountWishlist() {
+  const { navigate } = useRouter();
   const { t } = useTranslation();
-  const { wishlist, removeFromWishlist, moveToCart } = useWishlist();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { wishlist, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
 
-  useEffect(() => {
-    async function loadWishlistProducts() {
-      setLoading(true);
-      try {
-        const all = await productService.getAllProducts({ includeDrafts: true });
-        const filtered = all.filter((p) => wishlist.includes(p.id));
-        setProducts(filtered);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadWishlistProducts();
-  }, [wishlist]);
+  if (wishlist.length === 0) {
+    return (
+      <div className="text-center py-16 space-y-4 text-[#F5ECE3]">
+        <div className="w-16 h-16 rounded-full border border-[#5C3D28] flex items-center justify-center mx-auto text-[#D4AF37] bg-[#2D1F14]">
+          <Heart className="w-8 h-8 opacity-60" />
+        </div>
+        <h3 className="font-cinzel text-lg font-bold text-[#F8F5F0]">Your Vault Wishlist is Empty</h3>
+        <p className="text-xs text-[#BFA893] max-w-sm mx-auto">
+          Explore the Palace boutique and save your favored 60ml flacons and extraits.
+        </p>
+        <Link to="/shop" className="inline-block px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider">
+          Explore Catalog
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
-      <ScrollReveal direction="up">
-        <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-3">
-          <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--color-earth-dark)]">
-            {t('account.wishlist')}
-          </h2>
-          <span className="text-xs text-[var(--color-terracotta-deep)] font-mono font-semibold">{products.length} items saved</span>
-        </div>
-      </ScrollReveal>
+    <div className="space-y-6 text-[#F5ECE3]">
+      <div className="border-b border-[#5C3D28]/40 pb-4">
+        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+          Vault Wishlist ({wishlist.length})
+        </h2>
+        <p className="text-xs text-[#BFA893]">
+          Curated creations saved for future acquisitions.
+        </p>
+      </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-xs text-[var(--color-terracotta-deep)] font-medium">Retrieving wishlist items...</div>
-      ) : products.length === 0 ? (
-        <div className="text-center py-16 bg-[var(--color-desert-primary)]/20 border border-[var(--color-terracotta-deep)]/20 space-y-3">
-          <Heart className="w-10 h-10 text-[var(--color-terracotta)] mx-auto opacity-70" />
-          <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)]">Your Wishlist is Empty</h3>
-          <p className="text-xs text-[var(--color-terracotta-deep)] max-w-xs mx-auto font-medium">
-            You have not preserved any masterpieces in your private wishlist yet.
-          </p>
-          <Link to="/shop" className="luxury-btn-gold px-6 py-2.5 text-xs inline-block cursor-pointer">
-            {t('cart.startShopping')}
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product, index) => (
-            <ScrollRevealItem key={product.id} index={index}>
-            <div
-              className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 flex flex-col justify-between overflow-hidden group shadow-sm h-full"
-            >
-              <div className="relative aspect-[4/5] bg-[var(--color-desert-primary)]">
-                <img
-                  src={product.images?.[0]}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => removeFromWishlist(product.id)}
-                  className="absolute top-3 right-3 p-2 bg-[var(--color-desert-light)]/90 text-[var(--color-earth-dark)] hover:text-rose-600 border border-[var(--color-terracotta-deep)]/30 backdrop-blur-sm cursor-pointer"
-                  aria-label="Remove from wishlist"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-[var(--color-terracotta)] font-mono font-bold">
-                    {product.fragranceFamily}
-                  </span>
-                  <h4 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)] line-clamp-1">
-                    {product.name}
-                  </h4>
-                  <p className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">{product.arabicName}</p>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-[var(--color-terracotta-deep)]/20">
-                  <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)]">
-                    ${product.price}
-                  </span>
-                  <button
-                    onClick={() => moveToCart(product, '100ml')}
-                    className="luxury-btn-gold px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Move to Bag</span>
-                  </button>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {wishlist.map((item) => (
+          <div key={item.id} className="p-4 bg-[#2D1F14] border border-[#5C3D28]/60 flex flex-col justify-between space-y-3">
+            <img
+              src={item.cutoutImage || item.images?.[0] || '/products/black_diamond_gold.png'}
+              alt={item.name}
+              className="h-32 mx-auto object-contain"
+            />
+            <div>
+              <h4 className="font-cinzel font-bold text-xs text-[#F8F5F0] line-clamp-1">{item.name}</h4>
+              <p className="font-mono text-xs text-[#D4AF37] font-bold">€{item.price}</p>
             </div>
-            </ScrollRevealItem>
-          ))}
-        </div>
-      )}
+            <div className="flex gap-2 pt-2 border-t border-[#5C3D28]/40">
+              <button
+                onClick={() => addToCart(item, '60 ml', 1)}
+                className="flex-1 py-2 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider transition-colors"
+              >
+                Add to Bag
+              </button>
+              <button
+                onClick={() => removeFromWishlist(item.id)}
+                className="p-2 bg-[#160F0A] text-[#BFA893] hover:text-rose-400 border border-[#5C3D28]/50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

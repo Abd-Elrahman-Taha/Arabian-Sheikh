@@ -1,28 +1,28 @@
-import React, { Suspense, useEffect, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { gsap } from "gsap";
-import BakhoorSmoke from "./BakhoorSmoke";
-import ArabianLogo from "../common/ArabianLogo";
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { gsap } from 'gsap';
+import BakhoorSmoke from './BakhoorSmoke';
+import ArabianLogo from '../common/ArabianLogo';
 
 /**
  * ArabianIntro Component
  *
- * Cinematic 3D Bakhoor Smoke Atmospheric Intro:
- * 1. 3D interactive billowing incense smoke curls with palace ambient lighting.
- * 2. Majestic Royal Crest reveals "ARABIAN SHEIKH" and under it "اربيان شيخ".
- * 3. Smoothly dissolves to reveal the website, with immediate Skip capability.
+ * Cinematic 3.5-second brand prologue on initial load:
+ * - 3D Bakhoor incense smoke plumes
+ * - Radiant Arabian Sheikh royal crest with gold glint
+ * - Smooth fade into the website at 3.5s
+ * - Instant Skip button in top right
  */
 export default function ArabianIntro({ onComplete }) {
   const containerRef = useRef(null);
   const smokeContainerRef = useRef(null);
+  const logoWrapperRef = useRef(null);
   const [isFinished, setIsFinished] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Check for prefers-reduced-motion
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (mediaQuery.matches) {
       setReducedMotion(true);
       setIsFinished(true);
@@ -30,13 +30,12 @@ export default function ArabianIntro({ onComplete }) {
     }
   }, [onComplete]);
 
-  // Skip Intro immediately
   const handleSkip = () => {
     if (containerRef.current) {
       gsap.to(containerRef.current, {
         opacity: 0,
-        duration: 0.4,
-        ease: "power2.out",
+        duration: 0.35,
+        ease: 'power2.out',
         onComplete: () => {
           setIsFinished(true);
           onComplete?.();
@@ -48,7 +47,6 @@ export default function ArabianIntro({ onComplete }) {
     }
   };
 
-  // Smoke Stage GSAP Animation Timeline
   useEffect(() => {
     if (reducedMotion) return;
 
@@ -60,27 +58,32 @@ export default function ArabianIntro({ onComplete }) {
         },
       });
 
-      // 0.0s -> 0.8s: Smooth fade-in of smoke & crest
+      // 0.0s -> 0.7s: Smoke & Background fade-in
       tl.fromTo(
         smokeContainerRef.current,
         { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 0.8,
-          ease: "power2.out",
-        },
+        { opacity: 1, duration: 0.7, ease: 'power2.out' },
         0
       );
 
-      // 3.0s -> 4.2s: Smooth dissolve into website
+      // 0.2s -> 1.4s: Royal Logo reveal with scale & golden glow
+      tl.fromTo(
+        logoWrapperRef.current,
+        { opacity: 0, scale: 0.88, y: 15 },
+        { opacity: 1, scale: 1, y: 0, duration: 1.2, ease: 'power3.out' },
+        0.2
+      );
+
+      // 2.7s -> 3.5s: Dissolve curtain into homepage (total ~3.5 sec)
       tl.to(
         containerRef.current,
         {
           opacity: 0,
-          duration: 1.2,
-          ease: "power2.inOut",
+          scale: 1.04,
+          duration: 0.8,
+          ease: 'power2.inOut',
         },
-        3.0
+        2.7
       );
     }, containerRef);
 
@@ -96,18 +99,15 @@ export default function ArabianIntro({ onComplete }) {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[9999] select-none overflow-hidden bg-black"
-      aria-label="Arabian Sheikh Intro Experience"
+      className="fixed inset-0 z-[99999] select-none overflow-hidden bg-[#0A0A0B] flex items-center justify-center"
+      aria-label="Arabian Sheikh Royal Prologue"
     >
-      {/* =========================================================================
-          3D BAKHOOR SMOKE & BRAND CREST REVEAL
-          ========================================================================= */}
+      {/* 3D Bakhoor Incense Smoke Layer */}
       <div
         ref={smokeContainerRef}
-        className="absolute inset-0 z-10 bg-radial from-[#130C05]/40 via-[#130C05]/75 to-[#0B0602]/95 backdrop-blur-[2px]"
+        className="absolute inset-0 z-0 bg-radial from-[#1A140E]/60 via-[#100C09]/90 to-[#0A0A0B]"
         style={{ opacity: 0 }}
       >
-        {/* Three.js Canvas */}
         <Canvas
           camera={{
             position: [0, 0, 500],
@@ -115,53 +115,55 @@ export default function ArabianIntro({ onComplete }) {
             near: 1,
             far: 3000,
           }}
-          dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2)]}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2)]}
           gl={{
             antialias: true,
             alpha: true,
-            powerPreference: "high-performance",
+            powerPreference: 'high-performance',
           }}
         >
-          {/* Warm Palace & Incense Lighting */}
-          <ambientLight intensity={1.6} color="#F5ECE2" />
+          {/* Warm Amber Incense Lighting */}
+          <ambientLight intensity={1.8} color="#FFF5E8" />
           <directionalLight
             position={[100, 300, 150]}
-            intensity={2.2}
-            color="#FCEFD5"
+            intensity={2.4}
+            color="#D4AF37"
           />
           <pointLight
             position={[0, -60, -80]}
-            intensity={3.8}
+            intensity={4.2}
             distance={850}
-            color="#D2A55F"
+            color="#C5A059"
           />
 
           <Suspense fallback={null}>
-            <BakhoorSmoke visible={true} opacity={0.38} />
+            <BakhoorSmoke visible={true} opacity={0.42} />
           </Suspense>
         </Canvas>
-
-        {/* Central Brand Reveal in the Smoke */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 animate-fade-in opacity-95">
-          <ArabianLogo
-            variant="full"
-            size="xl"
-            showArabic={true}
-            arabicText="اربيان شيخ"
-            showSubtitle={false}
-          />
-        </div>
       </div>
 
-      {/* =========================================================================
-          GLOBAL SKIP BUTTON (Always available in top-right)
-          ========================================================================= */}
-      <div className="absolute top-6 right-6 z-[10000] pointer-events-auto">
+      {/* Central Official Brand Logo */}
+      <div
+        ref={logoWrapperRef}
+        className="relative z-10 flex flex-col items-center justify-center text-center px-4 pointer-events-none"
+      >
+        <ArabianLogo
+          variant="full"
+          size="hero"
+          showSubtitle={true}
+          subtitle="The Art of Modern Arabian Perfumery • Andalusia"
+        />
+
+        {/* Subtle Ambient Radial Light behind logo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.22)_0%,rgba(140,109,55,0.08)_50%,transparent_75%)] blur-3xl pointer-events-none -z-10" />
+      </div>
+
+      {/* Skip Button */}
+      <div className="absolute top-6 right-6 z-[100000] pointer-events-auto">
         <button
           type="button"
           onClick={handleSkip}
-          className="group flex items-center gap-2 rounded-full border border-[#D2A55F]/50 bg-[#130C05]/70 px-5 py-2 text-xs font-cinzel tracking-[0.25em] uppercase text-[#EADED2] backdrop-blur-md transition-all duration-300 hover:border-[#D2A55F] hover:bg-[#D2A55F]/25 hover:text-[#FFF5EB] shadow-2xl focus:outline-none focus:ring-1 focus:ring-[#D2A55F] cursor-pointer"
-          title="Skip Intro"
+          className="group flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-black/60 px-5 py-2 text-xs font-cinzel tracking-[0.25em] uppercase text-[#F8F5F0] backdrop-blur-md transition-all duration-300 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black shadow-2xl focus:outline-none cursor-pointer"
         >
           <span>Skip</span>
         </button>

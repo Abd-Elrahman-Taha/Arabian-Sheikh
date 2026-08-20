@@ -3,25 +3,15 @@ import React, { useEffect, useRef } from 'react';
 /**
  * DesertBackground
  *
- * A fixed full-viewport background layer that smoothly transitions through
- * 6 Arabian desert lighting stages as the user scrolls:
- *
- *   ☀️  Midday sand     →  🌤️  Afternoon  →  🌇  Golden hour
- *   🌅  Amber sunset    →  🌃  Maghrib     →  🌃  Deep evening
- *
- * Technique: reads scroll position on rAF, maps it to a gradient between
- * the nearest two color stops, applies via CSS custom property.
- * Zero canvas, zero dependencies beyond React.
+ * Calibrated dark luxury background transition:
+ * Deep obsidian (#0A0A0B) → Rich espresso (#0F0D0C) → Royal bronze ember (#14100D) → Obsidian night (#0A0A0B)
  */
 
-// 6 desert color stages mapped to scroll fraction [0..1]
 const STAGES = [
-  { at: 0.00, bg: '#F8D188', vignette: 'rgba(93,29,1,0.04)'   }, // ☀️  Midday Desert (Light Sand)
-  { at: 0.20, bg: '#EBAA62', vignette: 'rgba(93,29,1,0.07)'   }, // 🌤️  Warm Afternoon (Main Desert Sand)
-  { at: 0.40, bg: '#D98F44', vignette: 'rgba(128,48,13,0.12)' }, // 🌇  Golden Hour
-  { at: 0.60, bg: '#B45625', vignette: 'rgba(93,29,1,0.16)'   }, // 🌅  Terracotta Sunset
-  { at: 0.80, bg: '#80300D', vignette: 'rgba(93,29,1,0.24)'   }, // 🌇  Maghrib (Deep Terracotta)
-  { at: 1.00, bg: '#5D1D01', vignette: 'rgba(93,29,1,0.38)'   }, // 🌃  Arabian Evening (Darkest Earth)
+  { at: 0.00, bg: '#0A0A0B', vignette: 'rgba(0,0,0,0.6)' },
+  { at: 0.35, bg: '#0E0C0B', vignette: 'rgba(0,0,0,0.5)' },
+  { at: 0.70, bg: '#14100D', vignette: 'rgba(0,0,0,0.55)' },
+  { at: 1.00, bg: '#0A0A0B', vignette: 'rgba(0,0,0,0.7)' },
 ];
 
 function lerp(a, b, t) {
@@ -80,7 +70,6 @@ export default function DesertBackground() {
         document.documentElement.scrollHeight - window.innerHeight;
       const fraction = maxScroll > 0 ? scrollTop / maxScroll : 0;
 
-      // Only update DOM when value changes meaningfully
       if (Math.abs(fraction - lastFraction) > 0.0005) {
         lastFraction = fraction;
         const { bg } = getDesertColor(fraction);
@@ -100,15 +89,7 @@ export default function DesertBackground() {
   return (
     <div
       ref={bgRef}
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: -1,
-        backgroundColor: '#EBAA62', // initial Warm Desert Sand (#EBAA62)
-        transition: 'background-color 0.5s ease',
-        pointerEvents: 'none',
-      }}
+      className="fixed inset-0 pointer-events-none -z-20 transition-colors duration-700 bg-[#0A0A0B]"
     />
   );
 }

@@ -1,15 +1,22 @@
-import { INITIAL_PRODUCTS } from './mockData';
+import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products';
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v2';
 
 function loadProducts() {
-  const data = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+  const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
   if (!data) {
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
+    }
     return INITIAL_PRODUCTS;
   }
   try {
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed) || !parsed.some(p => p.id === 'as-luxury-black-diamond')) {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
+      return INITIAL_PRODUCTS;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error parsing products from localStorage:', e);
     return INITIAL_PRODUCTS;
@@ -17,7 +24,9 @@ function loadProducts() {
 }
 
 function saveProducts(products) {
-  localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+  }
 }
 
 export const productService = {
@@ -29,34 +38,56 @@ export const productService = {
     if (filters.search) {
       const q = filters.search.toLowerCase().trim();
       result = result.filter(p => 
-        p.name.toLowerCase().includes(q) ||
+        p.name?.toLowerCase().includes(q) ||
         p.arabicName?.includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.fragranceFamily.toLowerCase().includes(q) ||
-        p.topNotes.some(n => n.toLowerCase().includes(q)) ||
-        p.heartNotes.some(n => n.toLowerCase().includes(q)) ||
-        p.baseNotes.some(n => n.toLowerCase().includes(q))
+        p.bulgarianName?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.fragranceFamily?.toLowerCase().includes(q) ||
+        p.scentFamily?.toLowerCase().includes(q) ||
+        (p.topNotes && p.topNotes.some(n => n.toLowerCase().includes(q))) ||
+        (p.heartNotes && p.heartNotes.some(n => n.toLowerCase().includes(q))) ||
+        (p.baseNotes && p.baseNotes.some(n => n.toLowerCase().includes(q)))
       );
+    }
+
+    // Filter by category (perfumes, oils, bakhoor, cosmetics, bundles)
+    if (filters.category && filters.category !== 'all') {
+      result = result.filter(p => p.category?.toLowerCase() === filters.category.toLowerCase());
+    }
+
+    // Filter by perfume tier (Luxury, Royal, Classic)
+    if (filters.tier && filters.tier !== 'all') {
+      result = result.filter(p => p.tier?.toLowerCase() === filters.tier.toLowerCase());
     }
 
     // Filter by gender
     if (filters.gender && filters.gender !== 'all') {
-      result = result.filter(p => p.gender.toLowerCase() === filters.gender.toLowerCase());
+      result = result.filter(p => p.gender?.toLowerCase() === filters.gender.toLowerCase());
     }
 
-    // Filter by fragrance family
+    // Filter by fragrance family / scent family
     if (filters.family && filters.family !== 'all') {
       result = result.filter(p => 
-        p.fragranceFamily.toLowerCase().includes(filters.family.toLowerCase())
+        (p.fragranceFamily && p.fragranceFamily.toLowerCase().includes(filters.family.toLowerCase())) ||
+        (p.scentFamily && p.scentFamily.toLowerCase().includes(filters.family.toLowerCase()))
       );
     }
 
-    // Filter by collection
-    if (filters.collection && filters.collection !== 'all') {
-      result = result.filter(p => p.collection?.toLowerCase() === filters.collection.toLowerCase());
+    // Filter by season
+    if (filters.season && filters.season !== 'all') {
+      result = result.filter(p => 
+        p.season && (p.season.includes('All Seasons') || p.season.some(s => s.toLowerCase().includes(filters.season.toLowerCase())))
+      );
     }
 
-    // Filter by price
+    // Filter by occasion
+    if (filters.occasion && filters.occasion !== 'all') {
+      result = result.filter(p => 
+        p.occasion && p.occasion.some(o => o.toLowerCase().includes(filters.occasion.toLowerCase()))
+      );
+    }
+
+    // Filter by price range
     if (filters.minPrice !== undefined) {
       result = result.filter(p => p.price >= filters.minPrice);
     }
@@ -66,15 +97,15 @@ export const productService = {
 
     // Filter by rating
     if (filters.minRating !== undefined) {
-      result = result.filter(p => p.rating >= filters.minRating);
+      result = result.filter(p => (p.rating || 5) >= filters.minRating);
     }
 
-    // Filter by stock
+    // Filter by in-stock only
     if (filters.inStockOnly) {
       result = result.filter(p => p.stock > 0 && p.status === 'ACTIVE');
     }
 
-    // Status filter (admin vs public)
+    // Status filter
     if (filters.status) {
       result = result.filter(p => p.status === filters.status);
     } else if (!filters.includeDrafts) {
@@ -106,9 +137,9 @@ export const productService = {
     return result;
   },
 
-  async getProductById(id) {
+  async getProductById(idOrSlug) {
     const products = loadProducts();
-    return products.find(p => p.id === id) || null;
+    return products.find(p => p.id === idOrSlug || p.slug === idOrSlug) || null;
   },
 
   async getFeaturedProducts() {
@@ -121,26 +152,29 @@ export const productService = {
     return products.filter(p => (p.isBestSeller || p.featured) && p.status === 'ACTIVE');
   },
 
-  async getLuxuryCollection() {
+  async getPerfumes() {
     const products = loadProducts();
-    return products.filter(p => (p.collection === 'Desert Gold' || p.collection === 'Imperial Silk' || p.collection === 'Luxury Collection' || (p.price >= 300 && p.price < 400)) && p.status === 'ACTIVE');
+    return products.filter(p => p.category === 'perfumes' && p.status === 'ACTIVE');
   },
 
-  async getRoyalCollection() {
-    const products = loadProducts();
-    return products.filter(p => (p.collection === 'Royal Oud Reserve' || p.collection === 'Royal Collection' || p.price >= 390) && p.status === 'ACTIVE');
+  async getTiers() {
+    return PERFUME_TIERS;
+  },
+
+  async getCategories() {
+    return CATEGORIES;
   },
 
   async getRelatedProducts(currentId, limit = 4) {
     const products = loadProducts();
-    const current = products.find(p => p.id === currentId);
+    const current = products.find(p => p.id === currentId || p.slug === currentId);
     if (!current) return products.slice(0, limit);
 
     return products
-      .filter(p => p.id !== currentId && p.status === 'ACTIVE')
+      .filter(p => p.id !== current.id && p.status === 'ACTIVE')
       .sort((a, b) => {
-        const aMatch = (a.fragranceFamily === current.fragranceFamily ? 2 : 0) + (a.gender === current.gender ? 1 : 0);
-        const bMatch = (b.fragranceFamily === current.fragranceFamily ? 2 : 0) + (b.gender === current.gender ? 1 : 0);
+        const aMatch = (a.category === current.category ? 2 : 0) + (a.gender === current.gender ? 1 : 0);
+        const bMatch = (b.category === current.category ? 2 : 0) + (b.gender === current.gender ? 1 : 0);
         return bMatch - aMatch;
       })
       .slice(0, limit);
@@ -148,15 +182,18 @@ export const productService = {
 
   async addReview(productId, review) {
     const products = loadProducts();
-    const index = products.findIndex(p => p.id === productId);
+    const index = products.findIndex(p => p.id === productId || p.slug === productId);
     if (index === -1) throw new Error('Product not found');
 
     const newReview = {
       id: 'rev-' + Date.now(),
       author: review.author || 'Anonymous Patron',
       rating: review.rating || 5,
+      title: review.title || 'Exquisite Fragrance',
       date: new Date().toISOString().split('T')[0],
-      comment: review.comment
+      comment: review.comment,
+      verifiedPurchase: true,
+      status: 'approved'
     };
 
     const currentReviews = products[index].reviews || [];
@@ -181,9 +218,11 @@ export const productService = {
     const newProduct = {
       ...productData,
       id: 'as-' + (productData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '-' + Date.now().toString().slice(-4),
+      slug: (productData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
       rating: 5.0,
       reviewsCount: 0,
-      reviews: []
+      reviews: [],
+      status: productData.status || 'ACTIVE'
     };
     products.unshift(newProduct);
     saveProducts(products);
@@ -192,7 +231,7 @@ export const productService = {
 
   async updateProduct(id, productData) {
     const products = loadProducts();
-    const index = products.findIndex(p => p.id === id);
+    const index = products.findIndex(p => p.id === id || p.slug === id);
     if (index === -1) throw new Error('Product not found');
 
     products[index] = {
@@ -205,14 +244,14 @@ export const productService = {
 
   async deleteProduct(id) {
     let products = loadProducts();
-    products = products.filter(p => p.id !== id);
+    products = products.filter(p => p.id !== id && p.slug !== id);
     saveProducts(products);
     return true;
   },
 
   async updateStock(id, newStock) {
     const products = loadProducts();
-    const index = products.findIndex(p => p.id === id);
+    const index = products.findIndex(p => p.id === id || p.slug === id);
     if (index === -1) throw new Error('Product not found');
 
     products[index].stock = Math.max(0, newStock);

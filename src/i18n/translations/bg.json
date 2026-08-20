@@ -5,8 +5,8 @@
     "women": "Жени",
     "unisex": "Унисекс",
     "collections": "Колекции",
-    "theHouse": "Парфюмната Къща",
-    "about": "За Нас",
+    "theHouse": "Дворецът",
+    "about": "Дворецът",
     "contact": "Консиерж и Бутици",
     "search": "Търсене",
     "wishlist": "Любими",
@@ -21,7 +21,14 @@
     "silkRoadCollection": "Имперски Копринен Път",
     "desertGoldCollection": "Пустинно Злато",
     "pureBakhoor": "Чист Бахур и Тамян",
-    "perfumeOils": "Атари и Концентрирани Масла"
+    "perfumeOils": "Атари и Концентрирани Масла",
+    "perfumes": "Парфюми",
+    "oils": "Масла",
+    "bakhoor": "Бахур",
+    "cosmetics": "Козметика",
+    "bundles": "Комплекти",
+    "discovery": "Открийте аромат",
+    "thePalace": "Дворецът"
   },
   "home": {
     "heroSubtitle": "ВИСША АРАБСКА ПАРФЮМЕРИЯ",
@@ -359,5 +366,10 @@
     "popularSearches": "Популярни Търсения",
     "recentSearches": "Последни Търсения",
     "suggestedNotes": "Търсене по Нотки"
+  },
+  "tiers": {
+    "luxury": "Луксозен клас (€50)",
+    "royal": "Кралски клас (€40)",
+    "classic": "Класически клас (€30)"
   }
 }

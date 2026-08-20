@@ -1,124 +1,83 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter, Link } from '../../router/RouterContext';
-import { useTranslation } from '../../i18n/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import { orderService } from '../../services/orderService';
-import { ShoppingBag, ArrowRight, Truck } from 'lucide-react';
-import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
+import React from 'react';
+import { Link } from '../../router/RouterContext';
+import { Package, ExternalLink, Clock, Truck } from 'lucide-react';
 
 export default function AccountOrders() {
-  const { navigate } = useRouter();
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      if (!user) return;
-      try {
-        const userOrders = await orderService.getOrdersByUser(user.id);
-        setOrders(userOrders);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  const orders = [
+    {
+      id: 'ORD-98214',
+      date: '2026-08-14',
+      total: 120.00,
+      status: 'DELIVERED',
+      tracking: 'DHL-EXP-990142851',
+      items: [
+        { name: 'Black Diamond Flacon (Luxury €50)', qty: 2, price: 50 },
+        { name: 'Palace Keepsake Gift Wrap', qty: 1, price: 20 }
+      ]
+    },
+    {
+      id: 'ORD-97450',
+      date: '2026-07-28',
+      total: 50.00,
+      status: 'IN_TRANSIT',
+      tracking: 'DHL-EXP-881204910',
+      items: [
+        { name: 'Millionaire Flacon (Royal €40)', qty: 1, price: 40 },
+        { name: 'DHL Express Courier', qty: 1, price: 10 }
+      ]
     }
-    load();
-  }, [user]);
+  ];
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
-      <ScrollReveal direction="up">
-        <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-3">
-          <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--color-earth-dark)]">
-            {t('account.orders')}
-          </h2>
-          <span className="text-xs text-[var(--color-terracotta-deep)] font-mono font-semibold">{orders.length} orders total</span>
-        </div>
-      </ScrollReveal>
+    <div className="space-y-6 text-[#F5ECE3]">
+      <div className="border-b border-[#5C3D28]/40 pb-4">
+        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F8F5F0]">
+          Acquisition History
+        </h2>
+        <p className="text-xs text-[#BFA893]">
+          Track and review all royal distillations dispatched to your palace residence.
+        </p>
+      </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-xs text-[var(--color-terracotta-deep)] font-medium">Retrieving purchase archives...</div>
-      ) : orders.length === 0 ? (
-        <div className="text-center py-16 bg-[var(--color-desert-primary)]/20 border border-[var(--color-terracotta-deep)]/20 space-y-3">
-          <ShoppingBag className="w-10 h-10 text-[var(--color-terracotta)] mx-auto opacity-70" />
-          <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)]">{t('account.noOrders')}</h3>
-          <p className="text-xs text-[var(--color-terracotta-deep)] max-w-xs mx-auto font-medium">
-            Your collection awaits its first masterpiece. Discover the royal flacon catalog.
-          </p>
-          <Link to="/shop" className="luxury-btn-gold px-6 py-2.5 text-xs inline-block cursor-pointer">
-            {t('cart.startShopping')}
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((order, index) => (
-            <ScrollRevealItem key={order.id} index={index}>
-            <div
-              className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-sm"
-            >
-              {/* Order Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-3 gap-2">
-                <div>
-                  <span className="font-cinzel font-bold text-base text-[var(--color-earth-dark)] block">
-                    {order.id}
-                  </span>
-                  <span className="text-xs text-[var(--color-terracotta-deep)] font-medium">
-                    Placed on {new Date(order.date).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono px-2.5 py-1 bg-[var(--color-desert-light)] border border-[var(--color-terracotta)]/40 text-[var(--color-terracotta)] font-bold">
-                    {order.status}
-                  </span>
-                  <span className="font-cinzel text-lg font-bold text-[var(--color-terracotta)]">
-                    ${order.total}
-                  </span>
-                </div>
+      <div className="space-y-4">
+        {orders.map((o) => (
+          <div key={o.id} className="bg-[#2D1F14] border border-[#5C3D28]/60 p-6 space-y-4 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#5C3D28]/30 gap-2 text-xs">
+              <div>
+                <span className="font-cinzel font-bold text-[#D4AF37] text-sm">{o.id}</span>
+                <span className="text-[#BFA893] ml-3 font-mono">{o.date}</span>
               </div>
-
-              {/* Items Thumbnails */}
-              <div className="flex flex-wrap gap-3">
-                {order.items?.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/20 p-2 pr-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-12 h-14 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/30"
-                    />
-                    <div className="text-xs">
-                      <p className="font-cinzel font-bold text-[var(--color-earth-dark)]">{item.name}</p>
-                      <p className="text-[11px] text-[var(--color-terracotta-deep)] font-mono font-medium">{item.size} • Qty: {item.quantity}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Links */}
-              <div className="flex flex-wrap items-center justify-between pt-2 border-t border-[var(--color-terracotta-deep)]/20 gap-3 text-xs">
-                <Link
-                  to={`/order-tracking/${order.id}`}
-                  className="text-[var(--color-terracotta)] font-bold hover:underline flex items-center gap-1.5 font-cinzel"
-                >
-                  <Truck className="w-4 h-4" />
-                  <span>{t('confirmation.trackOrder')}</span>
-                </Link>
-
-                <button
-                  onClick={() => navigate(`/account/orders/${order.id}`)}
-                  className="luxury-btn-outline px-4 py-1.5 text-xs flex items-center gap-1 cursor-pointer"
-                >
-                  <span>Order Invoice & Details</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-0.5 text-[10px] font-mono ${
+                  o.status === 'DELIVERED' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40' : 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                }`}>
+                  {o.status}
+                </span>
+                <span className="font-cinzel font-bold text-[#F8F5F0] text-sm">€{o.total.toFixed(2)}</span>
               </div>
             </div>
-            </ScrollRevealItem>
-          ))}
-        </div>
-      )}
+
+            <div className="space-y-2 text-xs">
+              {o.items.map((it, idx) => (
+                <div key={idx} className="flex justify-between text-[#BFA893]">
+                  <span>{it.name} × {it.qty}</span>
+                  <span className="font-mono text-[#F8F5F0]">€{it.price * it.qty}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-[#5C3D28]/30 flex items-center justify-between text-xs text-[#D4AF37]">
+              <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                <Truck className="w-3.5 h-3.5" />
+                <span>Tracking: {o.tracking}</span>
+              </div>
+              <Link to={`/order-confirmation/${o.id}`} className="hover:underline font-cinzel text-[11px] uppercase tracking-wider">
+                View Receipt
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

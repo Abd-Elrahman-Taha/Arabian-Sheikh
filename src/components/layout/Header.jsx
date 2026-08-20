@@ -4,6 +4,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
+import ArabianLogo from '../common/ArabianLogo';
 import {
   Search,
   ShoppingBag,
@@ -20,7 +21,7 @@ import {
 
 export default function Header({ onOpenSearch }) {
   const { currentPath } = useRouter();
-  const { t, language, setLanguage, availableLanguages } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const { totals, openDrawer, cartBadgeAnimated } = useCart();
   const { wishlistCount } = useWishlist();
   const { user, isAdmin, isAuthenticated } = useAuth();
@@ -28,48 +29,59 @@ export default function Header({ onOpenSearch }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [shopMegaOpen, setShopMegaOpen] = useState(false);
-  const [collectionsMegaOpen, setCollectionsMegaOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 25);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu and dropdowns on path change
+  // Close mobile menu and dropdowns on route changes
   useEffect(() => {
     setMobileMenuOpen(false);
-    setShopMegaOpen(false);
-    setCollectionsMegaOpen(false);
     setLangDropdownOpen(false);
   }, [currentPath]);
+
+  const navCategories = [
+    { name: t('nav.perfumes') || 'Perfumes', path: '/shop?category=perfumes' },
+    { name: t('nav.oils') || 'Oils', path: '/shop?category=oils' },
+    { name: t('nav.bakhoor') || 'Bakhoor', path: '/shop?category=bakhoor' },
+    { name: t('nav.cosmetics') || 'Cosmetics', path: '/shop?category=cosmetics' },
+    { name: t('nav.bundles') || 'Bundles', path: '/shop?category=bundles' },
+    { name: t('nav.thePalace') || t('nav.about') || 'The Palace', path: '/the-palace' }
+  ];
+
+  const languages = [
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'es', label: 'Español', flag: '🇪🇸' },
+    { code: 'bg', label: 'Български', flag: '🇧🇬' }
+  ];
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-400 ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
           isScrolled
-            ? 'bg-[var(--color-desert-primary)]/95 backdrop-blur-md border-b border-[var(--color-terracotta-deep)]/25 py-3 shadow-md'
-            : 'bg-gradient-to-b from-[var(--color-desert-primary)]/95 via-[var(--color-desert-primary)]/75 to-transparent py-4'
+            ? 'bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#D4AF37]/20 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)]'
+            : 'bg-gradient-to-b from-[#0A0A0B]/95 via-[#0A0A0B]/60 to-transparent py-4'
         }`}
       >
-        {/* Top VIP Micro-Bar (when not scrolled) */}
+        {/* Top VIP Announcement Bar (when not scrolled) */}
         {!isScrolled && (
-          <div className="hidden lg:block border-b border-[var(--color-terracotta-deep)]/20 pb-2 mb-2.5">
-            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[var(--color-terracotta-deep)]">
+          <div className="hidden lg:block border-b border-[#D4AF37]/15 pb-2 mb-2">
+            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#C5A059]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-3 h-3 text-[var(--color-terracotta)]" />
-                <span>Complimentary Royal Express Delivery on Orders Over $200</span>
+                <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
               </div>
-              <div className="flex items-center gap-6">
-                <Link to="/the-house" className="hover:text-[var(--color-terracotta)] transition-colors">
-                  Private Salons & Boutiques
+              <div className="flex items-center gap-6 normal-case text-xs tracking-normal">
+                <Link to="/discovery" className="hover:text-[#D4AF37] transition-colors flex items-center gap-1 font-cinzel uppercase tracking-[0.15em] text-[11px]">
+                  <span>Fragrance Finder Quiz</span>
                 </Link>
                 {isAdmin && (
-                  <Link to="/admin" className="text-[var(--color-terracotta)] flex items-center gap-1 font-semibold">
+                  <Link to="/admin" className="text-[#D4AF37] flex items-center gap-1 font-semibold uppercase tracking-wider text-[11px]">
                     <ShieldAlert className="w-3 h-3" />
                     <span>Admin Suite</span>
                   </Link>
@@ -81,176 +93,111 @@ export default function Header({ onOpenSearch }) {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            {/* Desktop Left Navigation */}
-            <nav className="hidden lg:flex items-center space-x-7 text-[13px] tracking-[0.2em] uppercase font-cinzel font-medium">
-              {/* SHOP with Mega Dropdown */}
-              <div
-                className="relative py-2"
-                onMouseEnter={() => setShopMegaOpen(true)}
-                onMouseLeave={() => setShopMegaOpen(false)}
-              >
+            {/* Left Desktop Category Navigation */}
+            <nav className="hidden lg:flex items-center space-x-6 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#E5E0D8]">
+              {navCategories.slice(0, 3).map((item) => (
                 <Link
-                  to="/shop"
-                  className={`flex items-center gap-1 transition-colors ${
-                    currentPath.startsWith('/shop') ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
+                  key={item.path}
+                  to={item.path}
+                  className={`transition-colors duration-300 relative py-1 hover:text-[#D4AF37] ${
+                    currentPath === item.path ? 'text-[#D4AF37] font-semibold' : ''
                   }`}
                 >
-                  <span>{t('nav.shop')}</span>
-                  <ChevronDown className="w-3 h-3 transition-transform" />
+                  {item.name}
+                  {currentPath === item.path && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#D4AF37] animate-fade-in" />
+                  )}
                 </Link>
+              ))}
+            </nav>
 
-                {/* Shop Mega Dropdown */}
-                {shopMegaOpen && (
-                  <div className="absolute top-full left-0 w-[580px] bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/30 shadow-2xl p-6 grid grid-cols-2 gap-6 animate-fade-in z-50">
-                    <div>
-                      <h4 className="text-[11px] font-sans uppercase tracking-[0.25em] text-[var(--color-terracotta)] border-b border-[var(--color-terracotta-deep)]/20 pb-2 mb-3 font-bold">
-                        {t('shop.allProducts')}
-                      </h4>
-                      <ul className="space-y-2.5 text-xs tracking-wider normal-case font-sans">
-                        <li>
-                          <Link to="/shop" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
-                            <span>{t('nav.allPerfumes')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/men" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
-                            <span>{t('home.menTitle')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/women" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
-                            <span>{t('home.womenTitle')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/unisex" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
-                            <span>{t('home.unisexTitle')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
+            {/* Center Logo — Round 1 Fix #3: Perfect container crop with zero top whitespace */}
+            <div className="flex items-center justify-center py-0.5">
+              <Link
+                to="/"
+                className="inline-block focus:outline-none"
+                aria-label="Arabian Sheikh Homepage"
+              >
+                <ArabianLogo
+                  variant="header"
+                  size="navbar"
+                  showSubtitle={true}
+                  subtitle="Andalusia"
+                />
+              </Link>
+            </div>
 
-                    <div>
-                      <h4 className="text-[11px] font-sans uppercase tracking-[0.25em] text-[var(--color-terracotta)] border-b border-[var(--color-terracotta-deep)]/20 pb-2 mb-3 font-bold">
-                        {t('home.fragranceFamiliesTitle')}
-                      </h4>
-                      <ul className="space-y-2 text-xs tracking-wider normal-case font-sans">
-                        <li>
-                          <Link to="/shop?family=woody" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
-                            <span>{t('families.woody')}</span>
-                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الخشبية (عود)</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/shop?family=oriental" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
-                            <span>{t('families.oriental')}</span>
-                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الشرقية</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/shop?family=floral" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
-                            <span>{t('families.floral')}</span>
-                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الزهرية</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/shop?family=fresh" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
-                            <span>{t('families.fresh')}</span>
-                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">المنعشة</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/shop?family=fruity" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
-                            <span>{t('families.fruity')}</span>
-                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الفاكهية</span>
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
+            {/* Right Desktop Nav + Actions */}
+            <div className="flex items-center space-x-4 sm:space-x-6 text-[#E5E0D8]">
+              {/* Right secondary categories */}
+              <nav className="hidden lg:flex items-center space-x-6 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium">
+                {navCategories.slice(3).map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`transition-colors duration-300 relative py-1 hover:text-[#D4AF37] ${
+                      currentPath === item.path ? 'text-[#D4AF37] font-semibold' : ''
+                    }`}
+                  >
+                    {item.name}
+                    {currentPath === item.path && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#D4AF37] animate-fade-in" />
+                    )}
+                  </Link>
+                ))}
+              </nav>
+
+              {/* Language Switcher (English, Spanish, Bulgarian) */}
+              <div className="relative hidden md:block">
+                <button
+                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                  className="flex items-center gap-1.5 text-xs tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1 px-2.5 rounded border border-[#D4AF37]/25 bg-black/40 text-[#E5E0D8]"
+                  aria-label="Select Language"
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>{language.toUpperCase()}</span>
+                  <ChevronDown className="w-3 h-3 text-[#C5A059]" />
+                </button>
+
+                {langDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-36 bg-[#121010] border border-[#D4AF37]/30 rounded-md shadow-2xl py-1 z-50 animate-fade-in">
+                    {languages.map((l) => (
+                      <button
+                        key={l.code}
+                        onClick={() => {
+                          setLanguage(l.code);
+                          setLangDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[#D4AF37]/15 transition-colors ${
+                          language === l.code ? 'text-[#D4AF37] font-bold bg-[#D4AF37]/10' : 'text-[#E5E0D8]'
+                        }`}
+                      >
+                        <span>{l.label}</span>
+                        <span>{l.flag}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <Link
-                to="/men"
-                className={`transition-colors ${
-                  currentPath === '/men' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
-                }`}
-              >
-                {t('nav.men')}
-              </Link>
-              <Link
-                to="/women"
-                className={`transition-colors ${
-                  currentPath === '/women' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
-                }`}
-              >
-                {t('nav.women')}
-              </Link>
-              <Link
-                to="/unisex"
-                className={`transition-colors ${
-                  currentPath === '/unisex' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
-                }`}
-              >
-                {t('nav.unisex')}
-              </Link>
-              <Link
-                to="/collections"
-                className={`transition-colors ${
-                  currentPath.startsWith('/collections') ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
-                }`}
-              >
-                {t('nav.collections')}
-              </Link>
-              <Link
-                to="/the-house"
-                className={`transition-colors ${
-                  currentPath === '/the-house' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
-                }`}
-              >
-                {t('nav.theHouse')}
-              </Link>
-            </nav>
-
-            {/* Center Brand — Text-only premium wordmark */}
-            <div className="text-left lg:text-center py-1">
-              <Link
-                to="/"
-                className="inline-block focus:outline-none group"
-                aria-label="Arabian Sheikh — Home"
-              >
-                <span className="font-cinzel font-bold text-[var(--color-earth-dark)] group-hover:text-[var(--color-terracotta)] transition-colors duration-300 text-sm sm:text-base md:text-lg tracking-[0.25em] uppercase">
-                  ARABIAN SHEIKH
-                </span>
-              </Link>
-            </div>
-
-            {/* Right Action Icons, Language Selector & Mobile Toggle */}
-            <div className="flex items-center space-x-2 sm:space-x-4 text-[var(--color-earth-dark)]">
-
               {/* Search Trigger */}
               <button
                 onClick={onOpenSearch}
-                className="p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none cursor-pointer"
+                className="p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer"
                 aria-label="Search Fragrances"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
               </button>
 
               {/* Wishlist */}
               <Link
                 to="/account/wishlist"
-                className="relative p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none hidden sm:block"
+                className="relative p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block"
                 aria-label="Wishlist"
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1 right-1 bg-[var(--color-terracotta)] text-[#F8D188] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-badge-pop shadow-sm">
+                  <span className="absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center shadow-md">
                     {wishlistCount}
                   </span>
                 )}
@@ -258,183 +205,121 @@ export default function Header({ onOpenSearch }) {
 
               {/* Account */}
               <Link
-                to={isAuthenticated ? '/account' : '/login'}
-                className="p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none hidden sm:block"
-                aria-label="User Account"
+                to={isAuthenticated ? '/account' : '/auth/login'}
+                className="p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block"
+                aria-label="Account"
               >
-                <User className="w-5 h-5" />
+                <User className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
               </Link>
 
-              {/* Bag / Cart Trigger with Animated Counter */}
+              {/* Shopping Bag / Cart */}
               <button
                 onClick={openDrawer}
-                className="relative p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none cursor-pointer"
+                className="relative p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer group"
                 aria-label="Shopping Bag"
               >
-                <ShoppingBag className="w-5 h-5" />
-                {totals.totalCount > 0 && (
-                  <span
-                    className={`absolute top-1 right-1 bg-[var(--color-terracotta)] text-[#F8D188] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm ${
-                      cartBadgeAnimated ? 'animate-badge-pop' : ''
-                    }`}
-                  >
-                    {totals.totalCount}
+                <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#E5E0D8] group-hover:text-[#D4AF37] transition-colors" />
+                {totals.itemCount > 0 && (
+                  <span className={`absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-lg ${
+                    cartBadgeAnimated ? 'animate-bounce' : ''
+                  }`}>
+                    {totals.itemCount}
                   </span>
                 )}
               </button>
 
-              {/* Language Selector Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className="flex items-center gap-1.5 px-2 py-1 border border-[var(--color-terracotta-deep)]/30 hover:border-[var(--color-terracotta)] text-xs font-sans uppercase tracking-widest text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-all bg-[var(--color-desert-light)] cursor-pointer shadow-sm"
-                >
-                  <Globe className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
-                  <span>{language.toUpperCase()}</span>
-                  <ChevronDown className="w-3 h-3 text-[var(--color-terracotta-deep)]" />
-                </button>
-
-                {langDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-36 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/40 shadow-xl py-1 z-50 animate-fade-in"
-                    onMouseLeave={() => setLangDropdownOpen(false)}
-                  >
-                    {availableLanguages.map(l => (
-                      <button
-                        key={l.code}
-                        onClick={() => {
-                          setLanguage(l.code);
-                          setLangDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                          language === l.code
-                            ? 'bg-[var(--color-terracotta)]/15 text-[var(--color-terracotta)] font-bold'
-                            : 'text-[var(--color-earth-dark)] hover:bg-[var(--color-desert-primary)] hover:text-[var(--color-terracotta)]'
-                        }`}
-                      >
-                        <span>{l.name}</span>
-                        <span className="text-[10px] font-mono text-[var(--color-terracotta-deep)]">{l.short}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Mobile Menu Toggle Button */}
-              <div className="flex lg:hidden items-center">
-                <button
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="p-2 text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors focus:outline-none cursor-pointer"
-                  aria-label="Open Navigation Menu"
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
-              </div>
+              {/* Mobile Menu Trigger */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none"
+                aria-label="Toggle Menu"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6 text-[#D4AF37]" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </div>
       </header>
-      {/* Mobile Fullscreen Navigation Drawer */}
+
+      {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-[var(--color-desert-primary)]/98 backdrop-blur-2xl flex flex-col justify-between p-6 animate-fade-in overflow-y-auto text-[var(--color-earth-dark)]">
-          <div>
-            {/* Top Close Row */}
-            <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/25 pb-4">
-              <span className="font-cinzel font-bold text-[var(--color-earth-dark)] tracking-[0.2em] uppercase text-base">
-                ARABIAN SHEIKH
-              </span>
+        <div className="fixed inset-0 z-50 lg:hidden bg-[#0A0A0B]/98 backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[#D4AF37]/20">
+              <ArabianLogo variant="header" size="navbar" showSubtitle={true} subtitle="Andalusia" />
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] transition-colors cursor-pointer"
-                aria-label="Close Navigation"
+                className="p-2 text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-full"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Navigation List */}
-            <nav className="mt-6 space-y-4">
-              <Link
-                to="/shop"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
-              >
-                {t('nav.shop')}
-              </Link>
-              <div className="pl-4 space-y-2.5 border-l border-[var(--color-terracotta-deep)]/25">
-                <Link to="/men" className="block text-sm text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)]">
-                  {t('nav.men')}
-                </Link>
-                <Link to="/women" className="block text-sm text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)]">
-                  {t('nav.women')}
-                </Link>
-                <Link to="/unisex" className="block text-sm text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)]">
-                  {t('nav.unisex')}
-                </Link>
-              </div>
-              <Link
-                to="/collections"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
-              >
-                {t('nav.collections')}
-              </Link>
-              <Link
-                to="/the-house"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
-              >
-                {t('nav.theHouse')}
-              </Link>
-              <Link
-                to="/about"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
-              >
-                {t('nav.about')}
-              </Link>
-              <Link
-                to="/contact"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
-              >
-                {t('nav.contact')}
-              </Link>
-              <Link
-                to={isAuthenticated ? '/account' : '/login'}
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-terracotta)] hover:text-[var(--color-terracotta-deep)] transition-colors"
-              >
-                {t('nav.account')} {isAuthenticated ? `(${user?.name?.split(' ')[0]})` : ''}
-              </Link>
-              {isAdmin && (
+            {/* Mobile Nav Links */}
+            <div className="space-y-4 font-cinzel text-base tracking-[0.18em] uppercase">
+              {navCategories.map((item) => (
                 <Link
-                  to="/admin"
-                  className="block font-cinzel text-lg tracking-[0.15em] text-[var(--color-terracotta)] font-bold"
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-[#F8F5F0] hover:text-[#D4AF37] transition-colors border-b border-white/5 flex items-center justify-between"
                 >
-                  ★ {t('nav.admin')}
+                  <span>{item.name}</span>
+                  <ArrowRight className="w-4 h-4 text-[#D4AF37]/60" />
                 </Link>
-              )}
-            </nav>
+              ))}
+              <Link
+                to="/discovery"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2 text-[#D4AF37] font-semibold flex items-center justify-between"
+              >
+                <span>Fragrance Finder Quiz</span>
+                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+              </Link>
+            </div>
           </div>
 
-          {/* Bottom Language & Concierge Info */}
-          <div className="border-t border-[var(--color-terracotta-deep)]/25 pt-5 mt-6">
-            <p className="text-xs uppercase tracking-widest text-[var(--color-terracotta-deep)] mb-2.5">
-              Select Language
-            </p>
-            <div className="flex gap-2">
-              {availableLanguages.map(l => (
-                <button
-                  key={l.code}
-                  onClick={() => setLanguage(l.code)}
-                  className={`flex-1 py-2 text-xs uppercase tracking-wider font-sans border transition-all cursor-pointer ${
-                    language === l.code
-                      ? 'border-[var(--color-terracotta)] bg-[var(--color-terracotta)] text-[#F8D188] font-bold shadow'
-                      : 'border-[var(--color-terracotta-deep)]/30 text-[var(--color-earth-dark)] bg-[var(--color-desert-light)]'
-                  }`}
-                >
-                  {l.name}
-                </button>
-              ))}
+          {/* Mobile Bottom Utilities */}
+          <div className="pt-6 border-t border-[#D4AF37]/20 space-y-4">
+            {/* Language Selection */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-widest text-[#8C6D37]">Language:</span>
+              <div className="flex gap-2">
+                {languages.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => setLanguage(l.code)}
+                    className={`px-2.5 py-1 text-xs rounded border ${
+                      language === l.code
+                        ? 'border-[#D4AF37] bg-[#D4AF37] text-black font-bold'
+                        : 'border-white/20 text-[#E5E0D8]'
+                    }`}
+                  >
+                    {l.code.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
-            <p className="text-[11px] text-[var(--color-terracotta-deep)] mt-3 text-center">
-              Dubai Flagship Palace • Mayfair Salon • Vendôme Atelier
-            </p>
+
+            {/* Account & Wishlist */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Link
+                to="/account"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F8F5F0]"
+              >
+                <User className="w-4 h-4 text-[#D4AF37]" />
+                <span>Account</span>
+              </Link>
+              <Link
+                to="/account/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F8F5F0]"
+              >
+                <Heart className="w-4 h-4 text-[#D4AF37]" />
+                <span>Wishlist ({wishlistCount})</span>
+              </Link>
+            </div>
           </div>
         </div>
       )}

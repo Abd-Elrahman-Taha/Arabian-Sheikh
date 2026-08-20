@@ -1,583 +1,537 @@
-// Comprehensive Seed Data for Arabian Sheikh Haute Parfumerie
+// Official Arabian Sheikh Catalog & Store Data
+// Authentic Flacons: Black Diamond (Luxury - €50), Millionaire (Royal - €40), Ana Sukkar (Classic - €30)
 
 export const INITIAL_PRODUCTS = [
   {
-    id: 'as-oud-royal-01',
-    name: 'Dehn Al Oud Royal',
-    arabicName: 'دهن العود الملكي',
-    tagline: 'The Pinnacle of Wild Aged Assamese Agarwood & Royal Resins',
-    description: 'An exalted vintage creation distilled from 60-year-old wild Assamese agarwood trees. Matured in obsidian jars within dark stone palace vaults, Dehn Al Oud Royal unfolds with smoky leathery richness, sacred incense smoke, and a deep golden balsamic resonance that commands reverent silence.',
-    price: 420,
-    originalPrice: 490,
-    gender: 'unisex',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Woody',
-    familyArabic: 'الخشبية',
-    topNotes: ['Aged Wild Oud', 'Rare Saffron Threads', 'Cardamom Smoke'],
-    heartNotes: ['Smoky Birch Wood', 'Royal Cambodian Resin', 'Balsam Fir'],
-    baseNotes: ['Assamese Dehn Al Oud', 'Dark Ambergris', 'Earthy Patchouli'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 18,
-    images: [
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: true,
-    isBestSeller: true,
-    collection: 'Royal Oud Reserve',
-    discount: 15,
-    status: 'ACTIVE',
-    rating: 4.95,
-    reviewsCount: 84,
-    concentration: '38% Extrait de Parfum',
-    reviews: [
-      { id: 'r1', author: 'Sultan Al-Mansoor', rating: 5, date: '2026-06-12', comment: 'The most authentic, deep, non-synthetic wild Oud I have experienced outside private Gulf royal reserves.' },
-      { id: 'r2', author: 'Lord Montgomery', rating: 5, date: '2026-05-20', comment: 'A fragrance of pure majesty. Lasts easily over 24 hours on cashmere and linen with an aristocratic trail.' }
-    ]
-  },
-  {
-    id: 'as-amber-malaki-02',
-    name: 'Amber Al Malaki',
-    arabicName: 'عنبر الملكي',
-    tagline: 'Warm Fossilized Amber, Madagascar Vanilla & Sacred Bakhoor',
-    description: 'A monument to Arabian hospitality and regal warmth. Amber Al Malaki fuses dark balsamic labdanum with golden fossilized amber nectar, velvety Bourbon vanilla, and the smoldering embers of sacred frankincense.',
-    price: 360,
+    id: 'as-luxury-black-diamond',
+    slug: 'black-diamond-luxury',
+    name: 'Black Diamond',
+    arabicName: 'بلاك دايموند',
+    bulgarianName: 'Черен Диамант',
+    tier: 'Luxury',
+    price: 50,
     originalPrice: null,
-    gender: 'unisex',
-    category: 'Extrait de Parfum',
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Unisex',
+    season: ['Autumn', 'Winter', 'Evening / Gala'],
+    occasion: ['Evening / Gala', 'Royal Celebrations'],
+    longevity: '14+ Hours (Ultra Long Lasting)',
+    sillage: 'Heavy & Regal',
+    stock: 25,
+    tagline: 'An opulent golden sovereign crowned with radiant majesty.',
+    description: 'The pinnacle of the Arabian Sheikh collection. Black Diamond is encased in a striking mirror-gold flacon crowned with the royal Andalusian finial. Crafted for evenings of unmatched splendor and unforgettable distinction.',
+    notes: {
+      top: ['Precious Ambergris', 'Smoked Saffron', 'Bergamot Zest'],
+      heart: ['Royal Cambodian Agarwood', 'Midnight Rose', 'Cistus Labdanum'],
+      base: ['Dark Fossilized Amber', 'Smoky Cedar', 'Imperial White Musk']
+    },
+    topNotes: ['Precious Ambergris', 'Smoked Saffron', 'Bergamot Zest'],
+    heartNotes: ['Royal Cambodian Agarwood', 'Midnight Rose', 'Cistus Labdanum'],
+    baseNotes: ['Dark Fossilized Amber', 'Smoky Cedar', 'Imperial White Musk'],
+    scentFamily: 'Oriental / Amber',
     fragranceFamily: 'Oriental / Amber',
     familyArabic: 'الشرقية',
-    topNotes: ['Golden Ambergris', 'Nutmeg from Malabar', 'Cinnamon Bark'],
-    heartNotes: ['Sacred Bakhoor Smoke', 'Benzoin Tears', 'Myrrh Resin'],
-    baseNotes: ['Bourbon Vanilla Pods', 'Dark Labdanum', 'White Musk'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 24,
-    images: [
-      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1000&q=85'
-    ],
     featured: true,
     isBestSeller: true,
-    collection: 'Desert Gold',
-    discount: 0,
-    status: 'ACTIVE',
-    rating: 4.9,
-    reviewsCount: 62,
+    isHeroDefault: true,
+    rating: 5.0,
+    reviewsCount: 38,
     concentration: '35% Extrait de Parfum',
+    images: [
+      '/products/black_diamond_gold.png',
+      '/products/black_diamond_gold.jpg'
+    ],
+    cutoutImage: '/products/black_diamond_gold.png',
+    originalImage: '/products/black_diamond_gold.jpg',
+    status: 'ACTIVE',
     reviews: [
-      { id: 'r3', author: 'Elena Rostova', rating: 5, date: '2026-07-01', comment: 'Hypnotic and comforting yet profoundly luxurious. The vanilla and bakhoor interplay is heavenly.' }
+      {
+        id: 'rev-bd-1',
+        author: 'Tariq Al-Hashemi',
+        rating: 5,
+        date: '2026-07-15',
+        title: 'Pure Royalty in a Bottle',
+        comment: 'The projection and longevity are remarkable. The gold flacon is a true centerpiece in my collection.',
+        verifiedPurchase: true,
+        status: 'approved'
+      }
     ]
   },
   {
-    id: 'as-rose-taif-03',
-    name: 'Rose de Taif Imperial',
-    arabicName: 'ورد الطائف الإمبراطوري',
-    tagline: 'Highland Taif Rose Nectar & White Amber Velvet',
-    description: 'Gathered by hand in the misty mountain peaks of Taif before sunrise, thirty pristine petals distill into every single crystal flacon drop. Enhanced by delicate Damascene Rose, French Centifolia, and an ethereal whisper of royal white musk.',
-    price: 340,
-    originalPrice: 390,
-    gender: 'women',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Floral',
-    familyArabic: 'الزهرية',
-    topNotes: ['Taif Mountain Rose', 'Pink Peppercorn', 'Dewy Green Petals'],
-    heartNotes: ['Damascene Rose Absolute', 'Moroccan Orange Blossom', 'Night Jasmine'],
-    baseNotes: ['White Sandalwood', 'Ethereal Musk', 'Golden Honeycomb'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 14,
-    images: [
-      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1000&q=85'
-    ],
+    id: 'as-royal-millionaire',
+    slug: 'millionaire-royal',
+    name: 'Millionaire',
+    arabicName: 'مليونير',
+    bulgarianName: 'Милионер',
+    tier: 'Royal',
+    price: 40,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Masculine',
+    season: ['All Seasons', 'Autumn', 'Spring'],
+    occasion: ['Daily Luxury', 'Signature', 'Evening / Gala'],
+    longevity: '10-12 Hours',
+    sillage: 'Strong & Sophisticated',
+    stock: 30,
+    tagline: 'Dark charisma, power, and magnetic sophistication.',
+    description: 'Millionaire commands the room with an assertive obsidian silhouette and gold crown ornament. A refined composition blending noble woods, spiced warmth, and a clean aristocratic drydown.',
+    notes: {
+      top: ['Cardamom Infusion', 'Crushed Black Pepper', 'Sparkling Grapefruit'],
+      heart: ['Smoky Leather Accord', 'Aged Sandalwood', 'Clary Sage'],
+      base: ['Smoked Vetiver', 'Warm Amber', 'Cashmeran Wood']
+    },
+    topNotes: ['Cardamom Infusion', 'Crushed Black Pepper', 'Sparkling Grapefruit'],
+    heartNotes: ['Smoky Leather Accord', 'Aged Sandalwood', 'Clary Sage'],
+    baseNotes: ['Smoked Vetiver', 'Warm Amber', 'Cashmeran Wood'],
+    scentFamily: 'Woody / Spicy',
+    fragranceFamily: 'Woody',
+    familyArabic: 'الخشبية',
     featured: true,
-    isBestSeller: false,
-    collection: 'Imperial Silk',
-    discount: 12,
+    isBestSeller: true,
+    isHeroDefault: false,
+    rating: 4.9,
+    reviewsCount: 42,
+    concentration: '30% Extrait de Parfum',
+    images: [
+      '/products/millionaire_black.png',
+      '/products/millionaire_black.jpg'
+    ],
+    cutoutImage: '/products/millionaire_black.png',
+    originalImage: '/products/millionaire_black.jpg',
     status: 'ACTIVE',
-    rating: 4.88,
-    reviewsCount: 47,
-    concentration: '32% Extrait de Parfum',
     reviews: [
-      { id: 'r4', author: 'Princess Noura', rating: 5, date: '2026-04-18', comment: 'The true queen of roses. Fresh, noble, never cloying, and exquisitely refined.' }
+      {
+        id: 'rev-mil-1',
+        author: 'Alexander D.',
+        rating: 5,
+        date: '2026-06-28',
+        title: 'Masterpiece of Modern Luxury',
+        comment: 'Sophisticated, masculine, and long-lasting. Gets compliments everywhere I go.',
+        verifiedPurchase: true,
+        status: 'approved'
+      }
     ]
   },
   {
-    id: 'as-black-monarch-04',
-    name: 'Black Monarch Oud',
-    arabicName: 'العود الأسود للملوك',
-    tagline: 'Dark Italian Leather, Smoky Oud & Royal Castoreum',
-    description: 'Created for the modern Sheikh. An uncompromising declaration of strength and distinction featuring dark hand-tanned Florentine leather, intense Cambodian Oud, black pepper, and sacred incense braziers.',
-    price: 450,
+    id: 'as-classic-ana-sukkar',
+    slug: 'ana-sukkar-classic',
+    name: 'Ana Sukkar',
+    arabicName: 'أنا سكر',
+    bulgarianName: 'Ана Сукар',
+    tier: 'Classic',
+    price: 30,
     originalPrice: null,
-    gender: 'men',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Woody',
-    familyArabic: 'الخشبية',
-    topNotes: ['Black Leather', 'Smoked Bergamot', 'Crushed Black Pepper'],
-    heartNotes: ['Cambodian Dark Oud', 'Cistus Labdanum', 'Tobacco Leaf'],
-    baseNotes: ['Smoky Vetiver', 'Dark Cedarwood', 'Castoreum Musk'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 9,
-    images: [
-      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: true,
-    collection: 'Royal Oud Reserve',
-    discount: 0,
-    status: 'ACTIVE',
-    rating: 4.98,
-    reviewsCount: 92,
-    concentration: '40% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-oasis-breeze-05',
-    name: 'Oasis Breeze Al-Fajr',
-    arabicName: 'نسيم الواحة الفجر',
-    tagline: 'Zesty Calabrian Bergamot, Morning Palm Dew & Clean Airy Musk',
-    description: 'Inspired by dawn breaking over an ancient oasis. Crisp Italian citrus zests mingle with crisp crushed mint leaves, neroli blossom, and a cooling base of clean cedarwood and white amber.',
-    price: 290,
-    originalPrice: null,
-    gender: 'unisex',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Fresh',
-    familyArabic: 'المنعشة',
-    topNotes: ['Calabrian Bergamot', 'Menthol Mint Leaves', 'Sicilian Lemon'],
-    heartNotes: ['Neroli Sunflowers', 'Oasis Palm Dew', 'Cardamom Pod'],
-    baseNotes: ['White Cedarwood', 'Clean Airy Musks', 'Crisp Amber'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 31,
-    images: [
-      'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: false,
-    collection: 'Desert Gold',
-    discount: 0,
-    status: 'ACTIVE',
-    rating: 4.79,
-    reviewsCount: 35,
-    concentration: '30% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-pomegranate-babylon-06',
-    name: 'Imperial Pomegranate of Babylon',
-    arabicName: 'رمان بابل الإمبراطوري',
-    tagline: 'Ripe Arabian Pomegranate Nectar, Fig & Spiced Plum',
-    description: 'A sumptuous, regal fruity elixir. Deep crimson pomegranate gems crushed with sweet ripe desert figs, purple plum syrup, pink peppercorns, and an opulent foundation of smooth patchouli and creamy sandalwood.',
-    price: 320,
-    originalPrice: 370,
-    gender: 'women',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Fruity',
-    familyArabic: 'الفاكهية',
-    topNotes: ['Ripe Crimson Pomegranate', 'Black Currant', 'Pink Peppercorn'],
-    heartNotes: ['Sweet Desert Fig', 'Juicy Plum Syrup', 'Night Lily'],
-    baseNotes: ['Creamy Mysore Sandalwood', 'Soft Patchouli', 'Vanilla Caviar'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 22,
-    images: [
-      'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: true,
-    isBestSeller: true,
-    collection: 'Imperial Silk',
-    discount: 13,
-    status: 'ACTIVE',
-    rating: 4.86,
-    reviewsCount: 51,
-    concentration: '34% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-bakhoor-royale-07',
-    name: 'Bakhoor Royale Supreme',
-    arabicName: 'بخور ملكي سوبريم',
-    tagline: 'Smoldering Agarwood Chips, Frankincense Tears & Honeyed Amber',
-    description: 'The definitive scent of an Arabian royal reception. Captures the intoxicating atmosphere of burning precious bakhoor over golden braziers, sweetened with rich mountain honey and framed by dark resinous woods.',
-    price: 390,
-    originalPrice: null,
-    gender: 'unisex',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Oriental / Amber',
-    familyArabic: 'الشرقية',
-    topNotes: ['Omani Frankincense Tears', 'Wild Honey', 'Clove Bud'],
-    heartNotes: ['Charred Agarwood Chips', 'Royal Ambergris', 'Labdanum Gum'],
-    baseNotes: ['Dark Tonka Bean', 'Leather Accord', 'Smoky Vanilla'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 12,
-    images: [
-      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: true,
-    collection: 'Royal Oud Reserve',
-    discount: 0,
-    status: 'ACTIVE',
-    rating: 4.93,
-    reviewsCount: 78,
-    concentration: '36% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-jasmine-sultana-08',
-    name: 'Jasmine Al Sultana',
-    arabicName: 'ياسمين السلطانة',
-    tagline: 'Night-Blooming Sambac Jasmine, Lily & Orange Blossom Dew',
-    description: 'An intoxicating tribute to Arabian palace gardens at midnight. Pure night-blooming Sambac Jasmine absolute enriched with royal white lilies, delicate violet petals, and warm shimmering amber.',
-    price: 310,
-    originalPrice: null,
-    gender: 'women',
-    category: 'Extrait de Parfum',
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Feminine',
+    season: ['Spring', 'Summer', 'Daily Luxury'],
+    occasion: ['Daily Luxury', 'Signature'],
+    longevity: '8-10 Hours',
+    sillage: 'Moderate & Alluring',
+    stock: 45,
+    tagline: 'Velvety sweetness, delicate petals, and sweet confection.',
+    description: 'Ana Sukkar presents an angelic white flacon accented in radiant gold. A gourmand and floral melody capturing spun sugar, blooming blossoms, and creamy vanilla comfort.',
+    notes: {
+      top: ['Spun Sugar Nectar', 'Sweet Mandarin', 'White Peach'],
+      heart: ['Orange Blossom Petals', 'Gourmand Vanilla Cream', 'Jasmine Sambac'],
+      base: ['Fluffy White Musk', 'Tonka Bean', 'Soft Amber']
+    },
+    topNotes: ['Spun Sugar Nectar', 'Sweet Mandarin', 'White Peach'],
+    heartNotes: ['Orange Blossom Petals', 'Gourmand Vanilla Cream', 'Jasmine Sambac'],
+    baseNotes: ['Fluffy White Musk', 'Tonka Bean', 'Soft Amber'],
+    scentFamily: 'Gourmand / Floral',
     fragranceFamily: 'Floral',
     familyArabic: 'الزهرية',
-    topNotes: ['Orange Blossom Dew', 'Bergamot Zest', 'Green Violet Leaves'],
-    heartNotes: ['Night-Blooming Sambac Jasmine', 'Royal White Lily', 'Damask Rose'],
-    baseNotes: ['White Amber', 'Cashmere Woods', 'Solar Musk'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 16,
-    images: [
-      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: false,
-    collection: 'Imperial Silk',
-    discount: 0,
-    status: 'ACTIVE',
-    rating: 4.82,
-    reviewsCount: 29,
-    concentration: '32% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-sahara-cedar-09',
-    name: 'Sahara Cedar & Smoked Vetiver',
-    arabicName: 'أرز الصحراء و الفيتيفر المدخن',
-    tagline: 'Atlas Mountain Cedar, Earthy Vetiver Roots & Warm Spices',
-    description: 'The dignity of desert mountains captured in wood. Crisp Atlas cedarwood blended with smoky Bourbon vetiver, dry coriander seeds, and a touch of golden frankincense.',
-    price: 330,
-    originalPrice: null,
-    gender: 'men',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Woody',
-    familyArabic: 'الخشبية',
-    topNotes: ['Atlas Cedar Needles', 'Dry Coriander', 'Grapefruit Rind'],
-    heartNotes: ['Smoky Haitian Vetiver', 'Papyrus Bark', 'Nutmeg Spice'],
-    baseNotes: ['Aged Sandalwood', 'Dark Cedar Resin', 'Oakmoss'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 20,
-    images: [
-      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: false,
-    collection: 'Desert Gold',
-    discount: 0,
-    status: 'ACTIVE',
-    rating: 4.76,
-    reviewsCount: 33,
-    concentration: '33% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-desert-bergamot-10',
-    name: 'Desert Bergamot & Solar Amber',
-    arabicName: 'برغموت الصحراء و العنبر الشمسي',
-    tagline: 'Sparkling Sunlit Citrus, Cardamom Breeze & Airy Amber',
-    description: 'Golden morning sunlight breaking across shifting dunes. Sparkling sun-drenched bergamot and green mandarin woven into clean airy jasmine and glowing warm amber crystals.',
-    price: 280,
-    originalPrice: 320,
-    gender: 'unisex',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Fresh',
-    familyArabic: 'المنعشة',
-    topNotes: ['Sunlit Bergamot', 'Green Mandarin', 'Cardamom Breeze'],
-    heartNotes: ['White Neroli', 'Airy Tea Leaves', 'Solar Jasmine'],
-    baseNotes: ['Golden Amber Crystals', 'Silky Cedar', 'Skin Musks'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 28,
-    images: [
-      'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: false,
-    collection: 'Desert Gold',
-    discount: 12,
-    status: 'ACTIVE',
-    rating: 4.81,
-    reviewsCount: 40,
-    concentration: '30% Extrait de Parfum',
-    reviews: []
-  },
-  {
-    id: 'as-palace-fig-11',
-    name: 'Palace Fig & Royal Mango',
-    arabicName: 'تين القصر و المانجو الملكي',
-    tagline: 'Sun-Drenched Arabian Figs, Sweet Mango Pulp & Velvet Musks',
-    description: 'A decadent oasis banquet. Sun-ripened Arabian figs sliced open over juicy alphonso mango nectar, dusted with sweet cinnamon and resting on a foundation of warm cedar and vanilla.',
-    price: 310,
-    originalPrice: null,
-    gender: 'unisex',
-    category: 'Extrait de Parfum',
-    fragranceFamily: 'Fruity',
-    familyArabic: 'الفاكهية',
-    topNotes: ['Alphonso Mango Nectar', 'Sweet Wild Fig', 'Crisp Red Apple'],
-    heartNotes: ['White Peach Flesh', 'Cinnamon Dust', 'Orris Butter'],
-    baseNotes: ['Velvet Vanilla Musk', 'Blonde Cedar', 'Warm Amber'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 15,
-    images: [
-      'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1000&q=85'
-    ],
-    featured: false,
-    isBestSeller: false,
-    collection: 'Imperial Silk',
-    discount: 0,
-    status: 'ACTIVE',
+    featured: true,
+    isBestSeller: true,
+    isHeroDefault: false,
     rating: 4.85,
-    reviewsCount: 22,
-    concentration: '32% Extrait de Parfum',
+    reviewsCount: 29,
+    concentration: '25% Eau de Parfum Intense',
+    images: [
+      '/products/ana_sukkar_white.png',
+      '/products/ana_sukkar_white.jpg'
+    ],
+    cutoutImage: '/products/ana_sukkar_white.png',
+    originalImage: '/products/ana_sukkar_white.jpg',
+    status: 'ACTIVE',
+    reviews: [
+      {
+        id: 'rev-as-1',
+        author: 'Layla K.',
+        rating: 5,
+        date: '2026-07-02',
+        title: 'Irresistibly Delicious & Elegant',
+        comment: 'The sweet cream and floral balance is perfection. The white bottle looks stunning on my vanity.',
+        verifiedPurchase: true,
+        status: 'approved'
+      }
+    ]
+  },
+  // Oils Category Product (Placeholder for admin photo upload)
+  {
+    id: 'as-oil-attar-malaki',
+    slug: 'attar-al-malaki-oil',
+    name: 'Attar Al Malaki (Pure Oil)',
+    arabicName: 'عطر الملكي زيتي',
+    bulgarianName: 'Атар Ал Малаки (Масло)',
+    category: 'oils',
+    price: 35,
+    originalPrice: null,
+    size: '12 ml / 1 Tola',
+    gender: 'Unisex',
+    season: ['All Seasons'],
+    occasion: ['Daily Luxury', 'Royal Celebrations'],
+    longevity: '24+ Hours (Pure Concentrated Oil)',
+    sillage: 'Intimate & Profound',
+    stock: 20,
+    tagline: '100% pure alcohol-free concentrated royal perfume oil.',
+    description: 'Distilled using ancient artisanal techniques. A single drop offers an enduring aura of rare woods, warm amber, and golden musk. Admin can upload custom flacon photo.',
+    notes: {
+      top: ['Pure Cambodian Oud', 'Saffron Oil'],
+      heart: ['Taif Rose Concentrate', 'Frankincense Resin'],
+      base: ['Aged Sandalwood', 'Ambergris Nectar']
+    },
+    topNotes: ['Pure Cambodian Oud', 'Saffron Oil'],
+    heartNotes: ['Taif Rose Concentrate', 'Frankincense Resin'],
+    baseNotes: ['Aged Sandalwood', 'Ambergris Nectar'],
+    scentFamily: 'Oriental Oil',
+    fragranceFamily: 'Woody',
+    familyArabic: 'الخشبية',
+    featured: false,
+    isBestSeller: false,
+    rating: 4.9,
+    reviewsCount: 15,
+    images: ['/products/black_diamond_gold.png'],
+    cutoutImage: '/products/black_diamond_gold.png',
+    status: 'ACTIVE',
     reviews: []
   },
+  // Bakhoor Category Product
   {
-    id: 'as-majlis-velvet-12',
-    name: 'Majlis Velvet & Rare Spices',
-    arabicName: 'مخمل المجلس و التوابل النادرة',
-    tagline: 'Saffron Threads, Roasted Coffee Beans, Tonka & Smoky Amber',
-    description: 'The sacred sensory tapestry of an evening majlis. Aromatic roasted Arabic coffee beans, golden saffron threads, rich Indonesian patchouli, and deep vanilla tonka bean aged to perfection.',
-    price: 375,
-    originalPrice: 425,
-    gender: 'men',
-    category: 'Extrait de Parfum',
+    id: 'as-bakhoor-andalusia',
+    slug: 'bakhoor-andalusia-incense',
+    name: 'Bakhoor Andalusia Luxury Chips',
+    arabicName: 'بخور أندلوسيا فاخر',
+    bulgarianName: 'Бахур Андалусия',
+    category: 'bakhoor',
+    price: 45,
+    originalPrice: null,
+    size: '75g Premium Jar',
+    gender: 'Unisex',
+    season: ['All Seasons'],
+    occasion: ['Daily Luxury', 'Royal Celebrations'],
+    longevity: 'Enduring Home Fragrance',
+    sillage: 'Voluminous & Atmospheric',
+    stock: 35,
+    tagline: 'Hand-infused Agarwood chips scented with musk, rose, and amber.',
+    description: 'Slow-burning natural agarwood steeped in essential fragrance oils for home sanctification and welcoming guests with royal hospitality.',
+    notes: {
+      top: ['Oud Wood Chips', 'Cardamom Dust'],
+      heart: ['Balsam Resin', 'Damask Rose Petals'],
+      base: ['White Amber Crystals', 'Smoky Cedar']
+    },
+    topNotes: ['Oud Wood Chips', 'Cardamom Dust'],
+    heartNotes: ['Balsam Resin', 'Damask Rose Petals'],
+    baseNotes: ['White Amber Crystals', 'Smoky Cedar'],
+    scentFamily: 'Incense / Smoky',
     fragranceFamily: 'Oriental / Amber',
     familyArabic: 'الشرقية',
-    topNotes: ['Golden Saffron Threads', 'Arabic Coffee Infusion', 'Cardamom'],
-    heartNotes: ['Roasted Tonka Bean', 'Leather Cushions', 'Smoky Labdanum'],
-    baseNotes: ['Indonesian Patchouli', 'Sacred Amber Resin', 'Bourbon Vanilla'],
-    sizes: ['50ml', '100ml', '200ml Flacon'],
-    stock: 7,
-    images: [
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1000&q=85'
-    ],
     featured: false,
-    isBestSeller: true,
-    collection: 'Royal Oud Reserve',
-    discount: 11,
+    isBestSeller: false,
+    rating: 4.8,
+    reviewsCount: 19,
+    images: ['/products/millionaire_black.png'],
+    cutoutImage: '/products/millionaire_black.png',
     status: 'ACTIVE',
-    rating: 4.97,
-    reviewsCount: 65,
-    concentration: '36% Extrait de Parfum',
+    reviews: []
+  },
+  // Cosmetics Category Product
+  {
+    id: 'as-cosmetics-royal-body-cream',
+    slug: 'royal-scented-body-butter',
+    name: 'Royal Perfumed Body Silk',
+    arabicName: 'حرير الجسم الملكي المعطر',
+    bulgarianName: 'Кралска коприна за тяло',
+    category: 'cosmetics',
+    price: 28,
+    originalPrice: null,
+    size: '200 ml / 6.7 fl oz',
+    gender: 'Unisex',
+    season: ['All Seasons'],
+    occasion: ['Daily Luxury'],
+    longevity: '12 Hours Hydration & Scent',
+    sillage: 'Delicate Skin Veil',
+    stock: 40,
+    tagline: 'Nourishing shea and argan butter scented with Arabian Sheikh signature notes.',
+    description: 'A silky, fast-absorbing luxury body cream enriched with organic Moroccan argan oil, golden shimmer, and enduring fragrance.',
+    notes: {
+      top: ['Citrus Blossom', 'Sweet Almond'],
+      heart: ['Jasmine Milk', 'Shea Nectar'],
+      base: ['Vanilla Butter', 'Soft Sandalwood']
+    },
+    topNotes: ['Citrus Blossom', 'Sweet Almond'],
+    heartNotes: ['Jasmine Milk', 'Shea Nectar'],
+    baseNotes: ['Vanilla Butter', 'Soft Sandalwood'],
+    scentFamily: 'Cosmetic Luxury',
+    fragranceFamily: 'Floral',
+    familyArabic: 'الزهرية',
+    featured: false,
+    isBestSeller: false,
+    rating: 4.75,
+    reviewsCount: 11,
+    images: ['/products/ana_sukkar_white.png'],
+    cutoutImage: '/products/ana_sukkar_white.png',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  // Bundles Category Product
+  {
+    id: 'as-bundle-imperial-trio',
+    slug: 'imperial-trilogy-bundle',
+    name: 'The Imperial Flacon Trilogy (3 x 60ml)',
+    arabicName: 'ثلاثية الفخامة الإمبراطورية (٣ عطور)',
+    bulgarianName: 'Имперска трилогия (3 x 60мл)',
+    category: 'bundles',
+    price: 105,
+    originalPrice: 120,
+    size: '3 x 60 ml Full Set',
+    gender: 'Unisex',
+    season: ['All Seasons'],
+    occasion: ['Royal Celebrations', 'Signature'],
+    longevity: 'Complete Fragrance Wardrobe',
+    sillage: 'Variable by Flacon',
+    stock: 15,
+    tagline: 'All three signature flacons: Black Diamond, Millionaire & Ana Sukkar in a bespoke presentation box.',
+    description: 'Experience the entire prestige collection. Contains 1x Luxury Black Diamond (60ml), 1x Royal Millionaire (60ml), and 1x Classic Ana Sukkar (60ml) packaged in a velvet-lined gold-crested keepsake coffret.',
+    notes: {
+      top: ['Ambergris', 'Cardamom', 'Spun Sugar'],
+      heart: ['Cambodian Oud', 'Smoky Leather', 'Vanilla Blossom'],
+      base: ['Fossilized Amber', 'Cashmeran', 'White Musk']
+    },
+    topNotes: ['Ambergris', 'Cardamom', 'Spun Sugar'],
+    heartNotes: ['Cambodian Oud', 'Smoky Leather', 'Vanilla Blossom'],
+    baseNotes: ['Fossilized Amber', 'Cashmeran', 'White Musk'],
+    scentFamily: 'Collector Trilogy',
+    fragranceFamily: 'Oriental / Amber',
+    familyArabic: 'الشرقية',
+    featured: true,
+    isBestSeller: true,
+    rating: 5.0,
+    reviewsCount: 22,
+    images: ['/products/black_diamond_gold.png'],
+    cutoutImage: '/products/black_diamond_gold.png',
+    status: 'ACTIVE',
     reviews: []
   }
 ];
 
-export const INITIAL_DISCOUNTS = [
+export const PERFUME_TIERS = [
   {
-    code: 'ROYAL10',
-    type: 'percentage',
-    value: 10,
-    minSpend: 0,
-    description: '10% privilege discount on all royal fragrances',
-    status: 'ACTIVE',
-    usedCount: 42,
-    maxUsage: 500,
-    validUntil: '2027-12-31'
+    id: 'Luxury',
+    name: 'Luxury Tier',
+    arabicName: 'الفئة الفاخرة (لكجري)',
+    bulgarianName: 'Луксозен клас',
+    price: 50,
+    size: '60 ml / 2.0 fl oz',
+    bottle: 'Black Diamond',
+    color: '#D4AF37',
+    image: '/products/black_diamond_gold.png',
+    description: 'The highest expression of Andalusian perfumery. Encased in brilliant gold with concentrated precious oud, ambergris, and rare resins.',
+    filterParam: 'Luxury'
   },
   {
-    code: 'SHEIKH20',
-    type: 'percentage',
-    value: 20,
-    minSpend: 300,
-    description: '20% VIP discount on orders above $300',
-    status: 'ACTIVE',
-    usedCount: 18,
-    maxUsage: 100,
-    validUntil: '2027-12-31'
+    id: 'Royal',
+    name: 'Royal Tier',
+    arabicName: 'الفئة الملكية (رويال)',
+    bulgarianName: 'Кралски клас',
+    price: 40,
+    size: '60 ml / 2.0 fl oz',
+    bottle: 'Millionaire',
+    color: '#2A2A2A',
+    image: '/products/millionaire_black.png',
+    description: 'Commanding obsidian elegance with intense woods, spice, and magnetic masculine charisma.',
+    filterParam: 'Royal'
   },
   {
-    code: 'OUD50',
-    type: 'fixed',
-    value: 50,
-    minSpend: 250,
-    description: '$50 compliment on purchases above $250',
-    status: 'ACTIVE',
-    usedCount: 31,
-    maxUsage: 200,
-    validUntil: '2027-12-31'
-  },
-  {
-    code: 'WELCOMEVIP',
-    type: 'percentage',
-    value: 15,
-    minSpend: 100,
-    description: '15% welcome privilege for new palace patrons',
-    status: 'ACTIVE',
-    usedCount: 95,
-    maxUsage: 1000,
-    validUntil: '2027-12-31'
+    id: 'Classic',
+    name: 'Classic Tier',
+    arabicName: 'الفئة الكلاسيكية (كلاسيك)',
+    bulgarianName: 'Класически клас',
+    price: 30,
+    size: '60 ml / 2.0 fl oz',
+    bottle: 'Ana Sukkar',
+    color: '#E8D29F',
+    image: '/products/ana_sukkar_white.png',
+    description: 'Pristine porcelain-white flacon offering gourmand sweetness, delicate floral petals, and comforting creamy vanilla.',
+    filterParam: 'Classic'
   }
 ];
 
-export const INITIAL_USERS = [
+export const CATEGORIES = [
   {
-    id: 'user-admin-01',
-    name: 'Grand Concierge (Admin)',
-    email: 'admin@arabiansheikh.com',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    memberSince: '2024-01-01',
-    ordersCount: 14,
-    totalSpent: 5890,
-    addresses: [
-      {
-        id: 'addr-1',
-        isDefault: true,
-        fullName: 'Grand Concierge',
-        address: 'Al Wasl Road, Villa 42',
-        city: 'Dubai',
-        country: 'United Arab Emirates',
-        postalCode: '00000',
-        phone: '+971 50 123 4567'
-      }
-    ],
-    paymentMethods: [
-      {
-        id: 'pm-1',
-        isDefault: true,
-        cardholderName: 'Grand Concierge',
-        last4: '8892',
-        brand: 'Visa',
-        expiry: '08/29'
-      }
-    ]
+    id: 'perfumes',
+    slug: 'perfumes',
+    name: 'Perfumes',
+    arabicName: 'العطور',
+    bulgarianName: 'Парфюми',
+    description: 'Signature 60ml flacons in Classic, Royal, and Luxury tiers.',
+    image: '/products/black_diamond_gold.png'
   },
   {
-    id: 'user-patron-02',
-    name: 'Sheikh Tariq Al-Fassi',
-    email: 'sheikh.user@luxury.com',
-    role: 'USER',
-    status: 'ACTIVE',
-    memberSince: '2025-03-15',
-    ordersCount: 3,
-    totalSpent: 1230,
-    addresses: [
-      {
-        id: 'addr-2',
-        isDefault: true,
-        fullName: 'Sheikh Tariq Al-Fassi',
-        address: 'Royal Palm Estate, Avenue 7',
-        city: 'Riyadh',
-        country: 'Saudi Arabia',
-        postalCode: '11564',
-        phone: '+966 55 987 6543'
-      }
-    ],
-    paymentMethods: [
-      {
-        id: 'pm-2',
-        isDefault: true,
-        cardholderName: 'Sheikh Tariq Al-Fassi',
-        last4: '4112',
-        brand: 'Mastercard',
-        expiry: '11/28'
-      }
-    ]
+    id: 'oils',
+    slug: 'oils',
+    name: 'Oils (Attar)',
+    arabicName: 'الزيوت العطرية',
+    bulgarianName: 'Парфюмни масла',
+    description: 'Alcohol-free pure concentrated perfume attars.',
+    image: '/products/black_diamond_gold.png'
+  },
+  {
+    id: 'bakhoor',
+    slug: 'bakhoor',
+    name: 'Bakhoor & Incense',
+    arabicName: 'البخور والعود',
+    bulgarianName: 'Бахур и благовония',
+    description: 'Artisanal agarwood chips and fragrant incense blends.',
+    image: '/products/millionaire_black.png'
+  },
+  {
+    id: 'cosmetics',
+    slug: 'cosmetics',
+    name: 'Cosmetics',
+    arabicName: 'مستحضرات التجميل',
+    bulgarianName: 'Козметика',
+    description: 'Perfumed body silk, lotions, and royal self-care.',
+    image: '/products/ana_sukkar_white.png'
+  },
+  {
+    id: 'bundles',
+    slug: 'bundles',
+    name: 'Exclusive Bundles',
+    arabicName: 'الباقات والعروض',
+    bulgarianName: 'Комплекти',
+    description: 'Curated gift coffrets and fragrance trilogy collections.',
+    image: '/products/black_diamond_gold.png'
   }
 ];
 
 export const INITIAL_ORDERS = [
   {
-    id: 'ORD-98421',
-    userId: 'user-patron-02',
-    customerName: 'Sheikh Tariq Al-Fassi',
-    customerEmail: 'sheikh.user@luxury.com',
-    date: '2026-08-10T14:30:00Z',
-    status: 'SHIPPED',
-    trackingCode: '9842104-AE',
+    id: 'ORD-9842',
+    customer: {
+      name: 'Sheikh Hamdan Al-Maktoum',
+      email: 'h.maktoum@royal.ae',
+      phone: '+971 50 123 4567',
+      address: 'Al-Zabeel Palace, Dubai, UAE'
+    },
     items: [
       {
-        productId: 'as-oud-royal-01',
-        name: 'Dehn Al Oud Royal',
-        size: '100ml',
-        price: 420,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1000&q=85'
+        productId: 'as-luxury-black-diamond',
+        productName: 'Black Diamond',
+        productImage: '/products/black_diamond_gold.png',
+        price: 50,
+        quantity: 2,
+        size: '60 ml'
       },
       {
-        productId: 'as-amber-malaki-02',
-        name: 'Amber Al Malaki',
-        size: '100ml',
-        price: 360,
+        productId: 'as-royal-millionaire',
+        productName: 'Millionaire',
+        productImage: '/products/millionaire_black.png',
+        price: 40,
         quantity: 1,
-        image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1000&q=85'
+        size: '60 ml'
       }
     ],
-    subtotal: 780,
-    discountAmount: 78,
-    discountCode: 'ROYAL10',
-    shipping: 0,
-    total: 702,
-    shippingAddress: {
-      fullName: 'Sheikh Tariq Al-Fassi',
-      address: 'Royal Palm Estate, Avenue 7',
-      city: 'Riyadh',
-      country: 'Saudi Arabia',
-      postalCode: '11564',
-      phone: '+966 55 987 6543'
-    },
-    paymentMethod: {
-      type: 'card',
-      last4: '4112',
-      brand: 'Mastercard'
-    }
+    total: 140,
+    shippingFee: 0,
+    status: 'SHIPPED',
+    paymentStatus: 'PAID',
+    paymentMethod: 'Stripe Credit Card',
+    dhlTrackingNumber: 'DHL-EXP-9823471029',
+    createdAt: '2026-08-18T10:30:00Z'
+  }
+];
+
+export const INITIAL_ADMIN_SETTINGS = {
+  stripe: {
+    testMode: true,
+    publishableKey: 'pk_test_sample_arabiansheikh_key',
+    secretKey: 'sk_test_sample_arabiansheikh_secret',
+    currency: 'EUR'
+  },
+  dhl: {
+    testMode: true,
+    accountNumber: 'DHL-EXP-889021',
+    apiKey: 'dhl_test_api_key_andalusia',
+    defaultShippingFee: 15,
+    freeShippingThreshold: 100,
+    originCountry: 'Spain / UAE'
+  }
+};
+
+export const INITIAL_USERS = [
+  {
+    id: 'usr-admin-01',
+    name: 'Sheikh Tariq Al-Fassi',
+    email: 'admin@arabiansheikh.com',
+    phone: '+971 50 123 4567',
+    role: 'ADMIN',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
+    createdAt: '2026-01-01',
+    addresses: [
+      {
+        id: 'addr-1',
+        title: 'Primary Residence',
+        street: 'Royal Mirage Boulevard, Villa 42',
+        city: 'Dubai',
+        country: 'United Arab Emirates',
+        postalCode: '00000',
+        isDefault: true
+      }
+    ],
+    wishlist: ['as-luxury-black-diamond', 'as-royal-millionaire']
   },
   {
-    id: 'ORD-98350',
-    userId: 'user-patron-02',
-    customerName: 'Sheikh Tariq Al-Fassi',
-    customerEmail: 'sheikh.user@luxury.com',
-    date: '2026-07-22T09:15:00Z',
-    status: 'DELIVERED',
-    trackingCode: '9835011-AE',
-    items: [
+    id: 'usr-customer-02',
+    name: 'Princess Noura Al-Saud',
+    email: 'noura@royal.sa',
+    phone: '+966 50 987 6543',
+    role: 'CUSTOMER',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    createdAt: '2026-03-15',
+    addresses: [
       {
-        productId: 'as-black-monarch-04',
-        name: 'Black Monarch Oud',
-        size: '100ml',
-        price: 450,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1000&q=85'
+        id: 'addr-2',
+        title: 'Riyadh Residence',
+        street: 'Diplomatic Quarter, Palace 18',
+        city: 'Riyadh',
+        country: 'Saudi Arabia',
+        postalCode: '11564',
+        isDefault: true
       }
     ],
-    subtotal: 450,
-    discountAmount: 0,
-    discountCode: null,
-    shipping: 0,
-    total: 450,
-    shippingAddress: {
-      fullName: 'Sheikh Tariq Al-Fassi',
-      address: 'Royal Palm Estate, Avenue 7',
-      city: 'Riyadh',
-      country: 'Saudi Arabia',
-      postalCode: '11564',
-      phone: '+966 55 987 6543'
-    },
-    paymentMethod: {
-      type: 'card',
-      last4: '4112',
-      brand: 'Mastercard'
-    }
+    wishlist: ['as-classic-ana-sukkar']
+  }
+];
+
+export const INITIAL_DISCOUNTS = [
+  {
+    id: 'disc-sheikh10',
+    code: 'SHEIKH10',
+    percentage: 10,
+    minSpend: 50,
+    validUntil: '2027-12-31',
+    isActive: true
+  },
+  {
+    id: 'disc-royal20',
+    code: 'ROYAL20',
+    percentage: 20,
+    minSpend: 100,
+    validUntil: '2027-12-31',
+    isActive: true
   }
 ];

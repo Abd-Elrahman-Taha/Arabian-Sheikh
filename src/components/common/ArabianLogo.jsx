@@ -4,73 +4,96 @@ import logoSvg from '../../assets/arabian-sheikh-logo.svg';
 /**
  * ArabianLogo Component
  *
- * Official vector brand signature — Arabian Sheikh royal identity.
+ * Official vector brand signature with calibrated container crop
+ * (Round 1 Fix #3: removes extra whitespace above crest while keeping SVG file 100% untouched).
  *
  * Props:
- *  variant      – 'crest' | 'full' | 'horizontal'
+ *  variant      – 'crest' | 'full' | 'horizontal' | 'header'
  *  size         – 'navbar' | 'sm' | 'md' | 'lg' | 'hero' | 'xl'
- *  showSubtitle – show "Haute Parfumerie Arabe" (or custom subtitle)
- *  showArabic   – show "الشيخ العربي" Arabic brand name below English
+ *  showSubtitle – show "Haute Parfumerie • Andalusia"
  *  subtitle     – custom subtitle string
  */
 export default function ArabianLogo({
   variant = 'full',
   size = 'md',
   className = '',
-  showSubtitle = false,
-  showArabic = false,
-  arabicText = 'اربيان شيخ',
-  subtitle = 'Haute Parfumerie Arabe'
+  showSubtitle = true,
+  subtitle = 'Andalusia'
 }) {
   const sizeMap = {
     navbar: {
-      crest:  'h-10 sm:h-12 w-auto aspect-[85/113]',
-      text:   'text-sm sm:text-base md:text-lg tracking-[0.2em]',
-      sub:    'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]',
-      arabic: 'text-[11px] sm:text-[13px]'
+      crestWrap: 'h-9 sm:h-10 w-9 sm:w-10',
+      imgScale: 'scale-[1.28] -translate-y-[10%]',
+      text: 'text-xs sm:text-sm tracking-[0.25em]',
+      sub: 'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]'
     },
     sm: {
-      crest:  'h-14 sm:h-16 w-auto aspect-[85/113]',
-      text:   'text-base sm:text-lg tracking-[0.22em]',
-      sub:    'text-[8px] tracking-[0.35em]',
-      arabic: 'text-sm'
+      crestWrap: 'h-12 sm:h-14 w-12 sm:w-14',
+      imgScale: 'scale-[1.28] -translate-y-[10%]',
+      text: 'text-sm sm:text-base tracking-[0.22em]',
+      sub: 'text-[8px] tracking-[0.35em]'
     },
     md: {
-      crest:  'h-20 sm:h-24 w-auto aspect-[85/113]',
-      text:   'text-lg sm:text-xl tracking-[0.25em]',
-      sub:    'text-[9px] tracking-[0.4em]',
-      arabic: 'text-base'
+      crestWrap: 'h-16 sm:h-20 w-16 sm:w-20',
+      imgScale: 'scale-[1.28] -translate-y-[10%]',
+      text: 'text-base sm:text-lg tracking-[0.25em]',
+      sub: 'text-[9px] tracking-[0.4em]'
     },
     lg: {
-      crest:  'h-32 sm:h-40 md:h-48 w-auto aspect-[85/113]',
-      text:   'text-2xl sm:text-3xl tracking-[0.28em]',
-      sub:    'text-xs tracking-[0.45em]',
-      arabic: 'text-lg sm:text-xl'
+      crestWrap: 'h-24 sm:h-32 w-24 sm:w-32',
+      imgScale: 'scale-[1.28] -translate-y-[10%]',
+      text: 'text-xl sm:text-2xl tracking-[0.28em]',
+      sub: 'text-xs tracking-[0.45em]'
     },
     hero: {
-      crest:  'h-48 sm:h-64 md:h-72 lg:h-80 xl:h-96 w-auto aspect-[85/113]',
-      text:   'text-3xl sm:text-5xl lg:text-6xl tracking-[0.3em]',
-      sub:    'text-xs sm:text-sm tracking-[0.5em]',
-      arabic: 'text-xl sm:text-2xl'
+      crestWrap: 'h-36 sm:h-48 lg:h-56 w-36 sm:w-48 lg:w-56',
+      imgScale: 'scale-[1.28] -translate-y-[10%]',
+      text: 'text-2xl sm:text-4xl tracking-[0.3em]',
+      sub: 'text-xs sm:text-sm tracking-[0.5em]'
     },
     xl: {
-      crest:  'h-64 sm:h-80 md:h-96 lg:h-[28rem] xl:h-[32rem] w-auto aspect-[85/113]',
-      text:   'text-4xl sm:text-6xl lg:text-7xl tracking-[0.32em]',
-      sub:    'text-sm tracking-[0.52em]',
-      arabic: 'text-2xl sm:text-3xl lg:text-4xl'
+      crestWrap: 'h-48 sm:h-64 w-48 sm:w-64',
+      imgScale: 'scale-[1.28] -translate-y-[10%]',
+      text: 'text-3xl sm:text-5xl tracking-[0.32em]',
+      sub: 'text-sm tracking-[0.52em]'
     }
   };
 
   const s = sizeMap[size] || sizeMap.md;
 
+  // Header specific centered compact variant
+  if (variant === 'header') {
+    return (
+      <div className={`inline-flex items-center gap-2.5 sm:gap-3 group focus:outline-none ${className}`}>
+        <div className={`relative overflow-hidden flex items-center justify-center ${s.crestWrap}`}>
+          <img
+            src={logoSvg}
+            alt="Arabian Sheikh Crest"
+            className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.34] ${s.imgScale}`}
+          />
+        </div>
+        <div className="flex flex-col text-left justify-center">
+          <span className="font-cinzel font-bold text-[#F8F5F0] group-hover:text-[#D4AF37] transition-colors leading-tight text-xs sm:text-sm md:text-base tracking-[0.25em] uppercase">
+            ARABIAN SHEIKH
+          </span>
+          <span className="text-[#D4AF37] font-cinzel text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.35em] leading-tight mt-0.5">
+            {subtitle || 'Andalusia'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   if (variant === 'crest') {
     return (
       <div className={`inline-flex items-center justify-center ${className}`}>
-        <img
-          src={logoSvg}
-          alt="Arabian Sheikh Royal Crest"
-          className={`${s.crest} object-contain filter drop-shadow-[0_0_20px_rgba(180,86,37,0.45)] transition-transform duration-500 hover:scale-105`}
-        />
+        <div className={`relative overflow-hidden flex items-center justify-center ${s.crestWrap}`}>
+          <img
+            src={logoSvg}
+            alt="Arabian Sheikh Royal Crest"
+            className={`w-full h-full object-contain filter drop-shadow-[0_0_18px_rgba(212,175,55,0.45)] transition-transform duration-500 hover:scale-[1.34] ${s.imgScale}`}
+          />
+        </div>
       </div>
     );
   }
@@ -78,23 +101,20 @@ export default function ArabianLogo({
   if (variant === 'horizontal') {
     return (
       <div className={`inline-flex items-center gap-2.5 sm:gap-3 group ${className}`}>
-        <img
-          src={logoSvg}
-          alt="Arabian Sheikh Royal Crest"
-          className={`${s.crest} object-contain flex-shrink-0 filter drop-shadow-[0_0_12px_rgba(180,86,37,0.35)] transition-transform duration-300 group-hover:scale-105`}
-        />
+        <div className={`relative overflow-hidden flex items-center justify-center flex-shrink-0 ${s.crestWrap}`}>
+          <img
+            src={logoSvg}
+            alt="Arabian Sheikh Royal Crest"
+            className={`w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(212,175,55,0.35)] transition-transform duration-300 group-hover:scale-[1.34] ${s.imgScale}`}
+          />
+        </div>
         <div className="flex flex-col text-left justify-center">
-          <span className={`font-cinzel font-bold text-[var(--color-earth-dark)] group-hover:text-[var(--color-terracotta)] transition-colors leading-tight ${s.text}`}>
+          <span className={`font-cinzel font-bold text-[#F8F5F0] group-hover:text-[#D4AF37] transition-colors leading-tight ${s.text}`}>
             ARABIAN SHEIKH
           </span>
-          {showArabic && (
-            <span className={`font-arabic text-[var(--color-terracotta)] font-semibold leading-snug mt-0.5 ${s.arabic}`}>
-              {arabicText}
-            </span>
-          )}
-          {showSubtitle && !showArabic && (
-            <span className={`uppercase font-sans font-bold text-[var(--color-terracotta-deep)] tracking-widest leading-tight mt-0.5 ${s.sub}`}>
-              {subtitle}
+          {showSubtitle && (
+            <span className={`uppercase font-cinzel text-[#D4AF37] font-semibold tracking-widest leading-tight mt-0.5 ${s.sub}`}>
+              {subtitle || 'Haute Parfumerie • Andalusia'}
             </span>
           )}
         </div>
@@ -102,30 +122,26 @@ export default function ArabianLogo({
     );
   }
 
-  // Default 'full' centered layout
+  // Full stacked variant
   return (
-    <div className={`flex flex-col items-center text-center group ${className}`}>
-      <img
-        src={logoSvg}
-        alt="Arabian Sheikh Royal Crest"
-        className={`${s.crest} object-contain mb-4 filter drop-shadow-[0_0_32px_rgba(180,86,37,0.55)] transition-transform duration-500 group-hover:scale-105`}
-      />
-      <span className={`font-cinzel font-bold text-[var(--color-earth-dark)] group-hover:text-[var(--color-terracotta)] transition-colors ${s.text}`}>
-        ARABIAN SHEIKH
-      </span>
-      {showArabic && (
-        <span className={`font-arabic text-[var(--color-terracotta)] font-bold mt-2 leading-snug ${s.arabic}`}>
-          {arabicText}
+    <div className={`inline-flex flex-col items-center justify-center text-center group ${className}`}>
+      <div className={`relative overflow-hidden flex items-center justify-center mb-2 sm:mb-3 ${s.crestWrap}`}>
+        <img
+          src={logoSvg}
+          alt="Arabian Sheikh Royal Identity"
+          className={`w-full h-full object-contain filter drop-shadow-[0_0_24px_rgba(212,175,55,0.4)] transition-transform duration-500 group-hover:scale-[1.34] ${s.imgScale}`}
+        />
+      </div>
+      <div className="flex flex-col items-center">
+        <span className={`font-cinzel font-bold text-[#F8F5F0] group-hover:text-[#D4AF37] transition-colors ${s.text}`}>
+          ARABIAN SHEIKH
         </span>
-      )}
-      {showSubtitle && !showArabic && (
-        <span className={`uppercase font-sans font-bold text-[var(--color-terracotta-deep)] mt-1 tracking-widest ${s.sub}`}>
-          {subtitle}
-        </span>
-      )}
+        {showSubtitle && (
+          <span className={`uppercase font-cinzel font-semibold text-[#D4AF37] tracking-[0.35em] mt-1.5 ${s.sub}`}>
+            {subtitle || 'Haute Parfumerie • Andalusia'}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
-
-
-

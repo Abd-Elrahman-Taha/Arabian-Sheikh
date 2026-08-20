@@ -5,8 +5,8 @@
     "women": "Mujer",
     "unisex": "Unisex",
     "collections": "Colecciones",
-    "theHouse": "La Maison",
-    "about": "Nosotros",
+    "theHouse": "El Palacio",
+    "about": "El Palacio",
     "contact": "Conserjería y Boutiques",
     "search": "Buscar",
     "wishlist": "Deseos",
@@ -21,7 +21,14 @@
     "silkRoadCollection": "Colección Seda Imperial",
     "desertGoldCollection": "Colección Oro del Desierto",
     "pureBakhoor": "Bakhoor Puro e Incienso",
-    "perfumeOils": "Attars y Aceites Concentrados"
+    "perfumeOils": "Attars y Aceites Concentrados",
+    "perfumes": "Perfumes",
+    "oils": "Aceites",
+    "bakhoor": "Bakhoor",
+    "cosmetics": "Cosmética",
+    "bundles": "Colecciones",
+    "discovery": "Buscador de Fragancias",
+    "thePalace": "El Palacio"
   },
   "home": {
     "heroSubtitle": "ALTA PERFUMERÍA ÁRABE",
@@ -359,5 +366,10 @@
     "popularSearches": "Búsquedas Frecuentes",
     "recentSearches": "Búsquedas Recientes",
     "suggestedNotes": "Explorar por Notas"
+  },
+  "tiers": {
+    "luxury": "Gama Lujo (€50)",
+    "royal": "Gama Real (€40)",
+    "classic": "Gama Clásica (€30)"
   }
 }

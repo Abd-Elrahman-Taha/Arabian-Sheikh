@@ -22,6 +22,9 @@ import Shop from './pages/Shop';
 import GenderCategory from './pages/GenderCategory';
 import Collections from './pages/Collections';
 import ProductDetail from './pages/ProductDetail';
+import Discovery from './pages/Discovery';
+import Compare from './pages/Compare';
+import ThePalace from './pages/ThePalace';
 import TheHouse from './pages/TheHouse';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -75,8 +78,6 @@ function MainRouter() {
   const [showIntro, setShowIntro] = useState(true);
 
   const isAdminRoute = currentPath.startsWith('/admin');
-
-  // Customer Account Route matching
   const isAccountRoute = currentPath.startsWith('/account');
 
   // Route Dispatcher
@@ -104,7 +105,7 @@ function MainRouter() {
       );
     }
 
-    // 2. Customer Account Routes (Protected: must be logged in)
+    // 2. Customer Account Routes
     if (isAccountRoute) {
       if (!isAuthenticated) {
         return <Login returnPath={currentPath} />;
@@ -125,20 +126,24 @@ function MainRouter() {
       );
     }
 
-    // 3. Commerce Routes with Strict Authentication Requirement
-    if (currentPath === '/cart' || currentPath === '/checkout') {
-      if (!isAuthenticated) {
-        return <Login returnPath={currentPath} />;
-      }
-      return currentPath === '/cart' ? <CartPage /> : <CheckoutPage />;
+    // 3. Commerce Routes
+    if (currentPath === '/cart') {
+      return <CartPage />;
+    }
+    if (currentPath === '/checkout') {
+      return <CheckoutPage />;
     }
 
-    // 4. Public, Commerce Confirmation, Auth Routes
+    // 4. Public, Discovery, Compare, Product, Auth Routes
     switch (true) {
       case currentPath === '/':
         return <Home />;
       case currentPath.startsWith('/shop'):
         return <Shop />;
+      case currentPath === '/discovery':
+        return <Discovery />;
+      case currentPath === '/compare':
+        return <Compare />;
       case currentPath === '/men':
         return <GenderCategory genderType="men" />;
       case currentPath === '/women':
@@ -149,8 +154,9 @@ function MainRouter() {
         return <Collections />;
       case currentPath.startsWith('/product/'):
         return <ProductDetail />;
+      case currentPath.startsWith('/the-palace'):
       case currentPath.startsWith('/the-house'):
-        return <TheHouse />;
+        return <ThePalace />;
       case currentPath === '/about':
         return <About />;
       case currentPath === '/contact':
@@ -180,15 +186,15 @@ function MainRouter() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen text-[var(--text-primary)] transition-colors duration-400 overflow-x-hidden">
+    <div className="relative flex flex-col min-h-screen text-[#F8F5F0] bg-[#0A0A0B] transition-colors duration-400 overflow-x-hidden">
 
-      {/* Desert Background — scroll-linked color journey (z-[-1] behind everything) */}
+      {/* Desert Background — subtle obsidian/espresso depth */}
       <DesertBackground />
 
-      {/* Global Ambient Stars Layer — fixed z-[15] so stars are visible and shine above backgrounds */}
-      <BackgroundAtmosphere starCount={30} smokeIntensity={0.1} className="fixed inset-0 pointer-events-none z-[15]" />
+      {/* Global Ambient Stars Layer */}
+      <BackgroundAtmosphere starCount={25} smokeIntensity={0.08} className="fixed inset-0 pointer-events-none z-[5]" />
 
-      {/* Standalone Cinematic Bakhoor Smoke Intro (unmounts automatically after intro) */}
+      {/* Standalone Cinematic Intro */}
       {showIntro && !isAdminRoute && (
         <ArabianIntro onComplete={() => setShowIntro(false)} />
       )}
