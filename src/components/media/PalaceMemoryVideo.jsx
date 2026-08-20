@@ -7,23 +7,18 @@ import {
   VolumeX,
   Maximize2,
   Sparkles,
-  Crown,
-  Compass,
-  RotateCcw
+  Crown
 } from 'lucide-react';
 
 export default function PalaceMemoryVideo({
   videoSrc = '/intro.mp4',
-  posterSrc = '/hero_arabian_palace.jpg',
-  title = 'Scent as Living Memory',
-  subtitle = 'The Architecture of Olfactory Nostalgia'
+  posterSrc = '/hero_arabian_palace.jpg'
 }) {
   const { language } = useTranslation();
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [showControls, setShowControls] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -104,25 +99,22 @@ export default function PalaceMemoryVideo({
         
         {/* Editorial Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-[#D4AF37]/30 bg-[#1A120B]/80 backdrop-blur-md text-[11px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#1A120B]/90 backdrop-blur-md text-xs uppercase tracking-[0.28em] text-[#E5C07B] font-cinzel font-bold shadow-md">
+            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>{copy.tag}</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-cinzel font-bold text-[#F8F5F0] tracking-[0.05em] leading-tight">
+          <h2 className="text-3xl sm:text-5xl font-cinzel font-bold text-[#FFFFFF] tracking-[0.04em] leading-tight drop-shadow-md">
             {copy.title}
           </h2>
 
-          <p className="text-xs sm:text-sm text-[#C7B299] font-sans leading-relaxed max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-[#F5ECE3] font-sans font-medium leading-relaxed max-w-2xl mx-auto">
             {copy.definition}
           </p>
         </div>
 
         {/* High-Definition Luxury Video Player Container */}
-        <div
-          className="relative max-w-5xl mx-auto rounded-none border border-[#D4AF37]/30 bg-black shadow-[0_25px_60px_rgba(0,0,0,0.95)] overflow-hidden group"
-          onMouseEnter={() => setShowControls(true)}
-        >
+        <div className="relative max-w-5xl mx-auto rounded-none border border-[#D4AF37]/30 bg-black shadow-[0_25px_60px_rgba(0,0,0,0.95)] overflow-hidden group">
           {/* HTML5 Video */}
           <div className="relative aspect-video w-full overflow-hidden bg-black">
             <video
@@ -141,14 +133,14 @@ export default function PalaceMemoryVideo({
             <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/70 pointer-events-none" />
 
             {/* Provenance Watermark badge */}
-            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-[#1A120B]/80 backdrop-blur-md border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37] font-cinzel">
-              <Crown className="w-3 h-3" />
+            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-[#1A120B]/85 backdrop-blur-md border border-[#D4AF37]/40 text-[11px] uppercase tracking-widest text-[#E5C07B] font-cinzel font-bold">
+              <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span>{copy.provenance}</span>
             </div>
 
-            {/* Sound Wave Indicator (When playing with sound) */}
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-[#1A120B]/80 backdrop-blur-md border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#F8F5F0] font-mono">
-              <span className={`w-2 h-2 rounded-full ${!isMuted ? 'bg-emerald-400 animate-ping' : 'bg-[#8C6D37]'}`} />
+            {/* Sound Wave Indicator */}
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-[#1A120B]/85 backdrop-blur-md border border-[#D4AF37]/40 text-[11px] uppercase tracking-widest text-[#FFFFFF] font-mono font-bold">
+              <span className={`w-2 h-2 rounded-full ${!isMuted ? 'bg-emerald-400 animate-ping' : 'bg-[#D4AF37]'}`} />
               <span>{!isMuted ? 'Live Palace Audio' : 'Audio Muted'}</span>
             </div>
           </div>
@@ -159,11 +151,11 @@ export default function PalaceMemoryVideo({
             {/* Scrubber Progress Bar */}
             <div
               onClick={handleSeek}
-              className="w-full h-1.5 bg-white/10 hover:h-2 rounded-full cursor-pointer transition-all relative overflow-hidden"
+              className="w-full h-1.5 bg-white/15 hover:h-2 rounded-full cursor-pointer transition-all relative overflow-hidden"
               title="Seek Video"
             >
               <div
-                className="h-full bg-gradient-to-r from-[#8C6D37] via-[#D4AF37] to-[#FFF5EB] transition-all duration-150"
+                className="h-full bg-gradient-to-r from-[#8C6D37] via-[#D4AF37] to-[#FFFFFF] transition-all duration-150"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -174,32 +166,32 @@ export default function PalaceMemoryVideo({
                 {/* Play / Pause */}
                 <button
                   onClick={togglePlay}
-                  className="p-2 bg-[#D4AF37] hover:bg-[#E5C07B] text-black rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
+                  className="p-2.5 px-4 bg-[#D4AF37] hover:bg-[#E5C07B] text-black rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
                   aria-label={isPlaying ? 'Pause Video' : 'Play Video'}
                 >
                   {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  <span className="uppercase tracking-wider text-[10px]">{isPlaying ? 'Pause' : 'Play'}</span>
+                  <span className="uppercase tracking-wider text-xs">{isPlaying ? 'Pause' : 'Play'}</span>
                 </button>
 
                 {/* Mute / Unmute */}
                 <button
                   onClick={toggleMute}
-                  className="p-2 bg-white/5 hover:bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="p-2.5 px-4 bg-black/60 hover:bg-white/10 text-[#FFFFFF] border border-[#D4AF37]/40 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
                   aria-label={isMuted ? 'Unmute Audio' : 'Mute Audio'}
                 >
                   {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-                  <span className="uppercase tracking-wider text-[10px]">{isMuted ? 'Unmute Sound' : 'Mute'}</span>
+                  <span className="uppercase tracking-wider text-xs">{isMuted ? 'Unmute Sound' : 'Mute'}</span>
                 </button>
               </div>
 
               {/* Fullscreen & Quality */}
               <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-[10px] font-mono">
+                <span className="px-2.5 py-1 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#E5C07B] text-xs font-mono font-bold">
                   4K Master Cut
                 </span>
                 <button
                   onClick={toggleFullScreen}
-                  className="p-2 bg-white/5 hover:bg-white/10 text-[#F8F5F0] border border-white/10 rounded-xs transition-colors cursor-pointer"
+                  className="p-2 bg-white/10 hover:bg-white/20 text-[#FFFFFF] border border-white/20 rounded-xs transition-colors cursor-pointer"
                   title="Fullscreen"
                 >
                   <Maximize2 className="w-4 h-4" />
@@ -210,28 +202,28 @@ export default function PalaceMemoryVideo({
           </div>
         </div>
 
-        {/* 3 Pillars of Memory */}
+        {/* 3 Pillars of Memory with High Legibility */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto pt-6">
-          <div className="p-6 bg-[#160F0A] border border-[#D4AF37]/15 space-y-2">
-            <span className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-widest">Pillar I</span>
-            <h4 className="font-cinzel text-sm font-bold text-[#F8F5F0]">The Assamese Agarwood Resonance</h4>
-            <p className="text-xs text-[#BFA893] leading-relaxed">
+          <div className="p-6 bg-[#160F0A] border border-[#D4AF37]/25 space-y-2 shadow-lg">
+            <span className="text-xs font-mono text-[#E5C07B] font-bold uppercase tracking-widest">Pillar I</span>
+            <h4 className="font-cinzel text-base font-bold text-[#FFFFFF]">The Assamese Agarwood Resonance</h4>
+            <p className="text-xs sm:text-sm text-[#E8DACB] leading-relaxed font-normal">
               Matured over 18 years in crystal vessels, evoking the nocturnal tranquility of Andalusian palace gardens.
             </p>
           </div>
 
-          <div className="p-6 bg-[#160F0A] border border-[#D4AF37]/15 space-y-2">
-            <span className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-widest">Pillar II</span>
-            <h4 className="font-cinzel text-sm font-bold text-[#F8F5F0]">Fossilized Golden Amber</h4>
-            <p className="text-xs text-[#BFA893] leading-relaxed">
+          <div className="p-6 bg-[#160F0A] border border-[#D4AF37]/25 space-y-2 shadow-lg">
+            <span className="text-xs font-mono text-[#E5C07B] font-bold uppercase tracking-widest">Pillar II</span>
+            <h4 className="font-cinzel text-base font-bold text-[#FFFFFF]">Fossilized Golden Amber</h4>
+            <p className="text-xs sm:text-sm text-[#E8DACB] leading-relaxed font-normal">
               A sacred resin that anchors fleeting moments in eternity, creating an indelible warm olfactory silhouette.
             </p>
           </div>
 
-          <div className="p-6 bg-[#160F0A] border border-[#D4AF37]/15 space-y-2">
-            <span className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-widest">Pillar III</span>
-            <h4 className="font-cinzel text-sm font-bold text-[#F8F5F0]">Damascene Rose & Spiced Saffron</h4>
-            <p className="text-xs text-[#BFA893] leading-relaxed">
+          <div className="p-6 bg-[#160F0A] border border-[#D4AF37]/25 space-y-2 shadow-lg">
+            <span className="text-xs font-mono text-[#E5C07B] font-bold uppercase tracking-widest">Pillar III</span>
+            <h4 className="font-cinzel text-base font-bold text-[#FFFFFF]">Damascene Rose & Spiced Saffron</h4>
+            <p className="text-xs sm:text-sm text-[#E8DACB] leading-relaxed font-normal">
               Hand-harvested petals at dawn, immortalizing royal ceremonies and the regal warmth of the Sultan’s court.
             </p>
           </div>

@@ -66,7 +66,7 @@ export default function HorizontalCollectionShowcase({
     };
   }, [collection.products]);
 
-  // GSAP ScrollTrigger Entrance Animation for this Collection
+  // GSAP ScrollTrigger Entrance Animation
   useEffect(() => {
     const section = sectionRef.current;
     const titleEl = titleRef.current;
@@ -74,39 +74,37 @@ export default function HorizontalCollectionShowcase({
     if (!section || !titleEl || !track) return;
 
     const ctx = gsap.context(() => {
-      // Title reveal
       gsap.fromTo(
         titleEl,
-        { opacity: 0, y: 40 },
+        { opacity: 0, y: 35 },
         {
           opacity: 1,
           y: 0,
-          duration: 1.0,
+          duration: 0.9,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: section,
-            start: 'top 80%',
+            start: 'top 82%',
             toggleActions: 'play none none none'
           }
         }
       );
 
-      // Product cards staggered reveal
       const cards = track.querySelectorAll('.collection-product-card');
       if (cards.length > 0) {
         gsap.fromTo(
           cards,
-          { opacity: 0, x: 50, scale: 0.95 },
+          { opacity: 0, x: 45, scale: 0.96 },
           {
             opacity: 1,
             x: 0,
             scale: 1,
-            duration: 0.9,
-            stagger: 0.12,
+            duration: 0.85,
+            stagger: 0.1,
             ease: 'power3.out',
             scrollTrigger: {
               trigger: section,
-              start: 'top 75%',
+              start: 'top 78%',
               toggleActions: 'play none none none'
             }
           }
@@ -117,7 +115,6 @@ export default function HorizontalCollectionShowcase({
     return () => ctx.revert();
   }, [collection]);
 
-  // Navigation button controls
   const handleScroll = (direction) => {
     if (!trackRef.current) return;
     const cardWidth = 340;
@@ -125,7 +122,6 @@ export default function HorizontalCollectionShowcase({
     trackRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
-  // Drag to scroll handlers
   const handleMouseDown = (e) => {
     if (!trackRef.current) return;
     isDraggingRef.current = true;
@@ -151,7 +147,6 @@ export default function HorizontalCollectionShowcase({
     }
   };
 
-  // Titles / copy by language
   const title = language === 'es' && collection.spanishTitle
     ? collection.spanishTitle
     : language === 'bg' && collection.bulgarianTitle
@@ -169,63 +164,61 @@ export default function HorizontalCollectionShowcase({
   return (
     <section
       ref={sectionRef}
-      className={`relative min-h-[85vh] lg:min-h-[92vh] flex flex-col justify-center py-20 lg:py-28 border-t border-[#D4AF37]/15 overflow-hidden ${
-        isEven ? 'bg-[#0E0B09]/95' : 'bg-[#0A0A0B]/95'
+      className={`relative min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center py-20 lg:py-26 border-t border-[#D4AF37]/20 overflow-hidden ${
+        isEven ? 'bg-[#0E0B09]' : 'bg-[#0A0A0B]'
       }`}
     >
-      {/* Subtle collection ambient background aura */}
+      {/* Ambient background aura */}
       <div
-        className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[140px] pointer-events-none opacity-20"
+        className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[550px] h-[550px] rounded-full blur-[140px] pointer-events-none opacity-20"
         style={{ background: collection.accentColor || '#D4AF37' }}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10 space-y-8">
         
-        {/* Collection Header: Number, Title, Tagline & Scroll Navigation Controls */}
-        <div ref={titleRef} className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-4 border-b border-white/10">
+        {/* Collection Header: High Contrast & Crisp Typography */}
+        <div ref={titleRef} className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-4 border-b border-white/15">
           <div className="space-y-3 max-w-2xl">
             <div className="flex items-center gap-3">
-              <span className="font-mono text-xs text-[#D4AF37] font-bold tracking-widest px-2.5 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30">
+              <span className="font-mono text-xs text-[#E5C07B] font-bold tracking-widest px-3 py-1 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 shadow-sm">
                 COLLECTION {collectionNumber}
               </span>
               {collection.tag && (
-                <span className="font-cinzel text-[11px] uppercase tracking-[0.25em] text-[#C5A059]">
+                <span className="font-cinzel text-xs font-bold uppercase tracking-[0.25em] text-[#E5C07B]">
                   {collection.tag}
                 </span>
               )}
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F8F5F0] tracking-[0.05em] leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#FFFFFF] tracking-[0.04em] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
               {title}
             </h2>
 
-            <p className="text-xs sm:text-sm text-[#C7B299] font-sans leading-relaxed">
+            <p className="text-sm sm:text-base text-[#F5ECE3] font-sans font-medium leading-relaxed">
               {description}
             </p>
           </div>
 
-          {/* Collection Navigation Arrows & Horizontal Progress */}
+          {/* Navigation Controls */}
           <div className="flex items-center gap-4 shrink-0 self-start lg:self-end">
-            {/* Scroll Progress Bar */}
-            <div className="hidden sm:flex flex-col items-end gap-1 text-[10px] font-mono text-[#8C6D37]">
+            <div className="hidden sm:flex flex-col items-end gap-1 text-[11px] font-mono text-[#E5C07B] font-bold">
               <span>EXPLORE HORIZONTALLY</span>
-              <div className="w-28 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="w-32 h-1.5 bg-white/15 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#8C6D37] via-[#D4AF37] to-[#FFF5EB] transition-all duration-200"
+                  className="h-full bg-gradient-to-r from-[#8C6D37] via-[#D4AF37] to-[#FFFFFF] transition-all duration-200"
                   style={{ width: `${Math.max(15, scrollProgress)}%` }}
                 />
               </div>
             </div>
 
-            {/* Left & Right Arrow Buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleScroll('left')}
                 disabled={!canScrollLeft}
                 className={`p-3 rounded-full border transition-all duration-300 ${
                   canScrollLeft
-                    ? 'border-[#D4AF37]/50 bg-black/60 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
-                    : 'border-white/10 bg-black/30 text-neutral-600 opacity-40 cursor-not-allowed'
+                    ? 'border-[#D4AF37] bg-black/80 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
+                    : 'border-white/10 bg-black/40 text-neutral-600 opacity-40 cursor-not-allowed'
                 }`}
                 aria-label="Previous Products in Collection"
               >
@@ -237,8 +230,8 @@ export default function HorizontalCollectionShowcase({
                 disabled={!canScrollRight}
                 className={`p-3 rounded-full border transition-all duration-300 ${
                   canScrollRight
-                    ? 'border-[#D4AF37]/50 bg-black/60 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
-                    : 'border-white/10 bg-black/30 text-neutral-600 opacity-40 cursor-not-allowed'
+                    ? 'border-[#D4AF37] bg-black/80 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
+                    : 'border-white/10 bg-black/40 text-neutral-600 opacity-40 cursor-not-allowed'
                 }`}
                 aria-label="Next Products in Collection"
               >
@@ -248,7 +241,7 @@ export default function HorizontalCollectionShowcase({
           </div>
         </div>
 
-        {/* Horizontal Scrolling Products Track (Touch Swipe + Mouse Drag) */}
+        {/* Horizontal Track (Touch-friendly & Drag-to-scroll) */}
         <div
           ref={trackRef}
           onMouseDown={handleMouseDown}
@@ -256,7 +249,7 @@ export default function HorizontalCollectionShowcase({
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
           className="flex gap-6 sm:gap-8 overflow-x-auto scrollbar-none py-4 px-1 cursor-grab active:cursor-grabbing select-none"
-          style={{ scrollSnapType: 'x mandatory' }}
+          style={{ scrollSnapType: 'x mandatory', touchAction: 'pan-x pan-y' }}
         >
           {collection.products.map((product, pIdx) => {
             const isSaved = isInWishlist(product.id);
@@ -275,23 +268,22 @@ export default function HorizontalCollectionShowcase({
             return (
               <div
                 key={product.id || pIdx}
-                className="collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] bg-[#14100D]/90 border border-[#D4AF37]/20 hover:border-[#D4AF37] p-6 flex flex-col justify-between transition-all duration-500 shadow-2xl hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,0,0,0.9)] group"
+                className="collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] bg-[#16120E] border border-[#D4AF37]/30 hover:border-[#D4AF37] p-6 flex flex-col justify-between transition-all duration-500 shadow-2xl hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)] group"
                 style={{ scrollSnapAlign: 'start' }}
               >
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-4">
                     {product.tier ? (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black">
+                      <span className="px-3 py-1 rounded text-[11px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-sm">
                         {product.tier} Tier
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-cinzel font-bold uppercase tracking-wider bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30">
+                      <span className="px-3 py-1 rounded text-[11px] font-cinzel font-bold uppercase tracking-wider bg-black/60 text-[#E5C07B] border border-[#D4AF37]/40">
                         {product.category || 'Palace Reserve'}
                       </span>
                     )}
 
-                    {/* Wishlist Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -299,63 +291,61 @@ export default function HorizontalCollectionShowcase({
                       }}
                       className={`p-1.5 rounded-full border transition-colors cursor-pointer ${
                         isSaved
-                          ? 'border-red-500/50 bg-red-950/40 text-red-400'
-                          : 'border-white/10 bg-black/40 text-[#8C6D37] hover:text-[#D4AF37]'
+                          ? 'border-red-500 bg-red-950/60 text-red-400'
+                          : 'border-white/20 bg-black/60 text-[#D4AF37] hover:text-white'
                       }`}
                       title="Save to Wishlist"
                     >
-                      <Heart className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                      <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
                     </button>
                   </div>
 
-                  {/* Flacon Visual with soft ambient shadow */}
+                  {/* Flacon Visual */}
                   <div
                     onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                    className="aspect-[4/5] flex items-center justify-center p-4 mb-4 bg-black/50 border border-white/5 relative overflow-hidden cursor-pointer group-hover:border-[#D4AF37]/30 transition-colors"
+                    className="aspect-[4/5] flex items-center justify-center p-4 mb-4 bg-black/60 border border-white/10 relative overflow-hidden cursor-pointer group-hover:border-[#D4AF37]/50 transition-colors"
                   >
                     <img
                       src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
                       alt={product.name}
-                      className="max-h-[88%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.85)] group-hover:scale-108 transition-transform duration-700 pointer-events-none"
+                      className="max-h-[88%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] group-hover:scale-108 transition-transform duration-700 pointer-events-none"
                     />
                   </div>
 
-                  {/* Product Details */}
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3
-                        onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                        className="font-cinzel text-base font-bold text-[#F8F5F0] group-hover:text-[#D4AF37] transition-colors cursor-pointer line-clamp-1"
-                      >
-                        {displayName}
-                      </h3>
-                    </div>
+                  {/* High Contrast Product Info */}
+                  <div className="space-y-2.5">
+                    <h3
+                      onClick={() => navigate(`/product/${product.slug || product.id}`)}
+                      className="font-cinzel text-lg font-bold text-[#FFFFFF] group-hover:text-[#E5C07B] transition-colors cursor-pointer line-clamp-1 drop-shadow-sm"
+                    >
+                      {displayName}
+                    </h3>
 
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#8C6D37] font-mono text-[11px]">
+                      <span className="text-[#E8DACB] font-mono text-xs font-semibold">
                         {product.size || '60 ml'} • {product.fragranceFamily || 'Oriental'}
                       </span>
-                      <span className="font-cinzel font-bold text-[#D4AF37] text-base">
+                      <span className="font-cinzel font-bold text-[#E5C07B] text-lg">
                         €{product.price}
                       </span>
                     </div>
 
                     {/* Scent Notes Highlights */}
-                    <div className="py-2 px-3 bg-black/40 border border-white/5 text-[10px] text-[#C7B299] space-y-0.5">
-                      <div className="flex justify-between">
-                        <span className="text-[#8C6D37]">Notes:</span>
-                        <span className="text-right truncate ml-2">{topNote} • {heartNote}</span>
+                    <div className="py-2 px-3 bg-black/60 border border-white/10 text-xs text-[#F5ECE3] space-y-0.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#E5C07B] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
+                        <span className="text-right truncate ml-2 text-[11px] font-medium text-[#F8F5F0]">{topNote} • {heartNote}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Actions: Quick Add + Discover Details */}
-                <div className="grid grid-cols-2 gap-2 pt-4 mt-4 border-t border-white/10">
+                {/* Card Actions */}
+                <div className="grid grid-cols-2 gap-2.5 pt-4 mt-4 border-t border-white/15">
                   <button
                     onClick={() => addToCart(product, product.size || '60 ml', 1)}
                     disabled={isOutOfStock}
-                    className="py-2.5 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-md"
+                    className="py-3 bg-[#D4AF37] hover:bg-[#E5C07B] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-lg"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
                     <span>{isOutOfStock ? 'Sold Out' : 'Add to Bag'}</span>
@@ -363,10 +353,10 @@ export default function HorizontalCollectionShowcase({
 
                   <Link
                     to={`/product/${product.slug || product.id}`}
-                    className="py-2.5 bg-white/5 hover:bg-white/10 border border-[#D4AF37]/30 text-[#F8F5F0] hover:text-[#D4AF37] font-cinzel text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-1 text-center"
+                    className="py-3 bg-black/60 hover:bg-white/10 border border-[#D4AF37]/50 text-[#FFFFFF] hover:text-[#E5C07B] font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1 text-center"
                   >
                     <span>Discover</span>
-                    <ArrowRight className="w-3 h-3" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
 

@@ -98,7 +98,6 @@ export default function Hero3DFlaconScene({
     texturesRef.current = textures;
 
     // 6. Bottle Plane Mesh (Floating Flacon with realistic aspect ratio)
-    // The flacons are approximately 1:1.75 aspect ratio
     const bottleGeometry = new THREE.PlaneGeometry(2.4, 4.2);
     const bottleMaterial = new THREE.MeshStandardMaterial({
       map: textures[activeProductIndex] || textures[0],
@@ -112,7 +111,7 @@ export default function Hero3DFlaconScene({
     scene.add(bottleMesh);
     bottleMeshRef.current = bottleMesh;
 
-    // 7. Ambient Ground Shadow (Radial Gaussian gradient shadow beneath the bottle)
+    // 7. Ambient Ground Shadow
     const shadowCanvas = document.createElement('canvas');
     shadowCanvas.width = 256;
     shadowCanvas.height = 256;
@@ -139,11 +138,10 @@ export default function Hero3DFlaconScene({
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
-    // 8. Mouse Tilt & Parallax
+    // 8. Mouse Tilt & Parallax (Desktop Only)
     let targetRotX = 0;
     let targetRotY = 0;
     let targetLightX = 0;
-    let isHovering = false;
 
     const handleMouseMove = (e) => {
       const rect = container.getBoundingClientRect();
@@ -154,17 +152,14 @@ export default function Hero3DFlaconScene({
       targetLightX = x * 2.5;
     };
 
-    const handleMouseEnter = () => { isHovering = true; };
     const handleMouseLeave = () => {
-      isHovering = false;
       targetRotX = 0;
       targetRotY = 0;
       targetLightX = 0;
     };
 
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('mouseenter', handleMouseEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
+    container.addEventListener('mousemove', handleMouseMove, { passive: true });
+    container.addEventListener('mouseleave', handleMouseLeave, { passive: true });
 
     // 9. Render & Floating Animation Loop
     let animationFrameId;
@@ -178,7 +173,6 @@ export default function Hero3DFlaconScene({
       const floatY = Math.sin(elapsedTime * 1.5) * 0.08;
       if (bottleMeshRef.current) {
         bottleMeshRef.current.position.y = 0.1 + floatY;
-        // Smooth rotation damping
         bottleMeshRef.current.rotation.y += (targetRotY - bottleMeshRef.current.rotation.y) * 0.08;
         bottleMeshRef.current.rotation.x += (targetRotX - bottleMeshRef.current.rotation.x) * 0.08;
       }
@@ -220,13 +214,12 @@ export default function Hero3DFlaconScene({
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseenter', handleMouseEnter);
       container.removeEventListener('mouseleave', handleMouseLeave);
       renderer.dispose();
     };
   }, []);
 
-  // Handle active slide / tier change with smooth GSAP transition
+  // Handle active slide change
   useEffect(() => {
     if (!bottleMeshRef.current || !texturesRef.current[activeProductIndex]) return;
 
@@ -248,7 +241,6 @@ export default function Hero3DFlaconScene({
       }
     });
 
-    // Slight punch scale on change
     gsap.fromTo(
       mesh.scale,
       { x: 0.94, y: 0.94, z: 0.94 },
@@ -259,13 +251,12 @@ export default function Hero3DFlaconScene({
   // Fallback for non-WebGL devices
   if (!webglSupported) {
     return (
-      <div className="relative w-full h-[520px] sm:h-[620px] flex items-center justify-center">
+      <div className="relative w-full h-[460px] sm:h-[620px] flex items-center justify-center pointer-events-none">
         <img
           src={flaconImages[activeProductIndex] || flaconImages[0]}
           alt="Arabian Sheikh Flacon"
-          className="max-h-[85%] w-auto object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.85)] animate-fade-in transition-all duration-500"
+          className="max-h-[85%] w-auto object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.85)] animate-fade-in transition-all duration-500 pointer-events-none"
         />
-        {/* Ambient shadow fallback */}
         <div className="absolute bottom-6 w-56 h-6 bg-black/60 rounded-full blur-xl pointer-events-none" />
       </div>
     );
@@ -274,13 +265,18 @@ export default function Hero3DFlaconScene({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[520px] sm:h-[620px] lg:h-[680px] flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
-      title="Hover & drag to interact with the 3D flacon"
+      className="relative w-full h-[460px] sm:h-[620px] lg:h-[680px] flex items-center justify-center select-none pointer-events-none sm:pointer-events-auto"
+      style={{ touchAction: 'pan-y' }}
+      title="3D Floating Flacon"
     >
-      <canvas ref={canvasRef} className="w-full h-full block touch-none" />
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full block pointer-events-none sm:pointer-events-auto"
+        style={{ touchAction: 'pan-y' }}
+      />
 
-      {/* Subtle Specular Ambient Gold Glow Behind the Flacon */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] bg-[radial-gradient(ellipse_at_center,_rgba(212,175,55,0.18)_0%,_rgba(140,109,55,0.06)_45%,_transparent_70%)] blur-3xl pointer-events-none -z-10" />
+      {/* Ambient Gold Glow Behind Flacon */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] bg-[radial-gradient(ellipse_at_center,_rgba(212,175,55,0.22)_0%,_rgba(140,109,55,0.08)_45%,_transparent_70%)] blur-3xl pointer-events-none -z-10" />
     </div>
   );
 }
