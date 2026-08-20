@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import BlurText from '../common/BlurText';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -190,9 +191,14 @@ export default function HorizontalCollectionShowcase({
               )}
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-              {title}
-            </h2>
+            <BlurText
+              text={title}
+              delay={70}
+              animateBy="words"
+              direction="top"
+              className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+              as="h2"
+            />
 
             <p className="text-sm sm:text-base text-[#F3E6D0] font-sans font-medium leading-relaxed">
               {description}

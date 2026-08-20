@@ -15,6 +15,8 @@ import {
   Crown
 } from 'lucide-react';
 
+import BlurText from '../components/common/BlurText';
+
 export default function Shop() {
   const { queryParams, navigate } = useRouter();
   const { t, language, isRtl } = useTranslation();
@@ -231,9 +233,14 @@ export default function Shop() {
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
             The Master Catalogue
           </span>
-          <h1 className="text-3xl sm:text-5xl font-cinzel font-bold text-[#F3E6D0]">
-            {category !== 'all' ? category.toUpperCase() : 'ALL CREATIONS'}
-          </h1>
+          <BlurText
+            text={category !== 'all' ? category.toUpperCase() : 'ALL CREATIONS'}
+            delay={70}
+            animateBy="words"
+            direction="top"
+            className="text-3xl sm:text-5xl font-cinzel font-bold text-[#F3E6D0] justify-center"
+            as="h1"
+          />
           <p className="text-xs sm:text-sm text-[#D8BE99]">
             Prestige perfumes in fixed 60 ml flacons (€30 Classic, €40 Royal, €50 Luxury), concentrated oils, and royal incense.
           </p>

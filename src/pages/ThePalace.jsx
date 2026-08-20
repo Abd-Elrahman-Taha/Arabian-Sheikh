@@ -3,6 +3,7 @@ import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
 import ArabianLogo from '../components/common/ArabianLogo';
+import BlurText from '../components/common/BlurText';
 import {
   Crown,
   Trees,
@@ -42,9 +43,14 @@ export default function ThePalace() {
             </span>
           </div>
 
-          <h1 className="font-cinzel text-4xl sm:text-6xl font-bold tracking-[0.1em] text-[#F3E6D0] uppercase leading-tight">
-            {language === 'es' ? 'El Palacio' : 'The Palace'}
-          </h1>
+          <BlurText
+            text={language === 'es' ? 'El Palacio' : 'The Palace'}
+            delay={70}
+            animateBy="words"
+            direction="top"
+            className="font-cinzel text-4xl sm:text-6xl font-bold tracking-[0.1em] text-[#F3E6D0] uppercase leading-tight justify-center"
+            as="h1"
+          />
 
           <p className="italic text-xl sm:text-2xl text-[#D4AF37] max-w-2xl mx-auto font-serif">
             "{language === 'es' ? 'Donde el tiempo se convierte en aroma y la memoria en eternidad.' : 'Where time dissolves into fragrance and memory into eternity.'}"

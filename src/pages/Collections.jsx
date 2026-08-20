@@ -6,6 +6,7 @@ import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 import CamelCaravan from '../components/motion/CamelCaravan';
+import BlurText from '../components/common/BlurText';
 import { Crown, Feather, Sun, ArrowRight } from 'lucide-react';
 
 export default function Collections() {
@@ -77,9 +78,14 @@ export default function Collections() {
           <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--color-terracotta)] font-bold">
             Curated Private Reserves
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--color-earth-dark)] uppercase tracking-wider">
-            {t('nav.collections')}
-          </h1>
+          <BlurText
+            text={t('nav.collections') || 'THE ROYAL COLLECTIONS'}
+            delay={70}
+            animateBy="words"
+            direction="top"
+            className="font-cinzel text-3xl sm:text-5xl font-bold text-[#F3E6D0] uppercase tracking-wider justify-center"
+            as="h1"
+          />
           <p className="text-xs sm:text-sm text-[var(--color-terracotta-deep)] max-w-2xl mx-auto font-medium">
             Explore the three sovereign collections distilled by our master perfumers in limited batches.
           </p>

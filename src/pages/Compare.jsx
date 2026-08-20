@@ -3,6 +3,7 @@ import { Link } from '../router/RouterContext';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ChevronRight, Check } from 'lucide-react';
+import BlurText from '../components/common/BlurText';
 
 export default function Compare() {
   const { addToCart } = useCart();
@@ -30,9 +31,14 @@ export default function Compare() {
           <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel">
             Analytical Flacon Matrix
           </span>
-          <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0]">
-            The Three Flacons Comparison
-          </h1>
+          <BlurText
+            text="The Three Flacons Comparison"
+            delay={70}
+            animateBy="words"
+            direction="top"
+            className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] justify-center"
+            as="h1"
+          />
           <p className="text-xs sm:text-sm text-[#D8BE99]">
             Analyze notes, longevity, sillage, and pricing side-by-side.
           </p>

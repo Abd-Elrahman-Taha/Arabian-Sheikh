@@ -11,6 +11,7 @@ import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
 import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
 import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
+import BlurText from '../components/common/BlurText';
 import {
   Sparkles,
   ArrowRight,
@@ -295,9 +296,15 @@ export default function Home() {
                 <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold drop-shadow-md">
                   HAUTE PARFUMERIE • ANDALUSIA
                 </p>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-lg">
-                  {getDisplayName(currentHeroFlacon)}
-                </h1>
+                <BlurText
+                  key={currentHeroFlacon.id}
+                  text={getDisplayName(currentHeroFlacon)}
+                  delay={70}
+                  animateBy="words"
+                  direction="top"
+                  className="text-4xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-lg justify-center lg:justify-start"
+                  as="h1"
+                />
                 <p className="text-sm sm:text-base text-[#F3E6D0] font-sans font-medium tracking-wide max-w-xl mx-auto lg:mx-0">
                   {getTagline(currentHeroFlacon)}
                 </p>
@@ -413,9 +420,14 @@ export default function Home() {
                   <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] mb-2 shadow-sm">
                     <Compass className="w-6 h-6" />
                   </div>
-                  <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
-                    Fragrance Finder
-                  </h2>
+                  <BlurText
+                    text="Fragrance Finder"
+                    delay={70}
+                    animateBy="words"
+                    direction="top"
+                    className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md justify-center"
+                    as="h2"
+                  />
                   <p className="text-sm text-[#F3E6D0] font-medium max-w-lg mx-auto">
                     Select your olfactory preferences to match your signature creation.
                   </p>
@@ -518,9 +530,14 @@ export default function Home() {
                 <span className="text-xs uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold">
                   Side-by-Side
                 </span>
-                <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
-                  The Three Flacons
-                </h2>
+                <BlurText
+                  text="The Three Flacons"
+                  delay={70}
+                  animateBy="words"
+                  direction="top"
+                  className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md justify-center"
+                  as="h2"
+                />
               </div>
 
               <div className="overflow-x-auto">

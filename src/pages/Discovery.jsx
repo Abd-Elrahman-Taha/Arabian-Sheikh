@@ -4,6 +4,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { Sparkles, ArrowRight, RotateCcw, Check, ShoppingBag, Crown, Compass } from 'lucide-react';
+import BlurText from '../components/common/BlurText';
 
 export default function Discovery() {
   const { navigate } = useRouter();
@@ -120,9 +121,14 @@ export default function Discovery() {
           <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] mb-2">
             <Compass className="w-6 h-6" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0]">
-            The Olfactory Discovery Journey
-          </h1>
+          <BlurText
+            text="The Olfactory Discovery Journey"
+            delay={70}
+            animateBy="words"
+            direction="top"
+            className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] justify-center"
+            as="h1"
+          />
           <p className="text-xs sm:text-sm text-[#D8BE99]">
             Answer four curated questions to reveal your perfect Andalusian signature flacon.
           </p>

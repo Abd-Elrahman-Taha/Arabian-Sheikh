@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import ProductCard from '../components/common/ProductCard';
+import BlurText from '../components/common/BlurText';
 import {
   Heart,
   ShoppingBag,
@@ -247,9 +248,15 @@ export default function ProductDetail() {
               </div>
 
               {/* Main Title */}
-              <h1 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] leading-tight mb-2">
-                {displayName}
-              </h1>
+              <BlurText
+                key={displayName}
+                text={displayName}
+                delay={70}
+                animateBy="words"
+                direction="top"
+                className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] leading-tight mb-2"
+                as="h1"
+              />
 
               {/* Tagline */}
               <p className="text-sm text-[#D4AF37] font-serif italic mb-4">
