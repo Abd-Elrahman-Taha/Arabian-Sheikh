@@ -61,36 +61,36 @@ export default function GenderCategory({ genderType }) {
   }, [currentGender]);
 
   return (
-    <div className="space-y-16 pb-20 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-16 pb-20 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Editorial Category Hero */}
       <ScrollReveal direction="up">
-        <section className="relative min-h-[50vh] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden pt-36 sm:pt-44 pb-12">
+        <section className="relative min-h-[50vh] flex items-center justify-center bg-[var(--color-desert-primary)]/20 overflow-hidden pt-36 sm:pt-44 pb-12">
           <div className="absolute inset-0 z-0">
             <img
               src={meta.image}
               alt={meta.title}
               className="w-full h-full object-cover object-center opacity-30 scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/70 to-[var(--bg-primary)]/90" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-desert-primary)] via-[var(--color-desert-primary)]/70 to-[var(--color-desert-primary)]/90" />
           </div>
 
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--border-gold-subtle)] bg-[var(--bg-card)]/80 backdrop-blur-md shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
-              <span className="font-cinzel text-xs uppercase tracking-[0.25em] text-[var(--gold-primary)] font-semibold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--color-terracotta)]/40 bg-[var(--color-desert-light)]/80 backdrop-blur-md shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
+              <span className="font-cinzel text-xs uppercase tracking-[0.25em] text-[var(--color-terracotta)] font-bold">
                 {meta.subtitle}
               </span>
             </div>
 
-            <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+            <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--color-earth-dark)] uppercase tracking-wider">
               {meta.title}
             </h1>
 
-            <p className="font-arabic text-lg text-[var(--gold-light)]">
+            <p className="font-arabic text-lg text-[var(--color-terracotta)] font-bold">
               {meta.arabic}
             </p>
 
-            <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-[var(--color-terracotta-deep)] max-w-xl mx-auto leading-relaxed font-medium">
               {meta.desc}
             </p>
           </div>
@@ -100,9 +100,9 @@ export default function GenderCategory({ genderType }) {
       {/* Products Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal direction="up">
-          <div className="border-b border-[var(--border-subtle)] pb-4 mb-8 flex justify-between items-center text-xs text-[var(--text-muted)]">
+          <div className="border-b border-[var(--color-terracotta-deep)]/20 pb-4 mb-8 flex justify-between items-center text-xs text-[var(--color-terracotta-deep)] font-medium">
             <span>Displaying {products.length} exclusive formulations</span>
-            <span className="font-cinzel uppercase text-[var(--gold-primary)] font-semibold">Pure Extrait de Parfum</span>
+            <span className="font-cinzel uppercase text-[var(--color-terracotta)] font-bold">Pure Extrait de Parfum</span>
           </div>
         </ScrollReveal>
 

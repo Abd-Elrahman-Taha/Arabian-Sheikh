@@ -43,9 +43,9 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-8 animate-fade-in text-[var(--color-earth-dark)]">
       <ScrollReveal direction="up">
-        <h2 className="font-cinzel text-xl font-bold uppercase border-b border-[var(--border-subtle)] pb-3">
+        <h2 className="font-cinzel text-xl font-bold uppercase border-b border-[var(--color-terracotta-deep)]/20 pb-3 text-[var(--color-earth-dark)]">
           {t('account.settings')}
         </h2>
       </ScrollReveal>
@@ -53,13 +53,13 @@ export default function AccountSettings() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Profile Settings */}
         <ScrollReveal direction="up" delay={0.1}>
-        <form onSubmit={handleSaveProfile} className="p-6 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-4 shadow-sm h-full">
-          <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--gold-primary)] tracking-wider border-b border-[var(--border-subtle)] pb-2">
+        <form onSubmit={handleSaveProfile} className="p-6 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-sm h-full">
+          <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--color-terracotta)] tracking-wider border-b border-[var(--color-terracotta-deep)]/20 pb-2">
             Patron Profile Information
           </h3>
 
           <div>
-            <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
+            <label className="block text-xs uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
               Full Distinguished Name
             </label>
             <input
@@ -67,12 +67,12 @@ export default function AccountSettings() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-2.5 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+              className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-2.5 text-xs text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
+            <label className="block text-xs uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
               Email Address
             </label>
             <input
@@ -80,30 +80,30 @@ export default function AccountSettings() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-2.5 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+              className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-2.5 text-xs text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
+            <label className="block text-xs uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
               Phone Number
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-2.5 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+              className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-2.5 text-xs text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
+            <label className="block text-xs uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
               Preferred Palace Language
             </label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-2.5 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none cursor-pointer"
+              className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-2.5 text-xs text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none cursor-pointer font-medium"
             >
               {availableLanguages.map((l) => (
                 <option key={l.code} value={l.code}>
@@ -128,17 +128,17 @@ export default function AccountSettings() {
         <ScrollReveal direction="up" delay={0.2}>
         <div className="space-y-6">
           {/* Theme Mode Toggle in Settings */}
-          <div className="p-6 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-4 shadow-sm">
-            <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--gold-primary)] tracking-wider border-b border-[var(--border-subtle)] pb-2 flex items-center gap-2">
+          <div className="p-6 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-sm">
+            <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--color-terracotta)] tracking-wider border-b border-[var(--color-terracotta-deep)]/20 pb-2 flex items-center gap-2">
               <SunMoon className="w-4 h-4" />
               <span>Theme Appearance</span>
             </h3>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-cinzel text-xs font-semibold text-[var(--text-primary)]">
+                <p className="font-cinzel text-xs font-bold text-[var(--color-earth-dark)]">
                   Ambience Atmosphere
                 </p>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
                   Choose between Warm Sunlit Salon (Light) and Deep Arabian Palace (Dark)
                 </p>
               </div>
@@ -147,13 +147,13 @@ export default function AccountSettings() {
           </div>
 
           {/* Password Form */}
-          <form onSubmit={handlePasswordChange} className="p-6 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-4 shadow-sm">
-            <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--gold-primary)] tracking-wider border-b border-[var(--border-subtle)] pb-2">
+          <form onSubmit={handlePasswordChange} className="p-6 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-sm">
+            <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--color-terracotta)] tracking-wider border-b border-[var(--color-terracotta-deep)]/20 pb-2">
               Security & Access Credentials
             </h3>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
+              <label className="block text-xs uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
                 Current Password
               </label>
               <input
@@ -161,12 +161,12 @@ export default function AccountSettings() {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-2.5 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-2.5 text-xs text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
+              <label className="block text-xs uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
                 New Password
               </label>
               <input
@@ -174,12 +174,12 @@ export default function AccountSettings() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-2.5 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-2.5 text-xs text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
               />
             </div>
 
-            <div className="p-3 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[var(--gold-primary)] shrink-0" />
+            <div className="p-3 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/20 text-[11px] text-[var(--color-terracotta-deep)] flex items-center gap-2 font-medium">
+              <ShieldCheck className="w-4 h-4 text-[var(--color-terracotta)] shrink-0" />
               <span>Your credentials are encrypted with 256-bit AES algorithms.</span>
             </div>
 

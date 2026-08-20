@@ -31,30 +31,30 @@ export function ToastProvider({ children }) {
             key={toast.id}
             className={`pointer-events-auto flex items-start gap-3 p-4 border shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in ${
               toast.type === 'error'
-                ? 'bg-[var(--bg-card)] border-rose-500/50 text-[var(--text-primary)]'
+                ? 'bg-[var(--color-desert-light)] border-rose-500/50 text-[var(--color-earth-dark)]'
                 : toast.type === 'info'
-                ? 'bg-[var(--bg-card)] border-[var(--gold-primary)]/50 text-[var(--text-primary)]'
-                : 'bg-[var(--bg-card)] border-[var(--gold-primary)] text-[var(--text-primary)]'
+                ? 'bg-[var(--color-desert-light)] border-[var(--color-terracotta)]/50 text-[var(--color-earth-dark)]'
+                : 'bg-[var(--color-desert-light)] border-[var(--color-terracotta)] text-[var(--color-earth-dark)]'
             }`}
             style={{
-              boxShadow: 'var(--shadow-luxury), var(--shadow-gold)'
+              boxShadow: '0 20px 40px -15px rgba(93, 29, 1, 0.3), 0 0 25px rgba(180, 86, 37, 0.2)'
             }}
           >
             <div className="mt-0.5 shrink-0">
               {toast.type === 'error' ? (
-                <AlertCircle className="w-5 h-5 text-rose-400" />
+                <AlertCircle className="w-5 h-5 text-rose-500" />
               ) : toast.type === 'info' ? (
-                <Info className="w-5 h-5 text-[var(--gold-primary)]" />
+                <Info className="w-5 h-5 text-[var(--color-terracotta)]" />
               ) : (
-                <CheckCircle2 className="w-5 h-5 text-[var(--gold-primary)]" />
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-terracotta)]" />
               )}
             </div>
-            <div className="flex-1 text-xs sm:text-sm font-sans tracking-wide leading-relaxed">
+            <div className="flex-1 text-xs sm:text-sm font-sans tracking-wide leading-relaxed font-bold">
               {toast.message}
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors p-0.5 cursor-pointer"
+              className="text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-colors p-0.5 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

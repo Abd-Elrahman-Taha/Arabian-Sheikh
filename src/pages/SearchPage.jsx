@@ -36,13 +36,13 @@ export default function SearchPage() {
   }, [query]);
 
   return (
-    <div className="pt-36 sm:pt-40 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--color-earth-dark)]">
       <ScrollReveal direction="up">
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--color-terracotta)] font-bold">
             Olfactory Inquiries
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--text-primary)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--color-earth-dark)] uppercase tracking-wider">
             {t('nav.search')}
           </h1>
         </div>
@@ -56,13 +56,13 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('common.searchPlaceholder')}
-          className="w-full bg-[var(--bg-card)] border-2 border-[var(--gold-primary)]/40 focus:border-[var(--gold-primary)] py-4 pl-12 pr-10 text-base sm:text-lg font-cinzel text-[var(--text-primary)] placeholder-[var(--text-muted)]/60 focus:outline-none shadow-2xl"
+          className="w-full bg-[var(--color-desert-light)] border-2 border-[var(--color-terracotta)]/40 focus:border-[var(--color-terracotta)] py-4 pl-12 pr-10 text-base sm:text-lg font-cinzel text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/60 focus:outline-none shadow-xl"
         />
-        <Search className="w-6 h-6 text-[var(--gold-primary)] absolute left-4 top-1/2 -translate-y-1/2" />
+        <Search className="w-6 h-6 text-[var(--color-terracotta)] absolute left-4 top-1/2 -translate-y-1/2" />
         {query && (
           <button
             onClick={() => setQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -71,7 +71,7 @@ export default function SearchPage() {
       </ScrollReveal>
 
       {/* Results Header */}
-      <div className="border-b border-[var(--border-subtle)] pb-3 flex justify-between items-center text-xs text-[var(--text-muted)]">
+      <div className="border-b border-[var(--color-terracotta-deep)]/20 pb-3 flex justify-between items-center text-xs text-[var(--color-terracotta-deep)] font-medium">
         <span>
           {loading ? 'Searching royal archives...' : `Found ${results.length} fragrances`}
         </span>
@@ -85,12 +85,12 @@ export default function SearchPage() {
           ))}
         </div>
       ) : results.length === 0 ? (
-        <div className="text-center py-16 bg-[var(--bg-card)] border border-[var(--border-card)] p-8 space-y-3 shadow-sm">
-          <Sparkles className="w-8 h-8 text-[var(--gold-primary)] mx-auto opacity-50" />
-          <h3 className="font-cinzel text-lg font-bold text-[var(--text-primary)]">
+        <div className="text-center py-16 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-8 space-y-3 shadow-sm">
+          <Sparkles className="w-8 h-8 text-[var(--color-terracotta)] mx-auto opacity-50" />
+          <h3 className="font-cinzel text-lg font-bold text-[var(--color-earth-dark)]">
             {t('shop.noProductsFound')}
           </h3>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
             Try searching for "Oud", "Amber", "Bakhoor", "Rose", "Bergamot", or "Pomegranate".
           </p>
         </div>

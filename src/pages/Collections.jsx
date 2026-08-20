@@ -70,17 +70,17 @@ export default function Collections() {
   }, [activeCollection]);
 
   return (
-    <div className="pt-36 sm:pt-40 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] font-bold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--color-terracotta)] font-bold">
             Curated Private Reserves
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--color-earth-dark)] uppercase tracking-wider">
             {t('nav.collections')}
           </h1>
-          <p className="text-xs sm:text-sm text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)] max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm text-[var(--color-terracotta-deep)] max-w-2xl mx-auto font-medium">
             Explore the three sovereign collections distilled by our master perfumers in limited batches.
           </p>
         </div>
@@ -102,30 +102,30 @@ export default function Collections() {
                 onClick={() => setActiveCollection(isActive ? 'all' : c.id)}
                 className={`cursor-pointer p-6 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                   isActive
-                    ? 'border-[var(--gold-primary)] bg-[var(--bg-card)] shadow-2xl scale-[1.02]'
-                    : 'border-[var(--border-card)] bg-[var(--bg-card)] hover:border-[var(--gold-primary)]'
+                    ? 'border-[var(--color-terracotta)] bg-[var(--color-desert-light)] shadow-xl scale-[1.02] ring-1 ring-[var(--color-terracotta)]/40'
+                    : 'border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-light)] hover:border-[var(--color-terracotta)]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-none border border-[var(--border-gold-subtle)] flex items-center justify-center text-[var(--gold-primary)] bg-[var(--bg-primary)]">
+                    <div className="w-8 h-8 rounded-none border border-[var(--color-terracotta)]/40 flex items-center justify-center text-[var(--color-terracotta)] bg-[var(--color-desert-primary)]/40">
                       <Icon className="w-4 h-4" />
                     </div>
-                    <span className="font-arabic text-xs text-[var(--gold-light)] font-bold">{c.arabic}</span>
+                    <span className="font-arabic text-xs text-[var(--color-terracotta)] font-bold">{c.arabic}</span>
                   </div>
-                  <h3 className="font-cinzel text-base font-bold text-[var(--text-primary)] mb-1">
+                  <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)] mb-1">
                     {c.name}
                   </h3>
-                  <p className="text-xs text-[var(--text-muted)] font-sans leading-relaxed line-clamp-2">
+                  <p className="text-xs text-[var(--color-terracotta-deep)] font-sans leading-relaxed line-clamp-2 font-medium">
                     {c.desc}
                   </p>
                 </div>
 
-                <div className="pt-4 mt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
-                  <span className="font-cinzel uppercase text-[var(--gold-primary)] font-semibold">
+                <div className="pt-4 mt-3 border-t border-[var(--color-terracotta-deep)]/20 flex items-center justify-between text-xs">
+                  <span className="font-cinzel uppercase text-[var(--color-terracotta)] font-bold">
                     {isActive ? 'Showing Collection' : 'Select Collection'}
                   </span>
-                  <ArrowRight className={`w-3.5 h-3.5 text-[var(--gold-primary)] ${isActive ? 'rotate-90' : ''} transition-transform`} />
+                  <ArrowRight className={`w-3.5 h-3.5 text-[var(--color-terracotta)] ${isActive ? 'rotate-90' : ''} transition-transform`} />
                 </div>
               </div>
             </ScrollRevealItem>
@@ -136,17 +136,17 @@ export default function Collections() {
       {/* Products Grid */}
       <div className="space-y-6">
         <ScrollReveal direction="up" delay={0.2}>
-          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 text-xs text-[var(--text-muted)]">
+          <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-3 text-xs text-[var(--color-terracotta-deep)] font-medium">
             <span>
               Showing {products.length} masterpieces in{' '}
-              <strong className="text-[var(--text-primary)] font-cinzel">
+              <strong className="text-[var(--color-earth-dark)] font-cinzel">
                 {activeCollection === 'all' ? 'All Collections' : activeCollection}
               </strong>
             </span>
             {activeCollection !== 'all' && (
               <button
                 onClick={() => setActiveCollection('all')}
-                className="text-[var(--gold-primary)] hover:underline cursor-pointer font-cinzel"
+                className="text-[var(--color-terracotta)] hover:underline cursor-pointer font-cinzel font-bold"
               >
                 Show All Collections
               </button>

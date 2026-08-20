@@ -119,14 +119,14 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="pt-28 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-28 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-primary)] font-semibold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--color-terracotta)] font-bold">
             Secure Royal Checkout
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--text-primary)]">
+          <h1 className="font-cinzel text-3xl sm:text-4xl font-bold uppercase text-[var(--color-earth-dark)]">
             {t('checkout.title')}
           </h1>
         </div>
@@ -146,10 +146,10 @@ export default function CheckoutPage() {
               onClick={() => s.num < step && setStep(s.num)}
               className={`py-3 border-b-2 transition-all cursor-pointer ${
                 step === s.num
-                  ? 'border-[var(--gold-primary)] text-[var(--gold-primary)] font-bold bg-[var(--bg-secondary)]'
+                  ? 'border-[var(--color-terracotta)] text-[var(--color-terracotta)] font-bold bg-[var(--color-desert-light)]'
                   : step > s.num
-                  ? 'border-[var(--gold-primary)]/50 text-[var(--gold-light)]'
-                  : 'border-[var(--border-subtle)] text-[var(--text-muted)]'
+                  ? 'border-[var(--color-terracotta)]/50 text-[var(--color-terracotta-deep)]'
+                  : 'border-[var(--color-terracotta-deep)]/20 text-[var(--color-terracotta-deep)]/60'
               }`}
             >
               <span className="block text-sm font-bold">{s.num}</span>
@@ -162,17 +162,17 @@ export default function CheckoutPage() {
       {/* Main Grid: Form Steps + Order Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Step Form (7 cols) */}
-        <ScrollReveal direction="left" delay={0.2} className="lg:col-span-7 bg-[var(--bg-card)] border border-[var(--border-card)] p-6 sm:p-8 shadow-2xl space-y-6">
+        <ScrollReveal direction="left" delay={0.2} className="lg:col-span-7 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-6 sm:p-8 shadow-xl space-y-6">
           {/* STEP 1: INFORMATION */}
           {step === 1 && (
             <form onSubmit={handleNextStep} className="space-y-4 animate-fade-in text-xs font-sans">
-              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)] border-b border-[var(--border-subtle)] pb-3 flex items-center gap-2">
-                <User className="w-4 h-4 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)] border-b border-[var(--color-terracotta-deep)]/20 pb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-[var(--color-terracotta)]" />
                 <span>{t('checkout.step1')}</span>
               </h3>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.fullName')}
                 </label>
                 <input
@@ -181,12 +181,12 @@ export default function CheckoutPage() {
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="e.g. Sultan Tariq Al-Fassi"
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.email')}
                 </label>
                 <input
@@ -195,12 +195,12 @@ export default function CheckoutPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="your.email@palace.com"
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.phone')}
                 </label>
                 <input
@@ -209,7 +209,7 @@ export default function CheckoutPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+971 50 123 4567"
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
                 />
               </div>
 
@@ -226,13 +226,13 @@ export default function CheckoutPage() {
           {/* STEP 2: SHIPPING */}
           {step === 2 && (
             <form onSubmit={handleNextStep} className="space-y-4 animate-fade-in text-xs font-sans">
-              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)] border-b border-[var(--border-subtle)] pb-3 flex items-center gap-2">
-                <Truck className="w-4 h-4 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)] border-b border-[var(--color-terracotta-deep)]/20 pb-3 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-[var(--color-terracotta)]" />
                 <span>{t('checkout.step2')}</span>
               </h3>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.country')}
                 </label>
                 <input
@@ -240,12 +240,12 @@ export default function CheckoutPage() {
                   required
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.address')}
                 </label>
                 <input
@@ -254,13 +254,13 @@ export default function CheckoutPage() {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="Street, Villa or Apartment Number"
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                  <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                     {t('checkout.city')}
                   </label>
                   <input
@@ -268,11 +268,11 @@ export default function CheckoutPage() {
                     required
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                    className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                  <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                     {t('checkout.postalCode')}
                   </label>
                   <input
@@ -280,7 +280,7 @@ export default function CheckoutPage() {
                     required
                     value={formData.postalCode}
                     onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                    className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -308,19 +308,19 @@ export default function CheckoutPage() {
           {/* STEP 3: PAYMENT */}
           {step === 3 && (
             <form onSubmit={handleNextStep} className="space-y-4 animate-fade-in text-xs font-sans">
-              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)] border-b border-[var(--border-subtle)] pb-3 flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)] border-b border-[var(--color-terracotta-deep)]/20 pb-3 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-[var(--color-terracotta)]" />
                 <span>{t('checkout.step3')}</span>
               </h3>
 
               {/* Notice */}
-              <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-gold-subtle)] text-[11px] text-[var(--gold-primary)] flex items-center gap-2">
+              <div className="p-3 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta)]/40 text-[11px] text-[var(--color-terracotta)] flex items-center gap-2 font-medium">
                 <Sparkles className="w-4 h-4 shrink-0" />
                 <span>{t('checkout.mockNotice')}</span>
               </div>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.cardholderName')}
                 </label>
                 <input
@@ -329,12 +329,12 @@ export default function CheckoutPage() {
                   value={formData.cardholderName}
                   onChange={(e) => setFormData({ ...formData, cardholderName: e.target.value })}
                   placeholder="Full Name as appears on Card"
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                   {t('checkout.cardNumber')}
                 </label>
                 <input
@@ -344,13 +344,13 @@ export default function CheckoutPage() {
                   value={formData.cardNumber}
                   onChange={(e) => setFormData({ ...formData, cardNumber: e.target.value })}
                   placeholder="4000 1234 5678 9010"
-                  className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] font-mono focus:border-[var(--gold-primary)] focus:outline-none"
+                  className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] font-mono focus:border-[var(--color-terracotta)] focus:outline-none font-semibold"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                  <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                     {t('checkout.expiry')}
                   </label>
                   <input
@@ -360,11 +360,11 @@ export default function CheckoutPage() {
                     value={formData.expiry}
                     onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
                     placeholder="12/28"
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] font-mono focus:border-[var(--gold-primary)] focus:outline-none"
+                    className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] font-mono focus:border-[var(--color-terracotta)] focus:outline-none font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                  <label className="block text-[var(--color-terracotta-deep)] mb-1 uppercase tracking-wider font-semibold">
                     {t('checkout.cvv')}
                   </label>
                   <input
@@ -374,7 +374,7 @@ export default function CheckoutPage() {
                     value={formData.cvv}
                     onChange={(e) => setFormData({ ...formData, cvv: e.target.value })}
                     placeholder="•••"
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] p-3 text-[var(--text-primary)] font-mono focus:border-[var(--gold-primary)] focus:outline-none"
+                    className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 p-3 text-[var(--color-earth-dark)] font-mono focus:border-[var(--color-terracotta)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -402,34 +402,34 @@ export default function CheckoutPage() {
           {/* STEP 4: REVIEW & AUTHORIZE */}
           {step === 4 && (
             <div className="space-y-6 animate-fade-in text-xs font-sans">
-              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)] border-b border-[var(--border-subtle)] pb-3 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[var(--gold-primary)]" />
+              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)] border-b border-[var(--color-terracotta-deep)]/20 pb-3 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[var(--color-terracotta)]" />
                 <span>{t('checkout.step4')}</span>
               </h3>
 
-              <div className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-2">
-                <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-2">
-                  <strong className="text-[var(--gold-primary)] font-cinzel">Contact & Dispatch</strong>
-                  <button onClick={() => setStep(1)} className="text-[var(--gold-primary)] underline cursor-pointer">Edit</button>
+              <div className="p-4 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2">
+                <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-2">
+                  <strong className="text-[var(--color-terracotta)] font-cinzel font-bold">Contact & Dispatch</strong>
+                  <button onClick={() => setStep(1)} className="text-[var(--color-terracotta)] underline cursor-pointer font-semibold">Edit</button>
                 </div>
-                <p className="text-[var(--text-primary)] font-semibold">{formData.fullName}</p>
-                <p className="text-[var(--text-muted)]">{formData.email} • {formData.phone}</p>
+                <p className="text-[var(--color-earth-dark)] font-semibold">{formData.fullName}</p>
+                <p className="text-[var(--color-terracotta-deep)]">{formData.email} • {formData.phone}</p>
               </div>
 
-              <div className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-2">
-                <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-2">
-                  <strong className="text-[var(--gold-primary)] font-cinzel">Delivery Destination</strong>
-                  <button onClick={() => setStep(2)} className="text-[var(--gold-primary)] underline cursor-pointer">Edit</button>
+              <div className="p-4 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2">
+                <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-2">
+                  <strong className="text-[var(--color-terracotta)] font-cinzel font-bold">Delivery Destination</strong>
+                  <button onClick={() => setStep(2)} className="text-[var(--color-terracotta)] underline cursor-pointer font-semibold">Edit</button>
                 </div>
-                <p className="text-[var(--text-muted)]">{formData.address}, {formData.city}, {formData.postalCode}, {formData.country}</p>
+                <p className="text-[var(--color-terracotta-deep)]">{formData.address}, {formData.city}, {formData.postalCode}, {formData.country}</p>
               </div>
 
-              <div className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-2">
-                <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-2">
-                  <strong className="text-[var(--gold-primary)] font-cinzel">Payment Method</strong>
-                  <button onClick={() => setStep(3)} className="text-[var(--gold-primary)] underline cursor-pointer">Edit</button>
+              <div className="p-4 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2">
+                <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-2">
+                  <strong className="text-[var(--color-terracotta)] font-cinzel font-bold">Payment Method</strong>
+                  <button onClick={() => setStep(3)} className="text-[var(--color-terracotta)] underline cursor-pointer font-semibold">Edit</button>
                 </div>
-                <p className="text-[var(--text-muted)]">Card ending in •••• {formData.cardNumber.slice(-4)} (Expiry: {formData.expiry})</p>
+                <p className="text-[var(--color-terracotta-deep)]">Card ending in •••• {formData.cardNumber.slice(-4)} (Expiry: {formData.expiry})</p>
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -446,7 +446,7 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={handlePlaceOrder}
                   disabled={processing}
-                  className="w-2/3 luxury-btn-gold py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-2xl cursor-pointer"
+                  className="w-2/3 luxury-btn-gold py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
                   <span>{processing ? t('checkout.processing') : t('checkout.placeOrder')}</span>
@@ -457,46 +457,46 @@ export default function CheckoutPage() {
         </ScrollReveal>
 
         {/* Right: Order Summary (5 cols) */}
-        <ScrollReveal direction="right" delay={0.3} className="lg:col-span-5 bg-[var(--bg-card)] border border-[var(--border-card)] p-6 space-y-4 shadow-2xl">
-          <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)] border-b border-[var(--border-subtle)] pb-3">
+        <ScrollReveal direction="right" delay={0.3} className="lg:col-span-5 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-6 space-y-4 shadow-xl">
+          <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)] border-b border-[var(--color-terracotta-deep)]/20 pb-3">
             {t('checkout.orderSummary')}
           </h3>
 
-          <div className="divide-y divide-[var(--border-subtle)] max-h-72 overflow-y-auto pr-1">
+          <div className="divide-y divide-[var(--color-terracotta-deep)]/20 max-h-72 overflow-y-auto pr-1">
             {items.map((item, idx) => (
               <ScrollRevealItem key={idx} index={idx} desktopDirection="right" className="py-3 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-3">
-                  <img src={item.image} alt={item.name} className="w-12 h-14 object-cover bg-[var(--bg-primary)] border border-[var(--border-subtle)] shrink-0" />
+                  <img src={item.image} alt={item.name} className="w-12 h-14 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/30 shrink-0" />
                   <div>
-                    <h4 className="font-cinzel font-semibold text-[var(--text-primary)]">{item.name}</h4>
-                    <p className="text-[var(--gold-primary)] font-mono text-[11px]">{item.size} • Qty: {item.quantity}</p>
+                    <h4 className="font-cinzel font-bold text-[var(--color-earth-dark)]">{item.name}</h4>
+                    <p className="text-[var(--color-terracotta)] font-mono text-[11px] font-semibold">{item.size} • Qty: {item.quantity}</p>
                   </div>
                 </div>
-                <span className="font-cinzel font-bold text-[var(--gold-primary)]">
+                <span className="font-cinzel font-bold text-[var(--color-terracotta)]">
                   ${item.price * item.quantity}
                 </span>
               </ScrollRevealItem>
             ))}
           </div>
 
-          <div className="space-y-2 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
+          <div className="space-y-2 pt-3 border-t border-[var(--color-terracotta-deep)]/20 text-xs text-[var(--color-terracotta-deep)] font-medium">
             <div className="flex justify-between">
               <span>{t('cart.subtotal')}</span>
-              <span className="font-mono text-[var(--text-primary)] font-semibold">${totals.subtotal}</span>
+              <span className="font-mono text-[var(--color-earth-dark)] font-bold">${totals.subtotal}</span>
             </div>
             {totals.discountAmount > 0 && (
-              <div className="flex justify-between text-[var(--gold-primary)]">
+              <div className="flex justify-between text-[var(--color-terracotta)] font-bold">
                 <span>{t('cart.discount')}</span>
-                <span className="font-mono font-semibold">-${totals.discountAmount}</span>
+                <span className="font-mono">-${totals.discountAmount}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>{t('cart.shipping')}</span>
-              <span className="font-mono text-[var(--gold-primary)] font-semibold uppercase">{t('cart.freeShipping')}</span>
+              <span className="font-mono text-[var(--color-terracotta)] font-bold uppercase">{t('cart.freeShipping')}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold text-[var(--text-primary)] pt-2 border-t border-[var(--border-subtle)] font-cinzel">
+            <div className="flex justify-between text-lg font-bold text-[var(--color-earth-dark)] pt-2 border-t border-[var(--color-terracotta-deep)]/20 font-cinzel">
               <span>{t('cart.total')}</span>
-              <span className="text-[var(--gold-primary)]">${totals.total}</span>
+              <span className="text-[var(--color-terracotta)] font-mono font-bold">${totals.total}</span>
             </div>
           </div>
         </ScrollReveal>

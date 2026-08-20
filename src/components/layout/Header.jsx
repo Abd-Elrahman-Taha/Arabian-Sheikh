@@ -52,24 +52,24 @@ export default function Header({ onOpenSearch }) {
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-400 ${
           isScrolled
-            ? 'bg-[var(--bg-glass)] backdrop-blur-md border-b border-[var(--border-gold-subtle)] py-3 shadow-xl'
-            : 'bg-gradient-to-b from-[var(--bg-primary)]/90 via-[var(--bg-primary)]/60 to-transparent py-4'
+            ? 'bg-[var(--color-desert-primary)]/95 backdrop-blur-md border-b border-[var(--color-terracotta-deep)]/25 py-3 shadow-md'
+            : 'bg-gradient-to-b from-[var(--color-desert-primary)]/95 via-[var(--color-desert-primary)]/75 to-transparent py-4'
         }`}
       >
         {/* Top VIP Micro-Bar (when not scrolled) */}
         {!isScrolled && (
-          <div className="hidden lg:block border-b border-[var(--border-gold-subtle)] pb-2 mb-2.5">
-            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[var(--text-muted)]">
+          <div className="hidden lg:block border-b border-[var(--color-terracotta-deep)]/20 pb-2 mb-2.5">
+            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[var(--color-terracotta-deep)]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-3 h-3 text-[var(--gold-primary)]" />
+                <Sparkles className="w-3 h-3 text-[var(--color-terracotta)]" />
                 <span>Complimentary Royal Express Delivery on Orders Over $200</span>
               </div>
               <div className="flex items-center gap-6">
-                <Link to="/the-house" className="hover:text-[var(--gold-primary)] transition-colors">
+                <Link to="/the-house" className="hover:text-[var(--color-terracotta)] transition-colors">
                   Private Salons & Boutiques
                 </Link>
                 {isAdmin && (
-                  <Link to="/admin" className="text-[var(--gold-primary)] flex items-center gap-1 font-semibold">
+                  <Link to="/admin" className="text-[var(--color-terracotta)] flex items-center gap-1 font-semibold">
                     <ShieldAlert className="w-3 h-3" />
                     <span>Admin Suite</span>
                   </Link>
@@ -92,7 +92,7 @@ export default function Header({ onOpenSearch }) {
                 <Link
                   to="/shop"
                   className={`flex items-center gap-1 transition-colors ${
-                    currentPath.startsWith('/shop') ? 'text-[var(--gold-primary)] font-bold' : 'text-[var(--text-primary)] hover:text-[var(--gold-primary)]'
+                    currentPath.startsWith('/shop') ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
                   }`}
                 >
                   <span>{t('nav.shop')}</span>
@@ -101,72 +101,72 @@ export default function Header({ onOpenSearch }) {
 
                 {/* Shop Mega Dropdown */}
                 {shopMegaOpen && (
-                  <div className="absolute top-full left-0 w-[580px] bg-[var(--bg-card)] border border-[var(--border-gold)] shadow-2xl p-6 grid grid-cols-2 gap-6 animate-fade-in z-50">
+                  <div className="absolute top-full left-0 w-[580px] bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/30 shadow-2xl p-6 grid grid-cols-2 gap-6 animate-fade-in z-50">
                     <div>
-                      <h4 className="text-[11px] font-sans uppercase tracking-[0.25em] text-[var(--gold-primary)] border-b border-[var(--border-gold-subtle)] pb-2 mb-3">
+                      <h4 className="text-[11px] font-sans uppercase tracking-[0.25em] text-[var(--color-terracotta)] border-b border-[var(--color-terracotta-deep)]/20 pb-2 mb-3 font-bold">
                         {t('shop.allProducts')}
                       </h4>
                       <ul className="space-y-2.5 text-xs tracking-wider normal-case font-sans">
                         <li>
-                          <Link to="/shop" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between group">
+                          <Link to="/shop" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
                             <span>{t('nav.allPerfumes')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--gold-primary)]" />
+                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
                           </Link>
                         </li>
                         <li>
-                          <Link to="/men" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between group">
+                          <Link to="/men" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
                             <span>{t('home.menTitle')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--gold-primary)]" />
+                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
                           </Link>
                         </li>
                         <li>
-                          <Link to="/women" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between group">
+                          <Link to="/women" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
                             <span>{t('home.womenTitle')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--gold-primary)]" />
+                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
                           </Link>
                         </li>
                         <li>
-                          <Link to="/unisex" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between group">
+                          <Link to="/unisex" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between group">
                             <span>{t('home.unisexTitle')}</span>
-                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--gold-primary)]" />
+                            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-terracotta)]" />
                           </Link>
                         </li>
                       </ul>
                     </div>
 
                     <div>
-                      <h4 className="text-[11px] font-sans uppercase tracking-[0.25em] text-[var(--gold-primary)] border-b border-[var(--border-gold-subtle)] pb-2 mb-3">
+                      <h4 className="text-[11px] font-sans uppercase tracking-[0.25em] text-[var(--color-terracotta)] border-b border-[var(--color-terracotta-deep)]/20 pb-2 mb-3 font-bold">
                         {t('home.fragranceFamiliesTitle')}
                       </h4>
                       <ul className="space-y-2 text-xs tracking-wider normal-case font-sans">
                         <li>
-                          <Link to="/shop?family=woody" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between">
+                          <Link to="/shop?family=woody" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
                             <span>{t('families.woody')}</span>
-                            <span className="font-arabic text-[var(--gold-primary)] text-xs">الخشبية (عود)</span>
+                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الخشبية (عود)</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/shop?family=oriental" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between">
+                          <Link to="/shop?family=oriental" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
                             <span>{t('families.oriental')}</span>
-                            <span className="font-arabic text-[var(--gold-primary)] text-xs">الشرقية</span>
+                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الشرقية</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/shop?family=floral" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between">
+                          <Link to="/shop?family=floral" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
                             <span>{t('families.floral')}</span>
-                            <span className="font-arabic text-[var(--gold-primary)] text-xs">الزهرية</span>
+                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الزهرية</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/shop?family=fresh" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between">
+                          <Link to="/shop?family=fresh" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
                             <span>{t('families.fresh')}</span>
-                            <span className="font-arabic text-[var(--gold-primary)] text-xs">المنعشة</span>
+                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">المنعشة</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/shop?family=fruity" className="text-[var(--text-primary)] hover:text-[var(--gold-primary)] flex items-center justify-between">
+                          <Link to="/shop?family=fruity" className="text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] flex items-center justify-between">
                             <span>{t('families.fruity')}</span>
-                            <span className="font-arabic text-[var(--gold-primary)] text-xs">الفاكهية</span>
+                            <span className="font-arabic text-[var(--color-terracotta)] text-xs">الفاكهية</span>
                           </Link>
                         </li>
                       </ul>
@@ -178,7 +178,7 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/men"
                 className={`transition-colors ${
-                  currentPath === '/men' ? 'text-[var(--gold-primary)] font-bold' : 'text-[var(--text-primary)] hover:text-[var(--gold-primary)]'
+                  currentPath === '/men' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
                 }`}
               >
                 {t('nav.men')}
@@ -186,7 +186,7 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/women"
                 className={`transition-colors ${
-                  currentPath === '/women' ? 'text-[var(--gold-primary)] font-bold' : 'text-[var(--text-primary)] hover:text-[var(--gold-primary)]'
+                  currentPath === '/women' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
                 }`}
               >
                 {t('nav.women')}
@@ -194,84 +194,49 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/unisex"
                 className={`transition-colors ${
-                  currentPath === '/unisex' ? 'text-[var(--gold-primary)] font-bold' : 'text-[var(--text-primary)] hover:text-[var(--gold-primary)]'
+                  currentPath === '/unisex' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
                 }`}
               >
                 {t('nav.unisex')}
               </Link>
-
-              {/* COLLECTIONS Dropdown */}
-              <div
-                className="relative py-2"
-                onMouseEnter={() => setCollectionsMegaOpen(true)}
-                onMouseLeave={() => setCollectionsMegaOpen(false)}
+              <Link
+                to="/collections"
+                className={`transition-colors ${
+                  currentPath.startsWith('/collections') ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
+                }`}
               >
-                <Link
-                  to="/collections"
-                  className={`flex items-center gap-1 transition-colors ${
-                    currentPath.startsWith('/collections') ? 'text-[var(--gold-primary)] font-bold' : 'text-[var(--text-primary)] hover:text-[var(--gold-primary)]'
-                  }`}
-                >
-                  <span>{t('nav.collections')}</span>
-                  <ChevronDown className="w-3 h-3 transition-transform" />
-                </Link>
-
-                {collectionsMegaOpen && (
-                  <div className="absolute top-full left-0 w-72 bg-[var(--bg-card)] border border-[var(--border-gold)] shadow-2xl p-4 animate-fade-in z-50">
-                    <ul className="space-y-2.5 text-xs font-sans tracking-wide">
-                      <li>
-                        <Link to="/collections?c=royal-oud" className="block text-[var(--text-primary)] hover:text-[var(--gold-primary)] p-2 hover:bg-[var(--bg-secondary)] transition-colors">
-                          <p className="font-cinzel text-xs font-semibold">{t('nav.royalOudCollection')}</p>
-                          <p className="text-[11px] text-[var(--text-muted)]">Pure Assamese Wild Oud & Resins</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/collections?c=imperial-silk" className="block text-[var(--text-primary)] hover:text-[var(--gold-primary)] p-2 hover:bg-[var(--bg-secondary)] transition-colors">
-                          <p className="font-cinzel text-xs font-semibold">{t('nav.silkRoadCollection')}</p>
-                          <p className="text-[11px] text-[var(--text-muted)]">Taif Rose & Intoxicating Florals</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/collections?c=desert-gold" className="block text-[var(--text-primary)] hover:text-[var(--gold-primary)] p-2 hover:bg-[var(--bg-secondary)] transition-colors">
-                          <p className="font-cinzel text-xs font-semibold">{t('nav.desertGoldCollection')}</p>
-                          <p className="text-[11px] text-[var(--text-muted)]">Fossilized Amber & Solar Dew</p>
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-
+                {t('nav.collections')}
+              </Link>
               <Link
                 to="/the-house"
                 className={`transition-colors ${
-                  currentPath === '/the-house' ? 'text-[var(--gold-primary)] font-bold' : 'text-[var(--text-primary)] hover:text-[var(--gold-primary)]'
+                  currentPath === '/the-house' ? 'text-[var(--color-terracotta)] font-bold' : 'text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)]'
                 }`}
               >
                 {t('nav.theHouse')}
               </Link>
             </nav>
 
-            {/* Center Brand — Text-only premium wordmark (no logo in navbar) */}
+            {/* Center Brand — Text-only premium wordmark */}
             <div className="text-left lg:text-center py-1">
               <Link
                 to="/"
                 className="inline-block focus:outline-none group"
                 aria-label="Arabian Sheikh — Home"
               >
-                <span className="font-cinzel font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-primary)] transition-colors duration-300 text-sm sm:text-base md:text-lg tracking-[0.25em] uppercase">
+                <span className="font-cinzel font-bold text-[var(--color-earth-dark)] group-hover:text-[var(--color-terracotta)] transition-colors duration-300 text-sm sm:text-base md:text-lg tracking-[0.25em] uppercase">
                   ARABIAN SHEIKH
                 </span>
               </Link>
             </div>
 
             {/* Right Action Icons, Language Selector & Mobile Toggle */}
-            <div className="flex items-center space-x-2 sm:space-x-4 text-[var(--text-primary)]">
+            <div className="flex items-center space-x-2 sm:space-x-4 text-[var(--color-earth-dark)]">
 
               {/* Search Trigger */}
               <button
                 onClick={onOpenSearch}
-                className="p-2 hover:text-[var(--gold-primary)] transition-colors focus:outline-none cursor-pointer"
+                className="p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none cursor-pointer"
                 aria-label="Search Fragrances"
               >
                 <Search className="w-5 h-5" />
@@ -280,12 +245,12 @@ export default function Header({ onOpenSearch }) {
               {/* Wishlist */}
               <Link
                 to="/account/wishlist"
-                className="relative p-2 hover:text-[var(--gold-primary)] transition-colors focus:outline-none hidden sm:block"
+                className="relative p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none hidden sm:block"
                 aria-label="Wishlist"
               >
                 <Heart className="w-5 h-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1 right-1 bg-[#D2A55F] text-[#130C05] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-badge-pop">
+                  <span className="absolute top-1 right-1 bg-[var(--color-terracotta)] text-[#F8D188] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-badge-pop shadow-sm">
                     {wishlistCount}
                   </span>
                 )}
@@ -294,7 +259,7 @@ export default function Header({ onOpenSearch }) {
               {/* Account */}
               <Link
                 to={isAuthenticated ? '/account' : '/login'}
-                className="p-2 hover:text-[var(--gold-primary)] transition-colors focus:outline-none hidden sm:block"
+                className="p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none hidden sm:block"
                 aria-label="User Account"
               >
                 <User className="w-5 h-5" />
@@ -303,13 +268,13 @@ export default function Header({ onOpenSearch }) {
               {/* Bag / Cart Trigger with Animated Counter */}
               <button
                 onClick={openDrawer}
-                className="relative p-2 hover:text-[var(--gold-primary)] transition-colors focus:outline-none cursor-pointer"
+                className="relative p-2 hover:text-[var(--color-terracotta)] transition-colors focus:outline-none cursor-pointer"
                 aria-label="Shopping Bag"
               >
                 <ShoppingBag className="w-5 h-5" />
                 {totals.totalCount > 0 && (
                   <span
-                    className={`absolute top-1 right-1 bg-[#D2A55F] text-[#130C05] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center ${
+                    className={`absolute top-1 right-1 bg-[var(--color-terracotta)] text-[#F8D188] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm ${
                       cartBadgeAnimated ? 'animate-badge-pop' : ''
                     }`}
                   >
@@ -322,16 +287,16 @@ export default function Header({ onOpenSearch }) {
               <div className="relative">
                 <button
                   onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className="flex items-center gap-1.5 px-2 py-1 border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans uppercase tracking-widest text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-all bg-[var(--bg-card)] cursor-pointer shadow-sm"
+                  className="flex items-center gap-1.5 px-2 py-1 border border-[var(--color-terracotta-deep)]/30 hover:border-[var(--color-terracotta)] text-xs font-sans uppercase tracking-widest text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-all bg-[var(--color-desert-light)] cursor-pointer shadow-sm"
                 >
-                  <Globe className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
+                  <Globe className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
                   <span>{language.toUpperCase()}</span>
-                  <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
+                  <ChevronDown className="w-3 h-3 text-[var(--color-terracotta-deep)]" />
                 </button>
 
                 {langDropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-36 bg-[var(--bg-card)] border border-[var(--border-gold)] shadow-2xl py-1 z-50 animate-fade-in"
+                    className="absolute right-0 mt-2 w-36 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/40 shadow-xl py-1 z-50 animate-fade-in"
                     onMouseLeave={() => setLangDropdownOpen(false)}
                   >
                     {availableLanguages.map(l => (
@@ -343,23 +308,23 @@ export default function Header({ onOpenSearch }) {
                         }}
                         className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                           language === l.code
-                            ? 'bg-[var(--gold-primary)]/20 text-[var(--gold-primary)] font-semibold'
-                            : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--gold-primary)]'
+                            ? 'bg-[var(--color-terracotta)]/15 text-[var(--color-terracotta)] font-bold'
+                            : 'text-[var(--color-earth-dark)] hover:bg-[var(--color-desert-primary)] hover:text-[var(--color-terracotta)]'
                         }`}
                       >
                         <span>{l.name}</span>
-                        <span className="text-[10px] font-mono text-[var(--text-muted)]">{l.short}</span>
+                        <span className="text-[10px] font-mono text-[var(--color-terracotta-deep)]">{l.short}</span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Mobile Menu Toggle Button (Aligned on the same right side as the exit button) */}
+              {/* Mobile Menu Toggle Button */}
               <div className="flex lg:hidden items-center">
                 <button
                   onClick={() => setMobileMenuOpen(true)}
-                  className="p-2 text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors focus:outline-none cursor-pointer"
+                  className="p-2 text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors focus:outline-none cursor-pointer"
                   aria-label="Open Navigation Menu"
                 >
                   <Menu className="w-6 h-6" />
@@ -371,16 +336,16 @@ export default function Header({ onOpenSearch }) {
       </header>
       {/* Mobile Fullscreen Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-[var(--bg-primary)]/98 backdrop-blur-2xl flex flex-col justify-between p-6 animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-[var(--color-desert-primary)]/98 backdrop-blur-2xl flex flex-col justify-between p-6 animate-fade-in overflow-y-auto text-[var(--color-earth-dark)]">
           <div>
             {/* Top Close Row */}
-            <div className="flex items-center justify-between border-b border-[var(--border-gold-subtle)] pb-4">
-              <span className="font-cinzel font-bold text-[var(--text-primary)] tracking-[0.2em] uppercase text-base">
+            <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/25 pb-4">
+              <span className="font-cinzel font-bold text-[var(--color-earth-dark)] tracking-[0.2em] uppercase text-base">
                 ARABIAN SHEIKH
               </span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors cursor-pointer"
+                className="p-2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] transition-colors cursor-pointer"
                 aria-label="Close Navigation"
               >
                 <X className="w-6 h-6" />
@@ -391,55 +356,55 @@ export default function Header({ onOpenSearch }) {
             <nav className="mt-6 space-y-4">
               <Link
                 to="/shop"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors"
+                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
               >
                 {t('nav.shop')}
               </Link>
-              <div className="pl-4 space-y-2.5 border-l border-[var(--border-gold-subtle)]">
-                <Link to="/men" className="block text-sm text-[var(--text-secondary)] hover:text-[var(--gold-primary)]">
+              <div className="pl-4 space-y-2.5 border-l border-[var(--color-terracotta-deep)]/25">
+                <Link to="/men" className="block text-sm text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)]">
                   {t('nav.men')}
                 </Link>
-                <Link to="/women" className="block text-sm text-[var(--text-secondary)] hover:text-[var(--gold-primary)]">
+                <Link to="/women" className="block text-sm text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)]">
                   {t('nav.women')}
                 </Link>
-                <Link to="/unisex" className="block text-sm text-[var(--text-secondary)] hover:text-[var(--gold-primary)]">
-         
+                <Link to="/unisex" className="block text-sm text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)]">
+                  {t('nav.unisex')}
                 </Link>
               </div>
               <Link
                 to="/collections"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors"
+                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
               >
                 {t('nav.collections')}
               </Link>
               <Link
                 to="/the-house"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors"
+                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
               >
                 {t('nav.theHouse')}
               </Link>
               <Link
                 to="/about"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors"
+                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
               >
                 {t('nav.about')}
               </Link>
               <Link
                 to="/contact"
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-colors"
+                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-colors"
               >
                 {t('nav.contact')}
               </Link>
               <Link
                 to={isAuthenticated ? '/account' : '/login'}
-                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--gold-primary)] hover:text-[var(--gold-light)] transition-colors"
+                className="block font-cinzel text-xl tracking-[0.15em] text-[var(--color-terracotta)] hover:text-[var(--color-terracotta-deep)] transition-colors"
               >
                 {t('nav.account')} {isAuthenticated ? `(${user?.name?.split(' ')[0]})` : ''}
               </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="block font-cinzel text-lg tracking-[0.15em] text-gold-gradient font-bold"
+                  className="block font-cinzel text-lg tracking-[0.15em] text-[var(--color-terracotta)] font-bold"
                 >
                   ★ {t('nav.admin')}
                 </Link>
@@ -448,8 +413,8 @@ export default function Header({ onOpenSearch }) {
           </div>
 
           {/* Bottom Language & Concierge Info */}
-          <div className="border-t border-[var(--border-gold-subtle)] pt-5 mt-6">
-            <p className="text-xs uppercase tracking-widest text-[var(--text-muted)] mb-2.5">
+          <div className="border-t border-[var(--color-terracotta-deep)]/25 pt-5 mt-6">
+            <p className="text-xs uppercase tracking-widest text-[var(--color-terracotta-deep)] mb-2.5">
               Select Language
             </p>
             <div className="flex gap-2">
@@ -459,15 +424,15 @@ export default function Header({ onOpenSearch }) {
                   onClick={() => setLanguage(l.code)}
                   className={`flex-1 py-2 text-xs uppercase tracking-wider font-sans border transition-all cursor-pointer ${
                     language === l.code
-                      ? 'border-[#D2A55F] bg-[#D2A55F] text-[#130C05] font-bold shadow'
-                      : 'border-[var(--border-gold-subtle)] text-[var(--text-primary)] bg-[var(--bg-card)]'
+                      ? 'border-[var(--color-terracotta)] bg-[var(--color-terracotta)] text-[#F8D188] font-bold shadow'
+                      : 'border-[var(--color-terracotta-deep)]/30 text-[var(--color-earth-dark)] bg-[var(--color-desert-light)]'
                   }`}
                 >
                   {l.name}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-[var(--text-muted)] mt-3 text-center">
+            <p className="text-[11px] text-[var(--color-terracotta-deep)] mt-3 text-center">
               Dubai Flagship Palace • Mayfair Salon • Vendôme Atelier
             </p>
           </div>

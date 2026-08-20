@@ -48,41 +48,41 @@ export default function Login({ returnPath }) {
   };
 
   return (
-    <div className="pt-36 sm:pt-40 pb-24 min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 animate-fade-in text-[var(--text-primary)]">
+    <div className="pt-36 sm:pt-40 pb-24 min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 animate-fade-in text-[var(--color-earth-dark)]">
       <ScrollReveal direction="up">
-        <div className="max-w-md w-full bg-[var(--bg-card)] border border-[var(--border-card)] p-8 sm:p-10 shadow-2xl space-y-6">
+        <div className="max-w-md w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-8 sm:p-10 shadow-2xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-none border border-[var(--border-gold-subtle)] bg-[var(--bg-primary)] flex items-center justify-center mx-auto text-[var(--gold-primary)] mb-3">
+          <div className="w-12 h-12 rounded-none border border-[var(--color-terracotta)]/40 bg-[var(--color-desert-primary)]/30 flex items-center justify-center mx-auto text-[var(--color-terracotta)] mb-3">
             <Lock className="w-6 h-6" />
           </div>
-          <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[var(--text-primary)]">
+          <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[var(--color-earth-dark)]">
             {t('auth.loginTitle')}
           </h1>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
             {t('auth.loginSubtitle')}
           </p>
         </div>
 
         {/* Demo Fast Login Buttons */}
-        <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-gold-subtle)] space-y-2 text-xs">
-          <p className="text-[11px] uppercase tracking-wider text-[var(--gold-primary)] font-cinzel font-semibold text-center">
+        <div className="p-3 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta)]/30 space-y-2 text-xs">
+          <p className="text-[11px] uppercase tracking-wider text-[var(--color-terracotta)] font-cinzel font-bold text-center">
             ✦ Quick Access Demo Credentials
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={handleDemoCustomer}
-              className="py-1.5 px-2 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-gold-subtle)] text-[11px] text-[var(--text-primary)] text-center transition-colors cursor-pointer"
+              className="py-1.5 px-2 bg-[var(--color-desert-light)] hover:bg-[var(--color-desert-primary)]/50 border border-[var(--color-terracotta-deep)]/25 text-[11px] text-[var(--color-earth-dark)] font-semibold text-center transition-colors cursor-pointer"
             >
               Patron User
             </button>
             <button
               type="button"
               onClick={handleDemoAdmin}
-              className="py-1.5 px-2 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-gold-subtle)] text-[11px] text-[var(--gold-primary)] font-semibold text-center transition-colors flex items-center justify-center gap-1 cursor-pointer"
+              className="py-1.5 px-2 bg-[var(--color-desert-light)] hover:bg-[var(--color-desert-primary)]/50 border border-[var(--color-terracotta)]/40 text-[11px] text-[var(--color-terracotta)] font-bold text-center transition-colors flex items-center justify-center gap-1 cursor-pointer"
             >
-              <ShieldAlert className="w-3 h-3 text-[var(--gold-primary)]" />
+              <ShieldAlert className="w-3 h-3 text-[var(--color-terracotta)]" />
               <span>Grand Admin</span>
             </button>
           </div>
@@ -91,7 +91,7 @@ export default function Login({ returnPath }) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
           <div>
-            <label className="block uppercase tracking-wider text-[var(--text-muted)] mb-1">
+            <label className="block uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold mb-1">
               {t('auth.email')}
             </label>
             <div className="relative">
@@ -101,18 +101,18 @@ export default function Login({ returnPath }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@palace.com"
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] py-2.5 pl-9 pr-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 py-2.5 pl-9 pr-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none font-medium"
               />
-              <Mail className="w-4 h-4 text-[var(--gold-primary)] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-[var(--color-terracotta)] absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="uppercase tracking-wider text-[var(--text-muted)]">
+              <label className="uppercase tracking-wider text-[var(--color-terracotta-deep)] font-semibold">
                 {t('auth.password')}
               </label>
-              <Link to="/forgot-password" className="text-[11px] text-[var(--gold-primary)] hover:underline">
+              <Link to="/forgot-password" className="text-[11px] text-[var(--color-terracotta)] font-bold hover:underline">
                 {t('auth.forgotPassword')}
               </Link>
             </div>
@@ -123,9 +123,9 @@ export default function Login({ returnPath }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] py-2.5 pl-9 pr-3 text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 py-2.5 pl-9 pr-3 text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
               />
-              <KeyRound className="w-4 h-4 text-[var(--gold-primary)] absolute left-3 top-1/2 -translate-y-1/2" />
+              <KeyRound className="w-4 h-4 text-[var(--color-terracotta)] absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
           </div>
 
@@ -135,9 +135,9 @@ export default function Login({ returnPath }) {
               id="remember"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="accent-[#D2A55F] cursor-pointer"
+              className="accent-[#B45625] cursor-pointer"
             />
-            <label htmlFor="remember" className="text-xs text-[var(--text-muted)] cursor-pointer">
+            <label htmlFor="remember" className="text-xs text-[var(--color-terracotta-deep)] font-medium cursor-pointer">
               {t('auth.rememberMe')}
             </label>
           </div>
@@ -153,9 +153,9 @@ export default function Login({ returnPath }) {
         </form>
 
         {/* Signup Link */}
-        <div className="text-center text-xs text-[var(--text-muted)] pt-4 border-t border-[var(--border-subtle)]">
+        <div className="text-center text-xs text-[var(--color-terracotta-deep)] pt-4 border-t border-[var(--color-terracotta-deep)]/20 font-medium">
           <span>{t('auth.noAccount')} </span>
-          <Link to="/signup" className="text-[var(--gold-primary)] hover:underline font-semibold font-cinzel">
+          <Link to="/signup" className="text-[var(--color-terracotta)] hover:underline font-bold font-cinzel">
             {t('auth.signup')}
           </Link>
         </div>

@@ -60,19 +60,19 @@ export default function SearchOverlay({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--bg-primary)]/95 backdrop-blur-2xl animate-fade-in text-[var(--text-primary)] p-4 sm:p-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--color-desert-primary)]/95 backdrop-blur-2xl animate-fade-in text-[var(--color-earth-dark)] p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Top Bar with Close */}
-        <div className="flex items-center justify-between border-b border-[var(--border-gold-subtle)] pb-4 mb-8">
+        <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 mb-8">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[var(--gold-primary)]" />
-            <span className="font-cinzel text-sm uppercase tracking-[0.25em] text-[var(--gold-primary)] font-semibold">
+            <Sparkles className="w-5 h-5 text-[var(--color-terracotta)]" />
+            <span className="font-cinzel text-sm uppercase tracking-[0.25em] text-[var(--color-terracotta)] font-bold">
               Royal Olfactory Search
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors cursor-pointer"
+            className="p-2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-colors cursor-pointer"
             aria-label="Close search"
           >
             <X className="w-6 h-6" />
@@ -87,14 +87,14 @@ export default function SearchOverlay({ isOpen, onClose }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('common.searchPlaceholder')}
-            className="w-full bg-[var(--bg-card)] border-b-2 border-[var(--gold-primary)] py-4 pl-12 pr-12 text-lg sm:text-2xl font-cinzel text-[var(--text-primary)] placeholder-[var(--text-muted)]/60 focus:outline-none focus:bg-[var(--bg-secondary)] transition-colors"
+            className="w-full bg-[var(--color-desert-light)] border-b-2 border-[var(--color-terracotta)] py-4 pl-12 pr-12 text-lg sm:text-2xl font-cinzel text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/60 focus:outline-none focus:bg-[var(--color-desert-light)] transition-colors shadow-sm"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[var(--gold-primary)]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[var(--color-terracotta)]" />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -105,7 +105,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
         {!query && (
           <div className="space-y-8 animate-fade-in">
             <div>
-              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--gold-primary)] mb-3">
+              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--color-terracotta)] mb-3 font-bold">
                 {t('common.popularSearches')}
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -113,7 +113,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
                   <button
                     key={item}
                     onClick={() => setQuery(item)}
-                    className="px-3.5 py-1.5 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans text-[var(--text-primary)] hover:text-[var(--gold-primary)] transition-all cursor-pointer shadow-sm"
+                    className="px-3.5 py-1.5 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 hover:border-[var(--color-terracotta)] text-xs font-sans text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-all cursor-pointer shadow-sm font-bold"
                   >
                     {item}
                   </button>
@@ -122,7 +122,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
             </div>
 
             <div>
-              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--gold-primary)] mb-3">
+              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--color-terracotta)] mb-3 font-bold">
                 {t('common.suggestedNotes')}
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -130,7 +130,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
                   <button
                     key={note}
                     onClick={() => setQuery(note)}
-                    className="px-3 py-1 bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-[var(--gold-primary)] text-xs font-sans text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer shadow-sm"
+                    className="px-3 py-1 bg-[var(--color-desert-light)]/70 border border-[var(--color-terracotta-deep)]/20 hover:border-[var(--color-terracotta)] text-xs font-sans text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-all cursor-pointer shadow-sm font-medium"
                   >
                     • {note}
                   </button>
@@ -143,14 +143,14 @@ export default function SearchOverlay({ isOpen, onClose }) {
         {/* Live Search Results */}
         {query && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
+            <div className="flex items-center justify-between text-xs text-[var(--color-terracotta-deep)] border-b border-[var(--color-terracotta-deep)]/20 pb-2 font-medium">
               <span>
                 {loading ? 'Distilling search results...' : `${results.length} creations matched`}
               </span>
               {results.length > 0 && (
                 <button
                   onClick={handleSearchSubmit}
-                  className="text-[var(--gold-primary)] hover:underline flex items-center gap-1 font-cinzel uppercase text-[11px] tracking-wider cursor-pointer"
+                  className="text-[var(--color-terracotta)] hover:underline flex items-center gap-1 font-cinzel uppercase text-[11px] tracking-wider cursor-pointer font-bold"
                 >
                   <span>View All in Boutique</span>
                   <ArrowRight className="w-3 h-3" />
@@ -159,7 +159,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
             </div>
 
             {results.length === 0 && !loading ? (
-              <div className="text-center py-12 text-[var(--text-muted)] text-sm space-y-2">
+              <div className="text-center py-12 text-[var(--color-terracotta-deep)] text-sm space-y-2 font-medium">
                 <p>No bespoke flacons found matching "{query}".</p>
                 <p className="text-xs">Try searching for ingredients such as Oud, Amber, Rose, or Bakhoor.</p>
               </div>
@@ -169,29 +169,29 @@ export default function SearchOverlay({ isOpen, onClose }) {
                   <div
                     key={product.id}
                     onClick={() => handleSelectProduct(product.id)}
-                    className="flex gap-4 p-3 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] cursor-pointer transition-all hover:translate-x-1"
+                    className="flex gap-4 p-3 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 hover:border-[var(--color-terracotta)] cursor-pointer transition-all hover:translate-x-1 shadow-sm"
                   >
                     <img
                       src={product.images?.[0]}
                       alt={product.name}
-                      className="w-16 h-20 object-cover bg-[var(--bg-primary)] border border-[var(--border-subtle)] shrink-0"
+                      className="w-16 h-20 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/25 shrink-0"
                     />
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <span className="text-[10px] uppercase tracking-wider text-[var(--gold-primary)] font-mono">
+                        <span className="text-[10px] uppercase tracking-wider text-[var(--color-terracotta)] font-mono font-bold">
                           {product.fragranceFamily}
                         </span>
-                        <h4 className="font-cinzel text-sm font-semibold text-[var(--text-primary)]">
+                        <h4 className="font-cinzel text-sm font-bold text-[var(--color-earth-dark)]">
                           {product.name}
                         </h4>
-                        <p className="font-arabic text-xs text-[var(--text-muted)]">{product.arabicName}</p>
+                        <p className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">{product.arabicName}</p>
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center gap-1 text-[var(--gold-primary)] text-xs">
+                        <div className="flex items-center gap-1 text-[var(--color-terracotta)] text-xs font-bold">
                           <Star className="w-3 h-3 fill-current" />
                           <span>{product.rating}</span>
                         </div>
-                        <span className="font-cinzel text-sm font-bold text-[var(--gold-primary)]">
+                        <span className="font-cinzel text-sm font-bold text-[var(--color-terracotta)]">
                           ${product.price}
                         </span>
                       </div>

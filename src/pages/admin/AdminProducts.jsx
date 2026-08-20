@@ -56,14 +56,14 @@ export default function AdminProducts() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 gap-4">
         <div>
-          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--text-primary)]">
+          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--color-earth-dark)]">
             {t('admin.products')}
           </h1>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
             Manage the complete formulation catalog, pricing, and olfactory pyramid metadata.
           </p>
         </div>
@@ -78,23 +78,23 @@ export default function AdminProducts() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+      <div className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="relative w-full sm:w-80">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search creation or note..."
-            className="w-full bg-[var(--bg-secondary)] border border-[var(--border-card)] pl-9 pr-3 py-2 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+            className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 pl-9 pr-3 py-2 text-xs text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
           />
-          <Search className="w-4 h-4 text-[var(--gold-primary)] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--color-terracotta)] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={familyFilter}
             onChange={(e) => setFamilyFilter(e.target.value)}
-            className="w-full sm:w-auto bg-[var(--bg-secondary)] border border-[var(--border-card)] px-3 py-2 text-xs text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none cursor-pointer"
+            className="w-full sm:w-auto bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 px-3 py-2 text-xs text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none cursor-pointer font-medium"
           >
             <option value="all">All Fragrance Families</option>
             <option value="woody">Woody (Oud Focus)</option>
@@ -107,10 +107,10 @@ export default function AdminProducts() {
       </div>
 
       {/* Products Table */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl overflow-x-auto">
+      <div className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 shadow-xl overflow-x-auto">
         <table className="w-full text-left text-xs font-sans">
           <thead>
-            <tr className="border-b border-[var(--border-subtle)] text-[var(--gold-primary)] uppercase font-cinzel">
+            <tr className="border-b border-[var(--color-terracotta-deep)]/20 text-[var(--color-terracotta)] uppercase font-cinzel font-bold">
               <th className="py-3 px-4">Creation</th>
               <th className="py-3 px-4">Family / Gender</th>
               <th className="py-3 px-4">Price</th>
@@ -119,70 +119,70 @@ export default function AdminProducts() {
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
+          <tbody className="divide-y divide-[var(--color-terracotta-deep)]/15 text-[var(--color-earth-dark)]">
             {loading ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-[var(--text-muted)]">
+                <td colSpan={6} className="py-8 text-center text-[var(--color-terracotta-deep)] font-medium">
                   Retrieving fragrances...
                 </td>
               </tr>
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-[var(--text-muted)]">
+                <td colSpan={6} className="py-8 text-center text-[var(--color-terracotta-deep)] font-medium">
                   No fragrances found.
                 </td>
               </tr>
             ) : (
               products.map((prod) => (
-                <tr key={prod.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                <tr key={prod.id} className="hover:bg-[var(--color-desert-primary)]/20 transition-colors">
                   <td className="py-3 px-4 flex items-center gap-3">
                     <img
                       src={prod.images?.[0]}
                       alt={prod.name}
-                      className="w-10 h-12 object-cover bg-[var(--bg-primary)] border border-[var(--border-subtle)]"
+                      className="w-10 h-12 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/30"
                     />
                     <div>
-                      <span className="font-cinzel font-bold text-sm text-[var(--text-primary)] block">
+                      <span className="font-cinzel font-bold text-sm text-[var(--color-earth-dark)] block">
                         {prod.name}
                       </span>
-                      <span className="text-[11px] text-[var(--text-muted)] font-arabic">{prod.arabicName}</span>
+                      <span className="text-[11px] text-[var(--color-terracotta-deep)] font-arabic font-semibold">{prod.arabicName}</span>
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="text-xs uppercase font-mono block text-[var(--gold-primary)]">{prod.fragranceFamily}</span>
-                    <span className="text-[10px] text-[var(--text-muted)] capitalize">{prod.gender}</span>
+                    <span className="text-xs uppercase font-mono block text-[var(--color-terracotta)] font-bold">{prod.fragranceFamily}</span>
+                    <span className="text-[10px] text-[var(--color-terracotta-deep)] capitalize font-medium">{prod.gender}</span>
                   </td>
-                  <td className="py-3 px-4 font-mono font-bold text-sm text-[var(--gold-primary)]">
+                  <td className="py-3 px-4 font-mono font-bold text-sm text-[var(--color-terracotta)]">
                     ${prod.price}
                   </td>
-                  <td className="py-3 px-4 font-mono">
-                    <span className={prod.stock < 10 ? 'text-rose-500 font-bold' : 'text-[var(--text-primary)]'}>
+                  <td className="py-3 px-4 font-mono font-medium">
+                    <span className={prod.stock < 10 ? 'text-rose-600 font-bold' : 'text-[var(--color-earth-dark)]'}>
                       {prod.stock} units
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 text-[10px] font-mono uppercase ${prod.isFeatured ? 'bg-[var(--gold-primary)] text-[#130C05] font-bold' : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-muted)]'}`}>
+                    <span className={`px-2 py-0.5 text-[10px] font-mono uppercase ${prod.isFeatured ? 'bg-[var(--color-terracotta)] text-[#F8D188] font-bold' : 'bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 text-[var(--color-terracotta-deep)] font-medium'}`}>
                       {prod.isFeatured ? 'Featured' : 'Standard'}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right space-x-2">
                     <button
                       onClick={() => navigate(`/product/${prod.id}`)}
-                      className="p-1.5 text-[var(--text-muted)] hover:text-[var(--gold-primary)] cursor-pointer"
+                      className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
                       title="View on Storefront"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => navigate(`/admin/products/${prod.id}/edit`)}
-                      className="p-1.5 text-[var(--text-muted)] hover:text-[var(--gold-primary)] cursor-pointer"
+                      className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
                       title="Edit Formulation"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(prod.id, prod.name)}
-                      className="p-1.5 text-[var(--text-muted)] hover:text-rose-400 cursor-pointer"
+                      className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-rose-600 cursor-pointer"
                       title="Delete Flacon"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

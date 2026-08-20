@@ -29,23 +29,23 @@ export default function AccountWishlist() {
   }, [wishlist]);
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
       <ScrollReveal direction="up">
-        <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-3">
-          <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--text-primary)]">
+        <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-3">
+          <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--color-earth-dark)]">
             {t('account.wishlist')}
           </h2>
-          <span className="text-xs text-[var(--text-muted)] font-mono">{products.length} items saved</span>
+          <span className="text-xs text-[var(--color-terracotta-deep)] font-mono font-semibold">{products.length} items saved</span>
         </div>
       </ScrollReveal>
 
       {loading ? (
-        <div className="text-center py-12 text-xs text-[var(--text-muted)]">Retrieving wishlist items...</div>
+        <div className="text-center py-12 text-xs text-[var(--color-terracotta-deep)] font-medium">Retrieving wishlist items...</div>
       ) : products.length === 0 ? (
-        <div className="text-center py-16 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
-          <Heart className="w-10 h-10 text-[var(--gold-primary)] mx-auto opacity-50" />
-          <h3 className="font-cinzel text-base text-[var(--text-primary)]">Your Wishlist is Empty</h3>
-          <p className="text-xs text-[var(--text-muted)] max-w-xs mx-auto">
+        <div className="text-center py-16 bg-[var(--color-desert-primary)]/20 border border-[var(--color-terracotta-deep)]/20 space-y-3">
+          <Heart className="w-10 h-10 text-[var(--color-terracotta)] mx-auto opacity-70" />
+          <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)]">Your Wishlist is Empty</h3>
+          <p className="text-xs text-[var(--color-terracotta-deep)] max-w-xs mx-auto font-medium">
             You have not preserved any masterpieces in your private wishlist yet.
           </p>
           <Link to="/shop" className="luxury-btn-gold px-6 py-2.5 text-xs inline-block cursor-pointer">
@@ -57,9 +57,9 @@ export default function AccountWishlist() {
           {products.map((product, index) => (
             <ScrollRevealItem key={product.id} index={index}>
             <div
-              className="bg-[var(--bg-secondary)] border border-[var(--border-card)] flex flex-col justify-between overflow-hidden group shadow-sm h-full"
+              className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 flex flex-col justify-between overflow-hidden group shadow-sm h-full"
             >
-              <div className="relative aspect-[4/5] bg-[var(--bg-primary)]">
+              <div className="relative aspect-[4/5] bg-[var(--color-desert-primary)]">
                 <img
                   src={product.images?.[0]}
                   alt={product.name}
@@ -67,7 +67,7 @@ export default function AccountWishlist() {
                 />
                 <button
                   onClick={() => removeFromWishlist(product.id)}
-                  className="absolute top-3 right-3 p-2 bg-black/60 text-[#EADED2] hover:text-rose-400 border border-[var(--border-gold-subtle)] backdrop-blur-sm cursor-pointer"
+                  className="absolute top-3 right-3 p-2 bg-[var(--color-desert-light)]/90 text-[var(--color-earth-dark)] hover:text-rose-600 border border-[var(--color-terracotta-deep)]/30 backdrop-blur-sm cursor-pointer"
                   aria-label="Remove from wishlist"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -76,17 +76,17 @@ export default function AccountWishlist() {
 
               <div className="p-4 space-y-3">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-[var(--gold-primary)] font-mono">
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--color-terracotta)] font-mono font-bold">
                     {product.fragranceFamily}
                   </span>
-                  <h4 className="font-cinzel text-base font-semibold text-[var(--text-primary)] line-clamp-1">
+                  <h4 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)] line-clamp-1">
                     {product.name}
                   </h4>
-                  <p className="font-arabic text-xs text-[var(--text-muted)]">{product.arabicName}</p>
+                  <p className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">{product.arabicName}</p>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)]">
-                  <span className="font-cinzel text-base font-bold text-[var(--gold-primary)]">
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--color-terracotta-deep)]/20">
+                  <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)]">
                     ${product.price}
                   </span>
                   <button

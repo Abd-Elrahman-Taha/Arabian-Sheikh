@@ -185,8 +185,8 @@ function MainRouter() {
       {/* Desert Background — scroll-linked color journey (z-[-1] behind everything) */}
       <DesertBackground />
 
-      {/* Global Ambient Stars Layer — fixed z-[2] so stars are visible above transparent sections */}
-      <BackgroundAtmosphere starCount={18} smokeIntensity={0.2} className="fixed inset-0 pointer-events-none z-[2]" />
+      {/* Global Ambient Stars Layer — fixed z-[15] so stars are visible and shine above backgrounds */}
+      <BackgroundAtmosphere starCount={30} smokeIntensity={0.1} className="fixed inset-0 pointer-events-none z-[15]" />
 
       {/* Standalone Cinematic Bakhoor Smoke Intro (unmounts automatically after intro) */}
       {showIntro && !isAdminRoute && (

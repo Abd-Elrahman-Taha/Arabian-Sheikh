@@ -29,23 +29,23 @@ export default function AccountOrders() {
   }, [user]);
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
       <ScrollReveal direction="up">
-        <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-3">
-          <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--text-primary)]">
+        <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-3">
+          <h2 className="font-cinzel text-xl font-bold uppercase text-[var(--color-earth-dark)]">
             {t('account.orders')}
           </h2>
-          <span className="text-xs text-[var(--text-muted)] font-mono">{orders.length} orders total</span>
+          <span className="text-xs text-[var(--color-terracotta-deep)] font-mono font-semibold">{orders.length} orders total</span>
         </div>
       </ScrollReveal>
 
       {loading ? (
-        <div className="text-center py-12 text-xs text-[var(--text-muted)]">Retrieving purchase archives...</div>
+        <div className="text-center py-12 text-xs text-[var(--color-terracotta-deep)] font-medium">Retrieving purchase archives...</div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-16 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
-          <ShoppingBag className="w-10 h-10 text-[var(--gold-primary)] mx-auto opacity-50" />
-          <h3 className="font-cinzel text-base text-[var(--text-primary)]">{t('account.noOrders')}</h3>
-          <p className="text-xs text-[var(--text-muted)] max-w-xs mx-auto">
+        <div className="text-center py-16 bg-[var(--color-desert-primary)]/20 border border-[var(--color-terracotta-deep)]/20 space-y-3">
+          <ShoppingBag className="w-10 h-10 text-[var(--color-terracotta)] mx-auto opacity-70" />
+          <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)]">{t('account.noOrders')}</h3>
+          <p className="text-xs text-[var(--color-terracotta-deep)] max-w-xs mx-auto font-medium">
             Your collection awaits its first masterpiece. Discover the royal flacon catalog.
           </p>
           <Link to="/shop" className="luxury-btn-gold px-6 py-2.5 text-xs inline-block cursor-pointer">
@@ -57,23 +57,23 @@ export default function AccountOrders() {
           {orders.map((order, index) => (
             <ScrollRevealItem key={order.id} index={index}>
             <div
-              className="p-5 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-4 shadow-sm"
+              className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-sm"
             >
               {/* Order Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-3 gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-3 gap-2">
                 <div>
-                  <span className="font-cinzel font-bold text-base text-[var(--text-primary)] block">
+                  <span className="font-cinzel font-bold text-base text-[var(--color-earth-dark)] block">
                     {order.id}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)]">
+                  <span className="text-xs text-[var(--color-terracotta-deep)] font-medium">
                     Placed on {new Date(order.date).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-gold-subtle)] text-[var(--gold-primary)] font-semibold">
+                  <span className="text-xs font-mono px-2.5 py-1 bg-[var(--color-desert-light)] border border-[var(--color-terracotta)]/40 text-[var(--color-terracotta)] font-bold">
                     {order.status}
                   </span>
-                  <span className="font-cinzel text-lg font-bold text-[var(--gold-primary)]">
+                  <span className="font-cinzel text-lg font-bold text-[var(--color-terracotta)]">
                     ${order.total}
                   </span>
                 </div>
@@ -82,25 +82,25 @@ export default function AccountOrders() {
               {/* Items Thumbnails */}
               <div className="flex flex-wrap gap-3">
                 {order.items?.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-[var(--bg-card)] border border-[var(--border-subtle)] p-2 pr-4">
+                  <div key={i} className="flex items-center gap-3 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/20 p-2 pr-4">
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-12 h-14 object-cover bg-[var(--bg-primary)] border border-[var(--border-subtle)]"
+                      className="w-12 h-14 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/30"
                     />
                     <div className="text-xs">
-                      <p className="font-cinzel font-semibold text-[var(--text-primary)]">{item.name}</p>
-                      <p className="text-[11px] text-[var(--text-muted)] font-mono">{item.size} • Qty: {item.quantity}</p>
+                      <p className="font-cinzel font-bold text-[var(--color-earth-dark)]">{item.name}</p>
+                      <p className="text-[11px] text-[var(--color-terracotta-deep)] font-mono font-medium">{item.size} • Qty: {item.quantity}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Action Links */}
-              <div className="flex flex-wrap items-center justify-between pt-2 border-t border-[var(--border-subtle)] gap-3 text-xs">
+              <div className="flex flex-wrap items-center justify-between pt-2 border-t border-[var(--color-terracotta-deep)]/20 gap-3 text-xs">
                 <Link
                   to={`/order-tracking/${order.id}`}
-                  className="text-[var(--gold-primary)] hover:underline flex items-center gap-1.5 font-cinzel"
+                  className="text-[var(--color-terracotta)] font-bold hover:underline flex items-center gap-1.5 font-cinzel"
                 >
                   <Truck className="w-4 h-4" />
                   <span>{t('confirmation.trackOrder')}</span>

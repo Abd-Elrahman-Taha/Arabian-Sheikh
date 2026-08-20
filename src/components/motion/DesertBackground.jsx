@@ -16,12 +16,12 @@ import React, { useEffect, useRef } from 'react';
 
 // 6 desert color stages mapped to scroll fraction [0..1]
 const STAGES = [
-  { at: 0.00, bg: '#EDD9AD', vignette: 'rgba(180,120,40,0.18)'  }, // midday
-  { at: 0.18, bg: '#E2C98E', vignette: 'rgba(160,100,30,0.22)'  }, // early afternoon
-  { at: 0.36, bg: '#D4B070', vignette: 'rgba(140,85,20,0.28)'   }, // golden hour
-  { at: 0.55, bg: '#B89050', vignette: 'rgba(100,55,10,0.35)'   }, // amber sunset
-  { at: 0.72, bg: '#8B6030', vignette: 'rgba(60,30,5,0.45)'     }, // Maghrib
-  { at: 1.00, bg: '#3E2310', vignette: 'rgba(20,8,2,0.60)'      }, // deep evening
+  { at: 0.00, bg: '#F8D188', vignette: 'rgba(93,29,1,0.04)'   }, // ☀️  Midday Desert (Light Sand)
+  { at: 0.20, bg: '#EBAA62', vignette: 'rgba(93,29,1,0.07)'   }, // 🌤️  Warm Afternoon (Main Desert Sand)
+  { at: 0.40, bg: '#D98F44', vignette: 'rgba(128,48,13,0.12)' }, // 🌇  Golden Hour
+  { at: 0.60, bg: '#B45625', vignette: 'rgba(93,29,1,0.16)'   }, // 🌅  Terracotta Sunset
+  { at: 0.80, bg: '#80300D', vignette: 'rgba(93,29,1,0.24)'   }, // 🌇  Maghrib (Deep Terracotta)
+  { at: 1.00, bg: '#5D1D01', vignette: 'rgba(93,29,1,0.38)'   }, // 🌃  Arabian Evening (Darkest Earth)
 ];
 
 function lerp(a, b, t) {
@@ -105,7 +105,7 @@ export default function DesertBackground() {
         position: 'fixed',
         inset: 0,
         zIndex: -1,
-        backgroundColor: '#EDD9AD', // initial midday sand
+        backgroundColor: '#EBAA62', // initial Warm Desert Sand (#EBAA62)
         transition: 'background-color 0.5s ease',
         pointerEvents: 'none',
       }}

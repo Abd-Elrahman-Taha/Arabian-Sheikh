@@ -52,13 +52,13 @@ export default function AdminInventory() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--text-primary)]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-4 gap-4">
+    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 gap-4">
         <div>
-          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--text-primary)]">
+          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--color-earth-dark)]">
             {t('admin.inventory')}
           </h1>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
             Warehouse stock monitoring, vintage batch limits, and real-time inventory adjustments.
           </p>
         </div>
@@ -73,10 +73,10 @@ export default function AdminInventory() {
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl overflow-x-auto">
+      <div className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 shadow-xl overflow-x-auto">
         <table className="w-full text-left text-xs font-sans">
           <thead>
-            <tr className="border-b border-[var(--border-subtle)] text-[var(--gold-primary)] uppercase font-cinzel">
+            <tr className="border-b border-[var(--color-terracotta-deep)]/20 text-[var(--color-terracotta)] uppercase font-cinzel font-bold">
               <th className="py-3 px-4">Flacon Formulation</th>
               <th className="py-3 px-4">SKU / Code</th>
               <th className="py-3 px-4">Family</th>
@@ -85,10 +85,10 @@ export default function AdminInventory() {
               <th className="py-3 px-4 text-right">Commit Stock</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
+          <tbody className="divide-y divide-[var(--color-terracotta-deep)]/15 text-[var(--color-earth-dark)]">
             {loading ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-[var(--text-muted)]">
+                <td colSpan={6} className="py-8 text-center text-[var(--color-terracotta-deep)] font-medium">
                   Inspecting warehouse reserves...
                 </td>
               </tr>
@@ -99,45 +99,45 @@ export default function AdminInventory() {
                 const isOut = currentVal === 0;
 
                 return (
-                  <tr key={p.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                  <tr key={p.id} className="hover:bg-[var(--color-desert-primary)]/20 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <img
                           src={p.images?.[0]}
                           alt={p.name}
-                          className="w-10 h-12 object-cover bg-[var(--bg-primary)] shrink-0 border border-[var(--border-subtle)]"
+                          className="w-10 h-12 object-cover bg-[var(--color-desert-primary)] shrink-0 border border-[var(--color-terracotta-deep)]/30"
                         />
                         <div>
-                          <span className="font-cinzel font-bold text-sm text-[var(--text-primary)] block">
+                          <span className="font-cinzel font-bold text-sm text-[var(--color-earth-dark)] block">
                             {p.name}
                           </span>
-                          <span className="font-arabic text-xs text-[var(--text-muted)]">
+                          <span className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">
                             {p.arabicName}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 font-mono text-[var(--text-muted)]">
+                    <td className="py-3 px-4 font-mono text-[var(--color-terracotta-deep)] font-medium">
                       ARB-{p.id.slice(-6).toUpperCase()}
                     </td>
 
-                    <td className="py-3 px-4 text-[var(--gold-primary)] font-medium">
+                    <td className="py-3 px-4 text-[var(--color-terracotta)] font-bold">
                       {p.fragranceFamily}
                     </td>
 
                     <td className="py-3 px-4">
                       {isOut ? (
-                        <span className="px-2 py-0.5 text-[10px] uppercase font-mono bg-rose-500/20 border border-rose-500/30 text-rose-500 font-semibold">
+                        <span className="px-2 py-0.5 text-[10px] uppercase font-mono bg-rose-500/20 border border-rose-500/30 text-rose-600 font-bold">
                           Out of Stock
                         </span>
                       ) : isLow ? (
-                        <span className="px-2 py-0.5 text-[10px] uppercase font-mono bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-300 flex items-center gap-1 w-fit font-semibold">
+                        <span className="px-2 py-0.5 text-[10px] uppercase font-mono bg-amber-500/20 border border-amber-500/30 text-amber-700 flex items-center gap-1 w-fit font-bold">
                           <AlertTriangle className="w-3 h-3" />
                           <span>Low Reserve</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 text-[10px] uppercase font-mono bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 font-semibold">
+                        <span className="px-2 py-0.5 text-[10px] uppercase font-mono bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 font-bold">
                           Optimal Stock ({currentVal})
                         </span>
                       )}
@@ -147,7 +147,7 @@ export default function AdminInventory() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleStockChange(p.id, -1)}
-                          className="p-1 bg-[var(--bg-secondary)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--gold-primary)] cursor-pointer"
+                          className="p-1 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -158,11 +158,11 @@ export default function AdminInventory() {
                             const val = parseInt(e.target.value) || 0;
                             setStockMap(prev => ({ ...prev, [p.id]: Math.max(0, val) }));
                           }}
-                          className="w-16 bg-[var(--bg-secondary)] border border-[var(--border-card)] text-center py-1 text-xs font-mono text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none"
+                          className="w-16 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 text-center py-1 text-xs font-mono text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none font-bold"
                         />
                         <button
                           onClick={() => handleStockChange(p.id, 1)}
-                          className="p-1 bg-[var(--bg-secondary)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--gold-primary)] cursor-pointer"
+                          className="p-1 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -172,7 +172,7 @@ export default function AdminInventory() {
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => handleSaveStock(p.id)}
-                        className="luxury-btn-gold px-3 py-1.5 text-xs inline-flex items-center gap-1 cursor-pointer shadow-sm"
+                        className="luxury-btn-gold px-3 py-1.5 text-xs inline-flex items-center gap-1 cursor-pointer shadow-sm font-bold"
                       >
                         <Save className="w-3 h-3" />
                         <span>Save</span>

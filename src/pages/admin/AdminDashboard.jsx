@@ -54,14 +54,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-8 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 gap-4">
         <div>
-          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--text-primary)]">
+          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--color-earth-dark)]">
             {t('admin.dashboard')}
           </h1>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
             Real-time revenue, olfactory vault logistics, and patron metrics.
           </p>
         </div>
@@ -87,82 +87,82 @@ export default function AdminDashboard() {
       <ScrollReveal direction="up">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Revenue */}
-        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--gold-primary)]">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel font-semibold">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
+            <span className="text-[11px] uppercase tracking-wider font-cinzel font-bold">
               {t('admin.totalRevenue')}
             </span>
             <DollarSign className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--text-primary)]">
+          <p className="font-cinzel text-2xl font-bold text-[var(--color-earth-dark)]">
             $<AnimatedCounter end={metrics.totalRevenue} />
           </p>
-          <span className="text-[10px] text-emerald-500 font-mono flex items-center gap-1 font-semibold">
+          <span className="text-[10px] text-emerald-600 font-mono flex items-center gap-1 font-bold">
             <TrendingUp className="w-3 h-3" />
             <span>+18.4% vs last month</span>
           </span>
         </div>
 
         {/* Orders */}
-        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--gold-primary)]">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel font-semibold">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
+            <span className="text-[11px] uppercase tracking-wider font-cinzel font-bold">
               {t('admin.totalOrders')}
             </span>
             <ShoppingBag className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--text-primary)]">
+          <p className="font-cinzel text-2xl font-bold text-[var(--color-earth-dark)]">
             <AnimatedCounter end={metrics.totalOrders} />
           </p>
-          <span className="text-[10px] text-[var(--text-muted)] font-mono">
+          <span className="text-[10px] text-[var(--color-terracotta-deep)] font-mono font-medium">
             {metrics.recentOrders.length} processed today
           </span>
         </div>
 
         {/* Customers */}
-        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--gold-primary)]">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel font-semibold">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
+            <span className="text-[11px] uppercase tracking-wider font-cinzel font-bold">
               {t('admin.totalCustomers')}
             </span>
             <Users className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--text-primary)]">
+          <p className="font-cinzel text-2xl font-bold text-[var(--color-earth-dark)]">
             <AnimatedCounter end={metrics.totalCustomers} />
           </p>
-          <span className="text-[10px] text-[var(--gold-light)] font-mono font-semibold">
+          <span className="text-[10px] text-[var(--color-terracotta)] font-mono font-bold">
             Royal VIP Patrons
           </span>
         </div>
 
         {/* Active Products */}
-        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-sm">
-          <div className="flex justify-between items-center text-[var(--gold-primary)]">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel font-semibold">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 shadow-sm">
+          <div className="flex justify-between items-center text-[var(--color-terracotta)]">
+            <span className="text-[11px] uppercase tracking-wider font-cinzel font-bold">
               Flacon Formulations
             </span>
             <Package className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-[var(--text-primary)]">
+          <p className="font-cinzel text-2xl font-bold text-[var(--color-earth-dark)]">
             <AnimatedCounter end={metrics.totalProducts} />
           </p>
-          <span className="text-[10px] text-[var(--text-muted)] font-mono">
+          <span className="text-[10px] text-[var(--color-terracotta-deep)] font-mono font-medium">
             Across 5 Fragrance Families
           </span>
         </div>
 
         {/* Low Stock Alerts */}
-        <div className="p-5 bg-[var(--bg-card)] border border-rose-500/30 space-y-2 shadow-sm">
-          <div className="flex justify-between items-center text-rose-500">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel font-semibold">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-rose-500/40 space-y-2 shadow-sm">
+          <div className="flex justify-between items-center text-rose-600 font-bold">
+            <span className="text-[11px] uppercase tracking-wider font-cinzel font-bold">
               {t('admin.lowStockAlerts')}
             </span>
             <AlertTriangle className="w-4 h-4" />
           </div>
-          <p className="font-cinzel text-2xl font-bold text-rose-500">
+          <p className="font-cinzel text-2xl font-bold text-rose-600">
             <AnimatedCounter end={metrics.lowStockCount} />
           </p>
-          <Link to="/admin/inventory" className="text-[10px] text-[var(--gold-primary)] hover:underline font-mono block cursor-pointer">
+          <Link to="/admin/inventory" className="text-[10px] text-[var(--color-terracotta)] font-bold hover:underline font-mono block cursor-pointer">
             Inspect inventory →
           </Link>
         </div>
@@ -173,12 +173,12 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Monthly Revenue Bar Chart */}
         <ScrollReveal direction="left" className="lg:col-span-8">
-        <div className="p-6 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-xl">
-          <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-2">
-            <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--gold-primary)]">
+        <div className="p-6 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-xl">
+          <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-2">
+            <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--color-terracotta)]">
               Revenue Growth Trajectory (USD)
             </h3>
-            <span className="text-[11px] text-[var(--text-muted)] font-mono">Simulated 6-Month Velocity</span>
+            <span className="text-[11px] text-[var(--color-terracotta-deep)] font-mono font-medium">Simulated 6-Month Velocity</span>
           </div>
 
           <div className="h-56 flex items-end justify-between gap-3 pt-6 px-2">
@@ -186,16 +186,16 @@ export default function AdminDashboard() {
               const heightPercent = Math.min(100, Math.round((m.revenue / 60000) * 100));
               return (
                 <div key={m.month} className="flex-1 flex flex-col items-center gap-2 group">
-                  <span className="text-[10px] font-mono text-[var(--gold-primary)] opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
+                  <span className="text-[10px] font-mono text-[var(--color-terracotta)] opacity-0 group-hover:opacity-100 transition-opacity font-bold">
                     ${(m.revenue / 1000).toFixed(1)}k
                   </span>
-                  <div className="w-full bg-[var(--bg-secondary)] h-40 flex items-end">
+                  <div className="w-full bg-[var(--color-desert-light)]/60 h-40 flex items-end border border-[var(--color-terracotta-deep)]/10">
                     <div
-                      className="w-full bg-gold-gradient transition-all duration-700 hover:brightness-110"
+                      className="w-full bg-gradient-to-t from-[var(--color-terracotta-deep)] to-[var(--color-terracotta)] transition-all duration-700 hover:brightness-110"
                       style={{ height: `${heightPercent}%` }}
                     />
                   </div>
-                  <span className="text-xs font-mono text-[var(--text-muted)]">{m.month}</span>
+                  <span className="text-xs font-mono text-[var(--color-terracotta-deep)] font-medium">{m.month}</span>
                 </div>
               );
             })}
@@ -204,20 +204,20 @@ export default function AdminDashboard() {
         </ScrollReveal>
 
         {/* Fragrance Family Composition */}
-        <div className="lg:col-span-4 p-6 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-xl">
-          <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--gold-primary)] border-b border-[var(--border-subtle)] pb-2">
+        <div className="lg:col-span-4 p-6 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-xl">
+          <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--color-terracotta)] border-b border-[var(--color-terracotta-deep)]/20 pb-2">
             Olfactory Family Allocation
           </h3>
           <div className="space-y-3 pt-2 text-xs font-sans">
             {metrics.familyDistribution.map((fam) => (
               <div key={fam.name} className="space-y-1">
-                <div className="flex justify-between text-[var(--text-primary)]">
+                <div className="flex justify-between text-[var(--color-earth-dark)] font-medium">
                   <span>{fam.name}</span>
-                  <span className="font-mono text-[var(--gold-primary)] font-semibold">{fam.count} flacons ({fam.percentage}%)</span>
+                  <span className="font-mono text-[var(--color-terracotta)] font-bold">{fam.count} flacons ({fam.percentage}%)</span>
                 </div>
-                <div className="w-full h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-[var(--color-desert-light)]/60 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gold-gradient"
+                    className="h-full bg-gradient-to-r from-[var(--color-terracotta)] to-[var(--color-terracotta-deep)]"
                     style={{ width: `${fam.percentage}%` }}
                   />
                 </div>
@@ -229,12 +229,12 @@ export default function AdminDashboard() {
 
       {/* Recent Orders Table */}
       <ScrollReveal direction="right">
-      <div className="p-6 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-xl">
-        <div className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-2">
-          <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--text-primary)]">
+      <div className="p-6 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-4 shadow-xl">
+        <div className="flex justify-between items-center border-b border-[var(--color-terracotta-deep)]/20 pb-2">
+          <h3 className="font-cinzel text-sm font-bold uppercase text-[var(--color-earth-dark)]">
             {t('admin.recentOrders')}
           </h3>
-          <Link to="/admin/orders" className="text-xs text-[var(--gold-primary)] hover:underline flex items-center gap-1 cursor-pointer">
+          <Link to="/admin/orders" className="text-xs text-[var(--color-terracotta)] font-bold hover:underline flex items-center gap-1 cursor-pointer">
             <span>Manage All Orders</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-sans">
             <thead>
-              <tr className="border-b border-[var(--border-subtle)] text-[var(--gold-primary)] uppercase font-cinzel">
+              <tr className="border-b border-[var(--color-terracotta-deep)]/20 text-[var(--color-terracotta)] uppercase font-cinzel font-bold">
                 <th className="py-2.5 px-3">Order ID</th>
                 <th className="py-2.5 px-3">Patron</th>
                 <th className="py-2.5 px-3">Date</th>
@@ -252,15 +252,15 @@ export default function AdminDashboard() {
                 <th className="py-2.5 px-3 text-right">Quick Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
+            <tbody className="divide-y divide-[var(--color-terracotta-deep)]/15 text-[var(--color-earth-dark)]">
               {metrics.recentOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
-                  <td className="py-3 px-3 font-cinzel font-bold text-[var(--gold-primary)]">{order.id}</td>
-                  <td className="py-3 px-3">{order.customerName}</td>
-                  <td className="py-3 px-3 font-mono text-[var(--text-muted)]">{new Date(order.date).toLocaleDateString()}</td>
-                  <td className="py-3 px-3 font-mono font-bold">${order.total}</td>
+                <tr key={order.id} className="hover:bg-[var(--color-desert-primary)]/20 transition-colors">
+                  <td className="py-3 px-3 font-cinzel font-bold text-[var(--color-terracotta)]">{order.id}</td>
+                  <td className="py-3 px-3 font-medium">{order.customerName}</td>
+                  <td className="py-3 px-3 font-mono text-[var(--color-terracotta-deep)] font-medium">{new Date(order.date).toLocaleDateString()}</td>
+                  <td className="py-3 px-3 font-mono font-bold text-[var(--color-terracotta)]">${order.total}</td>
                   <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-[var(--bg-secondary)] border border-[var(--border-gold-subtle)] text-[var(--gold-primary)] font-semibold">
+                    <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-[var(--color-desert-light)] border border-[var(--color-terracotta)]/40 text-[var(--color-terracotta)] font-bold">
                       {order.status}
                     </span>
                   </td>
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
                     <select
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="bg-[var(--bg-secondary)] border border-[var(--border-card)] px-2 py-1 text-[11px] text-[var(--text-primary)] focus:border-[var(--gold-primary)] focus:outline-none cursor-pointer"
+                      className="bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 px-2 py-1 text-[11px] text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none cursor-pointer font-medium"
                     >
                       <option value="PENDING">Pending</option>
                       <option value="CONFIRMED">Confirmed</option>

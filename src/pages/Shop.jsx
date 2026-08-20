@@ -84,14 +84,14 @@ export default function Shop() {
 
   const filterSidebarContent = (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-        <h3 className="font-cinzel text-sm font-bold uppercase tracking-widest text-[var(--text-primary)]">
+      <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-3">
+        <h3 className="font-cinzel text-sm font-bold uppercase tracking-widest text-[var(--color-earth-dark)]">
           {t('shop.filterBy')}
         </h3>
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
-            className="text-[11px] text-[var(--gold-primary)] hover:underline flex items-center gap-1 font-sans cursor-pointer"
+            className="text-[11px] text-[var(--color-terracotta)] hover:underline flex items-center gap-1 font-sans cursor-pointer font-bold"
           >
             <RotateCcw className="w-3 h-3" />
             <span>{t('shop.resetFilters')}</span>
@@ -101,18 +101,18 @@ export default function Shop() {
 
       {/* Gender Filter */}
       <div className="space-y-2">
-        <h4 className="font-cinzel text-xs uppercase tracking-wider text-[var(--gold-primary)]">
+        <h4 className="font-cinzel text-xs uppercase tracking-wider text-[var(--color-terracotta)] font-bold">
           {t('shop.gender')}
         </h4>
-        <div className="space-y-1.5 text-xs text-[var(--text-secondary)]">
+        <div className="space-y-1.5 text-xs text-[var(--color-terracotta-deep)] font-medium">
           {['all', 'men', 'women', 'unisex'].map((g) => (
-            <label key={g} className="flex items-center gap-2 cursor-pointer hover:text-[var(--text-primary)]">
+            <label key={g} className="flex items-center gap-2 cursor-pointer hover:text-[var(--color-earth-dark)]">
               <input
                 type="radio"
                 name="gender"
                 checked={gender === g}
                 onChange={() => setGender(g)}
-                className="accent-[#D2A55F]"
+                className="accent-[#B45625]"
               />
               <span className="capitalize">{g === 'all' ? t('shop.allGenders') : g}</span>
             </label>
@@ -121,11 +121,11 @@ export default function Shop() {
       </div>
 
       {/* Fragrance Families */}
-      <div className="space-y-2 pt-4 border-t border-[var(--border-subtle)]">
-        <h4 className="font-cinzel text-xs uppercase tracking-wider text-[var(--gold-primary)]">
+      <div className="space-y-2 pt-4 border-t border-[var(--color-terracotta-deep)]/20">
+        <h4 className="font-cinzel text-xs uppercase tracking-wider text-[var(--color-terracotta)] font-bold">
           {t('shop.family')}
         </h4>
-        <div className="space-y-1.5 text-xs text-[var(--text-secondary)]">
+        <div className="space-y-1.5 text-xs text-[var(--color-terracotta-deep)] font-medium">
           {[
             { id: 'all', label: t('shop.allFamilies') },
             { id: 'woody', label: `${t('families.woody')} (Oud)` },
@@ -134,13 +134,13 @@ export default function Shop() {
             { id: 'fresh', label: t('families.fresh') },
             { id: 'fruity', label: t('families.fruity') }
           ].map((f) => (
-            <label key={f.id} className="flex items-center gap-2 cursor-pointer hover:text-[var(--text-primary)]">
+            <label key={f.id} className="flex items-center gap-2 cursor-pointer hover:text-[var(--color-earth-dark)]">
               <input
                 type="radio"
                 name="family"
                 checked={family === f.id}
                 onChange={() => setFamily(f.id)}
-                className="accent-[#D2A55F]"
+                className="accent-[#B45625]"
               />
               <span>{f.label}</span>
             </label>
@@ -149,12 +149,12 @@ export default function Shop() {
       </div>
 
       {/* Price Range */}
-      <div className="space-y-3 pt-4 border-t border-[var(--border-subtle)]">
+      <div className="space-y-3 pt-4 border-t border-[var(--color-terracotta-deep)]/20">
         <div className="flex justify-between text-xs">
-          <span className="font-cinzel text-[var(--gold-primary)] uppercase tracking-wider">
+          <span className="font-cinzel text-[var(--color-terracotta)] font-bold uppercase tracking-wider">
             {t('shop.priceRange')}
           </span>
-          <span className="font-mono text-[var(--text-primary)] font-semibold">${maxPrice}</span>
+          <span className="font-mono text-[var(--color-earth-dark)] font-bold">${maxPrice}</span>
         </div>
         <input
           type="range"
@@ -163,22 +163,22 @@ export default function Shop() {
           step="10"
           value={maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-[#D2A55F] cursor-pointer"
+          className="w-full accent-[#B45625] cursor-pointer"
         />
-        <div className="flex justify-between text-[11px] text-[var(--text-muted)] font-mono">
+        <div className="flex justify-between text-[11px] text-[var(--color-terracotta-deep)] font-mono">
           <span>$250</span>
           <span>$500</span>
         </div>
       </div>
 
       {/* In Stock Only */}
-      <div className="pt-4 border-t border-[var(--border-subtle)]">
-        <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)]">
+      <div className="pt-4 border-t border-[var(--color-terracotta-deep)]/20">
+        <label className="flex items-center gap-2 text-xs text-[var(--color-terracotta-deep)] font-medium cursor-pointer hover:text-[var(--color-earth-dark)]">
           <input
             type="checkbox"
             checked={inStockOnly}
             onChange={(e) => setInStockOnly(e.target.checked)}
-            className="accent-[#D2A55F]"
+            className="accent-[#B45625]"
           />
           <span>{t('shop.inStockOnly')}</span>
         </label>
@@ -191,13 +191,13 @@ export default function Shop() {
       {/* Page Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--gold-light)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] font-bold">
+          <span className="font-cinzel text-xs uppercase tracking-[0.35em] text-[var(--color-terracotta)] font-bold">
             Haute Parfumerie Flacons
           </span>
-          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] uppercase tracking-wider">
+          <h1 className="font-cinzel text-3xl sm:text-5xl font-bold text-[var(--color-earth-dark)] uppercase tracking-wider">
             {t('shop.title')}
           </h1>
-          <p className="text-xs sm:text-sm text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)] font-sans max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm text-[var(--color-terracotta-deep)] font-sans max-w-2xl mx-auto font-medium">
             {t('shop.subtitle')}
           </p>
         </div>
@@ -210,7 +210,7 @@ export default function Shop() {
 
       {/* Control Bar */}
       <ScrollReveal direction="up" delay={0.1}>
-      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+      <div className="bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
         {/* Search Input */}
         <div className="relative w-full md:w-80">
           <input
@@ -218,13 +218,13 @@ export default function Shop() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search fragrance or ingredient..."
-            className="w-full bg-[var(--bg-secondary)] border border-[var(--border-gold-subtle)] pl-9 pr-8 py-2.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)]/60 focus:border-[var(--gold-primary)] focus:outline-none transition-colors"
+            className="w-full bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 pl-9 pr-8 py-2.5 text-xs text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/60 focus:border-[var(--color-terracotta)] focus:outline-none transition-colors"
           />
-          <Search className="w-4 h-4 text-[var(--gold-primary)] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--color-terracotta)] absolute left-3 top-1/2 -translate-y-1/2" />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -236,20 +236,20 @@ export default function Shop() {
           {/* Mobile Filter Toggle */}
           <button
             onClick={() => setMobileFilterOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-3 py-2 border border-[var(--border-gold-subtle)] text-xs font-cinzel text-[var(--text-primary)] hover:text-[var(--gold-primary)] bg-[var(--bg-secondary)] cursor-pointer transition-colors"
+            className="lg:hidden flex items-center gap-2 px-3 py-2 border border-[var(--color-terracotta-deep)]/25 text-xs font-cinzel text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] bg-[var(--color-desert-primary)]/40 cursor-pointer transition-colors"
           >
-            <SlidersHorizontal className="w-4 h-4 text-[var(--gold-primary)]" />
+            <SlidersHorizontal className="w-4 h-4 text-[var(--color-terracotta)]" />
             <span>{t('shop.filterBy')}</span>
-            {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-[#D2A55F]" />}
+            {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-[var(--color-terracotta)]" />}
           </button>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-[var(--text-muted)] font-cinzel uppercase hidden sm:inline">{t('shop.sortBy')}:</span>
+            <span className="text-[var(--color-terracotta-deep)] font-cinzel uppercase hidden sm:inline font-semibold">{t('shop.sortBy')}:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-[var(--bg-secondary)] border border-[var(--border-gold-subtle)] px-3 py-2 text-xs text-[var(--text-primary)] font-sans focus:border-[var(--gold-primary)] focus:outline-none cursor-pointer"
+              className="bg-[var(--color-desert-primary)]/40 border border-[var(--color-terracotta-deep)]/25 px-3 py-2 text-xs text-[var(--color-earth-dark)] font-sans focus:border-[var(--color-terracotta)] focus:outline-none cursor-pointer"
             >
               <option value="featured">{t('shop.featured')}</option>
               <option value="rating">{t('shop.ratingHighLow')}</option>
@@ -260,11 +260,11 @@ export default function Shop() {
           </div>
 
           {/* View Mode Toggles */}
-          <div className="hidden sm:flex items-center border border-[var(--border-gold-subtle)] bg-[var(--bg-secondary)]">
+          <div className="hidden sm:flex items-center border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-primary)]/40">
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 transition-colors cursor-pointer ${
-                viewMode === 'grid' ? 'bg-[#D2A55F] text-[#130C05]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                viewMode === 'grid' ? 'bg-[var(--color-terracotta)] text-[#F8D188]' : 'text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)]'
               }`}
               aria-label="Grid View"
             >
@@ -273,7 +273,7 @@ export default function Shop() {
             <button
               onClick={() => setViewMode('list')}
               className={`p-2 transition-colors cursor-pointer ${
-                viewMode === 'list' ? 'bg-[#D2A55F] text-[#130C05]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                viewMode === 'list' ? 'bg-[var(--color-terracotta)] text-[#F8D188]' : 'text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)]'
               }`}
               aria-label="List View"
             >
@@ -288,7 +288,7 @@ export default function Shop() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Desktop Filter Sidebar */}
         <ScrollReveal direction="left">
-          <div className="hidden lg:block bg-[var(--bg-card)] border border-[var(--border-card)] p-6 self-start shadow-sm">
+          <div className="hidden lg:block bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-6 self-start shadow-sm">
             {filterSidebarContent}
           </div>
         </ScrollReveal>
@@ -296,12 +296,12 @@ export default function Shop() {
         {/* Product Grid / List */}
         <div className="lg:col-span-3 space-y-6">
           <ScrollReveal direction="up">
-            <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+            <div className="flex items-center justify-between text-xs text-[var(--color-terracotta-deep)] font-medium">
               <span>{t('shop.showingResults', { count: products.length })}</span>
               {hasActiveFilters && (
                 <button
                   onClick={resetFilters}
-                  className="text-[var(--gold-primary)] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[var(--color-terracotta)] hover:underline flex items-center gap-1 cursor-pointer font-bold"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Clear all filters
@@ -316,12 +316,12 @@ export default function Shop() {
             </div>
           ) : products.length === 0 ? (
             <ScrollReveal direction="up">
-              <div className="text-center py-20 bg-[var(--bg-card)] border border-[var(--border-card)] p-8 space-y-4 shadow-sm">
-                <Sparkles className="w-10 h-10 text-[var(--gold-primary)] mx-auto opacity-40" />
-                <h3 className="font-cinzel text-lg font-bold text-[var(--text-primary)]">
+              <div className="text-center py-20 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-8 space-y-4 shadow-sm">
+                <Sparkles className="w-10 h-10 text-[var(--color-terracotta)] mx-auto opacity-50" />
+                <h3 className="font-cinzel text-lg font-bold text-[var(--color-earth-dark)]">
                   {t('shop.noProductsFound')}
                 </h3>
-                <p className="text-xs text-[var(--text-muted)] max-w-sm mx-auto">
+                <p className="text-xs text-[var(--color-terracotta-deep)] max-w-sm mx-auto font-medium">
                   No bespoke creations matched your refined criteria. Try resetting the filters.
                 </p>
                 <button
@@ -355,14 +355,14 @@ export default function Shop() {
       {/* Mobile Bottom Sheet Filter */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm lg:hidden flex flex-col justify-end animate-fade-in">
-          <div className="bg-[var(--bg-card)] border-t border-[var(--border-gold)] max-h-[85vh] overflow-y-auto p-6 space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--text-primary)]">
+          <div className="bg-[var(--color-desert-light)] border-t border-[var(--color-terracotta)] max-h-[85vh] overflow-y-auto p-6 space-y-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-3">
+              <h3 className="font-cinzel text-base font-bold uppercase text-[var(--color-earth-dark)]">
                 {t('shop.filterBy')}
               </h3>
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="p-1 text-[var(--text-muted)] hover:text-[var(--gold-primary)] cursor-pointer"
+                className="p-1 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -370,7 +370,7 @@ export default function Shop() {
 
             {filterSidebarContent}
 
-            <div className="flex gap-3 pt-4 border-t border-[var(--border-subtle)]">
+            <div className="flex gap-3 pt-4 border-t border-[var(--color-terracotta-deep)]/20">
               <button
                 onClick={resetFilters}
                 className="flex-1 py-3 luxury-btn-outline text-xs text-center cursor-pointer"

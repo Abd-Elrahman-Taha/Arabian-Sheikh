@@ -3,15 +3,16 @@ import React, { useRef, useEffect } from 'react';
 /**
  * BackgroundAtmosphere Component
  * 
- * Sits BEHIND all content (z-0 / pointer-events-none).
+ * Sits in the atmosphere (pointer-events-none).
  * Features:
- * - Subtle, delicate twinkling celestial stars (light, not too many)
- * - Soft diffuse ethereal smoke/mist curling slowly in the background
+ * - Radiant, luminous twinkling celestial stars with diamond sparkle rays and glowing halos
+ * - Warm golden (#FFE082, #F8D188) and crystalline diamond white (#FFFDF5) stars with dynamic shine pulses
+ * - Soft diffuse ethereal desert smoke/mist curling slowly in the background
  * - 60fps performance with auto-pause when off-screen
  */
 export default function BackgroundAtmosphere({
-  starCount = 28,
-  smokeIntensity = 0.5,
+  starCount = 30,
+  smokeIntensity = 0.1,
   className = ''
 }) {
   const canvasRef = useRef(null);
@@ -39,7 +40,14 @@ export default function BackgroundAtmosphere({
 
     window.addEventListener('resize', handleResize);
 
-    // Star Class
+    const STAR_PALETTES = [
+      { core: '#FFFFFF', glow: 'rgba(255, 230, 150, 0.95)', ray: 'rgba(255, 245, 220, 0.9)' },
+      { core: '#FFF8E7', glow: 'rgba(248, 209, 136, 0.95)', ray: 'rgba(248, 209, 136, 0.85)' },
+      { core: '#FFE8A3', glow: 'rgba(235, 170, 98, 0.9)',  ray: 'rgba(255, 215, 130, 0.85)' },
+      { core: '#FFFDF0', glow: 'rgba(180, 86, 37, 0.85)',  ray: 'rgba(255, 235, 180, 0.8)' },
+    ];
+
+    // Star Class with dynamic shine, rotation, and lens-flare rays
     class Star {
       constructor() {
         this.reset(true);
@@ -48,48 +56,88 @@ export default function BackgroundAtmosphere({
       reset(randomize = false) {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.size = Math.random() * 1.5 + 0.6;
-        this.baseAlpha = Math.random() * 0.4 + 0.2;
-        this.twinkleSpeed = Math.random() * 0.02 + 0.008;
+        this.size = Math.random() * 2.2 + 0.9;
+        this.baseAlpha = Math.random() * 0.45 + 0.45; // Higher visibility
+        this.twinkleSpeed = Math.random() * 0.035 + 0.015;
         this.twinkleVal = randomize ? Math.random() * Math.PI * 2 : 0;
-        this.vx = (Math.random() - 0.5) * 0.15;
-        this.vy = -(Math.random() * 0.15 + 0.05);
+        this.vx = (Math.random() - 0.5) * 0.12;
+        this.vy = -(Math.random() * 0.12 + 0.04);
+        this.palette = STAR_PALETTES[Math.floor(Math.random() * STAR_PALETTES.length)];
+        this.hasRays = Math.random() > 0.45; // 55% of stars have sparkling diffraction rays
+        this.rayLength = this.size * (Math.random() * 3.5 + 3.0);
+        this.rotation = Math.random() * Math.PI;
+        this.rotSpeed = (Math.random() - 0.5) * 0.008;
       }
 
       update() {
         this.x += this.vx;
         this.y += this.vy;
         this.twinkleVal += this.twinkleSpeed;
+        this.rotation += this.rotSpeed;
 
-        if (this.y < -10) this.y = height + 10;
-        if (this.x < -10) this.x = width + 10;
-        if (this.x > width + 10) this.x = -10;
+        if (this.y < -15) this.y = height + 15;
+        if (this.x < -15) this.x = width + 15;
+        if (this.x > width + 15) this.x = -15;
       }
 
       draw(context) {
-        const currentAlpha = this.baseAlpha + Math.sin(this.twinkleVal) * 0.3;
-        const alpha = Math.max(0.05, Math.min(0.85, currentAlpha));
+        // Dynamic shine intensity with exponential peak for radiant twinkling
+        const sinVal = (Math.sin(this.twinkleVal) + 1) / 2; // 0..1
+        const shineFactor = Math.pow(sinVal, 1.8);
+        const alpha = Math.max(0.2, Math.min(1.0, this.baseAlpha * 0.6 + shineFactor * 0.55));
+        const currentSize = this.size * (0.8 + shineFactor * 0.5);
 
         context.save();
+        context.translate(this.x, this.y);
+
+        // 1. Radiant Outer Glow Halo
+        const glowRadius = currentSize * 4.5;
+        const radialGrad = context.createRadialGradient(0, 0, 0, 0, 0, glowRadius);
+        radialGrad.addColorStop(0, this.palette.glow);
+        radialGrad.addColorStop(0.4, `rgba(235, 170, 98, ${alpha * 0.4})`);
+        radialGrad.addColorStop(1, 'rgba(93, 29, 1, 0)');
+        context.fillStyle = radialGrad;
         context.beginPath();
-        context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        context.fillStyle = `rgba(245, 230, 195, ${alpha})`;
-        context.shadowBlur = this.size * 5;
-        context.shadowColor = 'rgba(210, 165, 95, 0.6)';
+        context.arc(0, 0, glowRadius, 0, Math.PI * 2);
         context.fill();
 
-        // Delicate 4-point sparkle for prominent stars
-        if (this.size > 1.4 && alpha > 0.4) {
-          const ray = this.size * 3;
-          context.strokeStyle = `rgba(255, 248, 230, ${alpha * 0.5})`;
-          context.lineWidth = 0.6;
+        // 2. Shining Diamond Sparkle Rays (4-point or 8-point lens flare)
+        if (this.hasRays && alpha > 0.35) {
+          context.rotate(this.rotation);
+          const rayLen = this.rayLength * (0.7 + shineFactor * 0.6);
+          const rayAlpha = alpha * 0.85;
+
+          // Main vertical & horizontal diamond rays
+          context.strokeStyle = this.palette.ray.replace(/[\d.]+\)$/, `${rayAlpha})`);
+          context.lineWidth = Math.max(0.8, currentSize * 0.45);
+          
           context.beginPath();
-          context.moveTo(this.x - ray, this.y);
-          context.lineTo(this.x + ray, this.y);
-          context.moveTo(this.x, this.y - ray);
-          context.lineTo(this.x, this.y + ray);
+          context.moveTo(-rayLen, 0);
+          context.lineTo(rayLen, 0);
+          context.moveTo(0, -rayLen);
+          context.lineTo(0, rayLen);
           context.stroke();
+
+          // Diagonal micro-spikes for extra brilliance
+          if (this.size > 1.8) {
+            const diagLen = rayLen * 0.55;
+            context.beginPath();
+            context.moveTo(-diagLen, -diagLen);
+            context.lineTo(diagLen, diagLen);
+            context.moveTo(diagLen, -diagLen);
+            context.lineTo(-diagLen, diagLen);
+            context.stroke();
+          }
         }
+
+        // 3. Crisp Brilliant Star Core
+        context.beginPath();
+        context.arc(0, 0, Math.max(0.8, currentSize * 0.8), 0, Math.PI * 2);
+        context.fillStyle = this.palette.core;
+        context.shadowBlur = currentSize * 8;
+        context.shadowColor = this.palette.glow;
+        context.fill();
+
         context.restore();
       }
     }
@@ -103,19 +151,19 @@ export default function BackgroundAtmosphere({
       reset(randomize = false) {
         this.x = Math.random() * width;
         this.y = randomize ? Math.random() * height : height + 60;
-        this.radius = Math.random() * 80 + 60;
+        this.radius = Math.random() * 90 + 60;
         this.growth = Math.random() * 0.2 + 0.1;
-        this.vx = (Math.random() - 0.5) * 0.3;
-        this.vy = -(Math.random() * 0.4 + 0.25);
+        this.vx = (Math.random() - 0.5) * 0.25;
+        this.vy = -(Math.random() * 0.35 + 0.2);
         this.maxLife = Math.random() * 260 + 200;
         this.life = randomize ? Math.random() * this.maxLife : 0;
         this.angle = Math.random() * Math.PI * 2;
-        this.angularSpeed = (Math.random() - 0.5) * 0.005;
+        this.angularSpeed = (Math.random() - 0.5) * 0.004;
       }
 
       update() {
         this.life++;
-        this.x += this.vx + Math.sin(this.life * 0.015) * 0.6;
+        this.x += this.vx + Math.sin(this.life * 0.015) * 0.5;
         this.y += this.vy;
         this.radius += this.growth;
         this.angle += this.angularSpeed;
@@ -141,9 +189,9 @@ export default function BackgroundAtmosphere({
         context.rotate(this.angle);
 
         const grad = context.createRadialGradient(0, 0, 0, 0, 0, this.radius);
-        grad.addColorStop(0, `rgba(235, 215, 185, ${alpha})`);
-        grad.addColorStop(0.5, `rgba(210, 175, 125, ${alpha * 0.4})`);
-        grad.addColorStop(1, 'rgba(19, 12, 5, 0)');
+        grad.addColorStop(0, `rgba(248, 209, 136, ${alpha})`);
+        grad.addColorStop(0.5, `rgba(235, 170, 98, ${alpha * 0.4})`);
+        grad.addColorStop(1, 'rgba(93, 29, 1, 0)');
 
         context.fillStyle = grad;
         context.beginPath();
@@ -163,7 +211,7 @@ export default function BackgroundAtmosphere({
         stars.push(new Star());
       }
       smokePuffs = [];
-      const puffCount = 12; // Light and subtle
+      const puffCount = 10;
       for (let i = 0; i < puffCount; i++) {
         smokePuffs.push(new SmokePuff());
       }
@@ -192,7 +240,7 @@ export default function BackgroundAtmosphere({
           smokePuffs[i].draw(ctx);
         }
 
-        // Draw twinkling stars
+        // Draw twinkling & shining stars
         for (let i = 0; i < stars.length; i++) {
           stars[i].update();
           stars[i].draw(ctx);
@@ -214,7 +262,7 @@ export default function BackgroundAtmosphere({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 pointer-events-none select-none overflow-hidden z-0 ${className}`}
+      className={`absolute inset-0 pointer-events-none select-none overflow-hidden ${className}`}
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="w-full h-full block" />

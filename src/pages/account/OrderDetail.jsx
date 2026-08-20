@@ -44,23 +44,23 @@ export default function OrderDetail() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in text-[var(--text-primary)]">
+    <div className="space-y-8 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
       <ScrollReveal direction="up">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-subtle)] pb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 gap-4">
         <div>
           <button
             onClick={() => navigate('/account/orders')}
-            className="text-xs text-[var(--gold-primary)] hover:underline flex items-center gap-1 mb-2 font-cinzel cursor-pointer"
+            className="text-xs text-[var(--color-terracotta)] hover:underline flex items-center gap-1 mb-2 font-cinzel font-bold cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to All Orders</span>
           </button>
-          <h2 className="font-cinzel text-2xl font-bold uppercase text-[var(--text-primary)]">
+          <h2 className="font-cinzel text-2xl font-bold uppercase text-[var(--color-earth-dark)]">
             Order Reference: {order.id}
           </h2>
-          <p className="text-xs text-[var(--text-muted)] font-mono">
-            Placed on {new Date(order.date).toLocaleString()} • Status: <strong className="text-[var(--gold-primary)]">{order.status}</strong>
+          <p className="text-xs text-[var(--color-terracotta-deep)] font-mono font-medium">
+            Placed on {new Date(order.date).toLocaleString()} • Status: <strong className="text-[var(--color-terracotta)]">{order.status}</strong>
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export default function OrderDetail() {
           </Link>
           <button
             onClick={() => window.print()}
-            className="p-2 border border-[var(--border-gold-subtle)] hover:border-[var(--gold-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+            className="p-2 border border-[var(--color-terracotta-deep)]/25 hover:border-[var(--color-terracotta)] text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
             title="Print Parchment Invoice"
           >
             <Printer className="w-4 h-4" />
@@ -86,25 +86,25 @@ export default function OrderDetail() {
       {/* Items Breakdown */}
       <ScrollReveal direction="up" delay={0.1}>
       <div className="space-y-4">
-        <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[var(--gold-primary)]">
+        <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[var(--color-terracotta)]">
           Flacons in this Order
         </h3>
-        <div className="divide-y divide-[var(--border-subtle)] border border-[var(--border-card)] bg-[var(--bg-secondary)]">
+        <div className="divide-y divide-[var(--color-terracotta-deep)]/20 border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-primary)]/30">
           {order.items?.map((item, idx) => (
             <div key={idx} className="p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-16 h-20 object-cover bg-[var(--bg-primary)] border border-[var(--border-subtle)]"
+                  className="w-16 h-20 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/30"
                 />
                 <div>
-                  <h4 className="font-cinzel text-sm font-semibold text-[var(--text-primary)]">{item.name}</h4>
-                  <p className="text-xs text-[var(--gold-primary)] font-mono">{item.size}</p>
-                  <p className="text-xs text-[var(--text-muted)]">Qty: {item.quantity} × ${item.price}</p>
+                  <h4 className="font-cinzel text-sm font-bold text-[var(--color-earth-dark)]">{item.name}</h4>
+                  <p className="text-xs text-[var(--color-terracotta)] font-mono font-semibold">{item.size}</p>
+                  <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">Qty: {item.quantity} × ${item.price}</p>
                 </div>
               </div>
-              <span className="font-cinzel text-base font-bold text-[var(--gold-primary)]">
+              <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)]">
                 ${item.price * item.quantity}
               </span>
             </div>
@@ -117,43 +117,43 @@ export default function OrderDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Shipping Destination */}
         <ScrollReveal direction="right" delay={0.2}>
-        <div className="p-5 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-2 text-xs h-full">
-          <h4 className="font-cinzel text-xs font-bold uppercase text-[var(--gold-primary)] tracking-wider mb-2">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 text-xs h-full">
+          <h4 className="font-cinzel text-xs font-bold uppercase text-[var(--color-terracotta)] tracking-wider mb-2">
             Delivery Destination
           </h4>
-          <p className="font-semibold text-[var(--text-primary)]">{order.shippingAddress?.fullName}</p>
-          <p className="text-[var(--text-muted)]">{order.shippingAddress?.address}</p>
-          <p className="text-[var(--text-muted)]">{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
-          <p className="text-[var(--text-muted)]">{order.shippingAddress?.country}</p>
-          <p className="text-[var(--text-muted)]">Phone: {order.shippingAddress?.phone}</p>
+          <p className="font-bold text-[var(--color-earth-dark)]">{order.shippingAddress?.fullName}</p>
+          <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.address}</p>
+          <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
+          <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.country}</p>
+          <p className="text-[var(--color-terracotta-deep)] font-medium">Phone: {order.shippingAddress?.phone}</p>
         </div>
         </ScrollReveal>
 
         {/* Invoice Summary */}
         <ScrollReveal direction="left" delay={0.2}>
-        <div className="p-5 bg-[var(--bg-secondary)] border border-[var(--border-card)] space-y-2 text-xs h-full">
-          <h4 className="font-cinzel text-xs font-bold uppercase text-[var(--gold-primary)] tracking-wider mb-2">
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 text-xs h-full">
+          <h4 className="font-cinzel text-xs font-bold uppercase text-[var(--color-terracotta)] tracking-wider mb-2">
             Settlement Summary
           </h4>
-          <div className="flex justify-between text-[var(--text-muted)]">
+          <div className="flex justify-between text-[var(--color-terracotta-deep)] font-medium">
             <span>Subtotal:</span>
-            <span className="font-mono text-[var(--text-primary)] font-semibold">${order.subtotal}</span>
+            <span className="font-mono text-[var(--color-earth-dark)] font-bold">${order.subtotal}</span>
           </div>
           {order.discountAmount > 0 && (
-            <div className="flex justify-between text-[var(--gold-primary)]">
+            <div className="flex justify-between text-[var(--color-terracotta)] font-bold">
               <span>Privilege ({order.discountCode}):</span>
-              <span className="font-mono font-semibold">-${order.discountAmount}</span>
+              <span className="font-mono">-${order.discountAmount}</span>
             </div>
           )}
-          <div className="flex justify-between text-[var(--text-muted)]">
+          <div className="flex justify-between text-[var(--color-terracotta-deep)] font-medium">
             <span>Insured Express Shipping:</span>
-            <span className="font-mono text-[var(--gold-primary)] font-semibold">Complimentary</span>
+            <span className="font-mono text-[var(--color-terracotta)] font-bold">Complimentary</span>
           </div>
-          <div className="flex justify-between text-base font-bold text-[var(--text-primary)] pt-3 border-t border-[var(--border-subtle)] font-cinzel">
+          <div className="flex justify-between text-base font-bold text-[var(--color-earth-dark)] pt-3 border-t border-[var(--color-terracotta-deep)]/20 font-cinzel">
             <span>Total Settled:</span>
-            <span className="text-[var(--gold-primary)]">${order.total}</span>
+            <span className="text-[var(--color-terracotta)] font-mono font-bold">${order.total}</span>
           </div>
-          <p className="text-[11px] text-[var(--text-muted)] pt-2">
+          <p className="text-[11px] text-[var(--color-terracotta-deep)] pt-2 font-medium">
             Payment Method: {order.paymentMethod?.brand} ending in •••• {order.paymentMethod?.last4 || '4112'}
           </p>
         </div>

@@ -130,9 +130,9 @@ export default function ProductSlider({
       </div>
 
       {/* Mobile Swipe Guidance Hint */}
-      <div className="flex sm:hidden items-center justify-between px-2 pt-2 text-[11px] uppercase tracking-[0.25em] text-[var(--gold-primary)]/80 font-cinzel">
+      <div className="flex sm:hidden items-center justify-between px-2 pt-2 text-[11px] uppercase tracking-[0.25em] text-[var(--color-terracotta)] font-cinzel font-bold">
         <span className="flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-[var(--gold-primary)]" />
+          <Sparkles className="w-3 h-3 text-[var(--color-terracotta)]" />
           <span>Swipe to explore</span>
         </span>
         <span>→</span>
