@@ -85,7 +85,8 @@ export default function HorizontalCollectionShowcase({
           ease: 'power3.out',
           scrollTrigger: {
             trigger: el,
-            start: 'top 80%',
+            start: 'top 85%',
+            once: true,
             toggleActions: 'play none none none'
           }
         }
@@ -102,7 +103,8 @@ export default function HorizontalCollectionShowcase({
           ease: 'power2.out',
           scrollTrigger: {
             trigger: el,
-            start: 'top 70%',
+            start: 'top 75%',
+            once: true,
             toggleActions: 'play none none none'
           }
         }

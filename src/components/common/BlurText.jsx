@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 
 const buildKeyframes = (from, steps) => {
   const keys = new Set([...Object.keys(from), ...steps.flatMap(s => Object.keys(s))]);
@@ -13,52 +13,56 @@ const buildKeyframes = (from, steps) => {
 
 const BlurText = ({
   text = '',
-  delay = 120,
+  delay = 100,
   className = '',
   animateBy = 'words',
   direction = 'top',
   threshold = 0.1,
-  rootMargin = '0px',
+  rootMargin = '60px 0px',
   animationFrom,
   animationTo,
   easing = t => t,
   onAnimationComplete,
-  stepDuration = 0.35,
+  stepDuration = 0.3,
   as = 'h2'
 }) => {
+  const prefersReduced = useReducedMotion();
   const elements = animateBy === 'words' ? (text || '').split(' ') : (text || '').split('');
   const [inView, setInView] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (inView || hasCompleted || prefersReduced || !ref.current) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setInView(true);
-          observer.unobserve(ref.current);
+          observer.unobserve(entry.target);
+          observer.disconnect();
         }
       },
       { threshold, rootMargin }
     );
     observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [threshold, rootMargin]);
+  }, [inView, hasCompleted, prefersReduced, threshold, rootMargin]);
 
   const defaultFrom = useMemo(
     () =>
       direction === 'top'
-        ? { filter: 'blur(10px)', opacity: 0, y: -40 }
-        : { filter: 'blur(10px)', opacity: 0, y: 40 },
+        ? { filter: 'blur(10px)', opacity: 0, y: -30 }
+        : { filter: 'blur(10px)', opacity: 0, y: 30 },
     [direction]
   );
 
   const defaultTo = useMemo(
     () => [
       {
-        filter: 'blur(4px)',
-        opacity: 0.6,
-        y: direction === 'top' ? 4 : -4
+        filter: 'blur(3px)',
+        opacity: 0.7,
+        y: direction === 'top' ? 3 : -3
       },
       { filter: 'blur(0px)', opacity: 1, y: 0 }
     ],
@@ -74,6 +78,27 @@ const BlurText = ({
 
   const Component = as;
 
+  // If reduced motion or already completed, render static text with 0 animations that stays permanently
+  if (prefersReduced || hasCompleted) {
+    return (
+      <Component ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap' }}>
+        {elements.map((segment, index) => (
+          <span key={index} className="inline-block" style={{ opacity: 1, filter: 'none', transform: 'none' }}>
+            {segment === ' ' ? '\u00A0' : segment}
+            {animateBy === 'words' && index < elements.length - 1 && '\u00A0'}
+          </span>
+        ))}
+      </Component>
+    );
+  }
+
+  const handleSpanComplete = (index) => {
+    if (index === elements.length - 1) {
+      setHasCompleted(true);
+      onAnimationComplete?.();
+    }
+  };
+
   return (
     <Component ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap' }}>
       {elements.map((segment, index) => {
@@ -82,9 +107,9 @@ const BlurText = ({
         const spanTransition = {
           duration: totalDuration,
           times,
-          delay: (index * delay) / 1000
+          delay: (index * delay) / 1000,
+          ease: easing
         };
-        spanTransition.ease = easing;
 
         return (
           <motion.span
@@ -93,7 +118,7 @@ const BlurText = ({
             initial={fromSnapshot}
             animate={inView ? animateKeyframes : fromSnapshot}
             transition={spanTransition}
-            onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
+            onAnimationComplete={() => handleSpanComplete(index)}
           >
             {segment === ' ' ? '\u00A0' : segment}
             {animateBy === 'words' && index < elements.length - 1 && '\u00A0'}
