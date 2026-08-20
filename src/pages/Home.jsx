@@ -77,6 +77,36 @@ export default function Home() {
       image: '/products/black_diamond_gold.png?v=5'
     },
     {
+      id: 'as-luxury-billionaire',
+      slug: 'billionaire-luxury',
+      tier: 'Luxury',
+      name: 'Billionaire',
+      spanishName: 'Billionaire',
+      bulgarianName: 'Милиардер',
+      price: 50,
+      size: '60 ml / 2.0 fl oz',
+      tagline: 'Solid 24K gold sovereignty, golden coins, and liquid empire.',
+      spanishTagline: 'Soberanía en oro macizo de 24K y opulencia líquida.',
+      notes: 'Golden Honey • Royal Dehn Al Oud • Amber Nectar',
+      color: '#D4AF37',
+      image: '/products/billionaire_gold.png'
+    },
+    {
+      id: 'as-royal-queens-secret',
+      slug: 'queens-secret-royal',
+      tier: 'Royal',
+      name: "Queen's Secret",
+      spanishName: 'Secret de la Reine',
+      bulgarianName: 'Тайната на Кралицата',
+      price: 45,
+      size: '60 ml / 2.0 fl oz',
+      tagline: 'The ruby-crowned sovereign secret of Andalusian queens.',
+      spanishTagline: 'El secreto real coronado de rubí de las reinas andalusíes.',
+      notes: 'Taif Royal Rose • Candied Saffron • Velvet Vanilla',
+      color: '#D4AF37',
+      image: '/products/queens_secret_gold.png'
+    },
+    {
       id: 'as-royal-millionaire',
       slug: 'millionaire-royal',
       tier: 'Royal',

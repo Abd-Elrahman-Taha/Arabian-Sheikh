@@ -20,11 +20,15 @@ export default function Hero3DFlaconScene({
   const [webglSupported, setWebglSupported] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
-  const flaconImages = [
-    '/products/black_diamond_gold.png?v=5', // Luxury (Default)
-    '/products/millionaire_black.png?v=5',  // Royal
-    '/products/ana_sukkar_white.png?v=5'   // Classic (Ana Sukkar)
-  ];
+  const flaconImages = (products && products.length > 0)
+    ? products.map(p => p.image || p.cutoutImage)
+    : [
+        '/products/black_diamond_gold.png?v=5',
+        '/products/billionaire_gold.png',
+        '/products/queens_secret_gold.png',
+        '/products/millionaire_black.png?v=5',
+        '/products/ana_sukkar_white.png?v=5'
+      ];
 
   useEffect(() => {
     const container = containerRef.current;

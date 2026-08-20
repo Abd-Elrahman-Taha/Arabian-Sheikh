@@ -1,6 +1,6 @@
 import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v6';
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v9';
 
 function loadProducts() {
   const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
@@ -12,7 +12,7 @@ function loadProducts() {
   }
   try {
     const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed) || !parsed.some(p => p.id === 'as-luxury-black-diamond')) {
+    if (!Array.isArray(parsed) || !parsed.some(p => p.id === 'as-royal-queens-secret')) {
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
       return INITIAL_PRODUCTS;
     }

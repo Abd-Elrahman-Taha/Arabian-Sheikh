@@ -82,17 +82,17 @@ export default function ProductCard({ product, onCompare }) {
         <Heart className={`w-3.5 h-3.5 transition-transform duration-200 ${isSaved ? 'fill-current' : ''}`} />
       </button>
 
-      {/* Flacon Image Container with Soft Ambient Dark Background */}
-      <div className="relative aspect-[3/4] bg-gradient-to-b from-[#0B0A08] to-[#0B0A08] overflow-hidden flex items-center justify-center p-6">
+      {/* Flacon Image Container with Full Editorial Background */}
+      <div className="relative aspect-[3/4] bg-[#0B0A08] overflow-hidden flex items-center justify-center">
         <img
-          src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
+          src={product.originalImage || product.images?.[0] || product.cutoutImage || '/products/black_diamond_gold.png'}
           alt={displayName}
-          className="max-h-[88%] w-auto object-contain filter drop-shadow-[0_15px_20px_rgba(0,0,0,0.9)] group-hover:scale-108 transition-transform duration-700 ease-out"
+          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
           loading="lazy"
         />
 
-        {/* Ambient shadow glow beneath bottle */}
-        <div className="absolute bottom-4 w-28 h-4 bg-black/80 rounded-full blur-md pointer-events-none" />
+        {/* Ambient subtle vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08]/70 via-transparent to-black/20 pointer-events-none" />
 
         {/* Quick Add Bar on Desktop Hover */}
         <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out hidden md:block z-10">

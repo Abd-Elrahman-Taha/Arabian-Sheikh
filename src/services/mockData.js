@@ -1,5 +1,5 @@
 // Official Arabian Sheikh Catalog & Store Data
-// Authentic Flacons: Black Diamond (Luxury - €50), Millionaire (Royal - €40), Ana Sukkar (Classic - €30)
+// Authentic Flacons: Black Diamond, Billionaire, Queen's Secret, Sheikh Supreme, Euphoria Nights, Invictus Prestige, Red Poison, Millionaire, Ana Sukkar
 
 export const INITIAL_PRODUCTS = [
   {
@@ -59,6 +59,276 @@ export const INITIAL_PRODUCTS = [
     ]
   },
   {
+    id: 'as-luxury-billionaire',
+    slug: 'billionaire-luxury',
+    name: 'Billionaire',
+    arabicName: 'بليونير',
+    bulgarianName: 'Милиардер',
+    tier: 'Luxury',
+    price: 50,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Unisex',
+    season: ['All Seasons', 'Autumn', 'Winter'],
+    occasion: ['Royal Celebrations', 'Evening / Gala', 'Signature'],
+    longevity: '16+ Hours',
+    sillage: 'Colossal Sovereign Trail',
+    stock: 20,
+    tagline: 'Pure 24K solid gold sovereignty, golden coins, and liquid empire.',
+    description: 'Billionaire is sculpted in mirror-finished solid 24K gold with an imperial crown stopper. A masterwork of liquid wealth featuring honeyed golden tobacco, royal Dehn Al Oud, sun-drenched amber, and rare Venezuelan tonka bean.',
+    notes: {
+      top: ['Golden Honey Nectar', 'Saffron Threads', 'Spiced Cardamom'],
+      heart: ['Royal Dehn Al Oud', 'Smoked Tobacco Leaf', 'Aged Bourbon Vanilla'],
+      base: ['Liquid Golden Amber', 'Dark Sandalwood', 'Precious Benzoin']
+    },
+    topNotes: ['Golden Honey Nectar', 'Saffron Threads', 'Spiced Cardamom'],
+    heartNotes: ['Royal Dehn Al Oud', 'Smoked Tobacco Leaf', 'Aged Bourbon Vanilla'],
+    baseNotes: ['Liquid Golden Amber', 'Dark Sandalwood', 'Precious Benzoin'],
+    scentFamily: 'Oriental / Amber',
+    fragranceFamily: 'Oriental / Amber',
+    familyArabic: 'الشرقية',
+    featured: true,
+    isBestSeller: true,
+    isHeroDefault: false,
+    rating: 5.0,
+    reviewsCount: 45,
+    concentration: '35% Extrait de Parfum',
+    images: [
+      '/products/billionaire_gold.png',
+      '/products/billionaire_gold.jpg'
+    ],
+    cutoutImage: '/products/billionaire_gold.png',
+    originalImage: '/products/billionaire_gold.jpg',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  {
+    id: 'as-royal-queens-secret',
+    slug: 'queens-secret-royal',
+    name: "Queen's Secret",
+    arabicName: 'سر الملكة',
+    bulgarianName: 'Тайната на Кралицата',
+    tier: 'Royal',
+    price: 45,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Feminine',
+    season: ['All Seasons', 'Evening / Gala'],
+    occasion: ['Royal Celebrations', 'Evening / Gala', 'Signature'],
+    longevity: '14+ Hours',
+    sillage: 'Intoxicating & Velvet',
+    stock: 28,
+    tagline: 'The ruby-crowned sovereign secret of Andalusian queens.',
+    description: "Queen's Secret is housed in a mirror-gold royal flacon adorned with a ruby crown emblem. An opulent symphony of velvety Bulgarian rose petals, spiced candied saffron, intoxicating midnight vanilla, and smoldering Bakhoor resin.",
+    notes: {
+      top: ['Candied Crimson Saffron', 'Wild Blackberry Nectar', 'Pink Pepper'],
+      heart: ['Taif Royal Rose', 'Smoked Incense', 'Gourmand Velvet Vanilla'],
+      base: ['White Ambergris', 'Dark Patchouli', 'Precious Cashmere Musk']
+    },
+    topNotes: ['Candied Crimson Saffron', 'Wild Blackberry Nectar', 'Pink Pepper'],
+    heartNotes: ['Taif Royal Rose', 'Smoked Incense', 'Gourmand Velvet Vanilla'],
+    baseNotes: ['White Ambergris', 'Dark Patchouli', 'Precious Cashmere Musk'],
+    scentFamily: 'Floral / Oriental',
+    fragranceFamily: 'Floral',
+    familyArabic: 'الزهرية',
+    featured: true,
+    isBestSeller: true,
+    isHeroDefault: false,
+    rating: 4.95,
+    reviewsCount: 36,
+    concentration: '30% Extrait de Parfum',
+    images: [
+      '/products/queens_secret_gold.png',
+      '/products/queens_secret_gold.jpg'
+    ],
+    cutoutImage: '/products/queens_secret_gold.png',
+    originalImage: '/products/queens_secret_gold.jpg',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  {
+    id: 'as-royal-sheikh-supreme',
+    slug: 'sheikh-supreme-royal',
+    name: 'Sheikh Supreme',
+    arabicName: 'الشيخ سوبريم',
+    bulgarianName: 'Шейх Суприм',
+    tier: 'Royal',
+    price: 45,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Masculine',
+    season: ['All Seasons', 'Autumn', 'Spring'],
+    occasion: ['Daily Luxury', 'Signature', 'Royal Celebrations'],
+    longevity: '12+ Hours',
+    sillage: 'Commanding & Noble',
+    stock: 32,
+    tagline: 'Aristocratic distinction, ancient library woods, and golden sunset warmth.',
+    description: 'Sheikh Supreme embodies royal wisdom and Andalusian dignity. Presented in a gleaming ivory flacon crowned in gold, it opens with sunlit Calabrian bergamot, evolving into rare frankincense, smoky cedarwood, and rich amber resin.',
+    notes: {
+      top: ['Calabrian Bergamot', 'Black Cardamom', 'Golden Amber Dust'],
+      heart: ['Sacred Hojari Frankincense', 'Aged Atlas Cedar', 'Nutmeg'],
+      base: ['Smoked Agarwood', 'Royal Ambergris', 'Earthy Vetiver']
+    },
+    topNotes: ['Calabrian Bergamot', 'Black Cardamom', 'Golden Amber Dust'],
+    heartNotes: ['Sacred Hojari Frankincense', 'Aged Atlas Cedar', 'Nutmeg'],
+    baseNotes: ['Smoked Agarwood', 'Royal Ambergris', 'Earthy Vetiver'],
+    scentFamily: 'Woody / Oriental',
+    fragranceFamily: 'Woody',
+    familyArabic: 'الخشبية',
+    featured: true,
+    isBestSeller: false,
+    isHeroDefault: false,
+    rating: 4.9,
+    reviewsCount: 22,
+    concentration: '30% Extrait de Parfum',
+    images: [
+      '/products/sheikh_supreme_white.png',
+      '/products/sheikh_supreme_white.jpg'
+    ],
+    cutoutImage: '/products/sheikh_supreme_white.png',
+    originalImage: '/products/sheikh_supreme_white.jpg',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  {
+    id: 'as-royal-euphoria-nights',
+    slug: 'euphoria-nights-royal',
+    name: 'Euphoria Nights',
+    arabicName: 'ليالي النشوة',
+    bulgarianName: 'Еуфорични Нощи',
+    tier: 'Royal',
+    price: 40,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Unisex',
+    season: ['Spring', 'Summer', 'Evening / Gala'],
+    occasion: ['Evening / Gala', 'Signature'],
+    longevity: '12 Hours',
+    sillage: 'Sensual & Radiant',
+    stock: 35,
+    tagline: 'Nocturnal enchantment under the silver crescent moon of Andalusia.',
+    description: 'Euphoria Nights captures the magic of midnight palace gardens. Blooming night jasmine, sweet dark plum, luminous white musk, and soft ambergris woven into an unforgettable nocturnal aura.',
+    notes: {
+      top: ['Midnight Plum', 'Star Anise', 'Sparkling Mandarin'],
+      heart: ['Night-Blooming Jasmine', 'Taif Rose Petals', 'Orange Blossom'],
+      base: ['Golden Amber Crystals', 'White Musk', 'Creamy Sandalwood']
+    },
+    topNotes: ['Midnight Plum', 'Star Anise', 'Sparkling Mandarin'],
+    heartNotes: ['Night-Blooming Jasmine', 'Taif Rose Petals', 'Orange Blossom'],
+    baseNotes: ['Golden Amber Crystals', 'White Musk', 'Creamy Sandalwood'],
+    scentFamily: 'Floral / Amber',
+    fragranceFamily: 'Floral',
+    familyArabic: 'الزهرية',
+    featured: true,
+    isBestSeller: false,
+    isHeroDefault: false,
+    rating: 4.88,
+    reviewsCount: 18,
+    concentration: '28% Extrait de Parfum',
+    images: [
+      '/products/euphoria_nights_white.png',
+      '/products/euphoria_nights_white.jpg'
+    ],
+    cutoutImage: '/products/euphoria_nights_white.png',
+    originalImage: '/products/euphoria_nights_white.jpg',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  {
+    id: 'as-classic-invictus-prestige',
+    slug: 'invictus-prestige-classic',
+    name: 'Invictus Prestige',
+    arabicName: 'إنفكتوس برستيج',
+    bulgarianName: 'Инвиктус Престиж',
+    tier: 'Classic',
+    price: 35,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Masculine',
+    season: ['Spring', 'Summer', 'Daily Luxury'],
+    occasion: ['Daily Luxury', 'Signature'],
+    longevity: '10 Hours',
+    sillage: 'Vibrant & Invigorating',
+    stock: 40,
+    tagline: 'The triumphant golden wreath of sovereign victory.',
+    description: 'Invictus Prestige radiates invigorating power and crisp masculine elegance. Marine sea breeze, sparkling grapefruit, and pink pepper resting on a noble base of amberwood and clean white cedar.',
+    notes: {
+      top: ['Sea Salt Accord', 'Crisp Grapefruit', 'Pink Pepper'],
+      heart: ['Bay Leaf Laurel', 'Aromatic Sage', 'Jasmine Nectar'],
+      base: ['Amberwood', 'Guaiac Wood', 'Oakmoss']
+    },
+    topNotes: ['Sea Salt Accord', 'Crisp Grapefruit', 'Pink Pepper'],
+    heartNotes: ['Bay Leaf Laurel', 'Aromatic Sage', 'Jasmine Nectar'],
+    baseNotes: ['Amberwood', 'Guaiac Wood', 'Oakmoss'],
+    scentFamily: 'Fresh / Woody',
+    fragranceFamily: 'Fresh',
+    familyArabic: 'المنعشة',
+    featured: true,
+    isBestSeller: false,
+    isHeroDefault: false,
+    rating: 4.85,
+    reviewsCount: 24,
+    concentration: '25% Eau de Parfum Intense',
+    images: [
+      '/products/invictus_prestige_white.png',
+      '/products/invictus_prestige_white.jpg'
+    ],
+    cutoutImage: '/products/invictus_prestige_white.png',
+    originalImage: '/products/invictus_prestige_white.jpg',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  {
+    id: 'as-classic-red-poison',
+    slug: 'red-poison-classic',
+    name: 'Red Poison',
+    arabicName: 'ريد بويزن',
+    bulgarianName: 'Червена Отрова',
+    tier: 'Classic',
+    price: 35,
+    originalPrice: null,
+    size: '60 ml / 2.0 fl oz',
+    category: 'perfumes',
+    gender: 'Feminine',
+    season: ['Autumn', 'Winter', 'Evening / Gala'],
+    occasion: ['Evening / Gala', 'Signature'],
+    longevity: '11 Hours',
+    sillage: 'Alluring & Seductive',
+    stock: 38,
+    tagline: 'An intoxicating ruby temptation of pomegranate nectar and red musk.',
+    description: 'Red Poison is an irresistible elixir of crimson passion. Fresh tart pomegranate gems, wild crushed berries, dark patchouli, and warm red amber creating a dangerously alluring trail.',
+    notes: {
+      top: ['Luscious Pomegranate', 'Wild Red Berries', 'Bitter Orange'],
+      heart: ['Crimson Rose Petals', 'Red Orchid', 'Spiced Cinnamon'],
+      base: ['Dark Patchouli', 'Warm Red Amber', 'Sensual Musk']
+    },
+    topNotes: ['Luscious Pomegranate', 'Wild Red Berries', 'Bitter Orange'],
+    heartNotes: ['Crimson Rose Petals', 'Red Orchid', 'Spiced Cinnamon'],
+    baseNotes: ['Dark Patchouli', 'Warm Red Amber', 'Sensual Musk'],
+    scentFamily: 'Fruity / Oriental',
+    fragranceFamily: 'Floral',
+    familyArabic: 'الزهرية',
+    featured: true,
+    isBestSeller: false,
+    isHeroDefault: false,
+    rating: 4.88,
+    reviewsCount: 31,
+    concentration: '25% Eau de Parfum Intense',
+    images: [
+      '/products/red_poison_white.png',
+      '/products/red_poison_white.jpg'
+    ],
+    cutoutImage: '/products/red_poison_white.png',
+    originalImage: '/products/red_poison_white.jpg',
+    status: 'ACTIVE',
+    reviews: []
+  },
+  {
     id: 'as-royal-millionaire',
     slug: 'millionaire-royal',
     name: 'Millionaire',
@@ -101,18 +371,7 @@ export const INITIAL_PRODUCTS = [
     cutoutImage: '/products/millionaire_black.png?v=5',
     originalImage: '/products/millionaire_black.jpg?v=5',
     status: 'ACTIVE',
-    reviews: [
-      {
-        id: 'rev-mil-1',
-        author: 'Alexander D.',
-        rating: 5,
-        date: '2026-06-28',
-        title: 'Masterpiece of Modern Luxury',
-        comment: 'Sophisticated, masculine, and long-lasting. Gets compliments everywhere I go.',
-        verifiedPurchase: true,
-        status: 'approved'
-      }
-    ]
+    reviews: []
   },
   {
     id: 'as-classic-ana-sukkar',
@@ -157,20 +416,8 @@ export const INITIAL_PRODUCTS = [
     cutoutImage: '/products/ana_sukkar_white.png?v=5',
     originalImage: '/products/ana_sukkar_white.jpg?v=5',
     status: 'ACTIVE',
-    reviews: [
-      {
-        id: 'rev-as-1',
-        author: 'Layla K.',
-        rating: 5,
-        date: '2026-07-02',
-        title: 'Irresistibly Delicious & Elegant',
-        comment: 'The sweet cream and floral balance is perfection. The white bottle looks stunning on my vanity.',
-        verifiedPurchase: true,
-        status: 'approved'
-      }
-    ]
+    reviews: []
   },
-  // Oils Category Product (Placeholder for admin photo upload)
   {
     id: 'as-oil-attar-malaki',
     slug: 'attar-al-malaki-oil',
@@ -188,7 +435,7 @@ export const INITIAL_PRODUCTS = [
     sillage: 'Intimate & Profound',
     stock: 20,
     tagline: '100% pure alcohol-free concentrated royal perfume oil.',
-    description: 'Distilled using ancient artisanal techniques. A single drop offers an enduring aura of rare woods, warm amber, and golden musk. Admin can upload custom flacon photo.',
+    description: 'Distilled using ancient artisanal techniques. A single drop offers an enduring aura of rare woods, warm amber, and golden musk.',
     notes: {
       top: ['Pure Cambodian Oud', 'Saffron Oil'],
       heart: ['Taif Rose Concentrate', 'Frankincense Resin'],
@@ -204,12 +451,11 @@ export const INITIAL_PRODUCTS = [
     isBestSeller: false,
     rating: 4.9,
     reviewsCount: 15,
-    images: ['/products/black_diamond_gold.png'],
-    cutoutImage: '/products/black_diamond_gold.png',
+    images: ['/products/billionaire_gold.png'],
+    cutoutImage: '/products/billionaire_gold.png',
     status: 'ACTIVE',
     reviews: []
   },
-  // Bakhoor Category Product
   {
     id: 'as-bakhoor-andalusia',
     slug: 'bakhoor-andalusia-incense',
@@ -243,277 +489,93 @@ export const INITIAL_PRODUCTS = [
     isBestSeller: false,
     rating: 4.8,
     reviewsCount: 19,
-    images: ['/products/millionaire_black.png'],
-    cutoutImage: '/products/millionaire_black.png',
-    status: 'ACTIVE',
-    reviews: []
-  },
-  // Cosmetics Category Product
-  {
-    id: 'as-cosmetics-royal-body-cream',
-    slug: 'royal-scented-body-butter',
-    name: 'Royal Perfumed Body Silk',
-    arabicName: 'حرير الجسم الملكي المعطر',
-    bulgarianName: 'Кралска коприна за тяло',
-    category: 'cosmetics',
-    price: 28,
-    originalPrice: null,
-    size: '200 ml / 6.7 fl oz',
-    gender: 'Unisex',
-    season: ['All Seasons'],
-    occasion: ['Daily Luxury'],
-    longevity: '12 Hours Hydration & Scent',
-    sillage: 'Delicate Skin Veil',
-    stock: 40,
-    tagline: 'Nourishing shea and argan butter scented with Arabian Sheikh signature notes.',
-    description: 'A silky, fast-absorbing luxury body cream enriched with organic Moroccan argan oil, golden shimmer, and enduring fragrance.',
-    notes: {
-      top: ['Citrus Blossom', 'Sweet Almond'],
-      heart: ['Jasmine Milk', 'Shea Nectar'],
-      base: ['Vanilla Butter', 'Soft Sandalwood']
-    },
-    topNotes: ['Citrus Blossom', 'Sweet Almond'],
-    heartNotes: ['Jasmine Milk', 'Shea Nectar'],
-    baseNotes: ['Vanilla Butter', 'Soft Sandalwood'],
-    scentFamily: 'Cosmetic Luxury',
-    fragranceFamily: 'Floral',
-    familyArabic: 'الزهرية',
-    featured: false,
-    isBestSeller: false,
-    rating: 4.75,
-    reviewsCount: 11,
-    images: ['/products/ana_sukkar_white.png'],
-    cutoutImage: '/products/ana_sukkar_white.png',
-    status: 'ACTIVE',
-    reviews: []
-  },
-  // Bundles Category Product
-  {
-    id: 'as-bundle-imperial-trio',
-    slug: 'imperial-trilogy-bundle',
-    name: 'The Imperial Flacon Trilogy (3 x 60ml)',
-    arabicName: 'ثلاثية الفخامة الإمبراطورية (٣ عطور)',
-    bulgarianName: 'Имперска трилогия (3 x 60мл)',
-    category: 'bundles',
-    price: 105,
-    originalPrice: 120,
-    size: '3 x 60 ml Full Set',
-    gender: 'Unisex',
-    season: ['All Seasons'],
-    occasion: ['Royal Celebrations', 'Signature'],
-    longevity: 'Complete Fragrance Wardrobe',
-    sillage: 'Variable by Flacon',
-    stock: 15,
-    tagline: 'All three signature flacons: Black Diamond, Millionaire & Ana Sukkar in a bespoke presentation box.',
-    description: 'Experience the entire prestige collection. Contains 1x Luxury Black Diamond (60ml), 1x Royal Millionaire (60ml), and 1x Classic Ana Sukkar (60ml) packaged in a velvet-lined gold-crested keepsake coffret.',
-    notes: {
-      top: ['Ambergris', 'Cardamom', 'Spun Sugar'],
-      heart: ['Cambodian Oud', 'Smoky Leather', 'Vanilla Blossom'],
-      base: ['Fossilized Amber', 'Cashmeran', 'White Musk']
-    },
-    topNotes: ['Ambergris', 'Cardamom', 'Spun Sugar'],
-    heartNotes: ['Cambodian Oud', 'Smoky Leather', 'Vanilla Blossom'],
-    baseNotes: ['Fossilized Amber', 'Cashmeran', 'White Musk'],
-    scentFamily: 'Collector Trilogy',
-    fragranceFamily: 'Oriental / Amber',
-    familyArabic: 'الشرقية',
-    featured: true,
-    isBestSeller: true,
-    rating: 5.0,
-    reviewsCount: 22,
-    images: ['/products/black_diamond_gold.png?v=5'],
-    cutoutImage: '/products/black_diamond_gold.png?v=5',
+    images: ['/products/queens_secret_gold.png'],
+    cutoutImage: '/products/queens_secret_gold.png',
     status: 'ACTIVE',
     reviews: []
   }
 ];
 
 export const PERFUME_TIERS = [
-  {
-    id: 'Luxury',
-    name: 'Luxury Tier',
-    arabicName: 'الفئة الفاخرة (لاكجري)',
-    bulgarianName: 'Луксозен клас',
-    price: 50,
-    size: '60 ml / 2.0 fl oz',
-    bottle: 'Black Diamond',
-    color: '#D4AF37',
-    image: '/products/black_diamond_gold.png?v=5',
-    description: 'The highest expression of Andalusian perfumery. Encased in brilliant gold with concentrated precious oud, ambergris, and rare resins.',
-    filterParam: 'Luxury'
-  },
-  {
-    id: 'Royal',
-    name: 'Royal Tier',
-    arabicName: 'الفئة الملكية (رويال)',
-    bulgarianName: 'Кралски клас',
-    price: 40,
-    size: '60 ml / 2.0 fl oz',
-    bottle: 'Millionaire',
-    color: '#0B0A08',
-    image: '/products/millionaire_black.png?v=5',
-    description: 'Commanding obsidian elegance with intense woods, spice, and magnetic masculine charisma.',
-    filterParam: 'Royal'
-  },
-  {
-    id: 'Classic',
-    name: 'Classic Tier',
-    arabicName: 'الفئة الكلاسيكية (كلاسيك)',
-    bulgarianName: 'Класически клас',
-    price: 30,
-    size: '60 ml / 2.0 fl oz',
-    bottle: 'Ana Sukkar',
-    color: '#D4AF37',
-    image: '/products/ana_sukkar_white.png?v=5',
-    description: 'Pristine porcelain-white flacon offering gourmand sweetness, delicate floral petals, and comforting creamy vanilla.',
-    filterParam: 'Classic'
-  }
+  { id: 'Luxury', name: 'Luxury Tier', price: 50, color: '#D4AF37' },
+  { id: 'Royal', name: 'Royal Tier', price: 40, color: '#D4AF37' },
+  { id: 'Classic', name: 'Classic Tier', price: 30, color: '#D4AF37' }
 ];
 
 export const CATEGORIES = [
+  { id: 'perfumes', name: 'Perfumes', icon: 'Sparkles' },
+  { id: 'oils', name: 'Concentrated Oils', icon: 'Droplet' },
+  { id: 'bakhoor', name: 'Bakhoor & Incense', icon: 'Flame' },
+  { id: 'cosmetics', name: 'Cosmetics', icon: 'Heart' },
+  { id: 'bundles', name: 'Gift Sets & Bundles', icon: 'Gift' }
+];
+
+export const INITIAL_USERS = [
   {
-    id: 'perfumes',
-    slug: 'perfumes',
-    name: 'Perfumes',
-    arabicName: 'العطور',
-    bulgarianName: 'Парфюми',
-    description: 'Signature 60ml flacons in Classic, Royal, and Luxury tiers.',
-    image: '/products/black_diamond_gold.png'
+    id: 'user-admin-1',
+    name: 'Grand Concierge',
+    email: 'admin@arabiansheikh.com',
+    role: 'ADMIN',
+    avatar: '/arabian-sheikh-logo.svg',
+    joinedDate: '2025-01-01',
+    ordersCount: 12,
+    totalSpent: 1250,
+    status: 'ACTIVE'
   },
   {
-    id: 'oils',
-    slug: 'oils',
-    name: 'Oils (Attar)',
-    arabicName: 'الزيوت العطرية',
-    bulgarianName: 'Парфюмни масла',
-    description: 'Alcohol-free pure concentrated perfume attars.',
-    image: '/products/black_diamond_gold.png'
-  },
-  {
-    id: 'bakhoor',
-    slug: 'bakhoor',
-    name: 'Bakhoor & Incense',
-    arabicName: 'البخور والعود',
-    bulgarianName: 'Бахур и благовония',
-    description: 'Artisanal agarwood chips and fragrant incense blends.',
-    image: '/products/millionaire_black.png'
-  },
-  {
-    id: 'cosmetics',
-    slug: 'cosmetics',
-    name: 'Cosmetics',
-    arabicName: 'مستحضرات التجميل',
-    bulgarianName: 'Козметика',
-    description: 'Perfumed body silk, lotions, and royal self-care.',
-    image: '/products/ana_sukkar_white.png'
-  },
-  {
-    id: 'bundles',
-    slug: 'bundles',
-    name: 'Exclusive Bundles',
-    arabicName: 'الباقات والعروض',
-    bulgarianName: 'Комплекти',
-    description: 'Curated gift coffrets and fragrance trilogy collections.',
-    image: '/products/black_diamond_gold.png'
+    id: 'user-vip-1',
+    name: 'Lord Tariq Al-Mansoor',
+    email: 'tariq@arabiansheikh.com',
+    role: 'CUSTOMER',
+    vipTier: 'SOVEREIGN',
+    avatar: null,
+    joinedDate: '2025-03-12',
+    ordersCount: 8,
+    totalSpent: 620,
+    status: 'ACTIVE'
   }
 ];
 
 export const INITIAL_ORDERS = [
   {
-    id: 'ORD-9842',
-    customer: {
-      name: 'Sheikh Hamdan Al-Maktoum',
-      email: 'h.maktoum@royal.ae',
-      phone: '+971 50 123 4567',
-      address: 'Al-Zabeel Palace, Dubai, UAE'
-    },
+    id: 'AS-882194',
+    customerName: 'Lord Tariq Al-Mansoor',
+    customerEmail: 'tariq@arabiansheikh.com',
+    date: '2026-08-18',
+    status: 'CONFIRMED',
+    paymentMethod: 'Credit Card (Visa)',
+    total: 135,
+    currency: 'EUR',
     items: [
       {
-        productId: 'as-luxury-black-diamond',
-        productName: 'Black Diamond',
-        productImage: '/products/black_diamond_gold.png',
+        id: 'as-luxury-black-diamond',
+        name: 'Black Diamond',
         price: 50,
-        quantity: 2,
-        size: '60 ml'
+        quantity: 1,
+        image: '/products/black_diamond_gold.png?v=5'
       },
       {
-        productId: 'as-royal-millionaire',
-        productName: 'Millionaire',
-        productImage: '/products/millionaire_black.png',
-        price: 40,
+        id: 'as-luxury-billionaire',
+        name: 'Billionaire',
+        price: 50,
         quantity: 1,
-        size: '60 ml'
-      }
-    ],
-    total: 140,
-    shippingFee: 0,
-    status: 'SHIPPED',
-    paymentStatus: 'PAID',
-    paymentMethod: 'Stripe Credit Card',
-    dhlTrackingNumber: 'DHL-EXP-9823471029',
-    createdAt: '2026-08-18T10:30:00Z'
-  }
-];
-
-export const INITIAL_ADMIN_SETTINGS = {
-  stripe: {
-    testMode: true,
-    publishableKey: 'pk_test_sample_arabiansheikh_key',
-    secretKey: 'sk_test_sample_arabiansheikh_secret',
-    currency: 'EUR'
-  },
-  dhl: {
-    testMode: true,
-    accountNumber: 'DHL-EXP-889021',
-    apiKey: 'dhl_test_api_key_andalusia',
-    defaultShippingFee: 15,
-    freeShippingThreshold: 100,
-    originCountry: 'Spain / UAE'
-  }
-};
-
-export const INITIAL_USERS = [
-  {
-    id: 'usr-admin-01',
-    name: 'Sheikh Tariq Al-Fassi',
-    email: 'admin@arabiansheikh.com',
-    phone: '+971 50 123 4567',
-    role: 'ADMIN',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-    createdAt: '2026-01-01',
-    addresses: [
+        image: '/products/billionaire_gold.png'
+      },
       {
-        id: 'addr-1',
-        title: 'Primary Residence',
-        street: 'Royal Mirage Boulevard, Villa 42',
-        city: 'Dubai',
-        country: 'United Arab Emirates',
-        postalCode: '00000',
-        isDefault: true
+        id: 'as-classic-invictus-prestige',
+        name: 'Invictus Prestige',
+        price: 35,
+        quantity: 1,
+        image: '/products/invictus_prestige_white.png'
       }
     ],
-    wishlist: ['as-luxury-black-diamond', 'as-royal-millionaire']
-  },
-  {
-    id: 'usr-customer-02',
-    name: 'Princess Noura Al-Saud',
-    email: 'noura@royal.sa',
-    phone: '+966 50 987 6543',
-    role: 'CUSTOMER',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-    createdAt: '2026-03-15',
-    addresses: [
-      {
-        id: 'addr-2',
-        title: 'Riyadh Residence',
-        street: 'Diplomatic Quarter, Palace 18',
-        city: 'Riyadh',
-        country: 'Saudi Arabia',
-        postalCode: '11564',
-        isDefault: true
-      }
-    ],
-    wishlist: ['as-classic-ana-sukkar']
+    shippingAddress: {
+      fullName: 'Lord Tariq Al-Mansoor',
+      street: 'Gran Vía 45, Planta 8',
+      city: 'Madrid',
+      postalCode: '28013',
+      country: 'Spain'
+    }
   }
 ];
 
@@ -521,17 +583,22 @@ export const INITIAL_DISCOUNTS = [
   {
     id: 'disc-sheikh10',
     code: 'SHEIKH10',
-    percentage: 10,
-    minSpend: 50,
-    validUntil: '2027-12-31',
-    isActive: true
+    discountType: 'percentage',
+    discountValue: 10,
+    minOrderAmount: 50,
+    status: 'ACTIVE',
+    usageLimit: 100,
+    usedCount: 14
   },
   {
-    id: 'disc-royal20',
-    code: 'ROYAL20',
-    percentage: 20,
-    minSpend: 100,
-    validUntil: '2027-12-31',
-    isActive: true
+    id: 'disc-royalty20',
+    code: 'ROYALTY20',
+    discountType: 'percentage',
+    discountValue: 20,
+    minOrderAmount: 100,
+    status: 'ACTIVE',
+    usageLimit: 50,
+    usedCount: 9
   }
 ];
+
