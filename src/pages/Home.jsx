@@ -70,7 +70,8 @@ export default function Home() {
       tagline: 'The ultimate golden crown of Arabian perfumery.',
       spanishTagline: 'La cumbre de la alta perfumería andalusí.',
       notes: 'Ambergris • Cambodian Oud • Fossilized Amber',
-      color: '#D4AF37'
+      color: '#D4AF37',
+      image: '/products/black_diamond_gold.png?v=5'
     },
     {
       id: 'as-royal-millionaire',
@@ -84,7 +85,8 @@ export default function Home() {
       tagline: 'Obsidian authority, noble woods, and spiced charisma.',
       spanishTagline: 'Autoridad en obsidiana, maderas nobles y carisma.',
       notes: 'Cardamom • Smoky Leather • Aged Sandalwood',
-      color: '#C5A059'
+      color: '#C5A059',
+      image: '/products/millionaire_black.png?v=5'
     },
     {
       id: 'as-classic-ana-sukkar',
@@ -98,7 +100,8 @@ export default function Home() {
       tagline: 'Delicate floral nectar, spun sugar, and comforting vanilla.',
       spanishTagline: 'Néctar floral delicado, azúcar hilado y vainilla suave.',
       notes: 'Spun Sugar • Vanilla Cream • White Musk',
-      color: '#E8D29F'
+      color: '#E8D29F',
+      image: '/products/ana_sukkar_white.png?v=5'
     }
   ];
 
@@ -527,7 +530,7 @@ export default function Home() {
                       {heroFlacons.map((f) => (
                         <td key={f.id} className="p-4 text-center">
                           <img
-                            src={f.tier === 'Luxury' ? '/products/black_diamond_gold.png' : f.tier === 'Royal' ? '/products/millionaire_black.png' : '/products/ana_sukkar_white.png'}
+                            src={f.tier === 'Luxury' ? '/products/black_diamond_gold.png?v=5' : f.tier === 'Royal' ? '/products/millionaire_black.png?v=5' : '/products/ana_sukkar_white.png?v=5'}
                             alt={f.name}
                             className="h-28 mx-auto object-contain filter drop-shadow-lg"
                           />

@@ -39,11 +39,11 @@ export const INITIAL_PRODUCTS = [
     reviewsCount: 38,
     concentration: '35% Extrait de Parfum',
     images: [
-      '/products/black_diamond_gold.png',
-      '/products/black_diamond_gold.jpg'
+      '/products/black_diamond_gold.png?v=5',
+      '/products/black_diamond_gold.jpg?v=5'
     ],
-    cutoutImage: '/products/black_diamond_gold.png',
-    originalImage: '/products/black_diamond_gold.jpg',
+    cutoutImage: '/products/black_diamond_gold.png?v=5',
+    originalImage: '/products/black_diamond_gold.jpg?v=5',
     status: 'ACTIVE',
     reviews: [
       {
@@ -95,11 +95,11 @@ export const INITIAL_PRODUCTS = [
     reviewsCount: 42,
     concentration: '30% Extrait de Parfum',
     images: [
-      '/products/millionaire_black.png',
-      '/products/millionaire_black.jpg'
+      '/products/millionaire_black.png?v=5',
+      '/products/millionaire_black.jpg?v=5'
     ],
-    cutoutImage: '/products/millionaire_black.png',
-    originalImage: '/products/millionaire_black.jpg',
+    cutoutImage: '/products/millionaire_black.png?v=5',
+    originalImage: '/products/millionaire_black.jpg?v=5',
     status: 'ACTIVE',
     reviews: [
       {
@@ -151,11 +151,11 @@ export const INITIAL_PRODUCTS = [
     reviewsCount: 29,
     concentration: '25% Eau de Parfum Intense',
     images: [
-      '/products/ana_sukkar_white.png',
-      '/products/ana_sukkar_white.jpg'
+      '/products/ana_sukkar_white.png?v=5',
+      '/products/ana_sukkar_white.jpg?v=5'
     ],
-    cutoutImage: '/products/ana_sukkar_white.png',
-    originalImage: '/products/ana_sukkar_white.jpg',
+    cutoutImage: '/products/ana_sukkar_white.png?v=5',
+    originalImage: '/products/ana_sukkar_white.jpg?v=5',
     status: 'ACTIVE',
     reviews: [
       {
@@ -321,8 +321,8 @@ export const INITIAL_PRODUCTS = [
     isBestSeller: true,
     rating: 5.0,
     reviewsCount: 22,
-    images: ['/products/black_diamond_gold.png'],
-    cutoutImage: '/products/black_diamond_gold.png',
+    images: ['/products/black_diamond_gold.png?v=5'],
+    cutoutImage: '/products/black_diamond_gold.png?v=5',
     status: 'ACTIVE',
     reviews: []
   }
@@ -332,13 +332,13 @@ export const PERFUME_TIERS = [
   {
     id: 'Luxury',
     name: 'Luxury Tier',
-    arabicName: 'الفئة الفاخرة (لكجري)',
+    arabicName: 'الفئة الفاخرة (لاكجري)',
     bulgarianName: 'Луксозен клас',
     price: 50,
     size: '60 ml / 2.0 fl oz',
     bottle: 'Black Diamond',
     color: '#D4AF37',
-    image: '/products/black_diamond_gold.png',
+    image: '/products/black_diamond_gold.png?v=5',
     description: 'The highest expression of Andalusian perfumery. Encased in brilliant gold with concentrated precious oud, ambergris, and rare resins.',
     filterParam: 'Luxury'
   },
@@ -351,7 +351,7 @@ export const PERFUME_TIERS = [
     size: '60 ml / 2.0 fl oz',
     bottle: 'Millionaire',
     color: '#2A2A2A',
-    image: '/products/millionaire_black.png',
+    image: '/products/millionaire_black.png?v=5',
     description: 'Commanding obsidian elegance with intense woods, spice, and magnetic masculine charisma.',
     filterParam: 'Royal'
   },
@@ -364,7 +364,7 @@ export const PERFUME_TIERS = [
     size: '60 ml / 2.0 fl oz',
     bottle: 'Ana Sukkar',
     color: '#E8D29F',
-    image: '/products/ana_sukkar_white.png',
+    image: '/products/ana_sukkar_white.png?v=5',
     description: 'Pristine porcelain-white flacon offering gourmand sweetness, delicate floral petals, and comforting creamy vanilla.',
     filterParam: 'Classic'
   }

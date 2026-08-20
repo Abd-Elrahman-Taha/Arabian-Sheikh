@@ -20,9 +20,9 @@ export default function Hero3DFlaconScene({
   const [loaded, setLoaded] = useState(false);
 
   const flaconImages = [
-    '/products/black_diamond_gold.png', // Luxury (Default)
-    '/products/millionaire_black.png',  // Royal
-    '/products/ana_sukkar_white.png'   // Classic
+    '/products/black_diamond_gold.png?v=5', // Luxury (Default)
+    '/products/millionaire_black.png?v=5',  // Royal
+    '/products/ana_sukkar_white.png?v=5'   // Classic (Ana Sukkar)
   ];
 
   useEffect(() => {

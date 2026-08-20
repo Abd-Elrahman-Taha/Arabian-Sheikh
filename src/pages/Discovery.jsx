@@ -77,7 +77,7 @@ export default function Discovery() {
           tier: 'Luxury Tier',
           price: 50,
           size: '60 ml',
-          image: '/products/black_diamond_gold.png',
+          image: '/products/black_diamond_gold.png?v=5',
           reason: 'Matches your desire for pure imperial majesty and unmatched 14+ hour ambergris sillage.'
         });
       } else if (updated.mood === 'royal' || updated.family === 'woody') {
@@ -87,7 +87,7 @@ export default function Discovery() {
           tier: 'Royal Tier',
           price: 40,
           size: '60 ml',
-          image: '/products/millionaire_black.png',
+          image: '/products/millionaire_black.png?v=5',
           reason: 'Matches your preference for commanding leather, cardamom spice, and dark charisma.'
         });
       } else {
@@ -97,7 +97,7 @@ export default function Discovery() {
           tier: 'Classic Tier',
           price: 30,
           size: '60 ml',
-          image: '/products/ana_sukkar_white.png',
+          image: '/products/ana_sukkar_white.png?v=5',
           reason: 'Matches your affinity for velvety spun sugar, vanilla comfort, and ethereal florals.'
         });
       }

@@ -1,6 +1,6 @@
 import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v2';
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v6';
 
 function loadProducts() {
   const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
