@@ -23,37 +23,37 @@ export default function ArabianLogo({
 }) {
   const sizeMap = {
     navbar: {
-      crest:  'h-8 sm:h-9 w-auto aspect-[85/113]',
+      crest:  'h-10 sm:h-12 w-auto aspect-[85/113]',
       text:   'text-sm sm:text-base md:text-lg tracking-[0.2em]',
       sub:    'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]',
       arabic: 'text-[11px] sm:text-[13px]'
     },
     sm: {
-      crest:  'h-8 sm:h-9 w-auto aspect-[85/113]',
+      crest:  'h-14 sm:h-16 w-auto aspect-[85/113]',
       text:   'text-base sm:text-lg tracking-[0.22em]',
       sub:    'text-[8px] tracking-[0.35em]',
       arabic: 'text-sm'
     },
     md: {
-      crest:  'h-11 sm:h-13 w-auto aspect-[85/113]',
+      crest:  'h-20 sm:h-24 w-auto aspect-[85/113]',
       text:   'text-lg sm:text-xl tracking-[0.25em]',
       sub:    'text-[9px] tracking-[0.4em]',
       arabic: 'text-base'
     },
     lg: {
-      crest:  'h-16 sm:h-20 w-auto aspect-[85/113]',
+      crest:  'h-32 sm:h-40 md:h-48 w-auto aspect-[85/113]',
       text:   'text-2xl sm:text-3xl tracking-[0.28em]',
       sub:    'text-xs tracking-[0.45em]',
       arabic: 'text-lg sm:text-xl'
     },
     hero: {
-      crest:  'h-24 sm:h-32 lg:h-36 w-auto aspect-[85/113]',
+      crest:  'h-48 sm:h-64 md:h-72 lg:h-80 xl:h-96 w-auto aspect-[85/113]',
       text:   'text-3xl sm:text-5xl lg:text-6xl tracking-[0.3em]',
       sub:    'text-xs sm:text-sm tracking-[0.5em]',
       arabic: 'text-xl sm:text-2xl'
     },
     xl: {
-      crest:  'h-36 sm:h-52 lg:h-60 w-auto aspect-[85/113]',
+      crest:  'h-64 sm:h-80 md:h-96 lg:h-[28rem] xl:h-[32rem] w-auto aspect-[85/113]',
       text:   'text-4xl sm:text-6xl lg:text-7xl tracking-[0.32em]',
       sub:    'text-sm tracking-[0.52em]',
       arabic: 'text-2xl sm:text-3xl lg:text-4xl'
