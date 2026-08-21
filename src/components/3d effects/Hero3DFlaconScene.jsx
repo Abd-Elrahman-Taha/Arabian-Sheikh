@@ -54,10 +54,10 @@ export default function Hero3DFlaconScene({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera: Framed so the entire bottle, cap, and shadow are 100% visible
+    // 2. Camera: Framed with refined proportions for minimized, 30-degree angled flacon
     const isMobile = width < 640;
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    camera.position.set(0, 0.05, isMobile ? 4.9 : 5.6);
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
+    camera.position.set(0, 0.05, isMobile ? 5.2 : 6.0);
     cameraRef.current = camera;
 
     // 3. Renderer with Optimal DPR
@@ -78,15 +78,15 @@ export default function Hero3DFlaconScene({
     const ambientLight = new THREE.AmbientLight(0xffeedd, 0.9);
     scene.add(ambientLight);
 
-    const warmKeyLight = new THREE.DirectionalLight(0xffdfa8, 2.4);
+    const warmKeyLight = new THREE.DirectionalLight(0xffdfa8, 2.5);
     warmKeyLight.position.set(3, 4, 3);
     scene.add(warmKeyLight);
 
-    const coolRimLight = new THREE.DirectionalLight(0xd4e2ff, 1.2);
+    const coolRimLight = new THREE.DirectionalLight(0xd4e2ff, 1.3);
     coolRimLight.position.set(-3, 2, -2);
     scene.add(coolRimLight);
 
-    const goldPointLight = new THREE.PointLight(0xd4af37, 2.0, 10);
+    const goldPointLight = new THREE.PointLight(0xd4af37, 2.2, 10);
     goldPointLight.position.set(0, -1.5, 2.5);
     scene.add(goldPointLight);
     lightSweepRef.current = goldPointLight;
@@ -104,8 +104,12 @@ export default function Hero3DFlaconScene({
     });
     texturesRef.current = textures;
 
-    // 6. Bottle Plane Mesh (Standardized 1:1.4 Aspect: 2.7 x 3.78 for full visibility)
-    const bottleGeometry = new THREE.PlaneGeometry(2.7, 3.78);
+    // 6. Bottle Plane Mesh (Standardized 1:1.4 Aspect: 2.3 x 3.22 with 15-degree lay angle)
+    const BASE_ROT_Z = -15 * (Math.PI / 180); // 15-degree subtle luxury tilt
+    const BASE_ROT_X = -4 * (Math.PI / 180);  // Subtle lay-back angle
+    const BASE_ROT_Y = 8 * (Math.PI / 180);   // Luxury 3D perspective turn
+
+    const bottleGeometry = new THREE.PlaneGeometry(2.3, 3.22);
     const bottleMaterial = new THREE.MeshStandardMaterial({
       map: textures[0],
       transparent: true,
@@ -116,10 +120,11 @@ export default function Hero3DFlaconScene({
     });
     const bottleMesh = new THREE.Mesh(bottleGeometry, bottleMaterial);
     bottleMesh.position.set(0, 0.05, 0);
+    bottleMesh.rotation.set(BASE_ROT_X, BASE_ROT_Y, BASE_ROT_Z);
     scene.add(bottleMesh);
     bottleMeshRef.current = bottleMesh;
 
-    // 7. Ground Contact Shadow
+    // 7. Ground Contact Shadow angled to match 15-degree flacon orientation
     const shadowCanvas = document.createElement('canvas');
     shadowCanvas.width = 128;
     shadowCanvas.height = 128;
@@ -132,7 +137,7 @@ export default function Hero3DFlaconScene({
     ctx.fillRect(0, 0, 128, 128);
 
     const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-    const shadowGeometry = new THREE.PlaneGeometry(3.0, 1.1);
+    const shadowGeometry = new THREE.PlaneGeometry(2.8, 1.1);
     const shadowMaterial = new THREE.MeshBasicMaterial({
       map: shadowTexture,
       transparent: true,
@@ -141,7 +146,8 @@ export default function Hero3DFlaconScene({
     });
     const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
     shadowMesh.rotation.x = -Math.PI / 2.2;
-    shadowMesh.position.set(0, -1.6, 0.2);
+    shadowMesh.rotation.z = -12 * (Math.PI / 180);
+    shadowMesh.position.set(0.05, -1.5, 0.2);
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
@@ -154,8 +160,8 @@ export default function Hero3DFlaconScene({
       const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      targetRotY = x * 0.16;
-      targetRotX = -y * 0.10;
+      targetRotY = x * 0.14;
+      targetRotX = -y * 0.08;
       targetLightX = x * 2.2;
     };
 
@@ -182,17 +188,17 @@ export default function Hero3DFlaconScene({
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Sleep loop if offscreen or tab hidden (Huge performance boost for rest of page)
       if (!isVisible || !performanceManager.isTabVisible) return;
 
       const elapsedTime = clock.getElapsedTime();
 
       // Subtle levitation hover
-      const floatY = Math.sin(elapsedTime * 1.5) * 0.08;
+      const floatY = Math.sin(elapsedTime * 1.5) * 0.06;
       if (bottleMeshRef.current) {
-        bottleMeshRef.current.position.y = 0.1 + floatY;
-        bottleMeshRef.current.rotation.y += (targetRotY - bottleMeshRef.current.rotation.y) * 0.08;
-        bottleMeshRef.current.rotation.x += (targetRotX - bottleMeshRef.current.rotation.x) * 0.08;
+        bottleMeshRef.current.position.y = 0.05 + floatY;
+        bottleMeshRef.current.rotation.z = BASE_ROT_Z;
+        bottleMeshRef.current.rotation.y += (BASE_ROT_Y + targetRotY - bottleMeshRef.current.rotation.y) * 0.08;
+        bottleMeshRef.current.rotation.x += (BASE_ROT_X + targetRotX - bottleMeshRef.current.rotation.x) * 0.08;
       }
 
       // Ground shadow breath syncing with hover
@@ -223,7 +229,7 @@ export default function Hero3DFlaconScene({
       const h = container.clientHeight || 650;
       const isMob = w < 640;
       camera.aspect = w / h;
-      camera.position.z = isMob ? 4.9 : 5.6;
+      camera.position.z = isMob ? 5.2 : 6.0;
       camera.position.y = 0.05;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);

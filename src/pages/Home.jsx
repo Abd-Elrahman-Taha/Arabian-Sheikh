@@ -313,13 +313,17 @@ export default function Home() {
                 as="h1"
               />
 
-              {/* Curved Caramel/Gold Pill CTA Button */}
-              <div>
+              {/* Ultra-Luxury Curved Caramel/Gold Pill CTA Button */}
+              <div className="pt-2">
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
-                  className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#B8860B] hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-2xl hover:scale-105 cursor-pointer"
+                  className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-[#FFFDF8] hover:text-[#0B0A08] border border-[#F2D675]/50 hover:border-[#FFF8E7] font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-105 overflow-hidden cursor-pointer"
                 >
-                  <span>FIND OUT MORE</span>
+                  {/* Subtle Light Glint on Hover */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
+                  <span className="relative z-10 drop-shadow-sm">FIND OUT MORE</span>
+                  <ArrowRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180" />
                 </Link>
               </div>
 
