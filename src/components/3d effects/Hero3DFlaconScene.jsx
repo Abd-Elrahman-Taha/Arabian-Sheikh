@@ -54,10 +54,10 @@ export default function Hero3DFlaconScene({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera with Mobile-Optimized Closer Perspective
+    // 2. Camera with Closer Perspective for Centered Product
     const isMobile = width < 640;
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, isMobile ? 0.05 : 0, isMobile ? 4.6 : 6.2);
+    camera.position.set(0, isMobile ? 0.05 : 0, isMobile ? 4.4 : 5.4);
     cameraRef.current = camera;
 
     // 3. Renderer with Optimal DPR

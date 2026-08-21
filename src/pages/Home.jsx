@@ -7,6 +7,7 @@ import { useWishlist } from '../context/WishlistContext';
 import ArabianLogo from '../components/common/ArabianLogo';
 import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
+import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
 import BlurText from '../components/common/BlurText';
 import HeroRulerPagination from '../components/home/HeroRulerPagination';
@@ -270,20 +271,39 @@ export default function Home() {
     <div className="w-full bg-transparent text-[#F3E6D0] overflow-x-hidden">
       
       {/* =========================================================================
-          1. HERO SECTION: CENTERED PRODUCT WITH PURE GOLD SHADER
+          1. HERO SECTION: CENTERED PRODUCT WITH GOLDEN SHADER & BLURRED GRADIENT AURA
           ========================================================================= */}
-      <section className="relative min-h-[90vh] lg:min-h-[94vh] flex flex-col justify-between overflow-hidden pt-24 sm:pt-28 lg:pt-32 pb-8">
+      <section className="relative min-h-[86vh] lg:min-h-[90vh] flex flex-col justify-between overflow-hidden pt-20 sm:pt-24 lg:pt-28 pb-0">
         
+        {/* Luxury Photographic Background with Warm Bronze/Amber Corner Lighting & Subtle Shader */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <img
+            src="/hero/luxury_hero_bg.jpg"
+            alt="Luxury Atmosphere"
+            className="w-full h-full object-cover opacity-95 filter brightness-100"
+          />
+          {/* Soft Golden Fluid Shader Blend */}
+          <LuxuryBackgroundShader
+            color1="#D4AF37"
+            color2="#4A2E1B"
+            color3="#0B0A08"
+            opacity={0.35}
+            className="absolute inset-0 pointer-events-none"
+          />
+          {/* Soft Depth Fade */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0A08]/40 via-transparent to-[#0B0A08] pointer-events-none" />
+        </div>
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
           
-          {/* Main Hero Centerpiece Grid (Left Specs • Center Grand Flacon • Right Availability) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-4 items-center flex-1 my-auto">
+          {/* Centered Product Flacon with Left Flank Specs Overlay */}
+          <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-center my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Column: Limited Edition Badge, Ref Code, Bold Title, Pill Button */}
-            <div className="lg:col-span-5 text-center lg:text-left space-y-4 sm:space-y-5 order-2 lg:order-1 z-20">
+            {/* Left Flank: Limited Edition Badge, Ref Code, Bold Title, Pill Button */}
+            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-sm text-center lg:text-left space-y-3 sm:space-y-4 order-2 lg:order-1 z-20 pointer-events-auto">
               
               {/* Limited Edition Pill Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#21130D]/80 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold shadow-lg">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#21130D]/85 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold shadow-lg">
                 <span>LIMITED TO 50 FLACONS</span>
               </div>
 
@@ -309,7 +329,7 @@ export default function Home() {
               </p>
 
               {/* Curved Caramel/Gold Pill CTA Button */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
                   className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#B8860B] hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-2xl hover:scale-105 cursor-pointer"
@@ -320,8 +340,8 @@ export default function Home() {
 
             </div>
 
-            {/* Center / Right Column: The Flacon Standing Majestically */}
-            <div className="lg:col-span-7 relative flex items-center justify-center h-[50vh] sm:h-[58vh] lg:h-[640px] order-1 lg:order-2 z-10">
+            {/* DEAD CENTER: The 3D Flacon Standing in the Middle of the Canvas */}
+            <div className="w-full max-w-2xl mx-auto relative flex items-center justify-center h-[46vh] sm:h-[54vh] lg:h-[600px] order-1 lg:order-2 z-10">
               <Hero3DFlaconScene
                 activeProductIndex={activeHeroIndex}
                 onSlideChange={setActiveHeroIndex}
@@ -332,7 +352,7 @@ export default function Home() {
           </div>
 
           {/* Horological Precision Ruler Pagination (Matching Chronoswiss Nav Gauge) */}
-          <div className="mt-4 sm:mt-6 pt-3 border-t border-[#D4AF37]/15">
+          <div className="mt-0 pt-0 pb-1">
             <HeroRulerPagination
               activeIndex={activeHeroIndex}
               onSelectIndex={setActiveHeroIndex}
@@ -347,7 +367,7 @@ export default function Home() {
       {/* =========================================================================
           1.1 EDITORIAL PREVIEW CARDS (MATCHING CHRONOSWISS BOTTOM 3 CARDS)
           ========================================================================= */}
-      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           
           {/* Card 1: Master Alchemist */}

@@ -39,7 +39,7 @@ export default function HeroRulerPagination({
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center pt-2 sm:pt-6 pb-2 select-none">
+    <div className="w-full flex flex-col items-center justify-center pt-0 pb-0 select-none">
       
       {/* 3-Flank Horological Gauge Row (Always horizontal & compact on phones) */}
       <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 flex flex-row items-center justify-center md:justify-between gap-2 sm:gap-4 md:gap-6">
