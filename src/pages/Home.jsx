@@ -241,6 +241,8 @@ export default function Home() {
   }, []);
 
   const currentHeroFlacon = heroFlacons[activeHeroIndex];
+  const nextHeroIndex = (activeHeroIndex + 1) % heroFlacons.length;
+  const nextHeroFlacon = heroFlacons[nextHeroIndex];
 
   // Discovery filtered list
   const discoveryMatches = allProducts.filter(p => {
@@ -251,12 +253,14 @@ export default function Home() {
   });
 
   const getDisplayName = (flacon) => {
+    if (!flacon) return '';
     if (language === 'bg' && flacon.bulgarianName) return flacon.bulgarianName;
     if (language === 'es' && flacon.spanishName) return flacon.spanishName;
     return flacon.name;
   };
 
   const getTagline = (flacon) => {
+    if (!flacon) return '';
     if (language === 'es' && flacon.spanishTagline) return flacon.spanishTagline;
     return flacon.tagline;
   };
@@ -296,10 +300,10 @@ export default function Home() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
           
-          {/* Centered Product Flacon with Left Flank Specs Overlay */}
-          <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-center my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
+          {/* Centered Product Flacon with Left & Right Flank Specs */}
+          <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: ONLY Product Name and Find Out More Button */}
+            {/* Left Flank: Product Name and Find Out More Button */}
             <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-sm text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto">
               
               {/* Bold Minimalist Product Title */}
@@ -329,13 +333,54 @@ export default function Home() {
 
             </div>
 
-            {/* DEAD CENTER: The 3D Flacon Standing in the Middle of the Canvas */}
-            <div className="w-full max-w-2xl mx-auto relative flex items-center justify-center h-[46vh] sm:h-[54vh] lg:h-[600px] order-1 lg:order-2 z-10">
+            {/* DEAD CENTER: The Active 3D Flacon Standing in the Middle */}
+            <div className="w-full max-w-xl mx-auto relative flex items-center justify-center h-[46vh] sm:h-[54vh] lg:h-[600px] order-1 lg:order-2 z-10">
               <Hero3DFlaconScene
                 activeProductIndex={activeHeroIndex}
                 onSlideChange={setActiveHeroIndex}
                 products={heroFlacons}
               />
+            </div>
+
+            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT (Smaller on the right side) */}
+            <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
+              <div
+                onClick={() => setActiveHeroIndex(nextHeroIndex)}
+                className="group relative cursor-pointer p-4 sm:p-5 rounded-3xl bg-[#0B0A08]/75 hover:bg-[#150D08]/90 border border-[#D4AF37]/35 hover:border-[#F2D675] shadow-2xl backdrop-blur-md transition-all duration-500 hover:scale-105 hover:shadow-[0_15px_40px_rgba(212,175,55,0.35)] max-w-xs flex flex-col items-center lg:items-end space-y-3"
+                title={`Next: ${getDisplayName(nextHeroFlacon)}`}
+              >
+                {/* Header Tag */}
+                <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold">
+                  <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                  <span>UPCOMING FLACON</span>
+                  <ChevronRight className="w-3 h-3 text-[#F2D675] group-hover:translate-x-1 transition-transform" />
+                </div>
+
+                {/* Smaller Next Flacon Preview with Soft Glow & 15-Degree Tilt */}
+                <div className="relative w-28 h-36 sm:w-32 sm:h-40 flex items-center justify-center my-1">
+                  {/* Subtle Gold Aura behind the smaller flacon */}
+                  <div className="absolute inset-0 bg-[#D4AF37]/15 rounded-full blur-xl group-hover:bg-[#D4AF37]/30 transition-all duration-500 pointer-events-none" />
+                  
+                  <img
+                    src={nextHeroFlacon.image}
+                    alt={getDisplayName(nextHeroFlacon)}
+                    className="h-full w-auto object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] -rotate-12 group-hover:-rotate-6 group-hover:scale-110 transition-transform duration-500 relative z-10"
+                  />
+                </div>
+
+                {/* Next Product Meta */}
+                <div className="space-y-0.5">
+                  <h4 className="font-cinzel text-sm sm:text-base font-bold text-[#F3E6D0] group-hover:text-[#F2D675] transition-colors leading-tight">
+                    {getDisplayName(nextHeroFlacon)}
+                  </h4>
+                  <p className="text-[10px] text-[#D8BE99] font-mono font-medium">
+                    {nextHeroFlacon.tier} Tier • €{nextHeroFlacon.price}
+                  </p>
+                  <p className="text-[9px] text-[#D4AF37]/75 font-mono italic max-w-[170px] line-clamp-1">
+                    {nextHeroFlacon.notes}
+                  </p>
+                </div>
+              </div>
             </div>
 
           </div>
