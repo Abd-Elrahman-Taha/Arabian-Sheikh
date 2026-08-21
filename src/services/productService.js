@@ -202,7 +202,10 @@ export const productService = {
   async getRelatedProducts(currentId, limit = 4) {
     if (!apiClient.isMockEnabled()) {
       try {
-        return await productApi.getRelatedProducts(currentId, limit);
+        const remote = await productApi.getRelatedProducts(currentId, limit);
+        if (Array.isArray(remote) && remote.length > 0) {
+          return remote;
+        }
       } catch (e) {
         console.warn('Real API related products fallback:', e.message);
       }
@@ -210,16 +213,85 @@ export const productService = {
 
     const products = loadProducts();
     const current = products.find(p => p.id === currentId || p.slug === currentId);
-    if (!current) return products.slice(0, limit);
+    
+    // Filter active candidates excluding current product
+    const candidates = products.filter(p => 
+      p.status === 'ACTIVE' && 
+      p.id !== currentId && 
+      p.slug !== currentId && 
+      (!current || (p.id !== current.id && p.slug !== current.slug))
+    );
 
-    return products
-      .filter(p => p.id !== current.id && p.status === 'ACTIVE')
-      .sort((a, b) => {
-        const aMatch = (a.category === current.category ? 2 : 0) + (a.gender === current.gender ? 1 : 0);
-        const bMatch = (b.category === current.category ? 2 : 0) + (b.gender === current.gender ? 1 : 0);
-        return bMatch - aMatch;
-      })
-      .slice(0, limit);
+    if (!current) {
+      return candidates.slice(0, limit);
+    }
+
+    // Extract current notes for deep olfactory matching
+    const currentNotes = [
+      ...(current.topNotes || []),
+      ...(current.heartNotes || []),
+      ...(current.baseNotes || []),
+      ...(current.notes?.top || []),
+      ...(current.notes?.heart || []),
+      ...(current.notes?.base || [])
+    ].map(n => String(n).toLowerCase());
+
+    const scored = candidates.map(p => {
+      let score = 0;
+
+      // 1. Same tier matching (+5 points)
+      if (p.tier && current.tier && p.tier.toLowerCase() === current.tier.toLowerCase()) {
+        score += 5;
+      }
+
+      // 2. Scent & Fragrance family matching (+4 points)
+      const pFamily = (p.fragranceFamily || p.scentFamily || '').toLowerCase();
+      const cFamily = (current.fragranceFamily || current.scentFamily || '').toLowerCase();
+      if (pFamily && cFamily && (pFamily.includes(cFamily) || cFamily.includes(pFamily))) {
+        score += 4;
+      }
+
+      // 3. Category matching (+3 points)
+      if (p.category && current.category && p.category === current.category) {
+        score += 3;
+      }
+
+      // 4. Gender profile matching (+2 points)
+      if (p.gender === current.gender || p.gender === 'Unisex' || current.gender === 'Unisex') {
+        score += 2;
+      }
+
+      // 5. Shared olfactory notes (+3 points per shared note)
+      const pNotes = [
+        ...(p.topNotes || []),
+        ...(p.heartNotes || []),
+        ...(p.baseNotes || []),
+        ...(p.notes?.top || []),
+        ...(p.notes?.heart || []),
+        ...(p.notes?.base || [])
+      ].map(n => String(n).toLowerCase());
+
+      pNotes.forEach(note => {
+        if (currentNotes.some(cn => cn.includes(note) || note.includes(cn))) {
+          score += 3;
+        }
+      });
+
+      return { product: p, score };
+    });
+
+    // Sort by highest match score
+    scored.sort((a, b) => b.score - a.score);
+
+    const result = scored.map(item => item.product).slice(0, limit);
+
+    // If result has fewer than requested limit, fill with remaining candidates
+    if (result.length < limit) {
+      const remaining = candidates.filter(c => !result.some(r => r.id === c.id));
+      result.push(...remaining.slice(0, limit - result.length));
+    }
+
+    return result;
   },
 
   async addReview(productId, review) {

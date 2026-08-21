@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
+import { productService } from '../../services/productService';
 import {
   X,
   ShoppingBag,
@@ -28,11 +29,29 @@ export default function CartDrawer() {
     cart,
     toggleGiftWrap,
     applyDiscount,
-    removeDiscount
+    removeDiscount,
+    addToCart
   } = useCart();
 
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+
+  useEffect(() => {
+    async function loadPairings() {
+      if (!isDrawerOpen) return;
+      try {
+        const firstItemId = items[0]?.productId || 'as-luxury-black-diamond';
+        const related = await productService.getRelatedProducts(firstItemId, 4);
+        const cartIds = items.map(i => i.productId);
+        const filtered = related.filter(r => !cartIds.includes(r.id));
+        setRecommendations(filtered.slice(0, 2));
+      } catch (err) {
+        console.error('Error loading drawer recommendations:', err);
+      }
+    }
+    loadPairings();
+  }, [isDrawerOpen, items]);
 
   if (!isDrawerOpen) return null;
 
@@ -206,6 +225,50 @@ export default function CartDrawer() {
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Frequently Paired / Related Recommendations */}
+            {items.length > 0 && recommendations.length > 0 && (
+              <div className="pt-3 mt-3 border-t border-[#D4AF37]/20 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#F2D675] uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Patrons Also Paired With</span>
+                </div>
+                <div className="space-y-2">
+                  {recommendations.map((rec) => (
+                    <div
+                      key={rec.id}
+                      className="flex items-center justify-between p-2.5 bg-black/60 border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 transition-colors rounded-xs"
+                    >
+                      <div
+                        onClick={() => {
+                          closeDrawer();
+                          navigate(`/product/${rec.slug || rec.id}`);
+                        }}
+                        className="flex items-center gap-2.5 cursor-pointer flex-1"
+                      >
+                        <img
+                          src={rec.cutoutImage || rec.images?.[0] || '/products/black_diamond_gold.png'}
+                          alt={rec.name}
+                          className="w-10 h-12 object-contain bg-black/40 p-0.5 border border-white/5"
+                        />
+                        <div>
+                          <h5 className="font-cinzel text-xs font-bold text-[#F3E6D0] line-clamp-1">{rec.name}</h5>
+                          <span className="text-xs font-mono font-bold text-[#F2D675]">€{rec.price}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          addToCart(rec, rec.size || '60 ml', 1);
+                        }}
+                        className="px-3 py-1.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider transition-colors cursor-pointer shrink-0 shadow-md"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 

@@ -54,6 +54,7 @@ export default function ProductDetail() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     async function loadProduct() {
       if (!productId) return;
       setLoading(true);
@@ -531,17 +532,114 @@ export default function ProductDetail() {
 
         </div>
 
-        {/* Related Creations */}
+        {/* Related Creations & Layering Rituals */}
         {relatedProducts.length > 0 && (
-          <div className="pt-12 border-t border-white/10 space-y-6">
-            <h2 className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0]">
-              Complementary Master Creations
-            </h2>
+          <div className="pt-16 border-t border-[#D4AF37]/20 space-y-10">
+            
+            {/* Header */}
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D4AF37]/40 bg-[#0B0A08] text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold shadow-md">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Curated Olfactory Layering</span>
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F3E6D0]">
+                Complementary Master Creations
+              </h2>
+              <p className="text-xs sm:text-sm text-[#D8BE99] font-medium">
+                Flacons specifically composed to harmonize and layer with <strong className="text-[#F2D675]">{displayName}</strong>.
+              </p>
+            </div>
+
+            {/* Frequently Layered Together (Dual Flacon Ritual) */}
+            {relatedProducts[0] && (
+              <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-6 sm:p-8 rounded-sm shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+                  
+                  {/* Left: 2 Products Visual Flow */}
+                  <div className="flex items-center justify-center gap-3 sm:gap-6">
+                    {/* Flacon 1 (Current) */}
+                    <div className="flex flex-col items-center text-center space-y-2">
+                      <div className="w-24 sm:w-28 h-28 sm:h-32 bg-black/60 border border-[#D4AF37]/30 p-2 flex items-center justify-center">
+                        <img
+                          src={galleryImages[0]}
+                          alt={displayName}
+                          className="max-h-full object-contain filter drop-shadow-md"
+                        />
+                      </div>
+                      <span className="font-cinzel text-xs font-bold text-[#F3E6D0] line-clamp-1 max-w-[110px]">{displayName}</span>
+                      <span className="text-xs font-mono font-bold text-[#F2D675]">€{product.price}</span>
+                    </div>
+
+                    {/* Plus Icon */}
+                    <div className="w-8 h-8 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] font-bold shrink-0">
+                      <Plus className="w-4 h-4" />
+                    </div>
+
+                    {/* Flacon 2 (Top Related) */}
+                    <div
+                      onClick={() => navigate(`/product/${relatedProducts[0].slug || relatedProducts[0].id}`)}
+                      className="flex flex-col items-center text-center space-y-2 cursor-pointer group"
+                    >
+                      <div className="w-24 sm:w-28 h-28 sm:h-32 bg-black/60 border border-[#D4AF37]/30 group-hover:border-[#D4AF37] p-2 flex items-center justify-center transition-colors">
+                        <img
+                          src={relatedProducts[0].cutoutImage || relatedProducts[0].images?.[0] || '/products/black_diamond_gold.png'}
+                          alt={relatedProducts[0].name}
+                          className="max-h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <span className="font-cinzel text-xs font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] line-clamp-1 max-w-[110px] transition-colors">
+                        {relatedProducts[0].name}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-[#F2D675]">€{relatedProducts[0].price}</span>
+                    </div>
+                  </div>
+
+                  {/* Center: Layering Advice */}
+                  <div className="flex-1 text-center lg:text-left space-y-2 max-w-md">
+                    <span className="text-[10px] uppercase tracking-widest text-[#F2D675] font-cinzel font-bold">
+                      Royal Sillage Synergy
+                    </span>
+                    <h3 className="font-cinzel text-base sm:text-lg font-bold text-[#F3E6D0]">
+                      The Sovereign Dual Pairing
+                    </h3>
+                    <p className="text-xs text-[#D8BE99] leading-relaxed">
+                      Layering <span className="text-[#F3E6D0] font-semibold">{displayName}</span> with <span className="text-[#F3E6D0] font-semibold">{relatedProducts[0].name}</span> deepens the base notes and extends sillage up to 18+ hours.
+                    </p>
+                  </div>
+
+                  {/* Right: 1-Click Dual Add Button */}
+                  <div className="w-full lg:w-auto flex flex-col items-center lg:items-end gap-3 shrink-0">
+                    <div className="text-center lg:text-right">
+                      <span className="text-xs text-[#D8BE99] block">Combined Ritual Price:</span>
+                      <span className="font-cinzel text-2xl font-bold text-[#D4AF37]">
+                        €{product.price + relatedProducts[0].price}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        addToCart(product, selectedSize, 1);
+                        addToCart(relatedProducts[0], relatedProducts[0].size || '60 ml', 1);
+                        success(`Added the Sovereign Pairing to your bag (${displayName} + ${relatedProducts[0].name})`);
+                      }}
+                      className="w-full sm:w-auto px-6 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-102"
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Add Pair to Bag</span>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* Grid of All Related Creations */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
+
           </div>
         )}
 
