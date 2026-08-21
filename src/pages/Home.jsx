@@ -72,7 +72,7 @@ export default function Home() {
       spanishTagline: 'La cumbre de la alta perfumería andalusí.',
       notes: 'Ambergris • Cambodian Oud • Fossilized Amber',
       color: '#D4AF37',
-      image: '/products/black_diamond_gold.png?v=5'
+      image: '/products/black_diamond_gold.png?v=6'
     },
     {
       id: 'as-luxury-billionaire',
@@ -87,7 +87,7 @@ export default function Home() {
       spanishTagline: 'Soberanía en oro macizo de 24K y opulencia líquida.',
       notes: 'Golden Honey • Royal Dehn Al Oud • Amber Nectar',
       color: '#D4AF37',
-      image: '/products/billionaire_gold.png'
+      image: '/products/billionaire_gold.png?v=6'
     },
     {
       id: 'as-royal-queens-secret',
@@ -102,7 +102,7 @@ export default function Home() {
       spanishTagline: 'El secreto real coronado de rubí de las reinas andalusíes.',
       notes: 'Taif Royal Rose • Candied Saffron • Velvet Vanilla',
       color: '#D4AF37',
-      image: '/products/queens_secret_gold.png'
+      image: '/products/queens_secret_gold.png?v=6'
     },
     {
       id: 'as-royal-millionaire',
@@ -117,7 +117,7 @@ export default function Home() {
       spanishTagline: 'Autoridad en obsidiana, maderas nobles y carisma.',
       notes: 'Cardamom • Smoky Leather • Aged Sandalwood',
       color: '#D4AF37',
-      image: '/products/millionaire_black.png?v=5'
+      image: '/products/millionaire_black.png?v=6'
     },
     {
       id: 'as-classic-ana-sukkar',
@@ -132,7 +132,7 @@ export default function Home() {
       spanishTagline: 'Néctar floral delicado, azúcar hilado y vainilla suave.',
       notes: 'Spun Sugar • Vanilla Cream • White Musk',
       color: '#D4AF37',
-      image: '/products/ana_sukkar_white.png?v=5'
+      image: '/products/ana_sukkar_white.png?v=6'
     }
   ];
 
@@ -299,20 +299,10 @@ export default function Home() {
           {/* Centered Product Flacon with Left Flank Specs Overlay */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-center my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: Limited Edition Badge, Ref Code, Bold Title, Pill Button */}
-            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-sm text-center lg:text-left space-y-3 sm:space-y-4 order-2 lg:order-1 z-20 pointer-events-auto">
+            {/* Left Flank: ONLY Product Name and Find Out More Button */}
+            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-sm text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto">
               
-              {/* Limited Edition Pill Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#21130D]/85 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold shadow-lg">
-                <span>LIMITED TO 50 FLACONS</span>
-              </div>
-
-              {/* Monospace Reference Code */}
-              <p className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#D8BE99]/80 font-medium">
-                AS-9343.2-{currentHeroFlacon.tier.toUpperCase()}
-              </p>
-
-              {/* Bold Minimalist Title */}
+              {/* Bold Minimalist Product Title */}
               <BlurText
                 key={currentHeroFlacon.id}
                 text={getDisplayName(currentHeroFlacon).toUpperCase()}
@@ -323,13 +313,8 @@ export default function Home() {
                 as="h1"
               />
 
-              {/* Subtle Scent Notes */}
-              <p className="hidden sm:block text-xs uppercase tracking-widest text-[#D8BE99]/75 font-mono">
-                {currentHeroFlacon.notes}
-              </p>
-
               {/* Curved Caramel/Gold Pill CTA Button */}
-              <div className="pt-1">
+              <div>
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
                   className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#B8860B] hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-2xl hover:scale-105 cursor-pointer"

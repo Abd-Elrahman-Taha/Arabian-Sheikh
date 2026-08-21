@@ -295,15 +295,15 @@ export default function HorizontalCollectionShowcase({
                     </button>
                   </div>
 
-                  {/* Flacon Visual */}
+                  {/* Flacon Visual (Uniform Big Sizing) */}
                   <div
                     onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                    className="aspect-[4/5] flex items-center justify-center p-4 mb-4 bg-black/60 border border-white/10 relative overflow-hidden cursor-pointer group-hover:border-[#D4AF37]/50 transition-colors"
+                    className="aspect-[4/5] flex items-center justify-center p-2.5 mb-4 bg-black/70 border border-white/10 relative overflow-hidden cursor-pointer group-hover:border-[#D4AF37]/50 transition-colors"
                   >
                     <img
                       src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
                       alt={product.name}
-                      className="max-h-[88%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] group-hover:scale-108 transition-transform duration-700 pointer-events-none"
+                      className="h-full max-h-[96%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.95)] group-hover:scale-110 transition-transform duration-700 pointer-events-none"
                     />
                   </div>
 

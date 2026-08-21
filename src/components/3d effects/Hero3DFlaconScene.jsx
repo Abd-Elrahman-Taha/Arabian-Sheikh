@@ -54,10 +54,10 @@ export default function Hero3DFlaconScene({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera with Closer Perspective for Centered Product
+    // 2. Camera: Framed so the entire bottle, cap, and shadow are 100% visible
     const isMobile = width < 640;
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, isMobile ? 0.05 : 0, isMobile ? 4.4 : 5.4);
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(0, 0.05, isMobile ? 4.9 : 5.6);
     cameraRef.current = camera;
 
     // 3. Renderer with Optimal DPR
@@ -104,8 +104,8 @@ export default function Hero3DFlaconScene({
     });
     texturesRef.current = textures;
 
-    // 6. Bottle Plane Mesh
-    const bottleGeometry = new THREE.PlaneGeometry(2.4, 3.4);
+    // 6. Bottle Plane Mesh (Standardized 1:1.4 Aspect: 2.7 x 3.78 for full visibility)
+    const bottleGeometry = new THREE.PlaneGeometry(2.7, 3.78);
     const bottleMaterial = new THREE.MeshStandardMaterial({
       map: textures[0],
       transparent: true,
@@ -115,7 +115,7 @@ export default function Hero3DFlaconScene({
       side: THREE.DoubleSide
     });
     const bottleMesh = new THREE.Mesh(bottleGeometry, bottleMaterial);
-    bottleMesh.position.set(0, 0.1, 0);
+    bottleMesh.position.set(0, 0.05, 0);
     scene.add(bottleMesh);
     bottleMeshRef.current = bottleMesh;
 
@@ -132,7 +132,7 @@ export default function Hero3DFlaconScene({
     ctx.fillRect(0, 0, 128, 128);
 
     const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-    const shadowGeometry = new THREE.PlaneGeometry(2.8, 1.2);
+    const shadowGeometry = new THREE.PlaneGeometry(3.0, 1.1);
     const shadowMaterial = new THREE.MeshBasicMaterial({
       map: shadowTexture,
       transparent: true,
@@ -141,7 +141,7 @@ export default function Hero3DFlaconScene({
     });
     const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
     shadowMesh.rotation.x = -Math.PI / 2.2;
-    shadowMesh.position.set(0, -1.65, 0.2);
+    shadowMesh.position.set(0, -1.6, 0.2);
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
@@ -223,8 +223,8 @@ export default function Hero3DFlaconScene({
       const h = container.clientHeight || 650;
       const isMob = w < 640;
       camera.aspect = w / h;
-      camera.position.z = isMob ? 4.6 : 6.2;
-      camera.position.y = isMob ? 0.05 : 0;
+      camera.position.z = isMob ? 4.9 : 5.6;
+      camera.position.y = 0.05;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
