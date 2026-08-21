@@ -186,6 +186,14 @@ function MainRouter() {
   return (
     <div className="relative flex flex-col min-h-screen text-[#F3E6D0] bg-[#0B0A08] transition-colors duration-400 overflow-x-hidden">
 
+      {/* Global Luxury Dark Gradient Background (Active across all pages & sections) */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          background: 'radial-gradient(ellipse 95% 75% at 50% 12%, #1C120C 0%, #130B07 45%, #0B0A08 100%), linear-gradient(180deg, #0B0A08 0%, #170E09 35%, #0F0A07 70%, #0B0A08 100%)'
+        }}
+      />
+
       {/* Standalone Cinematic Intro */}
       {showIntro && !isAdminRoute && (
         <ArabianIntro onComplete={() => setShowIntro(false)} />
