@@ -328,10 +328,13 @@ export default function CartDrawer() {
               {/* Checkout Button */}
               <button
                 onClick={handleCheckout}
-                className="w-full py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                className="group/btn relative w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-[1.02] flex items-center justify-center gap-2.5 cursor-pointer overflow-hidden"
               >
-                <span>Proceed to Stripe Checkout</span>
-                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                {/* Light Glint */}
+                <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+                <span className="relative z-10 drop-shadow-sm">Proceed to Stripe Checkout</span>
+                <ArrowRight className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:translate-x-1 rtl:rotate-180" />
               </button>
 
               <div className="text-center">

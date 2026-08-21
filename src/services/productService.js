@@ -3,44 +3,72 @@ import { productApi } from '../api/product.api';
 import { apiClient } from '../api/client';
 
 const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v9';
+let inMemoryProducts = null;
+
+function preloadProductAssets(products) {
+  if (typeof window === 'undefined' || !Array.isArray(products)) return;
+  const urls = new Set();
+  products.forEach(p => {
+    if (p.cutoutImage) urls.add(p.cutoutImage);
+    if (p.originalImage) urls.add(p.originalImage);
+    if (p.images && Array.isArray(p.images)) {
+      p.images.forEach(img => urls.add(img));
+    }
+  });
+  // Non-blocking browser asset pre-caching
+  requestIdleCallback ? requestIdleCallback(() => {
+    urls.forEach(src => { const img = new Image(); img.src = src; });
+  }) : setTimeout(() => {
+    urls.forEach(src => { const img = new Image(); img.src = src; });
+  }, 100);
+}
 
 function loadProducts() {
+  if (inMemoryProducts && inMemoryProducts.length > 0) {
+    return inMemoryProducts;
+  }
+
   const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
   if (!data) {
+    inMemoryProducts = [...INITIAL_PRODUCTS];
     if (typeof window !== 'undefined') {
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
     }
-    return INITIAL_PRODUCTS;
+    preloadProductAssets(inMemoryProducts);
+    return inMemoryProducts;
   }
   try {
     const parsed = JSON.parse(data);
     if (!Array.isArray(parsed) || !parsed.some(p => p.id === 'as-royal-queens-secret')) {
+      inMemoryProducts = [...INITIAL_PRODUCTS];
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
-      return INITIAL_PRODUCTS;
+      preloadProductAssets(inMemoryProducts);
+      return inMemoryProducts;
     }
-    return parsed;
+    inMemoryProducts = parsed;
+    preloadProductAssets(inMemoryProducts);
+    return inMemoryProducts;
   } catch (e) {
     console.error('Error parsing products from localStorage:', e);
-    return INITIAL_PRODUCTS;
+    inMemoryProducts = [...INITIAL_PRODUCTS];
+    return inMemoryProducts;
   }
 }
 
 function saveProducts(products) {
+  inMemoryProducts = products;
   if (typeof window !== 'undefined') {
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
   }
 }
 
-export const productService = {
-  async getAllProducts(filters = {}) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.getProducts(filters);
-      } catch (e) {
-        console.warn('Real API unavailable, falling back to local catalog data:', e.message);
-      }
-    }
+// Warm up products cache immediately on module load
+if (typeof window !== 'undefined') {
+  setTimeout(() => loadProducts(), 0);
+}
 
+export const productService = {
+  getAllProductsSync(filters = {}) {
     const products = loadProducts();
     let result = [...products];
 
@@ -147,41 +175,53 @@ export const productService = {
     return result;
   },
 
-  async getProductById(idOrSlug) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.getProductById(idOrSlug);
-      } catch (e) {
-        console.warn('Real API product detail unavailable, using local cache:', e.message);
-      }
+  async getAllProducts(filters = {}) {
+    const result = this.getAllProductsSync(filters);
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+      productApi.getProducts(filters).then(realProds => {
+        if (Array.isArray(realProds) && realProds.length > 0) {
+          saveProducts(realProds);
+        }
+      }).catch(() => {});
     }
 
+    return result;
+  },
+
+  getProductByIdSync(idOrSlug) {
+    if (!idOrSlug) return null;
     const products = loadProducts();
     return products.find(p => p.id === idOrSlug || p.slug === idOrSlug) || null;
   },
 
-  async getFeaturedProducts() {
-    if (!apiClient.isMockEnabled()) {
+  async getProductById(idOrSlug) {
+    const item = this.getProductByIdSync(idOrSlug);
+    if (item) return item;
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
       try {
-        return await productApi.getFeaturedProducts();
-      } catch (e) {
-        console.warn('Real API featured products fallback:', e.message);
-      }
+        const remote = await productApi.getProductById(idOrSlug);
+        if (remote) {
+          const prods = loadProducts();
+          const idx = prods.findIndex(p => p.id === remote.id);
+          if (idx >= 0) prods[idx] = remote;
+          else prods.push(remote);
+          saveProducts(prods);
+          return remote;
+        }
+      } catch (e) {}
     }
 
+    return null;
+  },
+
+  async getFeaturedProducts() {
     const products = loadProducts();
     return products.filter(p => p.featured && p.status === 'ACTIVE');
   },
 
   async getBestSellers() {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.getBestSellers();
-      } catch (e) {
-        console.warn('Real API bestsellers fallback:', e.message);
-      }
-    }
-
     const products = loadProducts();
     return products.filter(p => (p.isBestSeller || p.featured) && p.status === 'ACTIVE');
   },
@@ -199,18 +239,7 @@ export const productService = {
     return CATEGORIES;
   },
 
-  async getRelatedProducts(currentId, limit = 4) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const remote = await productApi.getRelatedProducts(currentId, limit);
-        if (Array.isArray(remote) && remote.length > 0) {
-          return remote;
-        }
-      } catch (e) {
-        console.warn('Real API related products fallback:', e.message);
-      }
-    }
-
+  getRelatedProductsSync(currentId, limit = 4) {
     const products = loadProducts();
     const current = products.find(p => p.id === currentId || p.slug === currentId);
     

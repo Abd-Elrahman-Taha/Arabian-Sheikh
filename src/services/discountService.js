@@ -3,38 +3,54 @@ import { discountApi } from '../api/discount.api';
 import { apiClient } from '../api/client';
 
 const DISCOUNTS_STORAGE_KEY = 'arabian_sheikh_discounts';
+let inMemoryDiscounts = null;
 
 function loadDiscounts() {
+  if (inMemoryDiscounts && inMemoryDiscounts.length > 0) {
+    return inMemoryDiscounts;
+  }
+
   const data = typeof window !== 'undefined' ? localStorage.getItem(DISCOUNTS_STORAGE_KEY) : null;
   if (!data) {
+    inMemoryDiscounts = [...INITIAL_DISCOUNTS];
     if (typeof window !== 'undefined') {
       localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(INITIAL_DISCOUNTS));
     }
-    return INITIAL_DISCOUNTS;
+    return inMemoryDiscounts;
   }
   try {
-    return JSON.parse(data);
+    inMemoryDiscounts = JSON.parse(data);
+    return inMemoryDiscounts;
   } catch {
-    return INITIAL_DISCOUNTS;
+    inMemoryDiscounts = [...INITIAL_DISCOUNTS];
+    return inMemoryDiscounts;
   }
 }
 
 function saveDiscounts(discounts) {
+  inMemoryDiscounts = discounts;
   if (typeof window !== 'undefined') {
     localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(discounts));
   }
 }
 
 export const discountService = {
-  async getAllDiscounts() {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await discountApi.getDiscounts();
-      } catch (e) {
-        console.warn('Real API discounts fallback:', e.message);
-      }
-    }
+  getAllDiscountsSync() {
     return loadDiscounts();
+  },
+
+  async getAllDiscounts() {
+    const result = this.getAllDiscountsSync();
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+      discountApi.getDiscounts().then(remote => {
+        if (Array.isArray(remote) && remote.length > 0) {
+          saveDiscounts(remote);
+        }
+      }).catch(() => {});
+    }
+
+    return result;
   },
 
   async validateCode(codeStr, subtotal = 0) {

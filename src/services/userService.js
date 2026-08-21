@@ -5,23 +5,32 @@ import { apiClient } from '../api/client';
 
 const USERS_STORAGE_KEY = 'arabian_sheikh_users';
 const WISHLIST_STORAGE_KEY = 'arabian_sheikh_wishlist';
+let inMemoryUsers = null;
 
 function loadUsers() {
+  if (inMemoryUsers && inMemoryUsers.length > 0) {
+    return inMemoryUsers;
+  }
+
   const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
   if (!data) {
+    inMemoryUsers = [...INITIAL_USERS];
     if (typeof window !== 'undefined') {
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
     }
-    return INITIAL_USERS;
+    return inMemoryUsers;
   }
   try {
-    return JSON.parse(data);
+    inMemoryUsers = JSON.parse(data);
+    return inMemoryUsers;
   } catch {
-    return INITIAL_USERS;
+    inMemoryUsers = [...INITIAL_USERS];
+    return inMemoryUsers;
   }
 }
 
 function saveUsers(users) {
+  inMemoryUsers = users;
   if (typeof window !== 'undefined') {
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
   }
@@ -41,16 +50,6 @@ export const userService = {
   },
 
   async toggleWishlist(productId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const remote = await wishlistApi.toggleWishlist(productId);
-        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(remote));
-        return remote;
-      } catch (e) {
-        console.warn('Real API toggle wishlist fallback:', e.message);
-      }
-    }
-
     const current = this.getWishlist();
     let updated;
     if (current.includes(productId)) {
@@ -59,6 +58,11 @@ export const userService = {
       updated = [productId, ...current];
     }
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(updated));
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+      wishlistApi.toggleWishlist(productId).catch(() => {});
+    }
+
     return updated;
   },
 
@@ -70,36 +74,29 @@ export const userService = {
   },
 
   // Addresses
-  async getAddresses(userId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await userApi.getAddresses();
-      } catch (e) {
-        console.warn('Real API get addresses fallback:', e.message);
-      }
-    }
-
+  getAddressesSync(userId) {
     const users = loadUsers();
     const user = users.find(u => u.id === userId);
     return user?.addresses || [];
   },
 
-  async addAddress(userId, addressData) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await userApi.addAddress(addressData);
-      } catch (e) {
-        console.warn('Real API add address fallback:', e.message);
-      }
-    }
+  async getAddresses(userId) {
+    return this.getAddressesSync(userId);
+  },
 
+  async addAddress(userId, addressData) {
     const users = loadUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     if (userIndex === -1) throw new Error('User not found');
 
     const newAddr = {
-      ...addressData,
       id: 'addr-' + Date.now(),
+      fullName: addressData.fullName,
+      address: addressData.address,
+      city: addressData.city,
+      country: addressData.country,
+      postalCode: addressData.postalCode,
+      phone: addressData.phone,
       isDefault: addressData.isDefault || users[userIndex].addresses?.length === 0
     };
 
@@ -109,10 +106,15 @@ export const userService = {
 
     users[userIndex].addresses = [newAddr, ...(users[userIndex].addresses || [])];
     saveUsers(users);
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+      userApi.addAddress(addressData).catch(() => {});
+    }
+
     return newAddr;
   },
 
-  async deleteAddress(userId, addressId) {
+  async removeAddress(userId, addressId) {
     const users = loadUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     if (userIndex === -1) throw new Error('User not found');
@@ -123,18 +125,14 @@ export const userService = {
   },
 
   // Payment Methods
-  async getPaymentMethods(userId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await userApi.getPaymentMethods();
-      } catch (e) {
-        console.warn('Real API get payment methods fallback:', e.message);
-      }
-    }
-
+  getPaymentMethodsSync(userId) {
     const users = loadUsers();
     const user = users.find(u => u.id === userId);
     return user?.paymentMethods || [];
+  },
+
+  async getPaymentMethods(userId) {
+    return this.getPaymentMethodsSync(userId);
   },
 
   async addPaymentMethod(userId, cardData) {
@@ -178,16 +176,8 @@ export const userService = {
     return true;
   },
 
-  // Admin user management
-  async getAllUsers(filters = {}) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await userApi.getUsers(filters);
-      } catch (e) {
-        console.warn('Real API get all users fallback:', e.message);
-      }
-    }
-
+  // Admin user management (Patron Directory)
+  getAllUsersSync(filters = {}) {
     const users = loadUsers();
     let result = [...users];
 
@@ -198,6 +188,20 @@ export const userService = {
 
     if (filters.role && filters.role !== 'ALL') {
       result = result.filter(u => u.role === filters.role);
+    }
+
+    return result;
+  },
+
+  async getAllUsers(filters = {}) {
+    const result = this.getAllUsersSync(filters);
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+      userApi.getUsers(filters).then(remote => {
+        if (Array.isArray(remote) && remote.length > 0) {
+          saveUsers(remote);
+        }
+      }).catch(() => {});
     }
 
     return result;

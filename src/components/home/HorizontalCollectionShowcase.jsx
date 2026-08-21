@@ -335,23 +335,26 @@ export default function HorizontalCollectionShowcase({
                   </div>
                 </div>
 
-                {/* Card Actions */}
+                {/* Ultra-Luxury Card Actions */}
                 <div className="grid grid-cols-2 gap-2.5 pt-4 mt-4 border-t border-white/15">
                   <button
                     onClick={() => addToCart(product, product.size || '60 ml', 1)}
                     disabled={isOutOfStock}
-                    className="py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-lg"
+                    className="group/btn relative py-3 px-3 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-400 flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-[0_6px_20px_rgba(140,98,57,0.35)] hover:shadow-[0_10px_30px_rgba(212,175,55,0.6)] hover:scale-[1.02] overflow-hidden"
                   >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>{isOutOfStock ? 'Sold Out' : 'Add to Bag'}</span>
+                    {/* Light Glint */}
+                    <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+                    <ShoppingBag className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
+                    <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? 'Sold Out' : 'Add to Bag'}</span>
                   </button>
 
                   <Link
                     to={`/product/${product.slug || product.id}`}
-                    className="py-3 bg-black/60 hover:bg-white/10 border border-[#D4AF37]/50 text-[#F3E6D0] hover:text-[#F2D675] font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1 text-center"
+                    className="group/btn relative py-3 px-3 rounded-full bg-[#0B0A08]/90 hover:bg-[#21130D] border border-[#D4AF37]/45 hover:border-[#F2D675] text-[#F3E6D0] hover:text-[#F2D675] font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1.5 text-center shadow-md hover:shadow-lg hover:scale-[1.02]"
                   >
                     <span>Discover</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" />
                   </Link>
                 </div>
 

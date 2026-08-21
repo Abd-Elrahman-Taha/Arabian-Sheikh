@@ -8,21 +8,16 @@ export default function AdminUsers() {
   const { t } = useTranslation();
   const { success, error } = useToast();
 
-  const [users, setUsers] = useState([]);
+  // Instant 0ms synchronous initialization
+  const initialUsers = userService.getAllUsersSync({ search: '', role: 'ALL' });
+  const [users, setUsers] = useState(initialUsers);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const list = await userService.getAllUsers({ search, role: roleFilter });
-      setUsers(list);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const fetchUsers = () => {
+    const list = userService.getAllUsersSync({ search, role: roleFilter });
+    setUsers(list);
   };
 
   useEffect(() => {
@@ -61,36 +56,36 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-[var(--color-earth-dark)]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 gap-4">
+    <div className="space-y-6 animate-fade-in text-[#F3E6D0]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-4 gap-4">
         <div>
-          <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[var(--color-earth-dark)]">
+          <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
             {t('admin.users')}
           </h1>
-          <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
+          <p className="text-xs text-[#D8BE99] font-medium mt-0.5">
             Manage palace patrons, VIP privilege tiers, and administrative credentials.
           </p>
         </div>
       </div>
 
       {/* Search & Filter */}
-      <div className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+      <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl backdrop-blur-md">
         <div className="relative w-full sm:w-80">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search patron by name or email..."
-            className="w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 pl-9 pr-3 py-2 text-xs text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/50 focus:border-[var(--color-terracotta)] focus:outline-none"
+            className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl pl-9 pr-3 py-2 text-xs text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
           />
-          <Search className="w-4 h-4 text-[var(--color-terracotta)] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full sm:w-auto bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 px-3 py-2 text-xs text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none cursor-pointer font-medium"
+            className="w-full sm:w-auto bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3 py-2 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
           >
             <option value="ALL">All Roles</option>
             <option value="ADMIN">ADMIN (Palace Masters)</option>
@@ -100,77 +95,77 @@ export default function AdminUsers() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 shadow-xl overflow-x-auto">
-        <table className="w-full text-left text-xs font-sans">
-          <thead>
-            <tr className="border-b border-[var(--color-terracotta-deep)]/20 text-[var(--color-terracotta)] uppercase font-cinzel font-bold">
-              <th className="py-3 px-4">Patron</th>
-              <th className="py-3 px-4">Email</th>
-              <th className="py-3 px-4">Role</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Member Since</th>
-              <th className="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--color-terracotta-deep)]/15 text-[var(--color-earth-dark)]">
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-[var(--color-terracotta-deep)] font-medium">
-                  Loading patrons...
-                </td>
+      <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/30 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-sans">
+            <thead>
+              <tr className="border-b border-[#D4AF37]/25 text-[#F2D675] uppercase font-cinzel font-bold">
+                <th className="py-3.5 px-4">Patron</th>
+                <th className="py-3.5 px-4">Email</th>
+                <th className="py-3.5 px-4">Role</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Member Since</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-[var(--color-terracotta-deep)] font-medium">
-                  No patrons found.
-                </td>
-              </tr>
-            ) : (
-              users.map((u) => (
-                <tr key={u.id} className="hover:bg-[var(--color-desert-primary)]/20 transition-colors">
-                  <td className="py-3 px-4">
-                    <span className="font-cinzel font-bold text-sm text-[var(--color-earth-dark)] block">
-                      {u.name}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 font-mono text-[var(--color-terracotta-deep)] font-medium">{u.email}</td>
-                  <td className="py-3 px-4">
-                    <select
-                      value={u.role}
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      className="bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 px-2 py-1 text-[11px] text-[var(--color-earth-dark)] focus:border-[var(--color-terracotta)] focus:outline-none cursor-pointer font-medium"
-                    >
-                      <option value="USER">USER</option>
-                      <option value="ADMIN">ADMIN</option>
-                    </select>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 text-[10px] font-mono uppercase ${u.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 font-bold' : 'bg-rose-500/20 text-rose-700 border border-rose-500/30 font-bold'}`}>
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 font-mono text-[var(--color-terracotta-deep)] font-medium">{u.memberSince || '2025'}</td>
-                  <td className="py-3 px-4 text-right space-x-2">
-                    <button
-                      onClick={() => handleToggleBlock(u.id)}
-                      className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
-                      title={u.status === 'ACTIVE' ? 'Suspend Access' : 'Restore Access'}
-                    >
-                      {u.status === 'ACTIVE' ? <Ban className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(u.id, u.name)}
-                      className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-rose-600 cursor-pointer"
-                      title="Purge Account"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-[#D4AF37]/15 text-[#F3E6D0]">
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-[#D8BE99] font-medium">
+                    No patrons found.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                users.map((u) => (
+                  <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <span className="font-cinzel font-bold text-sm text-[#F3E6D0] block">
+                        {u.name}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-[#D8BE99] font-medium">{u.email}</td>
+                    <td className="py-3.5 px-4">
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        className="bg-black/70 border border-[#D4AF37]/35 rounded-lg px-2.5 py-1 text-[11px] text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
+                      >
+                        <option value="USER">USER</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`px-2.5 py-0.5 text-[10px] font-mono uppercase rounded-full font-bold ${
+                        u.status === 'ACTIVE'
+                          ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
+                          : 'bg-rose-950/80 text-rose-300 border border-rose-500/40'
+                      }`}>
+                        {u.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-[#D8BE99] font-medium">{u.memberSince || '2025'}</td>
+                    <td className="py-3.5 px-4 text-right space-x-2">
+                      <button
+                        onClick={() => handleToggleBlock(u.id)}
+                        className="p-1.5 text-[#D8BE99] hover:text-[#F2D675] cursor-pointer transition-colors"
+                        title={u.status === 'ACTIVE' ? 'Suspend Access' : 'Restore Access'}
+                      >
+                        {u.status === 'ACTIVE' ? <Ban className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(u.id, u.name)}
+                        className="p-1.5 text-[#D8BE99] hover:text-rose-400 cursor-pointer transition-colors"
+                        title="Purge Account"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -3,23 +3,32 @@ import { orderApi } from '../api/order.api';
 import { apiClient } from '../api/client';
 
 const ORDERS_STORAGE_KEY = 'arabian_sheikh_orders';
+let inMemoryOrders = null;
 
 function loadOrders() {
+  if (inMemoryOrders && inMemoryOrders.length > 0) {
+    return inMemoryOrders;
+  }
+
   const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
   if (!data) {
+    inMemoryOrders = [...INITIAL_ORDERS];
     if (typeof window !== 'undefined') {
       localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
     }
-    return INITIAL_ORDERS;
+    return inMemoryOrders;
   }
   try {
-    return JSON.parse(data);
+    inMemoryOrders = JSON.parse(data);
+    return inMemoryOrders;
   } catch {
-    return INITIAL_ORDERS;
+    inMemoryOrders = [...INITIAL_ORDERS];
+    return inMemoryOrders;
   }
 }
 
 function saveOrders(orders) {
+  inMemoryOrders = orders;
   if (typeof window !== 'undefined') {
     localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
   }
@@ -36,15 +45,7 @@ export const ORDER_STATUSES = [
 ];
 
 export const orderService = {
-  async getAllOrders(filters = {}) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await orderApi.getOrders(filters);
-      } catch (e) {
-        console.warn('Real API orders fallback:', e.message);
-      }
-    }
-
+  getAllOrdersSync(filters = {}) {
     const orders = loadOrders();
     let result = [...orders];
 
@@ -58,39 +59,46 @@ export const orderService = {
         o.id.toLowerCase().includes(q) ||
         o.customerName.toLowerCase().includes(q) ||
         o.customerEmail.toLowerCase().includes(q) ||
-        o.trackingCode?.toLowerCase().includes(q)
+        (o.trackingCode && o.trackingCode.toLowerCase().includes(q))
       );
     }
 
-    return result.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return result;
   },
 
-  async getOrdersByUser(userId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await orderApi.getUserOrders(userId);
-      } catch (e) {
-        console.warn('Real API user orders fallback:', e.message);
-      }
+  async getAllOrders(filters = {}) {
+    const result = this.getAllOrdersSync(filters);
+
+    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+      orderApi.getOrders(filters).then(remote => {
+        if (Array.isArray(remote) && remote.length > 0) {
+          saveOrders(remote);
+        }
+      }).catch(() => {});
     }
 
+    return result;
+  },
+
+  getOrdersByUserSync(userId) {
     const orders = loadOrders();
     return orders
       .filter(o => o.userId === userId)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  },
+
+  async getOrdersByUser(userId) {
+    return this.getOrdersByUserSync(userId);
+  },
+
+  getOrderByIdSync(id) {
+    if (!id) return null;
+    const orders = loadOrders();
+    return orders.find(o => o.id === id || o.trackingCode === id) || null;
   },
 
   async getOrderById(id) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await orderApi.getOrderById(id);
-      } catch (e) {
-        console.warn('Real API get order fallback:', e.message);
-      }
-    }
-
-    const orders = loadOrders();
-    return orders.find(o => o.id === id || o.id === `ORD-${id}`) || null;
+    return this.getOrderByIdSync(id);
   },
 
   async createOrder(orderPayload) {

@@ -37,13 +37,17 @@ export default function ProductDetail() {
 
   const productId = currentPath.split('/product/')[1]?.split('?')[0];
 
-  const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
+  // Instant 0ms synchronous initialization from memory cache
+  const initialProduct = productService.getProductByIdSync(productId);
+  const initialRelated = initialProduct ? productService.getRelatedProductsSync(initialProduct.id, 4) : [];
+
+  const [product, setProduct] = useState(initialProduct);
+  const [relatedProducts, setRelatedProducts] = useState(initialRelated);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState('60 ml / 2.0 fl oz');
+  const [selectedSize, setSelectedSize] = useState(initialProduct?.size || '60 ml / 2.0 fl oz');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('pyramid');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialProduct);
 
   // Review submission state
   const [reviewAuthor, setReviewAuthor] = useState('');
@@ -55,25 +59,27 @@ export default function ProductDetail() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    async function loadProduct() {
-      if (!productId) return;
+    if (!productId) return;
+
+    const cached = productService.getProductByIdSync(productId);
+    if (cached) {
+      setProduct(cached);
+      setSelectedImage(0);
+      setSelectedSize(cached.size || '60 ml / 2.0 fl oz');
+      setRelatedProducts(productService.getRelatedProductsSync(cached.id, 4));
+      setLoading(false);
+    } else {
       setLoading(true);
-      try {
-        const item = await productService.getProductById(productId);
+      productService.getProductById(productId).then(item => {
         if (item) {
           setProduct(item);
           setSelectedImage(0);
           setSelectedSize(item.size || '60 ml / 2.0 fl oz');
-          const related = await productService.getRelatedProducts(item.id, 4);
-          setRelatedProducts(related);
+          setRelatedProducts(productService.getRelatedProductsSync(item.id, 4));
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
         setLoading(false);
-      }
+      }).catch(() => setLoading(false));
     }
-    loadProduct();
   }, [productId]);
 
   if (loading) {
@@ -325,14 +331,17 @@ export default function ProductDetail() {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className={`flex-1 py-3.5 font-cinzel font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all duration-300 shadow-xl ${
+                  className={`group/btn relative flex-1 py-4 px-6 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.22em] flex items-center justify-center gap-2.5 transition-all duration-400 overflow-hidden shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-[1.02] cursor-pointer ${
                     isOutOfStock
-                      ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                      : 'bg-[#D4AF37] hover:bg-[#F2D675] text-black font-bold'
+                      ? 'bg-neutral-900 text-neutral-500 border border-neutral-800 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white'
                   }`}
                 >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>{isOutOfStock ? 'Out of Stock' : `Add to Bag (€${product.price * quantity})`}</span>
+                  {/* Subtle Light Glint */}
+                  <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+                  <ShoppingBag className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
+                  <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? 'Out of Stock' : `Add to Bag (€${product.price * quantity})`}</span>
                 </button>
               </div>
 
@@ -340,9 +349,10 @@ export default function ProductDetail() {
               <button
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
-                className="w-full py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#F3E6D0] font-cinzel font-semibold text-xs uppercase tracking-[0.2em] transition-colors"
+                className="group/btn relative w-full py-3.5 px-6 rounded-full bg-[#0B0A08]/90 hover:bg-[#21130D] border border-[#D4AF37]/45 hover:border-[#F2D675] text-[#F3E6D0] hover:text-[#F2D675] font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2"
               >
-                Instant Express Checkout
+                <span>Instant Express Checkout</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" />
               </button>
             </div>
 
@@ -622,10 +632,13 @@ export default function ProductDetail() {
                         addToCart(relatedProducts[0], relatedProducts[0].size || '60 ml', 1);
                         success(`Added the Sovereign Pairing to your bag (${displayName} + ${relatedProducts[0].name})`);
                       }}
-                      className="w-full sm:w-auto px-6 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-102"
+                      className="group/btn relative w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white font-cinzel font-bold text-xs uppercase tracking-[0.22em] shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-400 hover:scale-105 overflow-hidden"
                     >
-                      <ShoppingBag className="w-4 h-4" />
-                      <span>Add Pair to Bag</span>
+                      {/* Light Glint */}
+                      <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+                      <ShoppingBag className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
+                      <span className="relative z-10 drop-shadow-sm">Add Pair to Bag</span>
                     </button>
                   </div>
 

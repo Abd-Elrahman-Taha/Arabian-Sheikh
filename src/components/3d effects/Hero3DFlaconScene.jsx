@@ -3,8 +3,11 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import performanceManager from '../../utils/performanceManager';
 
+const globalTextureCache = new Map();
+const textureLoader = new THREE.TextureLoader();
+
 export default function Hero3DFlaconScene({
-  activeProductIndex = 0, // 0: Luxury (Black Diamond), 1: Royal (Millionaire), 2: Classic (Ana Sukkar)
+  activeProductIndex = 0,
   onSlideChange,
   products = []
 }) {
@@ -18,17 +21,28 @@ export default function Hero3DFlaconScene({
   const lightSweepRef = useRef(null);
   const texturesRef = useRef([]);
   const [webglSupported, setWebglSupported] = useState(true);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(true);
 
   const flaconImages = (products && products.length > 0)
     ? products.map(p => p.image || p.cutoutImage)
     : [
-        '/products/black_diamond_gold.png?v=5',
-        '/products/billionaire_gold.png',
-        '/products/queens_secret_gold.png',
-        '/products/millionaire_black.png?v=5',
-        '/products/ana_sukkar_white.png?v=5'
+        '/products/black_diamond_gold.png?v=6',
+        '/products/billionaire_gold.png?v=6',
+        '/products/queens_secret_gold.png?v=6',
+        '/products/millionaire_black.png?v=6',
+        '/products/ana_sukkar_white.png?v=6'
       ];
+
+  // Pre-cache textures at module level
+  flaconImages.forEach(src => {
+    if (!globalTextureCache.has(src)) {
+      const tex = textureLoader.load(src);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      globalTextureCache.set(src, tex);
+    }
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -91,15 +105,16 @@ export default function Hero3DFlaconScene({
     scene.add(goldPointLight);
     lightSweepRef.current = goldPointLight;
 
-    // 5. Texture Loader
-    const textureLoader = new THREE.TextureLoader();
+    // 5. Instant Textures from Memory Cache
     const textures = flaconImages.map(src => {
-      const tex = textureLoader.load(src, () => {
-        setLoaded(true);
-      });
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
+      let tex = globalTextureCache.get(src);
+      if (!tex) {
+        tex = textureLoader.load(src);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        globalTextureCache.set(src, tex);
+      }
       return tex;
     });
     texturesRef.current = textures;

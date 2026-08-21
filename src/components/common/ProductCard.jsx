@@ -99,14 +99,17 @@ export default function ProductCard({ product, onCompare }) {
           <button
             onClick={handleQuickAdd}
             disabled={isOutOfStock}
-            className={`w-full py-2.5 text-[11px] uppercase tracking-[0.2em] font-cinzel font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`group/btn relative w-full py-3 px-4 rounded-full font-cinzel font-bold text-[11px] uppercase tracking-[0.22em] flex items-center justify-center gap-2 transition-all duration-400 overflow-hidden cursor-pointer ${
               isOutOfStock
-                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                : 'bg-[#D4AF37] text-black hover:bg-[#F2D675] shadow-lg font-bold'
+                ? 'bg-neutral-900/90 text-neutral-500 border border-neutral-800 cursor-not-allowed'
+                : 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white shadow-[0_8px_25px_rgba(140,98,57,0.45)] hover:shadow-[0_12px_35px_rgba(212,175,55,0.65)] hover:scale-[1.02]'
             }`}
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            <span>{isOutOfStock ? (t('shop.outOfStock') || 'Out of Stock') : (t('shop.addToBag') || 'Add to Bag')}</span>
+            {/* Subtle Light Glint */}
+            <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+            <ShoppingBag className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
+            <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? (t('shop.outOfStock') || 'Out of Stock') : (t('shop.addToBag') || 'Add to Bag')}</span>
           </button>
         </div>
       </div>

@@ -208,50 +208,58 @@ body {
   transform: translateY(-3px);
 }
 
-/* Primary CTA Button — Terracotta (#3A2116) */
+/* Primary CTA Button — Ultra-Luxury Caramel/Gold Metallic Gradient */
 .luxury-btn-gold {
   position: relative;
-  background-color: #3A2116;
-  color: #F2D675;
+  background: linear-gradient(135deg, #8C6239 0%, #B8860B 50%, #7A5228 100%);
+  color: #FFFDF8;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  border: 1px solid rgba(242, 214, 117, 0.5);
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px rgba(140, 98, 57, 0.45);
+  cursor: pointer;
+}
+
+.luxury-btn-gold:hover {
+  background: linear-gradient(135deg, #F2D675 0%, #D4AF37 50%, #F2D675 100%);
+  color: #0B0A08;
+  border-color: #FFFFFF;
+  box-shadow: 0 15px 40px rgba(212, 175, 55, 0.65);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.luxury-btn-gold:active {
+  transform: translateY(0) scale(1);
+}
+
+/* Secondary Button — Obsidian & Gold Metallic Outline */
+.luxury-btn-outline {
+  position: relative;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: #F3E6D0;
   font-family: 'Cinzel', serif;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  background: rgba(11, 10, 8, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 9999px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-  border: 1px solid #3A2116;
-  box-shadow: 0 4px 14px rgba(180, 86, 37, 0.28);
-}
-
-.luxury-btn-gold:hover {
-  background-color: #3A2116;
-  color: #F2D675;
-  box-shadow: 0 6px 20px rgba(128, 48, 13, 0.45);
-  transform: translateY(-1px);
-}
-
-.luxury-btn-gold:active {
-  transform: translateY(0);
-}
-
-/* Secondary Button — Deep Terracotta (#3A2116) Outline */
-.luxury-btn-outline {
-  position: relative;
-  border: 1.5px solid #3A2116;
-  color: #3A2116;
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  background: transparent;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
 }
 
 .luxury-btn-outline:hover {
-  border-color: #3A2116;
-  background-color: #3A2116;
+  border-color: #F2D675;
+  background-color: #21130D;
   color: #F2D675;
-  box-shadow: 0 4px 16px rgba(128, 48, 13, 0.25);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35);
+  transform: translateY(-1px) scale(1.01);
 }
 
 /* Luxury Form Inputs */

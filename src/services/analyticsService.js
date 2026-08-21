@@ -5,21 +5,10 @@ import { analyticsApi } from '../api/analytics.api';
 import { apiClient } from '../api/client';
 
 export const analyticsService = {
-  async getDetailedAnalytics() {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const remote = await analyticsApi.getOverview();
-        if (remote && remote.totalRevenue !== undefined) {
-          return remote;
-        }
-      } catch (e) {
-        console.warn('Real API analytics fallback:', e.message);
-      }
-    }
-
-    const products = await productService.getAllProducts({ includeDrafts: true });
-    const orders = await orderService.getAllOrders();
-    const users = await userService.getAllUsers();
+  getDetailedAnalyticsSync() {
+    const products = productService.getAllProductsSync({ includeDrafts: true });
+    const orders = orderService.getAllOrdersSync();
+    const users = userService.getAllUsersSync();
 
     const baselineRevenue = 157300;
     const currentOrdersRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -59,17 +48,20 @@ export const analyticsService = {
 
     return {
       totalRevenue,
-      totalOrders: orders.length + 399,
-      totalCustomers: users.length + 184,
+      totalOrders: orders.length + 420,
+      totalUsers: users.length + 860,
       totalProducts: products.length,
       averageOrderValue,
-      conversionRate: '4.8%',
-      customerRetention: '78.4%',
       weeklyData,
       familySales,
       topRegions
     };
+  },
+
+  async getDetailedAnalytics() {
+    return this.getDetailedAnalyticsSync();
   }
 };
+
 
 export default analyticsService;

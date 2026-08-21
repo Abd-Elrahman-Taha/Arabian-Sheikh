@@ -38,19 +38,19 @@ export default function AccountLayout({ children }) {
   return (
     <div className="pt-32 sm:pt-36 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-[#F3E6D0]">
       
-      {/* Account Hero Bar in Rich Dark Brown */}
-      <div className="bg-[#21130D] border border-[#3A2116]/60 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
+      {/* Account Hero Bar in Obsidian & Gold */}
+      <div className="rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl backdrop-blur-md">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-none border border-[#D4AF37]/50 bg-[#21130D] flex items-center justify-center text-[#D4AF37] font-cinzel text-2xl font-bold shadow-inner">
+          <div className="w-16 h-16 rounded-2xl border border-[#D4AF37]/50 bg-gradient-to-br from-[#D4AF37]/20 via-black to-[#8C6239]/20 flex items-center justify-center text-[#F2D675] font-cinzel text-2xl font-bold shadow-[0_0_20px_rgba(212,175,55,0.25)]">
             {user?.name ? user.name.charAt(0) : 'S'}
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-cinzel text-xl sm:text-2xl font-bold uppercase text-[#F3E6D0]">
+              <h1 className="font-cinzel text-xl sm:text-2xl font-bold uppercase text-[#F3E6D0] tracking-wide">
                 {user?.name || 'Distinguished Patron'}
               </h1>
               {isAdmin && (
-                <span className="bg-[#D4AF37] text-black font-cinzel text-[10px] font-bold px-2 py-0.5 uppercase shadow-sm">
+                <span className="bg-[#D4AF37] text-black font-cinzel text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase shadow-md">
                   Palace Admin
                 </span>
               )}
@@ -58,8 +58,8 @@ export default function AccountLayout({ children }) {
             <p className="text-xs text-[#D8BE99] mt-0.5 font-medium">
               Royal Member Since {user?.memberSince || '2025'}
             </p>
-            <p className="text-xs text-[#D4AF37] font-bold mt-1 flex items-center gap-1">
-              <Crown className="w-3.5 h-3.5" />
+            <p className="text-xs text-[#F2D675] font-bold mt-1 flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span>Privilege Patron Circle</span>
             </p>
           </div>
@@ -68,7 +68,7 @@ export default function AccountLayout({ children }) {
         {isAdmin && (
           <Link
             to="/admin"
-            className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-colors"
+            className="group/btn relative px-6 py-2.5 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all duration-300 border border-[#F2D675]/50 overflow-hidden"
           >
             <ShieldAlert className="w-4 h-4" />
             <span>Open Admin Suite</span>
@@ -78,8 +78,8 @@ export default function AccountLayout({ children }) {
 
       {/* Account Main Grid: Sidebar + Subpage Content */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Navigation Sidebar in Dark Brown */}
-        <aside className="lg:col-span-3 bg-[#21130D] border border-[#3A2116]/60 p-4 space-y-1.5 shadow-2xl">
+        {/* Navigation Sidebar in Obsidian Glass */}
+        <aside className="lg:col-span-3 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 p-4 space-y-2 shadow-2xl backdrop-blur-md">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = currentPath === link.to;
@@ -87,14 +87,20 @@ export default function AccountLayout({ children }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center justify-between px-4 py-3 text-xs font-cinzel uppercase tracking-wider transition-all border ${
+                className={`group flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-cinzel uppercase tracking-wider transition-all border ${
                   isActive
-                    ? 'border-[#D4AF37]/50 bg-[#21130D] text-[#D4AF37] font-bold shadow-md'
-                    : 'border-transparent text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-[#21130D]/60'
+                    ? 'border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/20 via-[#8C6239]/15 to-transparent text-[#F2D675] font-bold shadow-md'
+                    : 'border-transparent text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-white/5'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#D4AF37]' : 'text-[#3A2116]'}`} />
+                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+                    isActive
+                      ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] shadow-sm'
+                      : 'border-[#D4AF37]/30 bg-black/50 text-[#D8BE99] group-hover:border-[#D4AF37] group-hover:text-[#F2D675]'
+                  }`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
                   <span>{link.label}</span>
                 </div>
                 {link.count !== undefined && link.count > 0 && (

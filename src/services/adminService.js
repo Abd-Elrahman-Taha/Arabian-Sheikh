@@ -17,10 +17,10 @@ const DEFAULT_SETTINGS = {
 };
 
 export const adminService = {
-  async getDashboardMetrics() {
-    const products = await productService.getAllProducts({ includeDrafts: true });
-    const orders = await orderService.getAllOrders();
-    const users = await userService.getAllUsers();
+  getDashboardMetricsSync() {
+    const products = productService.getAllProductsSync({ includeDrafts: true });
+    const orders = orderService.getAllOrdersSync();
+    const users = userService.getAllUsersSync();
 
     const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= 10);
@@ -39,7 +39,7 @@ export const adminService = {
     // Family distribution
     const familyDistribution = [
       { name: 'Woody (Oud)', count: products.filter(p => p.fragranceFamily === 'Woody').length, percentage: 35 },
-      { name: 'Oriental / Amber', count: products.filter(p => p.fragranceFamily.includes('Oriental')).length, percentage: 30 },
+      { name: 'Oriental / Amber', count: products.filter(p => (p.fragranceFamily || '').includes('Oriental')).length, percentage: 30 },
       { name: 'Floral', count: products.filter(p => p.fragranceFamily === 'Floral').length, percentage: 15 },
       { name: 'Fresh', count: products.filter(p => p.fragranceFamily === 'Fresh').length, percentage: 10 },
       { name: 'Fruity', count: products.filter(p => p.fragranceFamily === 'Fruity').length, percentage: 10 }
@@ -57,6 +57,10 @@ export const adminService = {
       monthlyRevenue,
       familyDistribution
     };
+  },
+
+  async getDashboardMetrics() {
+    return this.getDashboardMetricsSync();
   },
 
   getSettings() {
