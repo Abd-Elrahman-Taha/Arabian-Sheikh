@@ -6,10 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import ArabianLogo from '../components/common/ArabianLogo';
 import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
-import WebThreads from '../components/motion/WebThreads';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
-import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
-import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
 import BlurText from '../components/common/BlurText';
 import HeroRulerPagination from '../components/home/HeroRulerPagination';
@@ -273,48 +270,58 @@ export default function Home() {
     <div className="w-full bg-transparent text-[#F3E6D0] overflow-x-hidden">
       
       {/* =========================================================================
-          1. HERO SECTION: 3.5s AUTO-CYCLING 3D FLACON (PRICE-FREE & ULTRA LUXURY)
+          1. HERO SECTION: CENTERED PRODUCT WITH PURE GOLD SHADER
           ========================================================================= */}
-      <section className="relative min-h-[92vh] lg:min-h-[96vh] flex items-center justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-16">
+      <section className="relative min-h-[90vh] lg:min-h-[94vh] flex flex-col justify-between overflow-hidden pt-24 sm:pt-28 lg:pt-32 pb-8">
         
-        {/* Interactive WebGL Shader Background */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-75">
-          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <WebThreads
-              color1="#D4AF37"
-              color2="#D8BE99"
-              color3="#F3E6D0"
-              speed={0.2}
-              threadCount={6}
-              frequency={5.0}
-              spread={0.18}
-              taper={1.0}
-              position={0.5}
-              fanMode="center"
-              glow={0.025}
-              falloff={0.55}
-              thickness={1.1}
-              brightness={0.65}
-              opacity={0.85}
-              mirror={true}
-              shimmer={false}
-              grain={true}
-              grainIntensity={0.05}
-              mouseInteraction={true}
-              mouseStrength={0.3}
-            />
-          </div>
-        </div>
-
-        {/* Ambient Vignette */}
-        <div className="absolute inset-0 bg-radial-vignette pointer-events-none z-1" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-transparent to-[#0B0A08]/80 pointer-events-none z-1" />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-12 items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
+          
+          {/* Main Hero Centerpiece Grid (Left Specs • Center Grand Flacon • Right Availability) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-4 items-center flex-1 my-auto">
             
-            {/* Center/Top Flacon for Mobile (order-1 on mobile, col-span-6 on desktop) */}
-            <div className="w-full lg:col-span-6 order-1 lg:order-2 relative flex items-center justify-center h-[46vh] sm:h-[52vh] lg:h-[580px]">
+            {/* Left Column: Limited Edition Badge, Ref Code, Bold Title, Pill Button */}
+            <div className="lg:col-span-5 text-center lg:text-left space-y-4 sm:space-y-5 order-2 lg:order-1 z-20">
+              
+              {/* Limited Edition Pill Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#21130D]/80 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold shadow-lg">
+                <span>LIMITED TO 50 FLACONS</span>
+              </div>
+
+              {/* Monospace Reference Code */}
+              <p className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#D8BE99]/80 font-medium">
+                AS-9343.2-{currentHeroFlacon.tier.toUpperCase()}
+              </p>
+
+              {/* Bold Minimalist Title */}
+              <BlurText
+                key={currentHeroFlacon.id}
+                text={getDisplayName(currentHeroFlacon).toUpperCase()}
+                delay={60}
+                animateBy="words"
+                direction="top"
+                className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.03em] leading-tight drop-shadow-2xl justify-center lg:justify-start"
+                as="h1"
+              />
+
+              {/* Subtle Scent Notes */}
+              <p className="hidden sm:block text-xs uppercase tracking-widest text-[#D8BE99]/75 font-mono">
+                {currentHeroFlacon.notes}
+              </p>
+
+              {/* Curved Caramel/Gold Pill CTA Button */}
+              <div className="pt-2">
+                <Link
+                  to={`/product/${currentHeroFlacon.slug}`}
+                  className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#B8860B] hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-2xl hover:scale-105 cursor-pointer"
+                >
+                  <span>FIND OUT MORE</span>
+                </Link>
+              </div>
+
+            </div>
+
+            {/* Center / Right Column: The Flacon Standing Majestically */}
+            <div className="lg:col-span-7 relative flex items-center justify-center h-[50vh] sm:h-[58vh] lg:h-[640px] order-1 lg:order-2 z-10">
               <Hero3DFlaconScene
                 activeProductIndex={activeHeroIndex}
                 onSlideChange={setActiveHeroIndex}
@@ -322,65 +329,10 @@ export default function Home() {
               />
             </div>
 
-            {/* Editorial Content: Minimalist & Clean on Mobile, Rich on Desktop */}
-            <div className="w-full lg:col-span-6 order-2 lg:order-1 text-center lg:text-left space-y-3 sm:space-y-4 lg:space-y-6">
-              
-              {/* Clean Badge */}
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#0B0A08]/90 backdrop-blur-md text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#F2D675] font-bold shadow-md">
-                <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37]" />
-                <span>{currentHeroFlacon.tier} Tier • 60ml Extrait</span>
-              </div>
-
-              {/* Minimal Headlines */}
-              <div className="space-y-1.5 sm:space-y-2.5">
-                <p className="hidden sm:block text-xs sm:text-sm uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold drop-shadow-md">
-                  HAUTE PARFUMERIE • ANDALUSIA
-                </p>
-                <BlurText
-                  key={currentHeroFlacon.id}
-                  text={getDisplayName(currentHeroFlacon)}
-                  delay={70}
-                  animateBy="words"
-                  direction="top"
-                  className="text-3xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-lg justify-center lg:justify-start"
-                  as="h1"
-                />
-                {/* Descriptive tagline: hidden on small mobile to keep UI clean and product-focused */}
-                <p className="hidden md:block text-sm sm:text-base text-[#F3E6D0] font-sans font-medium tracking-wide max-w-xl mx-auto lg:mx-0">
-                  {getTagline(currentHeroFlacon)}
-                </p>
-              </div>
-
-              {/* Scent Notes: shown on desktop / tablet, simplified on mobile */}
-              <div className="hidden sm:block text-xs sm:text-sm uppercase tracking-widest text-[#F2D675] font-mono font-semibold">
-                {currentHeroFlacon.notes}
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1 sm:pt-2">
-                <button
-                  onClick={scrollToCollections}
-                  className="flex-1 sm:flex-initial px-5 sm:px-8 py-3 sm:py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.22em] transition-all duration-300 shadow-xl hover:scale-102 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer"
-                >
-                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span>{language === 'es' ? 'Colecciones' : 'Collections'}</span>
-                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />
-                </button>
-
-                <Link
-                  to={`/product/${currentHeroFlacon.slug}`}
-                  className="flex-1 sm:flex-initial px-5 sm:px-8 py-3 sm:py-3.5 bg-black/60 hover:bg-white/10 text-[#F3E6D0] border border-[#D4AF37]/50 hover:border-[#D4AF37] font-cinzel font-bold text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.22em] transition-all duration-300 flex items-center justify-center gap-1.5 sm:gap-2 shadow-md"
-                >
-                  <span>{language === 'es' ? 'Descubrir' : 'Discover'}</span>
-                </Link>
-              </div>
-
-            </div>
-
           </div>
 
-          {/* Horological Precision Ruler Pagination */}
-          <div className="mt-4 sm:mt-8 lg:mt-12 pt-2 sm:pt-4 border-t border-[#D4AF37]/15">
+          {/* Horological Precision Ruler Pagination (Matching Chronoswiss Nav Gauge) */}
+          <div className="mt-4 sm:mt-6 pt-3 border-t border-[#D4AF37]/15">
             <HeroRulerPagination
               activeIndex={activeHeroIndex}
               onSelectIndex={setActiveHeroIndex}
@@ -393,25 +345,90 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          ATMOSPHERIC WEBGL SHADERS & TWINKLING CELESTIAL STARS
+          1.1 EDITORIAL PREVIEW CARDS (MATCHING CHRONOSWISS BOTTOM 3 CARDS)
+          ========================================================================= */}
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          
+          {/* Card 1: Master Alchemist */}
+          <div
+            onClick={() => navigate('/about')}
+            className="group relative h-80 sm:h-96 rounded-3xl overflow-hidden border border-[#D4AF37]/25 bg-black/60 shadow-2xl cursor-pointer hover:border-[#D4AF37] transition-all duration-500 hover:-translate-y-1.5"
+          >
+            <img
+              src="/editorial/master_alchemist.jpg"
+              alt="Master Alchemist"
+              className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-108 transition-transform duration-700 opacity-75 group-hover:opacity-95"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-6 space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
+                HAUTE PARFUMERIE
+              </span>
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors">
+                The Master Alchemist
+              </h3>
+              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed">
+                Centuries of Andalusian distillation wisdom crafted in numbered crystal flacons.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Flacon Craftsmanship */}
+          <div
+            onClick={() => navigate('/the-palace')}
+            className="group relative h-80 sm:h-96 rounded-3xl overflow-hidden border border-[#D4AF37]/25 bg-black/60 shadow-2xl cursor-pointer hover:border-[#D4AF37] transition-all duration-500 hover:-translate-y-1.5"
+          >
+            <img
+              src="/editorial/flacon_craftsmanship.jpg"
+              alt="Flacon Craftsmanship"
+              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-6 space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
+                MIRROR-GOLD ATELIER
+              </span>
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors">
+                Flacon Craftsmanship
+              </h3>
+              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed">
+                Mirror-finished 24K solid gold and obsidian glass sculpted for royal sovereignty.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Imperial Monograph */}
+          <div
+            onClick={() => navigate('/discovery')}
+            className="group relative h-80 sm:h-96 rounded-3xl overflow-hidden border border-[#D4AF37]/25 bg-black/60 shadow-2xl cursor-pointer hover:border-[#D4AF37] transition-all duration-500 hover:-translate-y-1.5"
+          >
+            <img
+              src="/editorial/imperial_monograph.jpg"
+              alt="Imperial Monograph"
+              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-6 space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
+                THE PALACE ARCHIVE
+              </span>
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors">
+                Imperial Monograph
+              </h3>
+              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed">
+                The historical formulation treatise and sacred Oud accords of Arabian Sheikh.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* =========================================================================
+          2. CURATED COLLECTIONS EXPERIENCE
           ========================================================================= */}
       <div className="relative overflow-hidden">
-        {/* Organic Golden Amber Fluid GLSL WebGL Shader */}
-        <LuxuryBackgroundShader
-          color1="#D4AF37"
-          color2="#3A2116"
-          color3="#0B0A08"
-          opacity={0.55}
-          className="absolute inset-0 pointer-events-none z-0"
-        />
-
-        {/* Twinkling Celestial Diamond Stars & Mist */}
-        <BackgroundAtmosphere
-          starCount={40}
-          smokeIntensity={0.06}
-          className="absolute inset-0 pointer-events-none z-0"
-        />
-
         <div className="relative z-10">
 
           {/* =========================================================================

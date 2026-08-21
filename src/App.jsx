@@ -13,9 +13,6 @@ import Footer from './components/layout/Footer';
 import CartDrawer from './components/cart/CartDrawer';
 import SearchOverlay from './components/search/SearchOverlay';
 import PageTransition from './components/common/PageTransition';
-import BackgroundAtmosphere from './components/motion/BackgroundAtmosphere';
-import LuxuryBackgroundShader from './components/motion/LuxuryBackgroundShader';
-import DesertBackground from './components/motion/DesertBackground';
 
 // Public Pages
 import Home from './pages/Home';
@@ -188,27 +185,6 @@ function MainRouter() {
 
   return (
     <div className="relative flex flex-col min-h-screen text-[#F3E6D0] bg-[#0B0A08] transition-colors duration-400 overflow-x-hidden">
-
-      {/* Desert Background — subtle obsidian/espresso depth */}
-      <DesertBackground />
-
-      {/* Global Fluid Golden Amber GLSL WebGL Shader (Active across every page) */}
-      <LuxuryBackgroundShader
-        color1="#D4AF37"
-        color2="#3A2116"
-        color3="#0B0A08"
-        opacity={0.65}
-        className="fixed inset-0 pointer-events-none z-[1]"
-      />
-
-      {/* Global Radiant Twinkling Celestial Stars (Active across other pages; Homepage starts stars strictly after Section 1) */}
-      {currentPath !== '/' && (
-        <BackgroundAtmosphere
-          starCount={45}
-          smokeIntensity={0.06}
-          className="fixed inset-0 pointer-events-none z-[2]"
-        />
-      )}
 
       {/* Standalone Cinematic Intro */}
       {showIntro && !isAdminRoute && (
