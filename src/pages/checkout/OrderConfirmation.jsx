@@ -22,7 +22,7 @@ export default function OrderConfirmation() {
   }, [orderId]);
 
   return (
-    <div className="pt-36 sm:pt-40 pb-24 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-[#F3E6D0]">
+    <div className="pt-36 sm:pt-40 pb-6 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-[#F3E6D0]">
       <ScrollReveal direction="up">
         <div className="rounded-3xl bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-8 sm:p-12 text-center space-y-7 shadow-2xl backdrop-blur-md relative overflow-hidden">
           {/* Success Medallion */}

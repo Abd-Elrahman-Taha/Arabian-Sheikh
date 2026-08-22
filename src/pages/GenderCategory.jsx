@@ -61,7 +61,7 @@ export default function GenderCategory({ genderType }) {
   }, [currentGender]);
 
   return (
-    <div className="space-y-16 pb-20 animate-fade-in text-[var(--color-earth-dark)]">
+    <div className="space-y-16 pb-6 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Editorial Category Hero */}
       <ScrollReveal direction="up">
         <section className="relative min-h-[50vh] flex items-center justify-center bg-[var(--color-desert-primary)]/20 overflow-hidden pt-36 sm:pt-44 pb-12">

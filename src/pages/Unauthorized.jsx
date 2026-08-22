@@ -4,7 +4,7 @@ import { Lock } from 'lucide-react';
 
 export default function Unauthorized() {
   return (
-    <div className="pt-36 pb-24 min-h-[70vh] flex items-center justify-center px-4 text-center text-[var(--color-earth-dark)] animate-fade-in">
+    <div className="pt-36 pb-6 min-h-[70vh] flex items-center justify-center px-4 text-center text-[var(--color-earth-dark)] animate-fade-in">
       <div className="max-w-md w-full bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-10 space-y-6 shadow-2xl">
         <div className="w-16 h-16 rounded-none border border-[var(--color-terracotta)]/40 bg-[var(--color-desert-primary)]/30 flex items-center justify-center mx-auto text-[var(--color-terracotta)]">
           <Lock className="w-8 h-8" />

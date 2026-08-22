@@ -71,7 +71,7 @@ export default function Collections() {
   }, [activeCollection]);
 
   return (
-    <div className="pt-36 sm:pt-40 pb-20 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-16 animate-fade-in text-[var(--color-earth-dark)]">
+    <div className="pt-36 sm:pt-40 pb-6 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-16 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">

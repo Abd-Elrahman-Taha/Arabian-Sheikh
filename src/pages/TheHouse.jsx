@@ -17,7 +17,7 @@ export default function TheHouse() {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-24 sm:space-y-32 pb-24 animate-fade-in text-[var(--color-earth-dark)]">
+    <div className="space-y-24 sm:space-y-32 pb-6 animate-fade-in text-[var(--color-earth-dark)]">
       {/* 1. Grand Editorial Hero */}
       <section className="relative min-h-[75vh] flex items-center justify-center bg-[var(--color-desert-primary)]/20 overflow-hidden pt-36 sm:pt-44 pb-16">
         <div className="absolute inset-0 z-0">

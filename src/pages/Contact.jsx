@@ -28,7 +28,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="pt-36 sm:pt-40 pb-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--color-earth-dark)]">
+    <div className="pt-36 sm:pt-40 pb-6 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
       <ScrollReveal direction="up" delay={0}>
         <div className="text-center max-w-2xl mx-auto space-y-3">

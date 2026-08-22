@@ -24,7 +24,7 @@ export default function Compare() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-32 pb-24">
+    <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-32 pb-6">
       <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
         
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">

@@ -36,7 +36,7 @@ export default function AccountLayout({ children }) {
   ];
 
   return (
-    <div className="pt-32 sm:pt-36 pb-24 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-8 animate-fade-in text-[#F3E6D0]">
+    <div className="pt-32 sm:pt-36 pb-6 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-8 animate-fade-in text-[#F3E6D0]">
       
       {/* Account Hero Bar in Obsidian & Gold */}
       <div className="rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl backdrop-blur-md">

@@ -733,34 +733,34 @@ export default function Home() {
           {/* =========================================================================
               7. TRUST & NEWSLETTER LAYER
               ========================================================================= */}
-          <section className="py-20 border-t border-[#D4AF37]/20 bg-[#0B0A08]">
+          <section className="py-10 border-t border-[#D4AF37]/20 bg-[#0B0A08]">
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               {/* 3 Pillars */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-16 border-b border-white/15 text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8 border-b border-white/15 text-center">
                 <div className="space-y-2 flex flex-col items-center">
-                  <Truck className="w-8 h-8 text-[#D4AF37] mb-1" />
-                  <h4 className="font-cinzel font-bold text-base text-[#F3E6D0]">DHL Express Delivery</h4>
-                  <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium">Complimentary royal shipping on orders over €100.</p>
+                  <Truck className="w-7 h-7 text-[#D4AF37] mb-1" />
+                  <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">DHL Express Delivery</h4>
+                  <p className="text-xs text-[#F3E6D0] font-medium">Complimentary royal shipping on orders over €100.</p>
                 </div>
                 <div className="space-y-2 flex flex-col items-center">
-                  <Lock className="w-8 h-8 text-[#D4AF37] mb-1" />
-                  <h4 className="font-cinzel font-bold text-base text-[#F3E6D0]">Encrypted Stripe Checkout</h4>
-                  <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium">256-bit encrypted global payment processing.</p>
+                  <Lock className="w-7 h-7 text-[#D4AF37] mb-1" />
+                  <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">Encrypted Stripe Checkout</h4>
+                  <p className="text-xs text-[#F3E6D0] font-medium">256-bit encrypted global payment processing.</p>
                 </div>
                 <div className="space-y-2 flex flex-col items-center">
-                  <Award className="w-8 h-8 text-[#D4AF37] mb-1" />
-                  <h4 className="font-cinzel font-bold text-base text-[#F3E6D0]">100% Authentic Extraits</h4>
-                  <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium">Meticulously matured in numbered flacons.</p>
+                  <Award className="w-7 h-7 text-[#D4AF37] mb-1" />
+                  <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">100% Authentic Extraits</h4>
+                  <p className="text-xs text-[#F3E6D0] font-medium">Meticulously matured in numbered flacons.</p>
                 </div>
               </div>
 
               {/* Newsletter Box */}
-              <div className="max-w-2xl mx-auto text-center pt-16 space-y-4">
+              <div className="max-w-2xl mx-auto text-center pt-8 space-y-3">
                 <span className="text-xs uppercase tracking-[0.3em] text-[#F2D675] font-cinzel font-bold">
                   The Sovereign Society
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
+                <h3 className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
                   Enter the world of Arabian Sheikh
                 </h3>
                 <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium">
@@ -771,11 +771,11 @@ export default function Home() {
                     type="email"
                     placeholder="Enter your email address"
                     required
-                    className="flex-1 bg-black/80 border border-[#D4AF37]/40 px-4 py-3 text-xs sm:text-sm text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none rounded-xs placeholder-neutral-500"
+                    className="flex-1 bg-black/80 border border-[#D4AF37]/40 px-4 py-2.5 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none rounded-xs placeholder-neutral-500"
                   />
                   <button
                     type="submit"
-                    className="px-7 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-lg"
+                    className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-lg"
                   >
                     Join
                   </button>
