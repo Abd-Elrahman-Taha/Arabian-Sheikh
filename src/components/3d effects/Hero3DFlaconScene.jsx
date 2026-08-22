@@ -82,25 +82,32 @@ export default function Hero3DFlaconScene({
     renderer.toneMappingExposure = 1.25;
     rendererRef.current = renderer;
 
-    // 4. Lighting Rig & Focused Top Spotlight
-    const ambientLight = new THREE.AmbientLight(0xffeedd, 0.9);
+    // 4. Lighting Rig & Camera-Angle Spotlight Setup
+    const ambientLight = new THREE.AmbientLight(0xfff5ea, 1.2);
     scene.add(ambientLight);
 
-    // Focused Overhead Spotlight shining directly down onto the flacon
-    const topSpotLight = new THREE.SpotLight(0xfff7d6, 5.5, 16, Math.PI / 3.5, 0.35, 1.2);
-    topSpotLight.position.set(0, 4.5, 2.5);
+    // Direct Camera-Angle Spotlight shining straight onto the front of the bottle
+    const cameraSpotLight = new THREE.SpotLight(0xfffaee, 5.5, 22, Math.PI / 4.2, 0.35, 1.0);
+    cameraSpotLight.position.set(0, 0.8, 5.6);
+    cameraSpotLight.target.position.set(0, 0.05, 0);
+    scene.add(cameraSpotLight);
+    scene.add(cameraSpotLight.target);
+
+    // Overhead Crown Spotlight
+    const topSpotLight = new THREE.SpotLight(0xfff7d6, 4.8, 18, Math.PI / 3.2, 0.4, 1.1);
+    topSpotLight.position.set(0, 5, 2.5);
     scene.add(topSpotLight);
 
-    const warmKeyLight = new THREE.DirectionalLight(0xffdfa8, 2.5);
-    warmKeyLight.position.set(3, 4, 3);
+    const warmKeyLight = new THREE.DirectionalLight(0xffe8b8, 2.5);
+    warmKeyLight.position.set(3, 4, 3.5);
     scene.add(warmKeyLight);
 
-    const coolRimLight = new THREE.DirectionalLight(0xd4e2ff, 1.6);
-    coolRimLight.position.set(-3, 2, -2);
+    const coolRimLight = new THREE.DirectionalLight(0xdbe8ff, 1.8);
+    coolRimLight.position.set(-3.5, 2.5, -2);
     scene.add(coolRimLight);
 
-    const goldPointLight = new THREE.PointLight(0xd4af37, 2.2, 10);
-    goldPointLight.position.set(0, -1.5, 2.5);
+    const goldPointLight = new THREE.PointLight(0xf2d675, 2.4, 10);
+    goldPointLight.position.set(0, -0.5, 3);
     scene.add(goldPointLight);
     lightSweepRef.current = goldPointLight;
 
