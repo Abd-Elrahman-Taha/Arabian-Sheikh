@@ -14,80 +14,154 @@
 }
 
 /* =========================================================================
-   ARABIAN SHEIKH — FINAL WARM DESERT COLOR SYSTEM
-   Primary: Warm Desert Sand (#D4AF37)
-   Light: Light Sand (#F2D675)
-   Secondary: Terracotta (#3A2116)
-   Deep Accent: Deep Terracotta (#3A2116)
-   Dark Contrast: Darkest Earth (#3A2116)
+   ARABIC LUXURY PALETTE COLOR SYSTEM
+   1. Shiny Gold:     #D4AF37
+   2. Gold Highlight:  #F2D675
+   3. Creamy Beige:    #F3E6D0
+   4. Warm Sand:       #D8BE99
+   5. Dark Brown:      #3A2116
+   6. Rich Espresso:   #21130D
+   7. Soft Black:      #0B0A08
    ========================================================================= */
 
-:root {
-  /* ── CORE PALETTE ──────────────────────────────────────────────────────── */
-  --color-desert-primary:  #D4AF37; /* Warm Desert Sand — Main brand color   */
-  --color-desert-light:    #F2D675; /* Light Sand — Lightest shade & cards   */
-  --color-terracotta:      #3A2116; /* Terracotta — Primary CTA & accent     */
-  --color-terracotta-deep: #3A2116; /* Deep Terracotta — Strong contrast     */
-  --color-earth-dark:      #3A2116; /* Darkest Earth — Main text & footer    */
+:root, .dark {
+  /* ── DARK MODE (SOVEREIGN PALACE) ─────────────────────────────────────── */
+  --color-desert-primary:  #D4AF37; /* Shiny Gold */
+  --color-desert-light:    #F2D675; /* Gold Highlight */
+  --color-creamy-beige:    #F3E6D0; /* Creamy Beige */
+  --color-warm-sand:       #D8BE99; /* Warm Sand */
+  --color-terracotta:      #3A2116; /* Dark Brown */
+  --color-terracotta-deep: #21130D; /* Rich Espresso */
+  --color-earth-dark:      #0B0A08; /* Soft Black */
 
   /* ── DERIVED SHADES ────────────────────────────────────────────────────── */
-  --sand-card:             #F2D675;
-  --sand-card-light:       #F2D675;
-  --terracotta-hover:      #3A2116;
-  --terracotta-soft:       rgba(180, 86, 37, 0.15);
-  --earth-muted:           #3A2116;
-  --earth-subtle:          #D8BE99;
+  --sand-card:             #140D07;
+  --sand-card-light:       #21130D;
+  --terracotta-hover:      #4E2E1F;
+  --terracotta-soft:       rgba(212, 175, 55, 0.15);
+  --earth-muted:           #D8BE99;
+  --earth-subtle:          #F3E6D0;
 
   /* ── SEMANTIC BACKGROUNDS ──────────────────────────────────────────────── */
-  --bg-primary:            #D4AF37; /* Primary warm desert sand page base    */
-  --bg-surface:            #F2D675; /* Light sand surfaces & inputs          */
-  --bg-card:               #F2D675; /* Light sand card base                 */
-  --bg-card-hover:         #F2D675; /* Elevated warm sand card               */
-  --bg-secondary:          #D4AF37; /* Slightly deeper desert sand           */
-  --bg-tertiary:           #3A2116; /* Terracotta architectural neutral     */
-  --bg-glass:              rgba(235, 170, 98, 0.94); /* Warm sand glass navbar */
-  --bg-dark-section:       #3A2116; /* Dark Earth section/footer             */
-  --bg-dark-section-text:  #F2D675;
+  --bg-primary:            #0B0A08; /* Soft Black base */
+  --bg-surface:            #140D07; /* Dark Obsidian Surface */
+  --bg-card:               #140D07; /* Dark Obsidian Card */
+  --bg-card-hover:         #21130D; /* Elevated Rich Espresso Card */
+  --bg-secondary:          #21130D; /* Rich Espresso */
+  --bg-tertiary:           #3A2116; /* Dark Brown Neutral */
+  --bg-glass:              rgba(11, 10, 8, 0.94);
+  --bg-dark-section:       #0B0A08;
+  --bg-dark-section-text:  #F3E6D0;
 
   /* ── TYPOGRAPHY ────────────────────────────────────────────────────────── */
-  --text-primary:          #3A2116; /* Darkest Earth for primary headings/text */
-  --text-secondary:        #3A2116; /* Deep Terracotta secondary text       */
-  --text-muted:            #D8BE99; /* Muted desert earth                   */
-  --text-inverse:          #F2D675; /* Light Sand on dark backgrounds       */
-  --text-accent:           #3A2116; /* Terracotta price & highlights        */
-  --text-on-sand:          #3A2116;
-  --text-on-sand-sec:      #3A2116;
-  --text-on-sand-muted:    #D8BE99;
-  --text-on-sand-gold:     #3A2116;
+  --text-primary:          #F3E6D0; /* Creamy Beige for primary text */
+  --text-secondary:        #D8BE99; /* Warm Sand secondary */
+  --text-muted:            #A68B68; /* Muted Warm Sand */
+  --text-inverse:          #0B0A08; /* Soft Black on gold */
+  --text-accent:           #D4AF37; /* Shiny Gold */
+  --text-on-sand:          #F3E6D0;
+  --text-on-sand-sec:      #D8BE99;
+  --text-on-sand-muted:    #A68B68;
+  --text-on-sand-gold:     #F2D675;
 
   /* ── ACCENT COMPATIBILITY ──────────────────────────────────────────────── */
-  --gold-primary:          #3A2116; /* Terracotta replaces legacy gold       */
-  --gold-light:            #D4AF37;
-  --gold-muted:            #3A2116;
-  --gold-dark:             #3A2116;
+  --gold-primary:          #D4AF37;
+  --gold-light:            #F2D675;
+  --gold-muted:            #C5A059;
+  --gold-dark:             #8C6239;
 
   /* ── BORDERS ───────────────────────────────────────────────────────────── */
-  --border-subtle:         rgba(93, 29, 1, 0.18);
-  --border-sand:           rgba(128, 48, 13, 0.25);
-  --border-card:           rgba(128, 48, 13, 0.22);
-  --border-clay:           #3A2116;
+  --border-subtle:         rgba(212, 175, 55, 0.20);
+  --border-sand:           rgba(212, 175, 55, 0.30);
+  --border-card:           rgba(212, 175, 55, 0.25);
+  --border-clay:           rgba(212, 175, 55, 0.35);
   --border-terracotta:     #3A2116;
-  --border-gold:           #3A2116;
-  --border-gold-subtle:    rgba(180, 86, 37, 0.25);
-  --border-gold-glow:      rgba(180, 86, 37, 0.45);
+  --border-gold:           #D4AF37;
+  --border-gold-subtle:    rgba(212, 175, 55, 0.35);
+  --border-gold-glow:      rgba(212, 175, 55, 0.55);
 
   /* ── SHADOWS ───────────────────────────────────────────────────────────── */
-  --shadow-luxury:         0 12px 32px -8px rgba(93, 29, 1, 0.15);
-  --shadow-gold:           0 0 24px rgba(180, 86, 37, 0.22);
-  --shadow-sand:           0 8px 24px rgba(93, 29, 1, 0.09);
+  --shadow-luxury:         0 14px 36px -8px rgba(0, 0, 0, 0.7);
+  --shadow-gold:           0 0 24px rgba(212, 175, 55, 0.28);
+  --shadow-sand:           0 8px 24px rgba(0, 0, 0, 0.5);
 
   /* ── FORM INPUTS ───────────────────────────────────────────────────────── */
-  --input-bg:              #F2D675;
-  --input-border:          #3A2116;
+  --input-bg:              #140D07;
+  --input-border:          rgba(212, 175, 55, 0.35);
 
   /* ── SKELETON ──────────────────────────────────────────────────────────── */
-  --skeleton-base:         #D4AF37;
-  --skeleton-highlight:    #F2D675;
+  --skeleton-base:         #1C130B;
+  --skeleton-highlight:    #2A1D12;
+}
+
+.light {
+  /* ── LIGHT MODE (HIGH CONTRAST ARABIC LUXURY) ─────────────────────────── */
+  --color-desert-primary:  #D4AF37; /* Shiny Gold */
+  --color-desert-light:    #F2D675; /* Gold Highlight */
+  --color-creamy-beige:    #F8F5EE; /* Light Desert Cream */
+  --color-warm-sand:       #E8DEC8; /* Warm Sand */
+  --color-terracotta:      #2C180F; /* Dark Brown */
+  --color-terracotta-deep: #120B06; /* Deepest Espresso */
+  --color-earth-dark:      #120B06; /* Deep Obsidian Espresso for all text */
+
+  /* ── DERIVED SHADES ────────────────────────────────────────────────────── */
+  --sand-card:             #FFFFFF; /* Pure Bright Card */
+  --sand-card-light:       #FFFDF9; /* Luminous Alabaster */
+  --terracotta-hover:      #3A2116;
+  --terracotta-soft:       rgba(212, 175, 55, 0.15);
+  --earth-muted:           #5A3517;
+  --earth-subtle:          #7A4B24;
+
+  /* ── SEMANTIC BACKGROUNDS ──────────────────────────────────────────────── */
+  --bg-primary:            #F8F5EE; /* Light Desert Cream Base */
+  --bg-surface:            #FFFFFF; /* Crisp Pure White Surface */
+  --bg-card:               #FFFFFF; /* Pure Bright Card Base */
+  --bg-card-hover:         #FFFDF9; /* Luminous Elevated Card */
+  --bg-secondary:          #F0E8DC; /* Soft Sand Neutral */
+  --bg-tertiary:           #E8DEC8; /* Sand Border Neutral */
+  --bg-glass:              rgba(255, 255, 255, 0.94);
+  --bg-dark-section:       #120B06; /* Deep Espresso Dark Section */
+  --bg-dark-section-text:  #FFFDF9;
+
+  /* ── TYPOGRAPHY (CRISP DARK CONTRAST) ─────────────────────────────────── */
+  --text-primary:          #120B06; /* Deep Obsidian Espresso for all headings & body */
+  --text-secondary:        #2C180F; /* Dark Brown for subheadings */
+  --text-muted:            #5A3517; /* Dark Amber-Brown for secondary metadata */
+  --text-inverse:          #FFFDF9; /* Pure Light on dark buttons/sections */
+  --text-accent:           #B8860B; /* Deep Royal Gold */
+  --text-on-sand:          #120B06;
+  --text-on-sand-sec:      #2C180F;
+  --text-on-sand-muted:    #5A3517;
+  --text-on-sand-gold:     #B8860B;
+
+  /* ── ACCENT COMPATIBILITY ──────────────────────────────────────────────── */
+  --gold-primary:          #D4AF37;
+  --gold-light:            #F2D675;
+  --gold-muted:            #C5A059;
+  --gold-dark:             #8C6239;
+
+  /* ── BORDERS ───────────────────────────────────────────────────────────── */
+  --border-subtle:         rgba(0, 0, 0, 0.08);
+  --border-sand:           rgba(212, 175, 55, 0.35);
+  --border-card:           rgba(212, 175, 55, 0.30);
+  --border-clay:           rgba(44, 24, 15, 0.15);
+  --border-terracotta:     #2C180F;
+  --border-gold:           #D4AF37;
+  --border-gold-subtle:    rgba(212, 175, 55, 0.35);
+  --border-gold-glow:      rgba(212, 175, 55, 0.50);
+
+  /* ── SHADOWS ───────────────────────────────────────────────────────────── */
+  --shadow-luxury:         0 10px 30px -5px rgba(0, 0, 0, 0.06);
+  --shadow-gold:           0 0 20px rgba(212, 175, 55, 0.20);
+  --shadow-sand:           0 6px 20px rgba(0, 0, 0, 0.04);
+
+  /* ── FORM INPUTS ───────────────────────────────────────────────────────── */
+  --input-bg:              #FFFFFF;
+  --input-border:          rgba(212, 175, 55, 0.35);
+
+  /* ── SKELETON ──────────────────────────────────────────────────────────── */
+  --skeleton-base:         #EAE2D5;
+  --skeleton-highlight:    #F8F5EE;
 }
 
 /* =========================================================================

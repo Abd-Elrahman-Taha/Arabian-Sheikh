@@ -73,7 +73,7 @@ export default function ArabianLogo({
           />
         </div>
         <div className="flex flex-col text-left justify-center">
-          <span className="font-cinzel font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight text-xs sm:text-sm md:text-base tracking-[0.25em] uppercase">
+          <span className="font-cinzel font-bold text-current group-hover:text-[#D4AF37] transition-colors leading-tight text-xs sm:text-sm md:text-base tracking-[0.25em] uppercase">
             ARABIAN SHEIKH
           </span>
           <span className="text-[#D4AF37] font-cinzel text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.35em] leading-tight mt-0.5">
@@ -109,7 +109,7 @@ export default function ArabianLogo({
           />
         </div>
         <div className="flex flex-col text-left justify-center">
-          <span className={`font-cinzel font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight ${s.text}`}>
+          <span className={`font-cinzel font-bold text-current group-hover:text-[#D4AF37] transition-colors leading-tight ${s.text}`}>
             ARABIAN SHEIKH
           </span>
           {showSubtitle && (
@@ -135,7 +135,7 @@ export default function ArabianLogo({
         />
       </div>
       <div className="flex flex-col items-center">
-        <span className={`font-cinzel font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors ${s.text}`}>
+        <span className={`font-cinzel font-bold text-current group-hover:text-[#D4AF37] transition-colors ${s.text}`}>
           ARABIAN SHEIKH
         </span>
         {showSubtitle && (

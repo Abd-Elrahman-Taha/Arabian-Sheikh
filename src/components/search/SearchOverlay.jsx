@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { productService } from '../../services/productService';
 import { Search, X, ArrowRight, Sparkles, Star } from 'lucide-react';
 
 export default function SearchOverlay({ isOpen, onClose }) {
   const { navigate } = useRouter();
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,19 +62,23 @@ export default function SearchOverlay({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--color-desert-primary)]/95 backdrop-blur-2xl animate-fade-in text-[var(--color-earth-dark)] p-4 sm:p-8">
+    <div className={`fixed inset-0 z-50 overflow-y-auto backdrop-blur-2xl animate-fade-in p-4 sm:p-8 transition-colors duration-500 ${
+      isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#FAF7F2]/95 text-[#120B06]'
+    }`}>
       <div className="max-w-4xl mx-auto">
         {/* Top Bar with Close */}
-        <div className="flex items-center justify-between border-b border-[var(--color-terracotta-deep)]/20 pb-4 mb-8">
+        <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-4 mb-8">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[var(--color-terracotta)]" />
-            <span className="font-cinzel text-sm uppercase tracking-[0.25em] text-[var(--color-terracotta)] font-bold">
+            <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+            <span className="font-cinzel text-sm uppercase tracking-[0.25em] text-[#D4AF37] font-bold">
               Royal Olfactory Search
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-colors cursor-pointer"
+            className={`p-2 transition-colors cursor-pointer ${
+              isDark ? 'text-[#D8BE99] hover:text-[#D4AF37]' : 'text-[#5A3517] hover:text-black'
+            }`}
             aria-label="Close search"
           >
             <X className="w-6 h-6" />
@@ -86,15 +92,21 @@ export default function SearchOverlay({ isOpen, onClose }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('common.searchPlaceholder')}
-            className="w-full bg-[var(--color-desert-light)] border-b-2 border-[var(--color-terracotta)] py-4 pl-12 pr-12 text-lg sm:text-2xl font-cinzel text-[var(--color-earth-dark)] placeholder-[var(--color-terracotta-deep)]/60 focus:outline-none focus:bg-[var(--color-desert-light)] transition-colors shadow-sm"
+            placeholder={t('common.searchPlaceholder') || 'Search perfumes, notes, oils...'}
+            className={`w-full border-b-2 py-4 pl-12 pr-12 text-lg sm:text-2xl font-cinzel transition-colors shadow-sm focus:outline-none ${
+              isDark
+                ? 'bg-black/40 border-[#D4AF37] text-[#F3E6D0] placeholder-neutral-500 focus:bg-black/60'
+                : 'bg-white border-[#D4AF37] text-[#120B06] placeholder-neutral-400 focus:bg-[#FFFDF9]'
+            }`}
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[var(--color-terracotta)]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[#D4AF37]" />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] cursor-pointer"
+              className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer ${
+                isDark ? 'text-[#D8BE99] hover:text-white' : 'text-[#5A3517] hover:text-black'
+              }`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -105,15 +117,21 @@ export default function SearchOverlay({ isOpen, onClose }) {
         {!query && (
           <div className="space-y-8 animate-fade-in">
             <div>
-              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--color-terracotta)] mb-3 font-bold">
-                {t('common.popularSearches')}
+              <h4 className={`font-cinzel text-xs uppercase tracking-[0.2em] mb-3 font-bold ${
+                isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+              }`}>
+                {t('common.popularSearches') || 'Popular Creations'}
               </h4>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_SEARCHES.map(item => (
                   <button
                     key={item}
                     onClick={() => setQuery(item)}
-                    className="px-3.5 py-1.5 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 hover:border-[var(--color-terracotta)] text-xs font-sans text-[var(--color-earth-dark)] hover:text-[var(--color-terracotta)] transition-all cursor-pointer shadow-sm font-bold"
+                    className={`px-3.5 py-1.5 border text-xs font-sans transition-all cursor-pointer font-bold rounded-full ${
+                      isDark
+                        ? 'bg-black/50 border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#F3E6D0] hover:text-[#D4AF37]'
+                        : 'bg-white border-[#D4AF37]/35 hover:border-[#D4AF37] text-[#120B06] hover:text-[#B8860B] shadow-sm'
+                    }`}
                   >
                     {item}
                   </button>
@@ -122,15 +140,21 @@ export default function SearchOverlay({ isOpen, onClose }) {
             </div>
 
             <div>
-              <h4 className="font-cinzel text-xs uppercase tracking-[0.2em] text-[var(--color-terracotta)] mb-3 font-bold">
-                {t('common.suggestedNotes')}
+              <h4 className={`font-cinzel text-xs uppercase tracking-[0.2em] mb-3 font-bold ${
+                isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+              }`}>
+                {t('common.suggestedNotes') || 'Signature Olfactory Notes'}
               </h4>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_NOTES.map(note => (
                   <button
                     key={note}
                     onClick={() => setQuery(note)}
-                    className="px-3 py-1 bg-[var(--color-desert-light)]/70 border border-[var(--color-terracotta-deep)]/20 hover:border-[var(--color-terracotta)] text-xs font-sans text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-all cursor-pointer shadow-sm font-medium"
+                    className={`px-3 py-1 border text-xs font-sans transition-all cursor-pointer font-medium rounded-full ${
+                      isDark
+                        ? 'bg-black/30 border-white/10 hover:border-[#D4AF37] text-[#D8BE99] hover:text-[#F3E6D0]'
+                        : 'bg-white/80 border-[#D4AF37]/25 hover:border-[#D4AF37] text-[#5A3517] hover:text-[#120B06] shadow-sm'
+                    }`}
                   >
                     • {note}
                   </button>
@@ -143,14 +167,16 @@ export default function SearchOverlay({ isOpen, onClose }) {
         {/* Live Search Results */}
         {query && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-[var(--color-terracotta-deep)] border-b border-[var(--color-terracotta-deep)]/20 pb-2 font-medium">
+            <div className={`flex items-center justify-between text-xs border-b pb-2 font-medium ${
+              isDark ? 'border-white/10 text-[#D8BE99]' : 'border-black/10 text-[#5A3517]'
+            }`}>
               <span>
                 {loading ? 'Distilling search results...' : `${results.length} creations matched`}
               </span>
               {results.length > 0 && (
                 <button
                   onClick={handleSearchSubmit}
-                  className="text-[var(--color-terracotta)] hover:underline flex items-center gap-1 font-cinzel uppercase text-[11px] tracking-wider cursor-pointer font-bold"
+                  className="text-[#D4AF37] hover:underline flex items-center gap-1 font-cinzel uppercase text-[11px] tracking-wider cursor-pointer font-bold"
                 >
                   <span>View All in Boutique</span>
                   <ArrowRight className="w-3 h-3" />
@@ -159,7 +185,9 @@ export default function SearchOverlay({ isOpen, onClose }) {
             </div>
 
             {results.length === 0 && !loading ? (
-              <div className="text-center py-12 text-[var(--color-terracotta-deep)] text-sm space-y-2 font-medium">
+              <div className={`text-center py-12 text-sm space-y-2 font-medium ${
+                isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+              }`}>
                 <p>No bespoke flacons found matching "{query}".</p>
                 <p className="text-xs">Try searching for ingredients such as Oud, Amber, Rose, or Bakhoor.</p>
               </div>
@@ -169,30 +197,40 @@ export default function SearchOverlay({ isOpen, onClose }) {
                   <div
                     key={product.id}
                     onClick={() => handleSelectProduct(product.id)}
-                    className="flex gap-4 p-3 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 hover:border-[var(--color-terracotta)] cursor-pointer transition-all hover:translate-x-1 shadow-sm"
+                    className={`flex gap-4 p-3.5 border cursor-pointer transition-all hover:translate-x-1 rounded-xl ${
+                      isDark
+                        ? 'bg-black/60 border-[#D4AF37]/20 hover:border-[#D4AF37]'
+                        : 'bg-white border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-sm'
+                    }`}
                   >
                     <img
-                      src={product.images?.[0]}
+                      src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
                       alt={product.name}
-                      className="w-16 h-20 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/25 shrink-0"
+                      className={`w-16 h-20 object-contain p-1 border rounded-lg shrink-0 ${
+                        isDark ? 'bg-black/40 border-white/10' : 'bg-[#FAF7F2] border-black/10'
+                      }`}
                     />
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <span className="text-[10px] uppercase tracking-wider text-[var(--color-terracotta)] font-mono font-bold">
-                          {product.fragranceFamily}
+                        <span className="text-[10px] uppercase tracking-wider text-[#D4AF37] font-mono font-bold">
+                          {product.fragranceFamily || 'Haute Parfumerie'}
                         </span>
-                        <h4 className="font-cinzel text-sm font-bold text-[var(--color-earth-dark)]">
+                        <h4 className={`font-cinzel text-sm font-bold line-clamp-1 ${
+                          isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+                        }`}>
                           {product.name}
                         </h4>
-                        <p className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">{product.arabicName}</p>
+                        {product.arabicName && (
+                          <p className="font-arabic text-xs text-[#D4AF37] font-semibold">{product.arabicName}</p>
+                        )}
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center gap-1 text-[var(--color-terracotta)] text-xs font-bold">
+                        <div className="flex items-center gap-1 text-[#D4AF37] text-xs font-bold">
                           <Star className="w-3 h-3 fill-current" />
-                          <span>{product.rating}</span>
+                          <span className={isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}>{product.rating || '5.0'}</span>
                         </div>
-                        <span className="font-cinzel text-sm font-bold text-[var(--color-terracotta)]">
-                          ${product.price}
+                        <span className="font-cinzel text-sm font-bold text-[#D4AF37]">
+                          €{product.price}
                         </span>
                       </div>
                     </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { Sparkles, ArrowRight, RotateCcw, Check, ShoppingBag, Crown, Compass } from 'lucide-react';
@@ -9,6 +10,7 @@ import BlurText from '../components/common/BlurText';
 export default function Discovery() {
   const { navigate } = useRouter();
   const { isRtl } = useTranslation();
+  const { isDark } = useTheme();
   const { addToCart } = useCart();
 
   const [step, setStep] = useState(1);
@@ -113,12 +115,14 @@ export default function Discovery() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-32 pb-6">
+    <div className={`min-h-screen bg-transparent pt-32 pb-12 transition-colors duration-500 ${
+      isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+    }`}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
         <div className="text-center space-y-3 mb-12">
-          <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] mb-2">
+          <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] mb-2 shadow-sm">
             <Compass className="w-6 h-6" />
           </div>
           <BlurText
@@ -126,10 +130,14 @@ export default function Discovery() {
             delay={70}
             animateBy="words"
             direction="top"
-            className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] justify-center"
+            className={`text-3xl sm:text-4xl font-cinzel font-bold justify-center ${
+              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+            }`}
             as="h1"
           />
-          <p className="text-xs sm:text-sm text-[#D8BE99]">
+          <p className={`text-xs sm:text-sm font-medium ${
+            isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+          }`}>
             Answer four curated questions to reveal your perfect Andalusian signature flacon.
           </p>
         </div>
@@ -137,11 +145,13 @@ export default function Discovery() {
         {/* Progress Bar */}
         {step <= 4 && (
           <div className="mb-8">
-            <div className="flex justify-between text-xs text-[#D8BE99] font-cinzel uppercase mb-2">
+            <div className={`flex justify-between text-xs font-cinzel font-bold uppercase mb-2 ${
+              isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
+            }`}>
               <span>Step {step} of 4</span>
               <span>{Math.round((step / 4) * 100)}% Completed</span>
             </div>
-            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#D4AF37] transition-all duration-500"
                 style={{ width: `${(step / 4) * 100}%` }}
@@ -152,8 +162,12 @@ export default function Discovery() {
 
         {/* Quiz Steps */}
         {step <= 4 && (
-          <div className="bg-[#0B0A08] border border-[#D4AF37]/30 p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in">
-            <h2 className="text-xl font-cinzel font-bold text-[#F3E6D0] text-center">
+          <div className={`p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in border rounded-2xl ${
+            isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/35 text-[#120B06]'
+          }`}>
+            <h2 className={`text-xl font-cinzel font-bold text-center ${
+              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+            }`}>
               {steps[step - 1].title}
             </h2>
 
@@ -162,16 +176,24 @@ export default function Discovery() {
                 <button
                   key={opt.id}
                   onClick={() => handleSelectOption(steps[step - 1].key, opt.id, opt)}
-                  className="p-5 bg-black/60 border border-white/10 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 text-left rtl:text-right rounded transition-all duration-300 group flex flex-col justify-between"
+                  className={`p-5 border text-left rtl:text-right rounded-xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
+                    isDark
+                      ? 'bg-black/60 border-white/10 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10'
+                      : 'bg-[#FAF7F2] border-[#D4AF37]/25 hover:border-[#D4AF37] hover:bg-white shadow-sm'
+                  }`}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="font-cinzel font-bold text-sm text-[#F3E6D0] group-hover:text-[#D4AF37]">
+                    <span className={`font-cinzel font-bold text-sm transition-colors ${
+                      isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#120B06] group-hover:text-[#D4AF37]'
+                    }`}>
                       {opt.label}
                     </span>
-                    <ArrowRight className="w-4 h-4 text-[#D8BE99] group-hover:text-[#D4AF37] transition-colors rtl:rotate-180" />
+                    <ArrowRight className={`w-4 h-4 transition-colors rtl:rotate-180 ${
+                      isDark ? 'text-[#D8BE99] group-hover:text-[#D4AF37]' : 'text-[#5A3517] group-hover:text-[#D4AF37]'
+                    }`} />
                   </div>
                   {opt.desc && (
-                    <p className="text-xs text-[#D8BE99] mt-1 font-sans">{opt.desc}</p>
+                    <p className={`text-xs mt-1 font-sans ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>{opt.desc}</p>
                   )}
                 </button>
               ))}
@@ -181,24 +203,34 @@ export default function Discovery() {
 
         {/* Results Screen */}
         {step === 5 && result && (
-          <div className="bg-[#0B0A08] border border-[#D4AF37]/50 p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in">
+          <div className={`p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in border rounded-2xl ${
+            isDark ? 'bg-[#0B0A08] border-[#D4AF37]/50 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#120B06]'
+          }`}>
             <div className="inline-flex px-3.5 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
               Your Olfactory Signature Match
             </div>
 
-            <div className="aspect-[3/4] max-h-72 mx-auto flex items-center justify-center p-4 bg-black/50 border border-white/10">
+            <div className={`aspect-[3/4] max-h-72 mx-auto flex items-center justify-center p-4 border rounded-2xl ${
+              isDark ? 'bg-black/50 border-white/10' : 'bg-[#FAF7F2] border-[#D4AF37]/25'
+            }`}>
               <img
                 src={result.image}
                 alt={result.name}
-                className="max-h-full object-contain filter drop-shadow-2xl animate-float"
+                className="max-h-full object-contain filter drop-shadow-2xl"
               />
             </div>
 
             <div className="space-y-2">
-              <span className="text-xs uppercase tracking-widest text-[#D8BE99] font-cinzel">{result.tier}</span>
+              <span className={`text-xs uppercase tracking-widest font-cinzel font-bold ${
+                isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
+              }`}>{result.tier}</span>
               <h2 className="text-3xl font-cinzel font-bold text-[#D4AF37]">{result.name}</h2>
-              <p className="text-xs sm:text-sm text-[#F3E6D0] max-w-md mx-auto">{result.reason}</p>
-              <p className="text-xl font-cinzel font-bold text-[#F3E6D0] pt-2">€{result.price} / {result.size}</p>
+              <p className={`text-xs sm:text-sm max-w-md mx-auto ${
+                isDark ? 'text-[#F3E6D0]' : 'text-[#2C180F]'
+              }`}>{result.reason}</p>
+              <p className={`text-xl font-cinzel font-bold pt-2 ${
+                isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+              }`}>€{result.price} / {result.size}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -207,7 +239,7 @@ export default function Discovery() {
                   const prod = await productService.getProductById(result.slug);
                   if (prod) addToCart(prod, '60 ml', 1);
                 }}
-                className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2"
+                className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2 rounded-full cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Add to Bag (€{result.price})</span>
@@ -215,16 +247,22 @@ export default function Discovery() {
 
               <Link
                 to={`/product/${result.slug}`}
-                className="px-8 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#F3E6D0] font-cinzel text-xs uppercase tracking-wider transition-colors flex items-center justify-center"
+                className={`px-8 py-3.5 border font-cinzel text-xs uppercase tracking-wider transition-colors flex items-center justify-center rounded-full ${
+                  isDark
+                    ? 'bg-white/5 hover:bg-white/10 border-white/20 text-[#F3E6D0]'
+                    : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] border-[#D4AF37]/40 text-[#120B06]'
+                }`}
               >
                 View Creation Details
               </Link>
             </div>
 
-            <div className="pt-6 border-t border-white/10">
+            <div className="pt-6 border-t border-black/10 dark:border-white/10">
               <button
                 onClick={handleReset}
-                className="text-xs text-[#D8BE99] hover:text-[#D4AF37] flex items-center gap-1.5 mx-auto transition-colors"
+                className={`text-xs flex items-center gap-1.5 mx-auto transition-colors cursor-pointer font-bold ${
+                  isDark ? 'text-[#D8BE99] hover:text-[#D4AF37]' : 'text-[#5A3517] hover:text-[#B8860B]'
+                }`}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Retake Olfactory Journey</span>

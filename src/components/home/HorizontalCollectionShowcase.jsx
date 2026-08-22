@@ -3,15 +3,13 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   ChevronLeft,
   ChevronRight,
   ShoppingBag,
   Heart,
-  Sparkles,
-  ArrowRight,
-  Eye,
-  Crown
+  ArrowRight
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -28,6 +26,7 @@ export default function HorizontalCollectionShowcase({
   const { language, t } = useTranslation();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { isDark } = useTheme();
 
   const sectionRef = useRef(null);
   const trackRef = useRef(null);
@@ -99,11 +98,11 @@ export default function HorizontalCollectionShowcase({
           opacity: 1,
           y: 0,
           duration: 0.6,
-          stagger: 0.1,
+          stagger: 0.12,
           ease: 'power2.out',
           scrollTrigger: {
             trigger: el,
-            start: 'top 75%',
+            start: 'top 80%',
             once: true,
             toggleActions: 'play none none none'
           }
@@ -112,11 +111,11 @@ export default function HorizontalCollectionShowcase({
     }, el);
 
     return () => ctx.revert();
-  }, []);
+  }, [collection.products]);
 
   const handleScroll = (direction) => {
     if (!trackRef.current) return;
-    const scrollAmount = 380;
+    const scrollAmount = trackRef.current.clientWidth * 0.75;
     trackRef.current.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
@@ -143,7 +142,6 @@ export default function HorizontalCollectionShowcase({
     isDraggingRef.current = false;
   };
 
-  const collectionNumber = String(index + 1).padStart(2, '0');
   const title = language === 'bg' && collection.bulgarianTitle
     ? collection.bulgarianTitle
     : language === 'es' && collection.spanishTitle
@@ -159,23 +157,25 @@ export default function HorizontalCollectionShowcase({
   return (
     <section
       ref={sectionRef}
-      className="py-16 sm:py-24 bg-transparent border-t border-white/10 relative overflow-hidden"
+      className={`relative py-16 sm:py-20 lg:py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
+        isDark ? (isEven ? 'bg-[#0B0A08]' : 'bg-[#140D07]') : (isEven ? 'bg-[#F8F5EE]' : 'bg-[#FAF7F2]')
+      }`}
     >
-      {/* Ambient Silk Shimmer Accent */}
-      <div className="absolute inset-0 bg-radial-vignette opacity-40 pointer-events-none" />
-
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-8 sm:space-y-10">
         
         {/* Collection Header: High Contrast & Crisp Typography */}
-        <div ref={titleRef} className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-4 border-b border-white/15">
-          <div className="space-y-3 max-w-2xl">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-xs text-[#F2D675] font-bold tracking-widest px-3 py-1 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 shadow-sm">
-                COLLECTION {collectionNumber}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-black/10 dark:border-white/10">
+          <div ref={titleRef} className="max-w-2xl space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="h-px w-8 bg-[#D4AF37]" />
+              <span className={`text-xs uppercase tracking-[0.35em] font-cinzel font-bold ${
+                isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+              }`}>
+                {collection.tier || 'Royal Reserve'} • 0{index + 1}
               </span>
-              {collection.tag && (
-                <span className="font-cinzel text-xs font-bold uppercase tracking-[0.25em] text-[#F2D675]">
-                  {collection.tag}
+              {collection.curatorNote && (
+                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 font-mono font-semibold">
+                  {collection.curatorNote}
                 </span>
               )}
             </div>
@@ -185,20 +185,26 @@ export default function HorizontalCollectionShowcase({
               delay={70}
               animateBy="words"
               direction="top"
-              className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.04em] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+              className={`text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold tracking-[0.04em] leading-tight ${
+                isDark ? 'text-[#F3E6D0] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]' : 'text-[#120B06]'
+              }`}
               as="h2"
             />
 
-            <p className="text-sm sm:text-base text-[#F3E6D0] font-sans font-medium leading-relaxed">
+            <p className={`text-sm sm:text-base font-sans font-medium leading-relaxed ${
+              isDark ? 'text-[#D8BE99]' : 'text-[#2C180F]'
+            }`}>
               {description}
             </p>
           </div>
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-4 shrink-0 self-start lg:self-end">
-            <div className="hidden sm:flex flex-col items-end gap-1 text-[11px] font-mono text-[#F2D675] font-bold">
+            <div className={`hidden sm:flex flex-col items-end gap-1 text-[11px] font-mono font-bold ${
+              isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+            }`}>
               <span>EXPLORE HORIZONTALLY</span>
-              <div className="w-32 h-1.5 bg-white/15 rounded-full overflow-hidden">
+              <div className="w-32 h-1.5 bg-black/10 dark:bg-white/15 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#D8BE99] via-[#D4AF37] to-[#F3E6D0] transition-all duration-200"
                   style={{ width: `${Math.max(15, scrollProgress)}%` }}
@@ -212,8 +218,10 @@ export default function HorizontalCollectionShowcase({
                 disabled={!canScrollLeft}
                 className={`p-3 rounded-full border transition-all duration-300 ${
                   canScrollLeft
-                    ? 'border-[#D4AF37] bg-black/80 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
-                    : 'border-white/10 bg-black/40 text-neutral-600 opacity-40 cursor-not-allowed'
+                    ? isDark
+                      ? 'border-[#D4AF37] bg-black/80 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
+                      : 'border-[#D4AF37] bg-white text-[#120B06] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-md'
+                    : 'border-black/10 dark:border-white/10 opacity-40 cursor-not-allowed text-neutral-400'
                 }`}
                 aria-label="Previous Products in Collection"
               >
@@ -225,8 +233,10 @@ export default function HorizontalCollectionShowcase({
                 disabled={!canScrollRight}
                 className={`p-3 rounded-full border transition-all duration-300 ${
                   canScrollRight
-                    ? 'border-[#D4AF37] bg-black/80 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
-                    : 'border-white/10 bg-black/40 text-neutral-600 opacity-40 cursor-not-allowed'
+                    ? isDark
+                      ? 'border-[#D4AF37] bg-black/80 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-lg'
+                      : 'border-[#D4AF37] bg-white text-[#120B06] hover:bg-[#D4AF37] hover:text-black cursor-pointer shadow-md'
+                    : 'border-black/10 dark:border-white/10 opacity-40 cursor-not-allowed text-neutral-400'
                 }`}
                 aria-label="Next Products in Collection"
               >
@@ -258,23 +268,28 @@ export default function HorizontalCollectionShowcase({
 
             const topNote = product.notes?.top?.[0] || product.topNotes?.[0] || 'Rare Resins';
             const heartNote = product.notes?.heart?.[0] || product.heartNotes?.[0] || 'Taif Rose';
-            const baseNote = product.notes?.base?.[0] || product.baseNotes?.[0] || 'Aged Oud';
 
             return (
               <div
                 key={product.id || pIdx}
-                className="collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] bg-[#21130D] border border-[#D4AF37]/30 hover:border-[#D4AF37] p-6 flex flex-col justify-between transition-all duration-500 shadow-2xl hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)] group"
+                className={`collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] border p-6 flex flex-col justify-between transition-all duration-500 rounded-2xl group hover:-translate-y-2 ${
+                  isDark
+                    ? 'bg-[#21130D] border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-2xl hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)]'
+                    : 'bg-white border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgba(212,175,55,0.2)]'
+                }`}
                 style={{ scrollSnapAlign: 'start' }}
               >
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-4">
                     {product.tier ? (
-                      <span className="px-3 py-1 rounded text-[11px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-sm">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-sm">
                         {product.tier} Tier
                       </span>
                     ) : (
-                      <span className="px-3 py-1 rounded text-[11px] font-cinzel font-bold uppercase tracking-wider bg-black/60 text-[#F2D675] border border-[#D4AF37]/40">
+                      <span className={`px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider border ${
+                        isDark ? 'bg-black/60 text-[#F2D675] border-[#D4AF37]/40' : 'bg-[#F8F5EE] text-[#8C6239] border-[#D4AF37]/40'
+                      }`}>
                         {product.category || 'Palace Reserve'}
                       </span>
                     )}
@@ -287,7 +302,9 @@ export default function HorizontalCollectionShowcase({
                       className={`p-1.5 rounded-full border transition-colors cursor-pointer ${
                         isSaved
                           ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-sm'
-                          : 'border-white/20 bg-black/60 text-[#D4AF37] hover:text-white'
+                          : isDark
+                          ? 'border-white/20 bg-black/60 text-[#D4AF37] hover:text-white'
+                          : 'border-black/10 bg-[#FAF7F2] text-[#D4AF37] hover:text-black'
                       }`}
                       title="Save to Wishlist"
                     >
@@ -295,15 +312,19 @@ export default function HorizontalCollectionShowcase({
                     </button>
                   </div>
 
-                  {/* Flacon Visual (Uniform Big Sizing) */}
+                  {/* Flacon Visual */}
                   <div
                     onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                    className="aspect-[4/5] flex items-center justify-center p-2.5 mb-4 bg-black/70 border border-white/10 relative overflow-hidden cursor-pointer group-hover:border-[#D4AF37]/50 transition-colors"
+                    className={`aspect-[4/5] flex items-center justify-center p-2.5 mb-4 border relative overflow-hidden cursor-pointer rounded-xl transition-colors ${
+                      isDark
+                        ? 'bg-black/70 border-white/10 group-hover:border-[#D4AF37]/50'
+                        : 'bg-[#FAF7F2] border-[#D4AF37]/25 group-hover:border-[#D4AF37]'
+                    }`}
                   >
                     <img
                       src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
                       alt={product.name}
-                      className="h-full max-h-[96%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.95)] group-hover:scale-110 transition-transform duration-700 pointer-events-none"
+                      className="h-full max-h-[96%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.35)] group-hover:scale-110 transition-transform duration-700 pointer-events-none"
                     />
                   </div>
 
@@ -311,58 +332,67 @@ export default function HorizontalCollectionShowcase({
                   <div className="space-y-2.5">
                     <h3
                       onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                      className="font-cinzel text-lg font-bold text-[#F3E6D0] group-hover:text-[#F2D675] transition-colors cursor-pointer line-clamp-1 drop-shadow-sm"
+                      className={`font-cinzel text-lg font-bold transition-colors cursor-pointer line-clamp-1 ${
+                        isDark ? 'text-[#F3E6D0] group-hover:text-[#F2D675]' : 'text-[#120B06] group-hover:text-[#D4AF37]'
+                      }`}
                     >
                       {displayName}
                     </h3>
 
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#F3E6D0] font-mono text-xs font-semibold">
+                      <span className={`font-mono text-xs font-semibold ${
+                        isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                      }`}>
                         {product.size || '60 ml'} • {product.fragranceFamily || 'Oriental'}
                       </span>
-                      <span className="font-cinzel font-bold text-[#F2D675] text-lg">
+                      <span className="font-cinzel font-bold text-[#D4AF37] text-lg">
                         €{product.price}
                       </span>
                     </div>
 
                     {/* Scent Notes Highlights */}
-                    <div className="py-2 px-3 bg-black/60 border border-white/10 text-xs text-[#F3E6D0] space-y-0.5">
+                    <div className={`py-2 px-3 border text-xs space-y-0.5 rounded-lg ${
+                      isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/25 text-[#2C180F]'
+                    }`}>
                       <div className="flex justify-between items-center">
-                        <span className="text-[#F2D675] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
-                        <span className="text-right truncate ml-2 text-[11px] font-medium text-[#F3E6D0]">{topNote} • {heartNote}</span>
+                        <span className="text-[#D4AF37] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
+                        <span className="text-right truncate ml-2 text-[11px] font-medium">{topNote} • {heartNote}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Ultra-Luxury Card Actions */}
-                <div className="grid grid-cols-2 gap-2.5 pt-4 mt-4 border-t border-white/15">
+                <div className="grid grid-cols-2 gap-2.5 pt-4 mt-4 border-t border-black/10 dark:border-white/15">
                   <button
                     onClick={() => addToCart(product, product.size || '60 ml', 1)}
                     disabled={isOutOfStock}
-                    className="group/btn relative py-3 px-3 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-400 flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-[0_6px_20px_rgba(140,98,57,0.35)] hover:shadow-[0_10px_30px_rgba(212,175,55,0.6)] hover:scale-[1.02] overflow-hidden"
+                    className={`group/btn relative py-3 px-3 rounded-full font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-400 flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer overflow-hidden ${
+                      isDark
+                        ? 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 shadow-[0_6px_20px_rgba(140,98,57,0.35)]'
+                        : 'bg-gradient-to-r from-[#2C180F] via-[#120B06] to-[#2C180F] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#FFFDF9] hover:text-[#120B06] border border-[#D4AF37]/50 shadow-[0_6px_20px_rgba(0,0,0,0.15)]'
+                    }`}
                   >
-                    {/* Light Glint */}
-                    <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-
                     <ShoppingBag className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
                     <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? 'Sold Out' : 'Add to Bag'}</span>
                   </button>
 
                   <Link
                     to={`/product/${product.slug || product.id}`}
-                    className="group/btn relative py-3 px-3 rounded-full bg-[#0B0A08]/90 hover:bg-[#21130D] border border-[#D4AF37]/45 hover:border-[#F2D675] text-[#F3E6D0] hover:text-[#F2D675] font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1.5 text-center shadow-md hover:shadow-lg hover:scale-[1.02]"
+                    className={`group/btn relative py-3 px-3 rounded-full border font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1.5 text-center shadow-sm hover:scale-[1.02] ${
+                      isDark
+                        ? 'bg-[#0B0A08]/90 hover:bg-[#21130D] border-[#D4AF37]/45 text-[#F3E6D0] hover:text-[#F2D675]'
+                        : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] border-[#D4AF37]/40 text-[#120B06] hover:text-[#B8860B]'
+                    }`}
                   >
                     <span>Discover</span>
                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" />
                   </Link>
                 </div>
-
               </div>
             );
           })}
         </div>
-
       </div>
     </section>
   );

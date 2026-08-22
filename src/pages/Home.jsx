@@ -4,6 +4,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useTheme } from '../context/ThemeContext';
 import ArabianLogo from '../components/common/ArabianLogo';
 import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
@@ -44,6 +45,7 @@ export default function Home() {
   const { t, language } = useTranslation();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { isDark } = useTheme();
 
   // 3D Hero active flacon (0: Luxury Black Diamond, 1: Royal Millionaire, 2: Classic Ana Sukkar)
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
@@ -177,6 +179,20 @@ export default function Home() {
   const nextHeroIndex = (activeHeroIndex + 1) % heroFlacons.length;
   const nextHeroFlacon = heroFlacons[nextHeroIndex];
 
+  const getDisplayName = (item) => {
+    if (!item) return '';
+    if (language === 'ar') return item.arabicName || item.name;
+    if (language === 'es') return item.spanishName || item.name;
+    if (language === 'bg') return item.bulgarianName || item.name;
+    return item.name;
+  };
+
+  const getTagline = (item) => {
+    if (!item) return '';
+    if (language === 'es') return item.spanishTagline || item.tagline;
+    return item.tagline;
+  };
+
   // Discovery filtered list
   const discoveryMatches = allProducts.filter(p => {
     if (selectedGender !== 'all' && p.gender?.toLowerCase() !== selectedGender.toLowerCase() && p.gender !== 'Unisex') return false;
@@ -185,19 +201,6 @@ export default function Home() {
     return true;
   });
 
-  const getDisplayName = (flacon) => {
-    if (!flacon) return '';
-    if (language === 'bg' && flacon.bulgarianName) return flacon.bulgarianName;
-    if (language === 'es' && flacon.spanishName) return flacon.spanishName;
-    return flacon.name;
-  };
-
-  const getTagline = (flacon) => {
-    if (!flacon) return '';
-    if (language === 'es' && flacon.spanishTagline) return flacon.spanishTagline;
-    return flacon.tagline;
-  };
-
   const scrollToCollections = () => {
     if (firstCollectionRef.current) {
       firstCollectionRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -205,7 +208,9 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full bg-transparent text-[#F3E6D0] overflow-x-hidden">
+    <div className={`w-full bg-transparent overflow-x-hidden transition-colors duration-500 ${
+      isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+    }`}>
       
       {/* =========================================================================
           1. HERO SECTION: CENTERED PRODUCT WITH GOLDEN SHADER & BLURRED GRADIENT AURA
@@ -213,27 +218,37 @@ export default function Home() {
       <section className="relative min-h-[86vh] lg:min-h-[90vh] flex flex-col justify-between overflow-hidden pt-20 sm:pt-24 lg:pt-28 pb-0">
         
         {/* Clean, Smooth, Noise-Free Luxury Background with Radiant Top-Left & Bottom-Right Shaders */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#0B0A08]">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]" />
-          <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.12),transparent_70%)]" />
+        <div className={`absolute inset-0 z-0 pointer-events-none overflow-hidden transition-colors duration-700 ${
+          isDark ? 'bg-[#0B0A08]' : 'bg-[#F3E6D0]'
+        }`}>
+          <div className={`absolute inset-0 transition-opacity duration-700 ${
+            isDark
+              ? 'bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]'
+              : 'bg-gradient-to-b from-[#FAF6F0] via-[#F3E6D0] to-[#E8D9C2]'
+          }`} />
+          <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.15),transparent_70%)]" />
 
           {/* 1. TOP-LEFT Radiant Luxury Fluid Shader Circle (Slightly Bigger) */}
-          <div className="absolute -top-28 -left-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none opacity-95 mix-blend-screen">
+          <div className={`absolute -top-28 -left-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none transition-all duration-700 ${
+            isDark ? 'opacity-95 mix-blend-screen' : 'opacity-85 mix-blend-multiply'
+          }`}>
             <LuxuryBackgroundShader
-              color1="#F2D675"
-              color2="#B8860B"
-              color3="#1A1008"
+              color1={isDark ? '#F2D675' : '#D4AF37'}
+              color2={isDark ? '#B8860B' : '#F2D675'}
+              color3={isDark ? '#1A1008' : '#D8BE99'}
               opacity={0.95}
               className="w-full h-full rounded-full"
             />
           </div>
 
           {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader Circle (Slightly Bigger) */}
-          <div className="absolute -bottom-28 -right-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none opacity-90 mix-blend-screen">
+          <div className={`absolute -bottom-28 -right-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none transition-all duration-700 ${
+            isDark ? 'opacity-90 mix-blend-screen' : 'opacity-80 mix-blend-multiply'
+          }`}>
             <LuxuryBackgroundShader
-              color1="#D4AF37"
-              color2="#8C6239"
-              color3="#140D07"
+              color1={isDark ? '#D4AF37' : '#F2D675'}
+              color2={isDark ? '#8C6239' : '#D4AF37'}
+              color3={isDark ? '#140D07' : '#D8BE99'}
               opacity={0.90}
               className="w-full h-full rounded-full"
             />
@@ -250,12 +265,14 @@ export default function Home() {
               
               {/* Bold Minimalist Product Title */}
               <BlurText
-                key={currentHeroFlacon.id}
+                key={`${currentHeroFlacon.id}-${isDark}`}
                 text={getDisplayName(currentHeroFlacon).toUpperCase()}
                 delay={60}
                 animateBy="words"
                 direction="top"
-                className="text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold text-[#F3E6D0] tracking-[0.03em] leading-tight drop-shadow-2xl justify-center lg:justify-start"
+                className={`text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold tracking-[0.03em] leading-tight drop-shadow-2xl justify-center lg:justify-start ${
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                }`}
                 as="h1"
               />
 
@@ -263,7 +280,11 @@ export default function Home() {
               <div className="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
-                  className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-[#FFFDF8] hover:text-[#0B0A08] border border-[#F2D675]/50 hover:border-[#FFF8E7] font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-105 overflow-hidden cursor-pointer"
+                  className={`group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 border overflow-hidden cursor-pointer ${
+                    isDark
+                      ? 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-[#FFFDF8] hover:text-[#0B0A08] border-[#F2D675]/50 hover:border-[#FFF8E7] shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-105'
+                      : 'bg-gradient-to-r from-[#3A2116] via-[#21130D] to-[#3A2116] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#F3E6D0] hover:text-[#21130D] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(58,33,22,0.25)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.45)] hover:scale-105'
+                  }`}
                 >
                   <span className="relative z-10 drop-shadow-sm">
                     {language === 'ar' ? 'استكشف العطر' : 'FIND OUT MORE'}
@@ -278,10 +299,14 @@ export default function Home() {
             <div className="w-full max-w-2xl mx-auto relative flex items-center justify-center h-[48vh] sm:h-[58vh] lg:h-[620px] scale-115 sm:scale-120 order-1 lg:order-2 z-10">
               
               {/* Theatrical Overhead Golden Spotlight Conical Beam */}
-              <div className="absolute -top-20 inset-x-0 mx-auto w-72 sm:w-96 lg:w-[440px] h-[440px] sm:h-[540px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FFF5D1]/45 via-[#D4AF37]/20 to-transparent blur-2xl pointer-events-none -z-10" />
+              <div className={`absolute -top-20 inset-x-0 mx-auto w-72 sm:w-96 lg:w-[440px] h-[440px] sm:h-[540px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${
+                isDark ? 'from-[#FFF5D1]/45 via-[#D4AF37]/20' : 'from-[#D4AF37]/35 via-[#F2D675]/20'
+              } to-transparent blur-2xl pointer-events-none -z-10`} />
               
               {/* Spotlight Core Flare Glow */}
-              <div className="absolute -top-12 inset-x-0 mx-auto w-32 sm:w-48 h-32 sm:h-48 rounded-full bg-[#FFE899]/35 blur-3xl pointer-events-none -z-10" />
+              <div className={`absolute -top-12 inset-x-0 mx-auto w-32 sm:w-48 h-32 sm:h-48 rounded-full ${
+                isDark ? 'bg-[#FFE899]/35' : 'bg-[#D4AF37]/30'
+              } blur-3xl pointer-events-none -z-10`} />
               
               <Hero3DFlaconScene
                 activeProductIndex={activeHeroIndex}
@@ -294,14 +319,20 @@ export default function Home() {
             <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
               <div
                 onClick={() => setActiveHeroIndex(nextHeroIndex)}
-                className="group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl bg-[#0B0A08]/85 border border-[#D4AF37]/35 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2"
+                className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
+                  isDark
+                    ? 'bg-[#0B0A08]/85 border-[#D4AF37]/35 text-[#F3E6D0]'
+                    : 'bg-[#FAF6F0]/90 border-[#D4AF37]/45 text-[#21130D] shadow-[0_10px_30px_rgba(33,19,13,0.08)]'
+                }`}
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
                 {/* Header Tag */}
-                <div className="flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold">
+                <div className={`flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] font-cinzel font-bold ${
+                  isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                }`}>
                   <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
                   <span>{language === 'ar' ? 'التالي' : 'NEXT'}</span>
-                  <ChevronRight className="w-3 h-3 text-[#F2D675] group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
+                  <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </div>
 
                 {/* Smaller Next Flacon Preview */}
@@ -309,16 +340,20 @@ export default function Home() {
                   <img
                     src={nextHeroFlacon.image}
                     alt={getDisplayName(nextHeroFlacon)}
-                    className="h-full w-auto object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.9)] group-hover:scale-105 transition-transform duration-300 relative z-10"
+                    className="h-full w-auto object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.4)] group-hover:scale-105 transition-transform duration-300 relative z-10"
                   />
                 </div>
 
                 {/* Next Product Title & Tier */}
                 <div className="space-y-0.5">
-                  <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#F3E6D0] leading-tight">
+                  <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight ${
+                    isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                  }`}>
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
-                  <p className="text-[9.5px] text-[#D8BE99] font-mono font-medium">
+                  <p className={`text-[9.5px] font-mono font-medium ${
+                    isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                  }`}>
                     €{nextHeroFlacon.price} • {nextHeroFlacon.tier}
                   </p>
                 </div>
@@ -452,10 +487,14 @@ export default function Home() {
           {/* =========================================================================
               4. INTERACTIVE FRAGRANCE FINDER QUIZ
               ========================================================================= */}
-          <section className="py-24 bg-gradient-to-b from-[#0B0A08]/95 via-[#21130D]/90 to-[#0B0A08]/95 border-t border-[#D4AF37]/20">
+          <section className={`py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
+            isDark ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#21130D]/90 to-[#0B0A08]/95' : 'bg-gradient-to-b from-[#FAF6F0]/95 via-[#F3E6D0]/90 to-[#FAF6F0]/95'
+          }`}>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
               
-              <div className="bg-[#0B0A08]/95 border border-[#D4AF37]/30 p-8 sm:p-12 shadow-2xl space-y-8">
+              <div className={`border p-8 sm:p-12 shadow-2xl space-y-8 rounded-2xl transition-colors duration-500 ${
+                isDark ? 'bg-[#0B0A08]/95 border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#FAF6F0]/95 border-[#D4AF37]/40 text-[#21130D]'
+              }`}>
                 <div className="text-center space-y-2">
                   <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] mb-2 shadow-sm">
                     <Compass className="w-6 h-6" />
@@ -465,10 +504,14 @@ export default function Home() {
                     delay={70}
                     animateBy="words"
                     direction="top"
-                    className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md justify-center"
+                    className={`text-3xl sm:text-4xl font-cinzel font-bold drop-shadow-md justify-center ${
+                      isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                    }`}
                     as="h2"
                   />
-                  <p className="text-sm text-[#F3E6D0] font-medium max-w-lg mx-auto">
+                  <p className={`text-sm font-medium max-w-lg mx-auto ${
+                    isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                  }`}>
                     Select your olfactory preferences to match your signature creation.
                   </p>
                 </div>
@@ -476,11 +519,15 @@ export default function Home() {
                 {/* Filters */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest text-[#F2D675] font-cinzel font-bold">Gender:</label>
+                    <label className={`text-xs uppercase tracking-widest font-cinzel font-bold ${
+                      isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                    }`}>Gender:</label>
                     <select
                       value={selectedGender}
                       onChange={(e) => setSelectedGender(e.target.value)}
-                      className="w-full bg-black/80 border border-[#D4AF37]/40 px-3.5 py-3 rounded text-xs sm:text-sm text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                      className={`w-full border px-3.5 py-3 rounded text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
+                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#21130D]'
+                      }`}
                     >
                       <option value="all">All Profiles</option>
                       <option value="Unisex">Unisex Sovereign</option>
@@ -490,11 +537,15 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest text-[#F2D675] font-cinzel font-bold">Scent Family:</label>
+                    <label className={`text-xs uppercase tracking-widest font-cinzel font-bold ${
+                      isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                    }`}>Scent Family:</label>
                     <select
                       value={selectedFamily}
                       onChange={(e) => setSelectedFamily(e.target.value)}
-                      className="w-full bg-black/80 border border-[#D4AF37]/40 px-3.5 py-3 rounded text-xs sm:text-sm text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                      className={`w-full border px-3.5 py-3 rounded text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
+                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#21130D]'
+                      }`}
                     >
                       <option value="all">All Families</option>
                       <option value="Oriental">Oriental / Amber</option>
@@ -504,11 +555,15 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest text-[#F2D675] font-cinzel font-bold">Occasion:</label>
+                    <label className={`text-xs uppercase tracking-widest font-cinzel font-bold ${
+                      isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                    }`}>Occasion:</label>
                     <select
                       value={selectedOccasion}
                       onChange={(e) => setSelectedOccasion(e.target.value)}
-                      className="w-full bg-black/80 border border-[#D4AF37]/40 px-3.5 py-3 rounded text-xs sm:text-sm text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                      className={`w-full border px-3.5 py-3 rounded text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
+                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#21130D]'
+                      }`}
                     >
                       <option value="all">All Occasions</option>
                       <option value="Evening">Evening / Gala</option>
@@ -519,14 +574,14 @@ export default function Home() {
                 </div>
 
                 {/* Filtered Matches Preview */}
-                <div className="pt-6 border-t border-white/15">
+                <div className="pt-6 border-t border-black/10 dark:border-white/15">
                   <div className="flex items-center justify-between mb-4 text-xs sm:text-sm">
-                    <span className="text-[#F3E6D0] font-medium">
-                      Matched <strong className="text-[#F2D675] text-base">{discoveryMatches.length}</strong> creations:
+                    <span className={`font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>
+                      Matched <strong className="text-[#D4AF37] text-base">{discoveryMatches.length}</strong> creations:
                     </span>
                     <Link
                       to="/discovery"
-                      className="text-[#F2D675] hover:text-[#F3E6D0] font-cinzel font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 transition-colors"
+                      className="text-[#D4AF37] hover:text-[#B8860B] font-cinzel font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 transition-colors"
                     >
                       <span>Take Full Guided Journey</span>
                       <ArrowRight className="w-4 h-4" />
@@ -538,7 +593,9 @@ export default function Home() {
                       <div
                         key={item.id}
                         onClick={() => navigate(`/product/${item.slug || item.id}`)}
-                        className="p-4 bg-black/60 border border-white/15 hover:border-[#D4AF37] cursor-pointer transition-colors flex items-center gap-3.5 shadow-lg"
+                        className={`p-4 border hover:border-[#D4AF37] cursor-pointer transition-colors flex items-center gap-3.5 shadow-lg rounded-xl ${
+                          isDark ? 'bg-black/60 border-white/15 text-[#F3E6D0]' : 'bg-white/80 border-[#D4AF37]/30 text-[#21130D]'
+                        }`}
                       >
                         <img
                           src={item.cutoutImage || item.images?.[0]}
@@ -546,9 +603,9 @@ export default function Home() {
                           className="w-14 h-18 object-contain"
                         />
                         <div>
-                          <h4 className="font-cinzel text-sm font-bold text-[#F3E6D0] line-clamp-1">{item.name}</h4>
-                          <p className="text-xs text-[#F2D675] font-bold">€{item.price}</p>
-                          <span className="text-[10px] uppercase tracking-wider text-[#F3E6D0] font-mono">{item.tier || item.category}</span>
+                          <h4 className={`font-cinzel text-sm font-bold line-clamp-1 ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>{item.name}</h4>
+                          <p className="text-xs text-[#D4AF37] font-bold">€{item.price}</p>
+                          <span className={`text-[10px] uppercase tracking-wider font-mono ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>{item.tier || item.category}</span>
                         </div>
                       </div>
                     ))}
@@ -563,11 +620,15 @@ export default function Home() {
           {/* =========================================================================
               5. PRODUCT COMPARISON MATRIX
               ========================================================================= */}
-          <section className="py-24 bg-[#0B0A08]/95 border-t border-[#D4AF37]/20">
+          <section className={`py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
+            isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#FAF6F0]/95 text-[#21130D]'
+          }`}>
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
-                <span className="text-xs uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold">
+                <span className={`text-xs uppercase tracking-[0.35em] font-cinzel font-bold ${
+                  isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                }`}>
                   Side-by-Side
                 </span>
                 <BlurText
@@ -575,7 +636,9 @@ export default function Home() {
                   delay={70}
                   animateBy="words"
                   direction="top"
-                  className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md justify-center"
+                  className={`text-3xl sm:text-4xl font-cinzel font-bold drop-shadow-md justify-center ${
+                    isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                  }`}
                   as="h2"
                 />
               </div>
@@ -583,18 +646,20 @@ export default function Home() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse border border-[#D4AF37]/30 text-xs sm:text-sm">
                   <thead>
-                    <tr className="bg-[#0B0A08] border-b border-[#D4AF37]/30">
-                      <th className="p-4 font-cinzel text-xs uppercase tracking-widest text-[#F2D675] font-bold w-1/4">Metric</th>
+                    <tr className={`border-b border-[#D4AF37]/30 ${isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'}`}>
+                      <th className="p-4 font-cinzel text-xs uppercase tracking-widest text-[#D4AF37] font-bold w-1/4">Metric</th>
                       {heroFlacons.map((f) => (
-                        <th key={f.id} className="p-4 font-cinzel text-base font-bold text-[#F3E6D0] text-center w-1/4">
+                        <th key={f.id} className={`p-4 font-cinzel text-base font-bold text-center w-1/4 ${
+                          isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                        }`}>
                           {f.name} ({f.tier})
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/10">
+                  <tbody className="divide-y divide-black/10 dark:divide-white/10">
                     <tr>
-                      <td className="p-4 font-bold text-[#F2D675]">Flacon Silhouette</td>
+                      <td className="p-4 font-bold text-[#D4AF37]">Flacon Silhouette</td>
                       {heroFlacons.map((f) => (
                         <td key={f.id} className="p-4 text-center">
                           <img
@@ -605,36 +670,36 @@ export default function Home() {
                         </td>
                       ))}
                     </tr>
-                    <tr className="bg-white/5">
-                      <td className="p-4 font-bold text-[#F2D675]">Price & Volume</td>
+                    <tr className={isDark ? 'bg-white/5' : 'bg-black/5'}>
+                      <td className="p-4 font-bold text-[#D4AF37]">Price & Volume</td>
                       {heroFlacons.map((f) => (
-                        <td key={f.id} className="p-4 text-center font-cinzel font-bold text-[#F2D675] text-base">
-                          €{f.price} <span className="text-xs text-[#F3E6D0] font-normal">/ {f.size}</span>
+                        <td key={f.id} className="p-4 text-center font-cinzel font-bold text-[#D4AF37] text-base">
+                          €{f.price} <span className={`text-xs font-normal ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>/ {f.size}</span>
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="p-4 font-bold text-[#F2D675]">Key Scent Notes</td>
+                      <td className="p-4 font-bold text-[#D4AF37]">Key Scent Notes</td>
                       {heroFlacons.map((f) => (
-                        <td key={f.id} className="p-4 text-center text-[#F3E6D0] font-medium">
+                        <td key={f.id} className={`p-4 text-center font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>
                           {f.notes}
                         </td>
                       ))}
                     </tr>
-                    <tr className="bg-white/5">
-                      <td className="p-4 font-bold text-[#F2D675]">Longevity Profile</td>
-                      <td className="p-4 text-center text-[#F3E6D0] font-bold">14+ Hours</td>
-                      <td className="p-4 text-center text-[#F3E6D0] font-bold">10-12 Hours</td>
-                      <td className="p-4 text-center text-[#F3E6D0] font-bold">8-10 Hours</td>
+                    <tr className={isDark ? 'bg-white/5' : 'bg-black/5'}>
+                      <td className="p-4 font-bold text-[#D4AF37]">Longevity Profile</td>
+                      <td className="p-4 text-center font-bold">14+ Hours</td>
+                      <td className="p-4 text-center font-bold">10-12 Hours</td>
+                      <td className="p-4 text-center font-bold">8-10 Hours</td>
                     </tr>
                     <tr>
-                      <td className="p-4 font-bold text-[#F2D675]">Gender Archetype</td>
-                      <td className="p-4 text-center text-[#F3E6D0] font-medium">Unisex Sovereign</td>
-                      <td className="p-4 text-center text-[#F3E6D0] font-medium">Masculine Strength</td>
-                      <td className="p-4 text-center text-[#F3E6D0] font-medium">Feminine Elegance</td>
+                      <td className="p-4 font-bold text-[#D4AF37]">Gender Archetype</td>
+                      <td className="p-4 text-center font-medium">Unisex Sovereign</td>
+                      <td className="p-4 text-center font-medium">Masculine Strength</td>
+                      <td className="p-4 text-center font-medium">Feminine Elegance</td>
                     </tr>
-                    <tr className="bg-[#0B0A08]">
-                      <td className="p-4 font-bold text-[#F2D675]">Action</td>
+                    <tr className={isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'}>
+                      <td className="p-4 font-bold text-[#D4AF37]">Action</td>
                       {heroFlacons.map((f) => (
                         <td key={f.id} className="p-4 text-center">
                           <button
@@ -642,7 +707,7 @@ export default function Home() {
                               const item = allProducts.find(p => p.slug === f.slug);
                               if (item) addToCart(item, '60 ml', 1);
                             }}
-                            className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-xs transition-colors cursor-pointer shadow-md"
+                            className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full transition-all duration-300 cursor-pointer shadow-md hover:scale-105"
                           >
                             Add to Bag (€{f.price})
                           </button>
@@ -659,68 +724,80 @@ export default function Home() {
           {/* =========================================================================
               6. REVIEWS & SOCIAL PROOF
               ========================================================================= */}
-          <section className="py-24 bg-[#0B0A08]/95 border-t border-[#D4AF37]/20">
+          <section className={`py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
+            isDark ? 'bg-[#0B0A08]/95' : 'bg-[#F3E6D0]/30'
+          }`}>
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
-                <span className="text-xs uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold">
+                <span className={`text-xs uppercase tracking-[0.35em] font-cinzel font-bold ${
+                  isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                }`}>
                   Testimonials
                 </span>
-                <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
+                <h2 className={`text-3xl sm:text-4xl font-cinzel font-bold drop-shadow-md ${
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                }`}>
                   Royal Acclaim
                 </h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-[#21130D] border border-[#D4AF37]/25 p-8 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
+                  isDark ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-[#FAF6F0] border-[#D4AF37]/35 text-[#21130D]'
+                }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
-                    <h4 className="font-cinzel font-bold text-[#F3E6D0] text-base">"Pure Royalty in a Bottle"</h4>
-                    <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium leading-relaxed">
+                    <h4 className="font-cinzel font-bold text-base">"Pure Royalty in a Bottle"</h4>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
                       "The projection lasts well past 14 hours with amber and oud notes that develop magnificently."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-[#F2D675]">Tariq Al-Hashemi</span>
-                    <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
+                  <div className="pt-4 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-[#D4AF37]">Tariq Al-Hashemi</span>
+                    <span className="text-emerald-500 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-[#21130D] border border-[#D4AF37]/25 p-8 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
+                  isDark ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-[#FAF6F0] border-[#D4AF37]/35 text-[#21130D]'
+                }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
-                    <h4 className="font-cinzel font-bold text-[#F3E6D0] text-base">"Masterpiece of Modern Luxury"</h4>
-                    <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium leading-relaxed">
+                    <h4 className="font-cinzel font-bold text-base">"Masterpiece of Modern Luxury"</h4>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
                       "Millionaire has commanding leather and spiced cardamom resonance. Highly recommended."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-[#F2D675]">Alexander D.</span>
-                    <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
+                  <div className="pt-4 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-[#D4AF37]">Alexander D.</span>
+                    <span className="text-emerald-500 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-[#21130D] border border-[#D4AF37]/25 p-8 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
+                  isDark ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-[#FAF6F0] border-[#D4AF37]/35 text-[#21130D]'
+                }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
-                    <h4 className="font-cinzel font-bold text-[#F3E6D0] text-base">"Delicious & Elegant"</h4>
-                    <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium leading-relaxed">
+                    <h4 className="font-cinzel font-bold text-base">"Delicious & Elegant"</h4>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
                       "Ana Sukkar is sweet and delicate. The spun sugar and white musk blend is heavenly."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-[#F2D675]">Layla K.</span>
-                    <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
+                  <div className="pt-4 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-[#D4AF37]">Layla K.</span>
+                    <span className="text-emerald-500 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
                   </div>
@@ -733,37 +810,45 @@ export default function Home() {
           {/* =========================================================================
               7. TRUST & NEWSLETTER LAYER
               ========================================================================= */}
-          <section className="py-10 border-t border-[#D4AF37]/20 bg-[#0B0A08]">
+          <section className={`py-10 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
+            isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'
+          }`}>
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               {/* 3 Pillars */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8 border-b border-white/15 text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8 border-b border-black/10 dark:border-white/15 text-center">
                 <div className="space-y-2 flex flex-col items-center">
                   <Truck className="w-7 h-7 text-[#D4AF37] mb-1" />
-                  <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">DHL Express Delivery</h4>
-                  <p className="text-xs text-[#F3E6D0] font-medium">Complimentary royal shipping on orders over €100.</p>
+                  <h4 className={`font-cinzel font-bold text-sm ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>DHL Express Delivery</h4>
+                  <p className={`text-xs font-medium ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Complimentary royal shipping on orders over €100.</p>
                 </div>
                 <div className="space-y-2 flex flex-col items-center">
                   <Lock className="w-7 h-7 text-[#D4AF37] mb-1" />
-                  <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">Encrypted Stripe Checkout</h4>
-                  <p className="text-xs text-[#F3E6D0] font-medium">256-bit encrypted global payment processing.</p>
+                  <h4 className={`font-cinzel font-bold text-sm ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>Encrypted Stripe Checkout</h4>
+                  <p className={`text-xs font-medium ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>256-bit encrypted global payment processing.</p>
                 </div>
                 <div className="space-y-2 flex flex-col items-center">
                   <Award className="w-7 h-7 text-[#D4AF37] mb-1" />
-                  <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">100% Authentic Extraits</h4>
-                  <p className="text-xs text-[#F3E6D0] font-medium">Meticulously matured in numbered flacons.</p>
+                  <h4 className={`font-cinzel font-bold text-sm ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>100% Authentic Extraits</h4>
+                  <p className={`text-xs font-medium ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Meticulously matured in numbered flacons.</p>
                 </div>
               </div>
 
               {/* Newsletter Box */}
               <div className="max-w-2xl mx-auto text-center pt-8 space-y-3">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#F2D675] font-cinzel font-bold">
+                <span className={`text-xs uppercase tracking-[0.3em] font-cinzel font-bold ${
+                  isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                }`}>
                   The Sovereign Society
                 </span>
-                <h3 className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
+                <h3 className={`text-xl sm:text-2xl font-cinzel font-bold drop-shadow-md ${
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                }`}>
                   Enter the world of Arabian Sheikh
                 </h3>
-                <p className="text-xs sm:text-sm text-[#F3E6D0] font-medium">
+                <p className={`text-xs sm:text-sm font-medium ${
+                  isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                }`}>
                   Receive private invitations to limited flacon reserves and releases.
                 </p>
                 <form onSubmit={(e) => { e.preventDefault(); alert('Thank you for subscribing to Arabian Sheikh Private Society.'); }} className="flex max-w-md mx-auto gap-2 pt-2">
@@ -771,11 +856,13 @@ export default function Home() {
                     type="email"
                     placeholder="Enter your email address"
                     required
-                    className="flex-1 bg-black/80 border border-[#D4AF37]/40 px-4 py-2.5 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none rounded-xs placeholder-neutral-500"
+                    className={`flex-1 border px-4 py-2.5 text-xs focus:border-[#D4AF37] focus:outline-none rounded-full ${
+                      isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0] placeholder-neutral-500' : 'bg-white border-[#D4AF37]/40 text-[#21130D] placeholder-neutral-400'
+                    }`}
                   />
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-lg"
+                    className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-lg rounded-full"
                   >
                     Join
                   </button>

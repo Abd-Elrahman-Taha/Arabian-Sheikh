@@ -1,20 +1,40 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
-/**
- * ThemeProvider
- * 
- * Unified Hybrid Arabian Palace Luxury Theme (Combining Dark Wood, Cream Marble & Gold)
- * Light/Dark switcher has been removed in favor of a single master luxury aesthetic.
- */
 export function ThemeProvider({ children }) {
-  const theme = 'hybrid-palace';
+  const [theme, setThemeState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('as_luxury_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    }
+    return 'dark'; // Default to the sovereign Dark mode
+  });
+
+  const isDark = theme === 'dark';
+
+  const setTheme = (newTheme) => {
+    setThemeState(newTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('as_luxury_theme', newTheme);
+    }
+  };
+
+  const toggleTheme = () => {
+    setTheme(isDark ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('light');
-    root.style.colorScheme = 'dark';
+    if (isDark) {
+      root.classList.remove('light');
+      root.classList.add('dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.style.colorScheme = 'light';
+    }
 
     // Update browser address bar / theme color meta tag
     let metaTheme = document.querySelector('meta[name="theme-color"]');
@@ -23,16 +43,16 @@ export function ThemeProvider({ children }) {
       metaTheme.name = 'theme-color';
       document.head.appendChild(metaTheme);
     }
-    metaTheme.content = '#21130D';
-  }, []);
+    metaTheme.content = isDark ? '#0B0A08' : '#F3E6D0';
+  }, [isDark]);
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
-        isDark: true,
-        toggleTheme: () => {},
-        setTheme: () => {}
+        isDark,
+        toggleTheme,
+        setTheme
       }}
     >
       {children}

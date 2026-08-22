@@ -4,6 +4,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import ArabianLogo from '../common/ArabianLogo';
 import {
   Search,
@@ -16,7 +17,9 @@ import {
   Globe,
   ShieldAlert,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Header({ onOpenSearch }) {
@@ -25,6 +28,7 @@ export default function Header({ onOpenSearch }) {
   const { totals, openDrawer, cartBadgeAnimated } = useCart();
   const { wishlistCount } = useWishlist();
   const { user, isAdmin, isAuthenticated } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -85,19 +89,27 @@ export default function Header({ onOpenSearch }) {
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
           isScrolled
-            ? 'bg-[#0B0A08]/95 backdrop-blur-md border-b border-[#D4AF37]/20 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)]'
-            : 'bg-gradient-to-b from-[#0B0A08]/95 via-[#0B0A08]/60 to-transparent py-4'
+            ? isDark
+              ? 'bg-[#0B0A08]/95 backdrop-blur-md border-b border-[#D4AF37]/20 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)]'
+              : 'bg-[#FAF6F0]/95 backdrop-blur-md border-b border-[#D4AF37]/30 py-2.5 shadow-[0_10px_30px_rgba(33,19,13,0.06)]'
+            : isDark
+              ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#0B0A08]/60 to-transparent py-4'
+              : 'bg-gradient-to-b from-[#FAF6F0]/95 via-[#FAF6F0]/70 to-transparent py-4'
         }`}
       >
         {/* Top VIP Announcement Bar */}
         {!isScrolled && (
           <div className="hidden lg:block border-b border-[#D4AF37]/15 pb-2 mb-2">
-            <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#D4AF37]">
+            <div className={`max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] ${
+              isDark ? 'text-[#D4AF37]' : 'text-[#8C6239]'
+            }`}>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3 h-3 text-[#D4AF37]" />
                 <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
               </div>
-              <div className="flex items-center gap-6 normal-case text-xs tracking-normal">
+              <div className={`flex items-center gap-6 normal-case text-xs tracking-normal ${
+                isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+              }`}>
                 <Link to="/discovery" className="hover:text-[#D4AF37] transition-colors flex items-center gap-1 font-cinzel uppercase tracking-[0.15em] text-[11px]">
                   <span>Fragrance Finder Quiz</span>
                 </Link>
@@ -132,7 +144,9 @@ export default function Header({ onOpenSearch }) {
             </div>
 
             {/* 2. CENTER: CATEGORY NAVIGATION WITH ACTIVE UNDERLINE INDICATOR */}
-            <nav className="hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium text-[#F3E6D0]">
+            <nav className={`hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium ${
+              isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+            }`}>
               {navCategories.map((item) => {
                 const active = isItemActive(item.path);
                 return (
@@ -140,7 +154,9 @@ export default function Header({ onOpenSearch }) {
                     key={item.path}
                     to={item.path}
                     className={`transition-colors duration-300 relative py-1.5 hover:text-[#D4AF37] ${
-                      active ? 'text-[#D4AF37] font-semibold' : 'text-[#F3E6D0]'
+                      active
+                        ? 'text-[#D4AF37] font-semibold'
+                        : isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
                     }`}
                   >
                     <span>{item.name}</span>
@@ -153,12 +169,16 @@ export default function Header({ onOpenSearch }) {
             </nav>
 
             {/* 3. RIGHT: UTILITIES & ACTIONS */}
-            <div className="flex items-center space-x-4 sm:space-x-5 text-[#F3E6D0]">
+            <div className={`flex items-center space-x-3 sm:space-x-4 ${
+              isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+            }`}>
               {/* Language Switcher */}
               <div className="relative hidden md:block">
                 <button
                   onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className="flex items-center gap-1.5 text-xs tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1 px-2.5 rounded border border-[#D4AF37]/25 bg-black/40 text-[#F3E6D0]"
+                  className={`flex items-center gap-1.5 text-xs tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1 px-2.5 rounded border border-[#D4AF37]/35 ${
+                    isDark ? 'bg-black/40 text-[#F3E6D0]' : 'bg-white/80 text-[#21130D] shadow-xs'
+                  }`}
                   aria-label="Select Language"
                 >
                   <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -167,7 +187,9 @@ export default function Header({ onOpenSearch }) {
                 </button>
 
                 {langDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-36 bg-[#0B0A08] border border-[#D4AF37]/30 rounded-md shadow-2xl py-1 z-50 animate-fade-in">
+                  <div className={`absolute right-0 mt-2 w-36 border border-[#D4AF37]/30 rounded-md shadow-2xl py-1 z-50 animate-fade-in ${
+                    isDark ? 'bg-[#0B0A08] text-[#F3E6D0]' : 'bg-[#FFFDF9] text-[#21130D]'
+                  }`}>
                     {languages.map((l) => (
                       <button
                         key={l.code}
@@ -176,7 +198,7 @@ export default function Header({ onOpenSearch }) {
                           setLangDropdownOpen(false);
                         }}
                         className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[#D4AF37]/15 transition-colors ${
-                          language === l.code ? 'text-[#D4AF37] font-bold bg-[#D4AF37]/10' : 'text-[#F3E6D0]'
+                          language === l.code ? 'text-[#D4AF37] font-bold bg-[#D4AF37]/10' : ''
                         }`}
                       >
                         <span>{l.label}</span>
@@ -186,6 +208,20 @@ export default function Header({ onOpenSearch }) {
                   </div>
                 )}
               </div>
+
+              {/* Theme Toggle Button (Light / Dark Mode Switcher) */}
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 hover:text-[#D4AF37] transition-all duration-300 focus:outline-none cursor-pointer rounded-full border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:scale-110 flex items-center justify-center"
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label="Toggle Luxury Theme"
+              >
+                {isDark ? (
+                  <Sun className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#F2D675] hover:rotate-90 transition-transform duration-500" />
+                ) : (
+                  <Moon className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#3A2116] hover:-rotate-45 transition-transform duration-500" />
+                )}
+              </button>
 
               {/* Search Trigger */}
               <button
@@ -225,7 +261,9 @@ export default function Header({ onOpenSearch }) {
                 className="relative p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer group"
                 aria-label="Shopping Bag"
               >
-                <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors" />
+                <ShoppingBag className={`w-4.5 h-4.5 sm:w-5 sm:h-5 group-hover:text-[#D4AF37] transition-colors ${
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                }`} />
                 {totals.itemCount > 0 && (
                   <span className={`absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-lg ${
                     cartBadgeAnimated ? 'animate-bounce' : ''
@@ -250,7 +288,9 @@ export default function Header({ onOpenSearch }) {
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden bg-[#0B0A08]/98 backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto">
+        <div className={`fixed inset-0 z-50 lg:hidden backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto ${
+          isDark ? 'bg-[#0B0A08]/98 text-[#F3E6D0]' : 'bg-[#FAF6F0]/98 text-[#21130D]'
+        }`}>
           <div className="space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#D4AF37]/20">
               <ArabianLogo variant="header" size="navbar" showSubtitle={true} subtitle="Andalusia" />
@@ -271,8 +311,10 @@ export default function Header({ onOpenSearch }) {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-2 transition-colors border-b border-white/5 flex items-center justify-between relative ${
-                      active ? 'text-[#D4AF37] font-bold' : 'text-[#F3E6D0] hover:text-[#D4AF37]'
+                    className={`block py-2 transition-colors border-b border-black/5 dark:border-white/5 flex items-center justify-between relative ${
+                      active
+                        ? 'text-[#D4AF37] font-bold'
+                        : isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#21130D] hover:text-[#D4AF37]'
                     }`}
                   >
                     <span className="relative inline-block">
@@ -288,9 +330,7 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/discovery"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block py-2 font-semibold flex items-center justify-between relative ${
-                  isItemActive('/discovery') ? 'text-[#D4AF37] font-bold' : 'text-[#D4AF37]'
-                }`}
+                className={`block py-2 font-semibold flex items-center justify-between relative text-[#D4AF37]`}
               >
                 <span className="relative inline-block">
                   Fragrance Finder Quiz
@@ -306,7 +346,20 @@ export default function Header({ onOpenSearch }) {
           {/* Mobile Bottom Utilities */}
           <div className="pt-6 border-t border-[#D4AF37]/20 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-widest text-[#D8BE99]">Language:</span>
+              <span className={`text-xs uppercase tracking-widest ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Appearance:</span>
+              <button
+                onClick={toggleTheme}
+                className={`px-3 py-1.5 text-xs rounded border border-[#D4AF37]/40 flex items-center gap-1.5 font-cinzel uppercase tracking-wider ${
+                  isDark ? 'bg-white/5 text-[#F3E6D0]' : 'bg-black/5 text-[#21130D]'
+                }`}
+              >
+                {isDark ? <Sun className="w-3.5 h-3.5 text-[#F2D675]" /> : <Moon className="w-3.5 h-3.5 text-[#3A2116]" />}
+                <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className={`text-xs uppercase tracking-widest ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Language:</span>
               <div className="flex gap-2">
                 {languages.map((l) => (
                   <button
@@ -315,7 +368,7 @@ export default function Header({ onOpenSearch }) {
                     className={`px-2.5 py-1 text-xs rounded border ${
                       language === l.code
                         ? 'border-[#D4AF37] bg-[#D4AF37] text-black font-bold'
-                        : 'border-white/20 text-[#F3E6D0]'
+                        : 'border-black/10 dark:border-white/20'
                     }`}
                   >
                     {l.code.toUpperCase()}
@@ -328,7 +381,9 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to={isAuthenticated ? '/account' : '/login'}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F3E6D0]"
+                className={`flex items-center justify-center gap-2 py-2.5 border rounded text-xs uppercase tracking-wider ${
+                  isDark ? 'bg-white/5 border-white/10 text-[#F3E6D0]' : 'bg-black/5 border-black/10 text-[#21130D]'
+                }`}
               >
                 <User className="w-4 h-4 text-[#D4AF37]" />
                 <span>{isAuthenticated ? 'Account' : 'Sign In'}</span>
@@ -336,7 +391,9 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/account/wishlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F3E6D0]"
+                className={`flex items-center justify-center gap-2 py-2.5 border rounded text-xs uppercase tracking-wider ${
+                  isDark ? 'bg-white/5 border-white/10 text-[#F3E6D0]' : 'bg-black/5 border-black/10 text-[#21130D]'
+                }`}
               >
                 <Heart className="w-4 h-4 text-[#D4AF37]" />
                 <span>Wishlist ({wishlistCount})</span>
