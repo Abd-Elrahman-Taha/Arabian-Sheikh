@@ -83,43 +83,43 @@ export default function ArabianIntro({ onComplete }) {
       },
     });
 
-    // 1. Video smoothly fades out (0.0s -> 1.0s)
+    // 1. Video smoothly fades out completely (0.0s -> 0.9s)
     if (videoContainerRef.current) {
       tl.to(
         videoContainerRef.current,
         {
           opacity: 0,
-          duration: 1.0,
+          duration: 0.9,
           ease: 'power2.inOut',
         },
         0
       );
     }
 
-    // 2. 3D Smoke fades in simultaneously (0.1s -> 1.1s)
+    // 2. 3D Bakhoor Smoke appears FIRST right away (0.0s -> 1.0s)
     if (smokeContainerRef.current) {
       tl.to(
         smokeContainerRef.current,
         {
           opacity: 1,
-          duration: 1.1,
+          duration: 1.0,
           ease: 'power2.out',
         },
-        0.1
+        0
       );
     }
 
-    // 3. Royal Arabic Logo reveals with elegant scale & golden glow (0.3s -> 1.5s)
+    // 3. Royal Arabic Logo reveals AFTER smoke is established (0.8s -> 2.0s)
     if (logoWrapperRef.current) {
       tl.fromTo(
         logoWrapperRef.current,
-        { opacity: 0, scale: 0.88, y: 15 },
+        { opacity: 0, scale: 0.86, y: 18 },
         { opacity: 1, scale: 1, y: 0, duration: 1.2, ease: 'power3.out' },
-        0.3
+        0.8
       );
     }
 
-    // 4. Linger on logo & smoke, then dissolve into homepage (2.6s -> 3.4s)
+    // 4. Linger on majestic logo & smoke, then dissolve into homepage (2.9s -> 3.7s)
     if (containerRef.current) {
       tl.to(
         containerRef.current,
@@ -129,19 +129,27 @@ export default function ArabianIntro({ onComplete }) {
           duration: 0.8,
           ease: 'power2.inOut',
         },
-        2.6
+        2.9
       );
     }
   };
 
-  // Video time tracking to trigger fade-out before video ends
+  // Video time tracking to trigger fade-out
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video || transitionTriggered) return;
 
-    // Trigger transition 1.2 seconds before video ends
-    if (video.duration && video.currentTime >= video.duration - 1.2) {
-      triggerLogoTransition();
+    if (isMobile) {
+      // On phones (mobile): play to second 6.3 then fade out smoothly
+      if (video.currentTime >= 6.1) {
+        triggerLogoTransition();
+      }
+    } else {
+      // On desktop: fade out 1.5s before end
+      const leadTime = 1.5;
+      if (video.duration && video.currentTime >= Math.max(0.5, video.duration - leadTime)) {
+        triggerLogoTransition();
+      }
     }
   };
 
@@ -159,7 +167,7 @@ export default function ArabianIntro({ onComplete }) {
       if (!transitionTriggered) {
         triggerLogoTransition();
       }
-    }, 7000); // 7s maximum wait safety threshold
+    }, 12000); // 12s safety threshold to allow full 6.7s mobile playback
 
     return () => clearTimeout(safetyTimer);
   }, [transitionTriggered, reducedMotion]);
