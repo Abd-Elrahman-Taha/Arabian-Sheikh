@@ -133,7 +133,7 @@ export default function PalaceMemoryVideo({
         <div className={`relative max-w-5xl mx-auto rounded-2xl border overflow-hidden group ${
           isDark
             ? 'border-[#D4AF37]/30 bg-black shadow-[0_25px_60px_rgba(0,0,0,0.95)]'
-            : 'border-[#D4AF37]/35 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.08)]'
+            : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_20px_50px_rgba(212,175,55,0.2)]'
         }`}>
           {/* HTML5 Video */}
           <div className="relative aspect-video w-full overflow-hidden bg-black">
@@ -153,40 +153,29 @@ export default function PalaceMemoryVideo({
             <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/70 pointer-events-none" />
 
             {/* Provenance Watermark badge */}
-            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-[#21130D]/85 backdrop-blur-md border border-[#D4AF37]/40 text-[11px] uppercase tracking-widest text-[#F2D675] font-cinzel font-bold rounded-full">
-              <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <div className="absolute top-4 left-4 rtl:left-auto rtl:right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-[#D4AF37]/40 text-[#F2D675] text-[10px] font-mono tracking-widest uppercase">
+              <Crown className="w-3 h-3 text-[#D4AF37]" />
               <span>{copy.provenance}</span>
-            </div>
-
-            {/* Sound Wave Indicator */}
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-[#21130D]/85 backdrop-blur-md border border-[#D4AF37]/40 text-[11px] uppercase tracking-widest text-[#F3E6D0] font-mono font-bold rounded-full">
-              <span className={`w-2 h-2 rounded-full ${!isMuted ? 'bg-emerald-400 animate-ping' : 'bg-[#D4AF37]'}`} />
-              <span>{!isMuted ? 'Live Palace Audio' : 'Audio Muted'}</span>
             </div>
           </div>
 
-          {/* Player Controls Bar */}
-          <div className={`p-4 border-t flex flex-col gap-3 transition-colors ${
-            isDark
-              ? 'bg-[#21130D] border-[#D4AF37]/20 text-[#F3E6D0]'
-              : 'bg-white border-[#D4AF37]/25 text-[#120B06]'
+          {/* Player Controls & Scrubber */}
+          <div className={`p-4 sm:p-6 border-t space-y-4 transition-colors ${
+            isDark ? 'bg-[#140D07] border-[#D4AF37]/20 text-[#F3E6D0]' : 'bg-[#FAF1DF]/90 border-[#D4AF37]/30 text-[#120B06]'
           }`}>
             
-            {/* Scrubber Progress Bar */}
+            {/* Scrubber */}
             <div
               onClick={handleSeek}
-              className={`w-full h-1.5 hover:h-2 rounded-full cursor-pointer transition-all relative overflow-hidden ${
-                isDark ? 'bg-white/15' : 'bg-black/10'
-              }`}
-              title="Seek Video"
+              className="group/scrub relative w-full h-2 bg-black/20 dark:bg-white/10 rounded-full cursor-pointer overflow-hidden transition-all hover:h-2.5"
             >
               <div
-                className="h-full bg-gradient-to-r from-[#D8BE99] via-[#D4AF37] to-[#F3E6D0] transition-all duration-150"
+                className="h-full bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] rounded-full transition-all duration-100 shadow-[0_0_12px_rgba(212,175,55,0.8)]"
                 style={{ width: `${progress}%` }}
               />
             </div>
 
-            {/* Bottom Controls Buttons */}
+            {/* Controls Bar */}
             <div className="flex items-center justify-between text-xs font-cinzel">
               <div className="flex items-center gap-4">
                 {/* Play / Pause */}
@@ -205,7 +194,7 @@ export default function PalaceMemoryVideo({
                   className={`p-2.5 px-4 border rounded-full transition-colors cursor-pointer flex items-center gap-1.5 font-bold ${
                     isDark
                       ? 'bg-black/60 hover:bg-white/10 text-[#F3E6D0] border-[#D4AF37]/40'
-                      : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] text-[#120B06] border-[#D4AF37]/40'
+                      : 'bg-[#FAF1DF] hover:bg-white text-[#120B06] border-[#D4AF37]/40'
                   }`}
                   aria-label={isMuted ? 'Unmute Audio' : 'Mute Audio'}
                 >
@@ -245,7 +234,7 @@ export default function PalaceMemoryVideo({
           <div className={`p-6 border space-y-2 rounded-2xl transition-colors ${
             isDark
               ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0] shadow-lg'
-              : 'bg-white border-[#D4AF37]/35 text-[#120B06] shadow-[0_10px_30px_rgba(0,0,0,0.05)]'
+              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
           }`}>
             <span className={`text-xs font-mono font-bold uppercase tracking-widest ${
               isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
@@ -261,7 +250,7 @@ export default function PalaceMemoryVideo({
           <div className={`p-6 border space-y-2 rounded-2xl transition-colors ${
             isDark
               ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0] shadow-lg'
-              : 'bg-white border-[#D4AF37]/35 text-[#120B06] shadow-[0_10px_30px_rgba(0,0,0,0.05)]'
+              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
           }`}>
             <span className={`text-xs font-mono font-bold uppercase tracking-widest ${
               isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
@@ -277,7 +266,7 @@ export default function PalaceMemoryVideo({
           <div className={`p-6 border space-y-2 rounded-2xl transition-colors ${
             isDark
               ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0] shadow-lg'
-              : 'bg-white border-[#D4AF37]/35 text-[#120B06] shadow-[0_10px_30px_rgba(0,0,0,0.05)]'
+              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
           }`}>
             <span className={`text-xs font-mono font-bold uppercase tracking-widest ${
               isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'

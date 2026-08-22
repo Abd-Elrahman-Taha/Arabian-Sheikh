@@ -116,10 +116,10 @@ export default function Collections() {
                 className={`cursor-pointer p-6 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between rounded-2xl ${
                   isActive
                     ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 shadow-xl scale-[1.02] ' +
-                      (isDark ? 'bg-black/80' : 'bg-white')
+                      (isDark ? 'bg-black/80' : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC]')
                     : isDark
                     ? 'border-[#D4AF37]/20 bg-[#0B0A08] hover:border-[#D4AF37]'
-                    : 'border-[#D4AF37]/30 bg-white hover:border-[#D4AF37] shadow-[0_8px_25px_rgba(0,0,0,0.04)]'
+                    : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}
               >
                 <div>

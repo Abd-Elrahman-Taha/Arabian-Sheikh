@@ -177,7 +177,9 @@ export default function CartDrawer() {
                 <div
                   key={`${item.productId}-${item.size}-${idx}`}
                   className={`flex gap-3.5 p-3.5 border relative group transition-all rounded-2xl ${
-                    isDark ? 'bg-[#0B0A08] border-[#D4AF37]/15' : 'bg-white border-[#D4AF37]/30 shadow-sm'
+                    isDark
+                      ? 'bg-[#0B0A08] border-[#D4AF37]/15'
+                      : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/40 shadow-sm'
                   }`}
                 >
                   {/* Flacon Image */}
@@ -185,7 +187,7 @@ export default function CartDrawer() {
                     src={item.image || '/products/black_diamond_gold.png'}
                     alt={item.name}
                     className={`w-16 h-20 object-contain p-1 shrink-0 border rounded-xl ${
-                      isDark ? 'bg-black/50 border-white/5' : 'bg-[#FAF7F2] border-black/10'
+                      isDark ? 'bg-black/50 border-white/5' : 'bg-white/80 border-[#D4AF37]/30'
                     }`}
                   />
 
@@ -213,7 +215,7 @@ export default function CartDrawer() {
                     {/* Quantity & Item Total */}
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/10 dark:border-white/5">
                       <div className={`flex items-center border rounded-full ${
-                        isDark ? 'border-[#D4AF37]/30 bg-black/60' : 'border-[#D4AF37]/40 bg-white'
+                        isDark ? 'border-[#D4AF37]/30 bg-black/60' : 'border-[#D4AF37]/40 bg-white/90'
                       }`}>
                         <button
                           onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
@@ -235,7 +237,7 @@ export default function CartDrawer() {
                       </div>
 
                       <span className="font-cinzel text-sm font-bold text-[#D4AF37]">
-                        €{item.price * item.quantity}
+                        €{(item.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -243,21 +245,22 @@ export default function CartDrawer() {
               ))
             )}
 
-            {/* Frequently Paired / Related Recommendations */}
-            {items.length > 0 && recommendations.length > 0 && (
-              <div className="pt-3 mt-3 border-t border-black/10 dark:border-[#D4AF37]/20 space-y-2.5">
-                <div className={`flex items-center gap-1.5 text-[11px] font-cinzel font-bold uppercase tracking-wider ${
-                  isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
-                }`}>
+            {/* Cross-Sell Recommendations */}
+            {recommendations.length > 0 && items.length > 0 && (
+              <div className="pt-3 border-t border-black/10 dark:border-white/10 space-y-2.5">
+                <div className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Patrons Also Paired With</span>
+                  <span className={`font-cinzel text-xs font-bold uppercase tracking-wider ${isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'}`}>
+                    Palace Pairing
+                  </span>
                 </div>
+
                 <div className="space-y-2">
                   {recommendations.map((rec) => (
                     <div
                       key={rec.id}
                       className={`flex items-center justify-between p-2.5 border transition-colors rounded-xl ${
-                        isDark ? 'bg-black/60 border-[#D4AF37]/20 hover:border-[#D4AF37]/50' : 'bg-white border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-sm'
+                        isDark ? 'bg-black/60 border-[#D4AF37]/20 hover:border-[#D4AF37]/50' : 'bg-gradient-to-r from-[#FFFDF8] to-[#FAF1DF] border-[#D4AF37]/35 hover:border-[#D4AF37] shadow-xs'
                       }`}
                     >
                       <div
@@ -271,7 +274,7 @@ export default function CartDrawer() {
                           src={rec.cutoutImage || rec.images?.[0] || '/products/black_diamond_gold.png'}
                           alt={rec.name}
                           className={`w-10 h-12 object-contain p-0.5 border rounded-lg ${
-                            isDark ? 'bg-black/40 border-white/5' : 'bg-[#FAF7F2] border-black/10'
+                            isDark ? 'bg-black/40 border-white/5' : 'bg-white border-[#D4AF37]/25'
                           }`}
                         />
                         <div>

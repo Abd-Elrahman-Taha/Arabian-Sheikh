@@ -275,7 +275,7 @@ export default function HorizontalCollectionShowcase({
                 className={`collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] border p-6 flex flex-col justify-between transition-all duration-500 rounded-2xl group hover:-translate-y-2 ${
                   isDark
                     ? 'bg-[#21130D] border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-2xl hover:shadow-[0_20px_45px_rgba(0,0,0,0.95)]'
-                    : 'bg-white border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgba(212,175,55,0.2)]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_20px_40px_rgba(212,175,55,0.35)]'
                 }`}
                 style={{ scrollSnapAlign: 'start' }}
               >
@@ -288,7 +288,7 @@ export default function HorizontalCollectionShowcase({
                       </span>
                     ) : (
                       <span className={`px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider border ${
-                        isDark ? 'bg-black/60 text-[#F2D675] border-[#D4AF37]/40' : 'bg-[#F8F5EE] text-[#8C6239] border-[#D4AF37]/40'
+                        isDark ? 'bg-black/60 text-[#F2D675] border-[#D4AF37]/40' : 'bg-[#FAF1DF] text-[#8C6239] border-[#D4AF37]/40 font-bold'
                       }`}>
                         {product.category || 'Palace Reserve'}
                       </span>
@@ -304,7 +304,7 @@ export default function HorizontalCollectionShowcase({
                           ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-sm'
                           : isDark
                           ? 'border-white/20 bg-black/60 text-[#D4AF37] hover:text-white'
-                          : 'border-black/10 bg-[#FAF7F2] text-[#D4AF37] hover:text-black'
+                          : 'border-[#D4AF37]/40 bg-white/80 text-[#120B06] hover:bg-[#D4AF37] hover:text-black shadow-xs'
                       }`}
                       title="Save to Wishlist"
                     >
@@ -318,7 +318,7 @@ export default function HorizontalCollectionShowcase({
                     className={`aspect-[4/5] flex items-center justify-center p-2.5 mb-4 border relative overflow-hidden cursor-pointer rounded-xl transition-colors ${
                       isDark
                         ? 'bg-black/70 border-white/10 group-hover:border-[#D4AF37]/50'
-                        : 'bg-[#FAF7F2] border-[#D4AF37]/25 group-hover:border-[#D4AF37]'
+                        : 'bg-white/80 border-[#D4AF37]/30 group-hover:border-[#D4AF37]'
                     }`}
                   >
                     <img
@@ -352,7 +352,7 @@ export default function HorizontalCollectionShowcase({
 
                     {/* Scent Notes Highlights */}
                     <div className={`py-2 px-3 border text-xs space-y-0.5 rounded-lg ${
-                      isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/25 text-[#2C180F]'
+                      isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-white/80 border-[#D4AF37]/30 text-[#2C180F]'
                     }`}>
                       <div className="flex justify-between items-center">
                         <span className="text-[#D4AF37] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
@@ -382,7 +382,7 @@ export default function HorizontalCollectionShowcase({
                     className={`group/btn relative py-3 px-3 rounded-full border font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1.5 text-center shadow-sm hover:scale-[1.02] ${
                       isDark
                         ? 'bg-[#0B0A08]/90 hover:bg-[#21130D] border-[#D4AF37]/45 text-[#F3E6D0] hover:text-[#F2D675]'
-                        : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] border-[#D4AF37]/40 text-[#120B06] hover:text-[#B8860B]'
+                        : 'bg-white/80 hover:bg-white border-[#D4AF37]/40 text-[#120B06] hover:text-[#B8860B]'
                     }`}
                   >
                     <span>Discover</span>

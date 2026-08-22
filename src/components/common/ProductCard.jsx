@@ -51,7 +51,7 @@ export default function ProductCard({ product, onCompare }) {
       className={`group cursor-pointer relative border transition-all duration-500 flex flex-col justify-between overflow-hidden rounded-2xl hover:-translate-y-1 ${
         isDark
           ? 'bg-[#0B0A08]/80 border-[#D4AF37]/15 hover:border-[#D4AF37]/60 shadow-lg hover:shadow-[0_15px_35px_rgba(0,0,0,0.85)]'
-          : 'bg-white border-[#D4AF37]/30 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_15px_35px_rgba(212,175,55,0.2)]'
+          : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)]'
       }`}
     >
       {/* Top Badges */}
@@ -84,7 +84,7 @@ export default function ProductCard({ product, onCompare }) {
             ? 'bg-[#D4AF37] text-black shadow-md scale-105'
             : isDark
             ? 'bg-black/60 text-[#F3E6D0] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/20 shadow-sm'
-            : 'bg-white/80 text-[#120B06] hover:bg-[#D4AF37] hover:text-black border border-black/10 shadow-sm'
+            : 'bg-[#FAF1DF]/90 text-[#120B06] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/40 shadow-sm'
         }`}
       >
         <Heart className={`w-3.5 h-3.5 transition-transform duration-200 ${isSaved ? 'fill-current' : ''}`} />
@@ -92,7 +92,7 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Flacon Image Container with Full Editorial Background */}
       <div className={`relative aspect-[3/4] overflow-hidden flex items-center justify-center ${
-        isDark ? 'bg-[#0B0A08]' : 'bg-white'
+        isDark ? 'bg-[#0B0A08]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#FAF1DF]'
       }`}>
         <img
           src={product.originalImage || product.images?.[0] || product.cutoutImage || '/products/black_diamond_gold.png'}
@@ -129,7 +129,7 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Details Area */}
       <div className={`p-4 sm:p-5 flex flex-col flex-1 justify-between border-t ${
-        isDark ? 'bg-[#0B0A08]/95 border-[#D4AF37]/10' : 'bg-white border-[#D4AF37]/20'
+        isDark ? 'bg-[#0B0A08]/95 border-[#D4AF37]/10' : 'bg-[#FAF1DF]/90 border-[#D4AF37]/30'
       }`}>
         <div>
           {/* Scent family / volume */}

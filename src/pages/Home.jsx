@@ -322,7 +322,7 @@ export default function Home() {
                 className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
                   isDark
                     ? 'bg-[#0B0A08]/85 border-[#D4AF37]/35 text-[#F3E6D0]'
-                    : 'bg-[#FAF6F0]/90 border-[#D4AF37]/45 text-[#21130D] shadow-[0_10px_30px_rgba(33,19,13,0.08)]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
@@ -347,7 +347,7 @@ export default function Home() {
                 {/* Next Product Title & Tier */}
                 <div className="space-y-0.5">
                   <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight ${
-                    isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                    isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                   }`}>
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
@@ -384,7 +384,11 @@ export default function Home() {
           {/* Card 1: Master Alchemist */}
           <div
             onClick={() => navigate('/about')}
-            className="group relative h-80 sm:h-96 rounded-3xl overflow-hidden border border-[#D4AF37]/25 bg-black/60 shadow-2xl cursor-pointer hover:border-[#D4AF37] transition-all duration-500 hover:-translate-y-1.5"
+            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
+              isDark
+                ? 'border-[#D4AF37]/25 bg-black/60 hover:border-[#D4AF37]'
+                : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+            }`}
           >
             <img
               src="/editorial/master_alchemist.jpg"
@@ -408,7 +412,11 @@ export default function Home() {
           {/* Card 2: Flacon Craftsmanship */}
           <div
             onClick={() => navigate('/the-palace')}
-            className="group relative h-80 sm:h-96 rounded-3xl overflow-hidden border border-[#D4AF37]/25 bg-black/60 shadow-2xl cursor-pointer hover:border-[#D4AF37] transition-all duration-500 hover:-translate-y-1.5"
+            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
+              isDark
+                ? 'border-[#D4AF37]/25 bg-black/60 hover:border-[#D4AF37]'
+                : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+            }`}
           >
             <img
               src="/editorial/flacon_craftsmanship.jpg"
@@ -432,7 +440,11 @@ export default function Home() {
           {/* Card 3: Imperial Monograph */}
           <div
             onClick={() => navigate('/discovery')}
-            className="group relative h-80 sm:h-96 rounded-3xl overflow-hidden border border-[#D4AF37]/25 bg-black/60 shadow-2xl cursor-pointer hover:border-[#D4AF37] transition-all duration-500 hover:-translate-y-1.5"
+            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
+              isDark
+                ? 'border-[#D4AF37]/25 bg-black/60 hover:border-[#D4AF37]'
+                : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+            }`}
           >
             <img
               src="/editorial/imperial_monograph.jpg"
@@ -488,12 +500,14 @@ export default function Home() {
               4. INTERACTIVE FRAGRANCE FINDER QUIZ
               ========================================================================= */}
           <section className={`py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
-            isDark ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#21130D]/90 to-[#0B0A08]/95' : 'bg-gradient-to-b from-[#FAF6F0]/95 via-[#F3E6D0]/90 to-[#FAF6F0]/95'
+            isDark ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#21130D]/90 to-[#0B0A08]/95' : 'bg-transparent'
           }`}>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
               
               <div className={`border p-8 sm:p-12 shadow-2xl space-y-8 rounded-2xl transition-colors duration-500 ${
-                isDark ? 'bg-[#0B0A08]/95 border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#FAF6F0]/95 border-[#D4AF37]/40 text-[#21130D]'
+                isDark
+                  ? 'bg-[#0B0A08]/95 border-[#D4AF37]/30 text-[#F3E6D0]'
+                  : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.2)]'
               }`}>
                 <div className="text-center space-y-2">
                   <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] mb-2 shadow-sm">
@@ -505,12 +519,12 @@ export default function Home() {
                     animateBy="words"
                     direction="top"
                     className={`text-3xl sm:text-4xl font-cinzel font-bold drop-shadow-md justify-center ${
-                      isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                      isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                     }`}
                     as="h2"
                   />
                   <p className={`text-sm font-medium max-w-lg mx-auto ${
-                    isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                    isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'
                   }`}>
                     Select your olfactory preferences to match your signature creation.
                   </p>
@@ -525,8 +539,8 @@ export default function Home() {
                     <select
                       value={selectedGender}
                       onChange={(e) => setSelectedGender(e.target.value)}
-                      className={`w-full border px-3.5 py-3 rounded text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
-                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#21130D]'
+                      className={`w-full border px-3.5 py-3 rounded-xl text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
+                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white/90 border-[#D4AF37]/40 text-[#120B06]'
                       }`}
                     >
                       <option value="all">All Profiles</option>
@@ -543,8 +557,8 @@ export default function Home() {
                     <select
                       value={selectedFamily}
                       onChange={(e) => setSelectedFamily(e.target.value)}
-                      className={`w-full border px-3.5 py-3 rounded text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
-                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#21130D]'
+                      className={`w-full border px-3.5 py-3 rounded-xl text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
+                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white/90 border-[#D4AF37]/40 text-[#120B06]'
                       }`}
                     >
                       <option value="all">All Families</option>
@@ -561,8 +575,8 @@ export default function Home() {
                     <select
                       value={selectedOccasion}
                       onChange={(e) => setSelectedOccasion(e.target.value)}
-                      className={`w-full border px-3.5 py-3 rounded text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
-                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#21130D]'
+                      className={`w-full border px-3.5 py-3 rounded-xl text-xs sm:text-sm focus:border-[#D4AF37] focus:outline-none ${
+                        isDark ? 'bg-black/80 border-[#D4AF37]/40 text-[#F3E6D0]' : 'bg-white/90 border-[#D4AF37]/40 text-[#120B06]'
                       }`}
                     >
                       <option value="all">All Occasions</option>
@@ -576,7 +590,7 @@ export default function Home() {
                 {/* Filtered Matches Preview */}
                 <div className="pt-6 border-t border-black/10 dark:border-white/15">
                   <div className="flex items-center justify-between mb-4 text-xs sm:text-sm">
-                    <span className={`font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>
+                    <span className={`font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
                       Matched <strong className="text-[#D4AF37] text-base">{discoveryMatches.length}</strong> creations:
                     </span>
                     <Link
@@ -593,8 +607,8 @@ export default function Home() {
                       <div
                         key={item.id}
                         onClick={() => navigate(`/product/${item.slug || item.id}`)}
-                        className={`p-4 border hover:border-[#D4AF37] cursor-pointer transition-colors flex items-center gap-3.5 shadow-lg rounded-xl ${
-                          isDark ? 'bg-black/60 border-white/15 text-[#F3E6D0]' : 'bg-white/80 border-[#D4AF37]/30 text-[#21130D]'
+                        className={`p-4 border hover:border-[#D4AF37] cursor-pointer transition-colors flex items-center gap-3.5 shadow-md rounded-xl ${
+                          isDark ? 'bg-black/60 border-white/15 text-[#F3E6D0]' : 'bg-white/90 border-[#D4AF37]/35 text-[#120B06]'
                         }`}
                       >
                         <img
@@ -603,7 +617,7 @@ export default function Home() {
                           className="w-14 h-18 object-contain"
                         />
                         <div>
-                          <h4 className={`font-cinzel text-sm font-bold line-clamp-1 ${isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'}`}>{item.name}</h4>
+                          <h4 className={`font-cinzel text-sm font-bold line-clamp-1 ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>{item.name}</h4>
                           <p className="text-xs text-[#D4AF37] font-bold">€{item.price}</p>
                           <span className={`text-[10px] uppercase tracking-wider font-mono ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>{item.tier || item.category}</span>
                         </div>
@@ -736,7 +750,7 @@ export default function Home() {
                   Testimonials
                 </span>
                 <h2 className={`text-3xl sm:text-4xl font-cinzel font-bold drop-shadow-md ${
-                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                 }`}>
                   Royal Acclaim
                 </h2>
@@ -744,14 +758,16 @@ export default function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
-                  isDark ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-[#FAF6F0] border-[#D4AF37]/35 text-[#21130D]'
+                  isDark
+                    ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Pure Royalty in a Bottle"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'}`}>
                       "The projection lasts well past 14 hours with amber and oud notes that develop magnificently."
                     </p>
                   </div>
@@ -764,14 +780,16 @@ export default function Home() {
                 </div>
 
                 <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
-                  isDark ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-[#FAF6F0] border-[#D4AF37]/35 text-[#21130D]'
+                  isDark
+                    ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Masterpiece of Modern Luxury"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'}`}>
                       "Millionaire has commanding leather and spiced cardamom resonance. Highly recommended."
                     </p>
                   </div>
@@ -784,14 +802,16 @@ export default function Home() {
                 </div>
 
                 <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
-                  isDark ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-[#FAF6F0] border-[#D4AF37]/35 text-[#21130D]'
+                  isDark
+                    ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Delicious & Elegant"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'}`}>
                       "Ana Sukkar is sweet and delicate. The spun sugar and white musk blend is heavenly."
                     </p>
                   </div>

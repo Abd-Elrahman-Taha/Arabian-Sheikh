@@ -105,8 +105,8 @@
   --color-earth-dark:      #120B06; /* Deep Obsidian Espresso for all text */
 
   /* ── DERIVED SHADES ────────────────────────────────────────────────────── */
-  --sand-card:             #FFFFFF; /* Pure Bright Card */
-  --sand-card-light:       #FFFDF9; /* Luminous Alabaster */
+  --sand-card:             #FAF1DF; /* Luminous Warm Gold Card Base */
+  --sand-card-light:       #FFFDF8; /* Luminous Warm Gold Highlight */
   --terracotta-hover:      #3A2116;
   --terracotta-soft:       rgba(212, 175, 55, 0.15);
   --earth-muted:           #5A3517;
@@ -114,9 +114,9 @@
 
   /* ── SEMANTIC BACKGROUNDS ──────────────────────────────────────────────── */
   --bg-primary:            #CBB198; /* Main Light Mode Luxury Base #CBB198 */
-  --bg-surface:            #FFFFFF; /* Crisp Pure White Surface */
-  --bg-card:               #FFFFFF; /* Pure Bright Card Base */
-  --bg-card-hover:         #FFFDF9; /* Luminous Elevated Card */
+  --bg-surface:            #FAF1DF; /* Warm Gold Card Surface */
+  --bg-card:               #FAF1DF; /* Warm Gold Card Base */
+  --bg-card-hover:         #FFFDF8; /* Luminous Elevated Gold Card */
   --bg-secondary:          #DECABB; /* Soft Sand Neutral */
   --bg-tertiary:           #BFA389; /* Sand Border Neutral */
   --bg-glass:              rgba(203, 177, 152, 0.94);

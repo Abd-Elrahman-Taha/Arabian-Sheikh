@@ -163,7 +163,9 @@ export default function Discovery() {
         {/* Quiz Steps */}
         {step <= 4 && (
           <div className={`p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in border rounded-2xl ${
-            isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/35 text-[#120B06]'
+            isDark
+              ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]'
+              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.2)]'
           }`}>
             <h2 className={`text-xl font-cinzel font-bold text-center ${
               isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
@@ -179,7 +181,7 @@ export default function Discovery() {
                   className={`p-5 border text-left rtl:text-right rounded-xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
                     isDark
                       ? 'bg-black/60 border-white/10 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10'
-                      : 'bg-[#FAF7F2] border-[#D4AF37]/25 hover:border-[#D4AF37] hover:bg-white shadow-sm'
+                      : 'bg-white/80 border-[#D4AF37]/35 hover:border-[#D4AF37] hover:bg-white shadow-xs'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -204,14 +206,16 @@ export default function Discovery() {
         {/* Results Screen */}
         {step === 5 && result && (
           <div className={`p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in border rounded-2xl ${
-            isDark ? 'bg-[#0B0A08] border-[#D4AF37]/50 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/40 text-[#120B06]'
+            isDark
+              ? 'bg-[#0B0A08] border-[#D4AF37]/50 text-[#F3E6D0]'
+              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 text-[#120B06] shadow-[0_20px_45px_rgba(212,175,55,0.25)]'
           }`}>
             <div className="inline-flex px-3.5 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
               Your Olfactory Signature Match
             </div>
 
             <div className={`aspect-[3/4] max-h-72 mx-auto flex items-center justify-center p-4 border rounded-2xl ${
-              isDark ? 'bg-black/50 border-white/10' : 'bg-[#FAF7F2] border-[#D4AF37]/25'
+              isDark ? 'bg-black/50 border-white/10' : 'bg-white/90 border-[#D4AF37]/35 shadow-inner'
             }`}>
               <img
                 src={result.image}

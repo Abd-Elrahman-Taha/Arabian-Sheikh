@@ -196,7 +196,7 @@ export default function ProductDetail() {
             <div className={`relative aspect-[3/4] p-8 sm:p-12 flex items-center justify-center overflow-hidden rounded-2xl border transition-all duration-500 ${
               isDark
                 ? 'bg-gradient-to-b from-[#0B0A08] via-[#0B0A08] to-[#0B0A08] border-[#D4AF37]/25 shadow-2xl'
-                : 'bg-[#FAF7F2] border-[#D4AF37]/35 shadow-[0_10px_30px_rgba(0,0,0,0.06)]'
+                : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 shadow-[0_20px_50px_rgba(212,175,55,0.22)]'
             }`}>
               
               {/* Badges */}
@@ -221,7 +221,7 @@ export default function ProductDetail() {
                     ? 'bg-[#D4AF37] text-black border-[#D4AF37]'
                     : isDark
                     ? 'bg-black/60 text-[#F3E6D0] border-white/20 hover:border-[#D4AF37]'
-                    : 'bg-white/80 text-[#120B06] border-black/10 hover:border-[#D4AF37] shadow-sm'
+                    : 'bg-[#FAF1DF]/90 text-[#120B06] border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-sm'
                 }`}
               >
                 <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -249,10 +249,10 @@ export default function ProductDetail() {
                     onClick={() => setSelectedImage(idx)}
                     className={`h-20 w-20 flex-shrink-0 border p-2 flex items-center justify-center rounded-xl transition-all ${
                       selectedImage === idx
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/15 ring-2 ring-[#D4AF37]/50'
+                        ? 'border-[#D4AF37] bg-[#D4AF37]/25 ring-2 ring-[#D4AF37]/60'
                         : isDark
                         ? 'bg-[#0B0A08] border-white/10 hover:border-white/30'
-                        : 'bg-white border-black/10 hover:border-[#D4AF37]/40'
+                        : 'bg-gradient-to-br from-[#FFFDF8] to-[#FAF1DF] border-[#D4AF37]/35 hover:border-[#D4AF37]'
                     }`}
                   >
                     <img src={img} alt="Thumbnail" className="max-h-full max-w-full object-contain" />
@@ -390,7 +390,9 @@ export default function ProductDetail() {
 
             {/* Trust Badges & DHL Shipping Estimate */}
             <div className={`p-5 border rounded-2xl space-y-2.5 text-xs ${
-              isDark ? 'bg-[#0B0A08] border-white/10 text-[#D8BE99]' : 'bg-white border-[#D4AF37]/30 text-[#2C180F] shadow-[0_6px_20px_rgba(0,0,0,0.04)]'
+              isDark
+                ? 'bg-[#0B0A08] border-white/10 text-[#D8BE99]'
+                : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#2C180F] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
             }`}>
               <div className={`flex items-center gap-2 ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
                 <Truck className="w-4 h-4 text-[#D4AF37]" />
@@ -449,7 +451,9 @@ export default function ProductDetail() {
                 
                 {/* Top Notes */}
                 <div className={`p-6 border space-y-3 rounded-2xl ${
-                  isDark ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/30 text-[#120B06] shadow-md'
+                  isDark
+                    ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}>
                   <div className="text-[11px] uppercase tracking-widest text-[#D4AF37] font-cinzel font-bold">
                     Top Notes (Opening)
@@ -461,7 +465,9 @@ export default function ProductDetail() {
 
                 {/* Heart Notes */}
                 <div className={`p-6 border space-y-3 rounded-2xl ${
-                  isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0] shadow-lg' : 'bg-white border-[#D4AF37]/35 text-[#120B06] shadow-lg ring-1 ring-[#D4AF37]/20'
+                  isDark
+                    ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0] shadow-lg'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 text-[#120B06] shadow-[0_12px_35px_rgba(212,175,55,0.25)] ring-1 ring-[#D4AF37]/30'
                 }`}>
                   <div className="text-[11px] uppercase tracking-widest text-[#D4AF37] font-cinzel font-bold">
                     Heart Notes (Core Sillage)
@@ -473,7 +479,9 @@ export default function ProductDetail() {
 
                 {/* Base Notes */}
                 <div className={`p-6 border space-y-3 rounded-2xl ${
-                  isDark ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/30 text-[#120B06] shadow-md'
+                  isDark
+                    ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]'
+                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                 }`}>
                   <div className="text-[11px] uppercase tracking-widest text-[#D4AF37] font-cinzel font-bold">
                     Base Notes (Drydown)
@@ -490,7 +498,9 @@ export default function ProductDetail() {
           {/* TAB 2: Performance Profile */}
           {activeTab === 'performance' && (
             <div className={`max-w-3xl mx-auto border p-8 space-y-6 rounded-2xl ${
-              isDark ? 'bg-[#0B0A08] border-[#D4AF37]/20' : 'bg-white border-[#D4AF37]/30 shadow-md'
+              isDark
+                ? 'bg-[#0B0A08] border-[#D4AF37]/20'
+                : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
             }`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
                 <div>
@@ -521,7 +531,9 @@ export default function ProductDetail() {
                 {product.reviews && product.reviews.length > 0 ? (
                   product.reviews.map((rev) => (
                     <div key={rev.id} className={`p-6 border space-y-2 rounded-2xl ${
-                      isDark ? 'bg-[#0B0A08] border-white/10' : 'bg-white border-[#D4AF37]/30 shadow-sm'
+                      isDark
+                        ? 'bg-[#0B0A08] border-white/10'
+                        : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
                     }`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -543,7 +555,9 @@ export default function ProductDetail() {
 
               {/* Review Submission Form */}
               <div className={`p-6 border space-y-4 rounded-2xl ${
-                isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30' : 'bg-white border-[#D4AF37]/35 shadow-md'
+                isDark
+                  ? 'bg-[#0B0A08] border-[#D4AF37]/30'
+                  : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
               }`}>
                 <h3 className="font-cinzel text-sm font-bold text-[#D4AF37] uppercase tracking-wider">
                   Submit an Olfactory Review
@@ -557,7 +571,7 @@ export default function ProductDetail() {
                       value={reviewAuthor}
                       onChange={(e) => setReviewAuthor(e.target.value)}
                       className={`border px-3 py-2 text-xs rounded-full focus:border-[#D4AF37] focus:outline-none ${
-                        isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/35 text-[#120B06]'
+                        isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-white/80 border-[#D4AF37]/35 text-[#120B06]'
                       }`}
                     />
                     <input
@@ -566,7 +580,7 @@ export default function ProductDetail() {
                       value={reviewTitle}
                       onChange={(e) => setReviewTitle(e.target.value)}
                       className={`border px-3 py-2 text-xs rounded-full focus:border-[#D4AF37] focus:outline-none ${
-                        isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/35 text-[#120B06]'
+                        isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-white/80 border-[#D4AF37]/35 text-[#120B06]'
                       }`}
                     />
                   </div>
@@ -576,7 +590,9 @@ export default function ProductDetail() {
                     required
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
-                    className="w-full bg-black/60 border border-white/10 p-3 text-xs rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                    className={`w-full border p-3 text-xs rounded-xl focus:border-[#D4AF37] focus:outline-none ${
+                      isDark ? 'bg-black/60 border-white/10 text-[#F3E6D0]' : 'bg-white/80 border-[#D4AF37]/35 text-[#120B06]'
+                    }`}
                   />
                   <button
                     type="submit"
