@@ -25,17 +25,11 @@ export default function Hero3DFlaconScene({
 
   const flaconImages = (products && products.length > 0)
     ? products.map(p => p.image || p.cutoutImage)
-    : [
-        '/products/black_diamond_gold.png?v=6',
-        '/products/billionaire_gold.png?v=6',
-        '/products/queens_secret_gold.png?v=6',
-        '/products/millionaire_black.png?v=6',
-        '/products/ana_sukkar_white.png?v=6'
-      ];
+    : ['/products/stallion_royal_flacon.png'];
 
   // Pre-cache textures at module level
   flaconImages.forEach(src => {
-    if (!globalTextureCache.has(src)) {
+    if (src && !globalTextureCache.has(src)) {
       const tex = textureLoader.load(src);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.minFilter = THREE.LinearFilter;
@@ -68,7 +62,7 @@ export default function Hero3DFlaconScene({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera: Framed with refined proportions for minimized, 30-degree angled flacon
+    // 2. Camera
     const isMobile = width < 640;
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
     camera.position.set(0, 0.05, isMobile ? 5.2 : 6.0);
@@ -88,15 +82,20 @@ export default function Hero3DFlaconScene({
     renderer.toneMappingExposure = 1.25;
     rendererRef.current = renderer;
 
-    // 4. Lighting Rig
+    // 4. Lighting Rig & Focused Top Spotlight
     const ambientLight = new THREE.AmbientLight(0xffeedd, 0.9);
     scene.add(ambientLight);
+
+    // Focused Overhead Spotlight shining directly down onto the flacon
+    const topSpotLight = new THREE.SpotLight(0xfff7d6, 5.5, 16, Math.PI / 3.5, 0.35, 1.2);
+    topSpotLight.position.set(0, 4.5, 2.5);
+    scene.add(topSpotLight);
 
     const warmKeyLight = new THREE.DirectionalLight(0xffdfa8, 2.5);
     warmKeyLight.position.set(3, 4, 3);
     scene.add(warmKeyLight);
 
-    const coolRimLight = new THREE.DirectionalLight(0xd4e2ff, 1.3);
+    const coolRimLight = new THREE.DirectionalLight(0xd4e2ff, 1.6);
     coolRimLight.position.set(-3, 2, -2);
     scene.add(coolRimLight);
 
@@ -119,12 +118,12 @@ export default function Hero3DFlaconScene({
     });
     texturesRef.current = textures;
 
-    // 6. Bottle Plane Mesh (Standardized 1:1.4 Aspect: 2.3 x 3.22 with 15-degree lay angle, pure non-reflective rendering)
-    const BASE_ROT_Z = -15 * (Math.PI / 180); // 15-degree subtle luxury tilt
-    const BASE_ROT_X = -4 * (Math.PI / 180);  // Subtle lay-back angle
-    const BASE_ROT_Y = 8 * (Math.PI / 180);   // Luxury 3D perspective turn
+    // 6. Bottle Plane Mesh (Aspect 2.4 x 3.1 for high-res 3D model render)
+    const BASE_ROT_Z = -2 * (Math.PI / 180);
+    const BASE_ROT_X = 0;
+    const BASE_ROT_Y = 0;
 
-    const bottleGeometry = new THREE.PlaneGeometry(2.3, 3.22);
+    const bottleGeometry = new THREE.PlaneGeometry(2.4, 3.1);
     const bottleMaterial = new THREE.MeshBasicMaterial({
       map: textures[0],
       transparent: true,

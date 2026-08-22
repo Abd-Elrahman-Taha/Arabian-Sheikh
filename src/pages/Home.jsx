@@ -60,89 +60,22 @@ export default function Home() {
 
   const heroFlacons = [
     {
-      id: 'as-luxury-black-diamond',
+      id: 'as-royal-arabian-stallion',
       slug: 'black-diamond-luxury',
-      tier: 'Luxury',
-      name: 'Black Diamond',
-      spanishName: 'Black Diamond',
-      bulgarianName: 'Черен Диамант',
-      price: 50,
+      tier: 'Imperial Reserve',
+      name: 'Arabian Stallion',
+      arabicName: 'الفارس العربي',
+      spanishName: 'Arabian Stallion',
+      bulgarianName: 'Арабски Жребец',
+      price: 65,
       size: '60 ml / 2.0 fl oz',
-      tagline: 'The ultimate golden crown of Arabian perfumery.',
-      spanishTagline: 'La cumbre de la alta perfumería andalusí.',
-      notes: 'Ambergris • Cambodian Oud • Fossilized Amber',
+      tagline: 'Sculpted 3D Haute Parfumerie Flacon • 35% Pure Extrait',
+      spanishTagline: 'Frasco Esculpido en 3D de Alta Perfumería • 35% Extrait Puro',
+      notes: 'Wild Assamese Oud • Taif Royal Rose • Ambergris • Kashmiri Saffron',
       color: '#D4AF37',
-      image: '/products/black_diamond_gold.png?v=6'
-    },
-    {
-      id: 'as-luxury-billionaire',
-      slug: 'billionaire-luxury',
-      tier: 'Luxury',
-      name: 'Billionaire',
-      spanishName: 'Billionaire',
-      bulgarianName: 'Милиардер',
-      price: 50,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'Solid 24K gold sovereignty, golden coins, and liquid empire.',
-      spanishTagline: 'Soberanía en oro macizo de 24K y opulencia líquida.',
-      notes: 'Golden Honey • Royal Dehn Al Oud • Amber Nectar',
-      color: '#D4AF37',
-      image: '/products/billionaire_gold.png?v=6'
-    },
-    {
-      id: 'as-royal-queens-secret',
-      slug: 'queens-secret-royal',
-      tier: 'Royal',
-      name: "Queen's Secret",
-      spanishName: 'Secret de la Reine',
-      bulgarianName: 'Тайната на Кралицата',
-      price: 45,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'The ruby-crowned sovereign secret of Andalusian queens.',
-      spanishTagline: 'El secreto real coronado de rubí de las reinas andalusíes.',
-      notes: 'Taif Royal Rose • Candied Saffron • Velvet Vanilla',
-      color: '#D4AF37',
-      image: '/products/queens_secret_gold.png?v=6'
-    },
-    {
-      id: 'as-royal-millionaire',
-      slug: 'millionaire-royal',
-      tier: 'Royal',
-      name: 'Millionaire',
-      spanishName: 'Millionaire',
-      bulgarianName: 'Милионер',
-      price: 40,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'Obsidian authority, noble woods, and spiced charisma.',
-      spanishTagline: 'Autoridad en obsidiana, maderas nobles y carisma.',
-      notes: 'Cardamom • Smoky Leather • Aged Sandalwood',
-      color: '#D4AF37',
-      image: '/products/millionaire_black.png?v=6'
-    },
-    {
-      id: 'as-classic-ana-sukkar',
-      slug: 'ana-sukkar-classic',
-      tier: 'Classic',
-      name: 'Ana Sukkar',
-      spanishName: 'Ana Sukkar',
-      bulgarianName: 'Ана Сукар',
-      price: 30,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'Delicate floral nectar, spun sugar, and comforting vanilla.',
-      spanishTagline: 'Néctar floral delicado, azúcar hilado y vainilla suave.',
-      notes: 'Spun Sugar • Vanilla Cream • White Musk',
-      color: '#D4AF37',
-      image: '/products/ana_sukkar_white.png?v=6'
+      image: '/products/stallion_royal_flacon.png'
     }
   ];
-
-  // Auto-scroll / advance to next 3D product every 3.5 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveHeroIndex((prev) => (prev + 1) % heroFlacons.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [heroFlacons.length]);
 
   useEffect(() => {
     async function loadData() {
@@ -303,9 +236,16 @@ export default function Home() {
           {/* Centered Product Flacon with Left & Right Flank Specs */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: Product Name and Find Out More Button */}
-            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-sm text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto">
+            {/* Left Flank: Product Name, Tagline and Discover Button */}
+            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto">
               
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D4AF37]/40 bg-[#21130D]/80 backdrop-blur-md">
+                <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="text-[10px] uppercase font-cinzel tracking-[0.25em] text-[#F2D675] font-bold">
+                  {language === 'ar' ? 'التحفة الملكية المنحوتة' : 'Crown Masterpiece • 3D Atelier'}
+                </span>
+              </div>
+
               {/* Bold Minimalist Product Title */}
               <BlurText
                 key={currentHeroFlacon.id}
@@ -318,69 +258,96 @@ export default function Home() {
               />
 
               {/* Ultra-Luxury Curved Caramel/Gold Pill CTA Button */}
-              <div className="pt-2">
+              <div className="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
                 <Link
-                  to={`/product/${currentHeroFlacon.slug}`}
+                  to="/shop"
                   className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-[#FFFDF8] hover:text-[#0B0A08] border border-[#F2D675]/50 hover:border-[#FFF8E7] font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-105 overflow-hidden cursor-pointer"
                 >
-                  {/* Subtle Light Glint on Hover */}
-                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
-
-                  <span className="relative z-10 drop-shadow-sm">FIND OUT MORE</span>
+                  <span className="relative z-10 drop-shadow-sm">
+                    {language === 'ar' ? 'استكشف التحفة' : 'EXPLORE THE FORMULATION'}
+                  </span>
                   <ArrowRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180" />
                 </Link>
               </div>
 
             </div>
 
-            {/* DEAD CENTER: The Active 3D Flacon Standing in the Middle */}
+            {/* DEAD CENTER: The Active 3D Flacon Standing in the Middle with Overhead Theatrical Spotlight */}
             <div className="w-full max-w-xl mx-auto relative flex items-center justify-center h-[46vh] sm:h-[54vh] lg:h-[600px] order-1 lg:order-2 z-10">
+              
+              {/* Theatrical Overhead Golden Spotlight Conical Beam */}
+              <div className="absolute -top-16 inset-x-0 mx-auto w-64 sm:w-80 lg:w-96 h-[420px] sm:h-[520px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FFF5D1]/45 via-[#D4AF37]/20 to-transparent blur-2xl pointer-events-none -z-10" />
+              
+              {/* Spotlight Core Flare Glow */}
+              <div className="absolute -top-10 inset-x-0 mx-auto w-28 sm:w-40 h-28 sm:h-40 rounded-full bg-[#FFE899]/35 blur-3xl pointer-events-none -z-10" />
+              
               <Hero3DFlaconScene
-                activeProductIndex={activeHeroIndex}
-                onSlideChange={setActiveHeroIndex}
+                activeProductIndex={0}
+                onSlideChange={() => {}}
                 products={heroFlacons}
               />
             </div>
 
-            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT (Smaller on the right side, No hover color) */}
+            {/* RIGHT FLANK: ARCHITECTURAL & OLFACTORY SPECS CARD */}
             <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
               <div
-                onClick={() => setActiveHeroIndex(nextHeroIndex)}
-                className="group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl bg-[#0B0A08]/80 border border-[#D4AF37]/30 shadow-xl backdrop-blur-md transition-transform duration-300 hover:scale-[1.03] max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2"
-                title={`Next: ${getDisplayName(nextHeroFlacon)}`}
+                className="p-4 sm:p-5 rounded-2xl bg-[#0B0A08]/85 border border-[#D4AF37]/35 shadow-2xl backdrop-blur-md max-w-[220px] sm:max-w-[250px] flex flex-col items-center lg:items-end space-y-3"
               >
                 {/* Header Tag */}
-                <div className="flex items-center gap-1.5 text-[8.5px] uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold">
-                  <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
-                  <span>UPCOMING</span>
-                  <ChevronRight className="w-3 h-3 text-[#F2D675] group-hover:translate-x-0.5 transition-transform" />
+                <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-[#F2D675] font-cinzel font-bold">
+                  <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                  <span>{language === 'ar' ? 'مواصفات الإصدار' : 'IMPERIAL SPECIFICATION'}</span>
                 </div>
 
-                {/* Smaller Next Flacon Preview (15-Degree Tilt, No hover color/aura) */}
-                <div className="relative w-16 h-24 sm:w-20 sm:h-28 flex items-center justify-center my-0.5">
-                  <img
-                    src={nextHeroFlacon.image}
-                    alt={getDisplayName(nextHeroFlacon)}
-                    className="h-full w-auto object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.9)] -rotate-12 group-hover:scale-105 transition-transform duration-300 relative z-10"
-                  />
+                <div className="space-y-2 text-[11px] text-[#D8BE99] font-mono border-y border-white/10 py-2.5 w-full text-center lg:text-right">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-white/60">CONCENTRATION</span>
+                    <span className="text-[#F2D675] font-bold font-cinzel">35% EXTRAIT</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-white/60">FLACON</span>
+                    <span className="text-[#F3E6D0]">24K GOLD 3D</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-white/60">VOLUME</span>
+                    <span className="text-[#F3E6D0]">60 ML / 2.0 OZ</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-white/60">LONGEVITY</span>
+                    <span className="text-[#F2D675] font-bold">24+ HOURS</span>
+                  </div>
                 </div>
 
-                {/* Next Product Meta */}
-                <div className="space-y-0.5">
-                  <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#F3E6D0] leading-tight">
-                    {getDisplayName(nextHeroFlacon)}
-                  </h4>
-                  <p className="text-[9.5px] text-[#D8BE99] font-mono font-medium">
-                    {nextHeroFlacon.tier} Tier • €{nextHeroFlacon.price}
-                  </p>
+                {/* Price & Direct Bag CTA */}
+                <div className="w-full pt-1 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] text-[#D8BE99] block font-mono">PRICE</span>
+                    <span className="font-cinzel text-base font-bold text-[#F3E6D0]">€65</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addToCart({
+                      id: 'as-royal-arabian-stallion',
+                      name: 'Arabian Stallion',
+                      price: 65,
+                      size: '60 ml / 2.0 fl oz',
+                      image: '/products/stallion_royal_flacon.png',
+                      tier: 'Imperial Reserve',
+                      quantity: 1
+                    })}
+                    className="px-4 py-2 rounded-full bg-[#D4AF37] hover:bg-[#F2D675] text-[#0B0A08] font-cinzel font-bold text-[10px] uppercase tracking-wider transition-all duration-300 hover:scale-105 shadow-md cursor-pointer flex items-center gap-1"
+                  >
+                    <ShoppingBag className="w-3 h-3" />
+                    <span>{language === 'ar' ? 'إضافة للحقيبة' : 'Add to Bag'}</span>
+                  </button>
                 </div>
               </div>
             </div>
 
           </div>
 
-          {/* Horological Precision Ruler Pagination (Matching Chronoswiss Nav Gauge) */}
-          <div className="mt-0 pt-0 pb-1">
+          {/* Horological Precision Ruler Gauge Under the Flacon */}
+          <div className="mt-2 pt-0 pb-2 pointer-events-auto">
             <HeroRulerPagination
               activeIndex={activeHeroIndex}
               onSelectIndex={setActiveHeroIndex}
