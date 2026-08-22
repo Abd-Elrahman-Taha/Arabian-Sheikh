@@ -212,29 +212,29 @@ export default function Home() {
           ========================================================================= */}
       <section className="relative min-h-[86vh] lg:min-h-[90vh] flex flex-col justify-between overflow-hidden pt-20 sm:pt-24 lg:pt-28 pb-0">
         
-        {/* Clean, Smooth, Noise-Free Luxury Background with Top-Left & Bottom-Right Shaders */}
+        {/* Clean, Smooth, Noise-Free Luxury Background with Radiant Top-Left & Bottom-Right Shaders */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#0B0A08]">
           <div className="absolute inset-0 bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]" />
-          <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.09),transparent_70%)]" />
+          <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.12),transparent_70%)]" />
 
-          {/* 1. TOP-LEFT Ambient Luxury Fluid Shader */}
-          <div className="absolute -top-20 -left-20 w-[380px] sm:w-[520px] lg:w-[680px] h-[380px] sm:h-[520px] lg:h-[680px] rounded-full overflow-hidden pointer-events-none opacity-60 mix-blend-screen filter blur-xl">
+          {/* 1. TOP-LEFT Radiant Luxury Fluid Shader */}
+          <div className="absolute -top-24 -left-24 w-[480px] sm:w-[680px] lg:w-[880px] h-[480px] sm:h-[680px] lg:h-[880px] rounded-full overflow-hidden pointer-events-none opacity-95 mix-blend-screen filter blur-md">
             <LuxuryBackgroundShader
-              color1="#D4AF37"
-              color2="#5A3517"
-              color3="#0B0A08"
-              opacity={0.65}
+              color1="#F2D675"
+              color2="#B8860B"
+              color3="#1A1008"
+              opacity={0.92}
               className="w-full h-full"
             />
           </div>
 
-          {/* 2. BOTTOM-RIGHT Ambient Luxury Fluid Shader */}
-          <div className="absolute -bottom-20 -right-20 w-[380px] sm:w-[520px] lg:w-[680px] h-[380px] sm:h-[520px] lg:h-[680px] rounded-full overflow-hidden pointer-events-none opacity-55 mix-blend-screen filter blur-xl">
+          {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader */}
+          <div className="absolute -bottom-24 -right-24 w-[480px] sm:w-[680px] lg:w-[880px] h-[480px] sm:h-[680px] lg:h-[880px] rounded-full overflow-hidden pointer-events-none opacity-90 mix-blend-screen filter blur-md">
             <LuxuryBackgroundShader
-              color1="#F2D675"
-              color2="#4A2812"
-              color3="#0B0A08"
-              opacity={0.60}
+              color1="#D4AF37"
+              color2="#8C6239"
+              color3="#140D07"
+              opacity={0.88}
               className="w-full h-full"
             />
           </div>

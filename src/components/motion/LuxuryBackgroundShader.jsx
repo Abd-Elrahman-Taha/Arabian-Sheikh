@@ -81,19 +81,19 @@ void main() {
   float f = fbm(p + 1.5 * r);
 
   // Haute Parfumerie liquid color synthesis
-  vec3 col = mix(uColor3, uColor2, clamp(f * f * 2.5, 0.0, 1.0));
-  col = mix(col, uColor1, clamp(length(q) * 0.4, 0.0, 1.0));
-  col = mix(col, vec3(0.96, 0.88, 0.70), clamp(pow(max(0.0, r.x * r.y), 2.0) * 1.2, 0.0, 1.0));
+  vec3 col = mix(uColor3, uColor2, clamp(f * f * 2.2, 0.0, 1.0));
+  col = mix(col, uColor1, clamp(length(q) * 0.65, 0.0, 1.0));
+  col = mix(col, vec3(1.0, 0.92, 0.75), clamp(pow(max(0.0, r.x * r.y), 1.8) * 1.6, 0.0, 1.0));
 
   // Soft atmospheric radial vignette
-  float vig = 1.0 - length(uv - 0.5) * 0.8;
+  float vig = 1.0 - length(uv - 0.5) * 0.7;
   col *= clamp(vig, 0.0, 1.0);
 
-  // Ambient gold glow
-  float glow = pow(max(0.0, f), 2.2) * 0.3;
-  col += vec3(0.95, 0.78, 0.35) * glow;
+  // Radiant gold glow
+  float glow = pow(max(0.0, f), 1.8) * 0.55;
+  col += vec3(1.0, 0.85, 0.4) * glow;
 
-  fragColor = vec4(col, uOpacity * clamp(vig, 0.0, 1.0));
+  fragColor = vec4(col, uOpacity * clamp(vig * 1.2, 0.0, 1.0));
 }
 `;
 
