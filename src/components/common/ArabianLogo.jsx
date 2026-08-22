@@ -1,11 +1,12 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 import logoSvg from '../../assets/arabian-sheikh-logo.svg';
 
 /**
  * ArabianLogo Component
  *
  * Official vector brand signature with calibrated container crop
- * (Round 1 Fix #3: removes extra whitespace above crest while keeping SVG file 100% untouched).
+ * Supports light & dark luxury themes with dynamic contrast.
  *
  * Props:
  *  variant      – 'crest' | 'full' | 'horizontal' | 'header'
@@ -20,24 +21,26 @@ export default function ArabianLogo({
   showSubtitle = true,
   subtitle = 'Andalusia'
 }) {
+  const { isDark } = useTheme();
+
   const sizeMap = {
     navbar: {
-      crestWrap: 'h-9 sm:h-10 w-9 sm:w-10',
-      imgScale: 'scale-[1.28] -translate-y-[10%]',
-      text: 'text-xs sm:text-sm tracking-[0.25em]',
-      sub: 'text-[7.5px] sm:text-[8.5px] tracking-[0.32em]'
+      crestWrap: 'h-10 sm:h-11 w-10 sm:w-11',
+      imgScale: 'scale-[1.32] -translate-y-[8%]',
+      text: 'text-sm sm:text-[15px] md:text-base tracking-[0.25em]',
+      sub: 'text-[8.5px] sm:text-[9.5px] tracking-[0.34em]'
     },
     sm: {
       crestWrap: 'h-12 sm:h-14 w-12 sm:w-14',
       imgScale: 'scale-[1.28] -translate-y-[10%]',
       text: 'text-sm sm:text-base tracking-[0.22em]',
-      sub: 'text-[8px] tracking-[0.35em]'
+      sub: 'text-[8.5px] tracking-[0.35em]'
     },
     md: {
       crestWrap: 'h-16 sm:h-20 w-16 sm:w-20',
       imgScale: 'scale-[1.28] -translate-y-[10%]',
       text: 'text-base sm:text-lg tracking-[0.25em]',
-      sub: 'text-[9px] tracking-[0.4em]'
+      sub: 'text-[9.5px] tracking-[0.4em]'
     },
     lg: {
       crestWrap: 'h-24 sm:h-32 w-24 sm:w-32',
@@ -61,6 +64,20 @@ export default function ArabianLogo({
 
   const s = sizeMap[size] || sizeMap.md;
 
+  // Crest styling filter per theme
+  const crestFilter = isDark
+    ? 'filter drop-shadow-[0_0_14px_rgba(212,175,55,0.45)] brightness-100'
+    : 'filter drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)] contrast-[1.35] brightness-[0.75]';
+
+  // Text color per theme
+  const brandTextColor = isDark
+    ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]'
+    : 'text-[#120B06] group-hover:text-[#D4AF37]';
+
+  const subtitleColor = isDark
+    ? 'text-[#D4AF37]'
+    : 'text-[#8C6239]';
+
   // Header specific centered compact variant
   if (variant === 'header') {
     return (
@@ -69,14 +86,14 @@ export default function ArabianLogo({
           <img
             src={logoSvg}
             alt="Arabian Sheikh Crest"
-            className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.34] ${s.imgScale}`}
+            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.38] ${crestFilter} ${s.imgScale}`}
           />
         </div>
         <div className="flex flex-col text-left justify-center">
-          <span className="font-cinzel font-bold text-current group-hover:text-[#D4AF37] transition-colors leading-tight text-xs sm:text-sm md:text-base tracking-[0.25em] uppercase">
+          <span className={`font-cinzel font-bold transition-colors leading-tight uppercase ${brandTextColor} ${s.text}`}>
             ARABIAN SHEIKH
           </span>
-          <span className="text-[#D4AF37] font-cinzel text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.35em] leading-tight mt-0.5">
+          <span className={`font-cinzel font-semibold uppercase leading-tight mt-0.5 ${subtitleColor} ${s.sub}`}>
             {subtitle || 'Andalusia'}
           </span>
         </div>
@@ -91,7 +108,7 @@ export default function ArabianLogo({
           <img
             src={logoSvg}
             alt="Arabian Sheikh Royal Crest"
-            className={`w-full h-full object-contain filter drop-shadow-[0_0_18px_rgba(212,175,55,0.45)] transition-transform duration-500 hover:scale-[1.34] ${s.imgScale}`}
+            className={`w-full h-full object-contain transition-all duration-500 hover:scale-[1.36] ${crestFilter} ${s.imgScale}`}
           />
         </div>
       </div>
@@ -105,15 +122,15 @@ export default function ArabianLogo({
           <img
             src={logoSvg}
             alt="Arabian Sheikh Royal Crest"
-            className={`w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(212,175,55,0.35)] transition-transform duration-300 group-hover:scale-[1.34] ${s.imgScale}`}
+            className={`w-full h-full object-contain transition-all duration-300 group-hover:scale-[1.36] ${crestFilter} ${s.imgScale}`}
           />
         </div>
         <div className="flex flex-col text-left justify-center">
-          <span className={`font-cinzel font-bold text-current group-hover:text-[#D4AF37] transition-colors leading-tight ${s.text}`}>
+          <span className={`font-cinzel font-bold transition-colors leading-tight ${brandTextColor} ${s.text}`}>
             ARABIAN SHEIKH
           </span>
           {showSubtitle && (
-            <span className={`uppercase font-cinzel text-[#D4AF37] font-semibold tracking-widest leading-tight mt-0.5 ${s.sub}`}>
+            <span className={`uppercase font-cinzel font-semibold tracking-widest leading-tight mt-0.5 ${subtitleColor} ${s.sub}`}>
               {subtitle || 'Haute Parfumerie • Andalusia'}
             </span>
           )}
@@ -131,19 +148,19 @@ export default function ArabianLogo({
         <img
           src={logoSvg}
           alt="Arabian Sheikh Royal Identity"
-          className={`w-full h-full object-contain filter drop-shadow-[0_0_24px_rgba(212,175,55,0.4)] transition-transform duration-500 group-hover:scale-[1.34] ${s.imgScale}`}
+          className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.36] ${crestFilter} ${s.imgScale}`}
         />
       </div>
       <div className="flex flex-col items-center">
-        <span className={`font-cinzel font-bold text-current group-hover:text-[#D4AF37] transition-colors ${s.text}`}>
+        <span className={`font-cinzel font-bold transition-colors ${brandTextColor} ${s.text}`}>
           ARABIAN SHEIKH
         </span>
         {showSubtitle && (
           <span
-            className={`font-semibold text-[#D4AF37] mt-1.5 ${
+            className={`font-semibold mt-1.5 ${
               isArabicSubtitle
-                ? 'font-arabic text-lg sm:text-2xl tracking-normal text-[#F2D675] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]'
-                : `uppercase font-cinzel tracking-[0.35em] ${s.sub}`
+                ? 'font-arabic text-lg sm:text-2xl tracking-normal text-[#D4AF37]'
+                : `uppercase font-cinzel tracking-[0.35em] ${subtitleColor} ${s.sub}`
             }`}
           >
             {subtitle || 'Haute Parfumerie • Andalusia'}

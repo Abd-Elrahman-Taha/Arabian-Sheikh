@@ -144,8 +144,8 @@ export default function Header({ onOpenSearch }) {
             </div>
 
             {/* 2. CENTER: CATEGORY NAVIGATION WITH ACTIVE UNDERLINE INDICATOR */}
-            <nav className={`hidden lg:flex items-center space-x-7 text-[12px] tracking-[0.22em] uppercase font-cinzel font-medium ${
-              isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+            <nav className={`hidden lg:flex items-center space-x-7 text-[13.5px] xl:text-[14.5px] tracking-[0.22em] uppercase font-cinzel font-semibold ${
+              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}>
               {navCategories.map((item) => {
                 const active = isItemActive(item.path);
@@ -153,15 +153,15 @@ export default function Header({ onOpenSearch }) {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`transition-colors duration-300 relative py-1.5 hover:text-[#D4AF37] ${
+                    className={`transition-colors duration-300 relative py-2 hover:text-[#D4AF37] ${
                       active
-                        ? 'text-[#D4AF37] font-semibold'
-                        : isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                        ? 'text-[#D4AF37] font-bold'
+                        : isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                     }`}
                   >
                     <span>{item.name}</span>
                     {active && (
-                      <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full animate-fade-in" />
+                      <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full animate-fade-in" />
                     )}
                   </Link>
                 );
@@ -170,14 +170,14 @@ export default function Header({ onOpenSearch }) {
 
             {/* 3. RIGHT: UTILITIES & ACTIONS */}
             <div className={`flex items-center space-x-3 sm:space-x-4 ${
-              isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}>
               {/* Language Switcher */}
               <div className="relative hidden md:block">
                 <button
                   onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className={`flex items-center gap-1.5 text-xs tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1 px-2.5 rounded border border-[#D4AF37]/35 ${
-                    isDark ? 'bg-black/40 text-[#F3E6D0]' : 'bg-white/80 text-[#21130D] shadow-xs'
+                  className={`flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase hover:text-[#D4AF37] transition-colors py-1.5 px-3 rounded-full border border-[#D4AF37]/35 ${
+                    isDark ? 'bg-black/40 text-[#F3E6D0]' : 'bg-white text-[#120B06] shadow-xs'
                   }`}
                   aria-label="Select Language"
                 >
@@ -187,8 +187,8 @@ export default function Header({ onOpenSearch }) {
                 </button>
 
                 {langDropdownOpen && (
-                  <div className={`absolute right-0 mt-2 w-36 border border-[#D4AF37]/30 rounded-md shadow-2xl py-1 z-50 animate-fade-in ${
-                    isDark ? 'bg-[#0B0A08] text-[#F3E6D0]' : 'bg-[#FFFDF9] text-[#21130D]'
+                  <div className={`absolute right-0 mt-2 w-36 border border-[#D4AF37]/30 rounded-xl shadow-2xl py-1 z-50 animate-fade-in ${
+                    isDark ? 'bg-[#0B0A08] text-[#F3E6D0]' : 'bg-white text-[#120B06]'
                   }`}>
                     {languages.map((l) => (
                       <button
@@ -197,7 +197,7 @@ export default function Header({ onOpenSearch }) {
                           setLanguage(l.code);
                           setLangDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[#D4AF37]/15 transition-colors ${
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-[#D4AF37]/15 transition-colors font-semibold ${
                           language === l.code ? 'text-[#D4AF37] font-bold bg-[#D4AF37]/10' : ''
                         }`}
                       >
@@ -212,14 +212,16 @@ export default function Header({ onOpenSearch }) {
               {/* Theme Toggle Button (Light / Dark Mode Switcher) */}
               <button
                 onClick={toggleTheme}
-                className="p-1.5 hover:text-[#D4AF37] transition-all duration-300 focus:outline-none cursor-pointer rounded-full border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:scale-110 flex items-center justify-center"
+                className={`p-1.5 hover:text-[#D4AF37] transition-all duration-300 focus:outline-none cursor-pointer rounded-full border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:scale-110 flex items-center justify-center ${
+                  isDark ? 'bg-black/40' : 'bg-white shadow-xs'
+                }`}
                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 aria-label="Toggle Luxury Theme"
               >
                 {isDark ? (
                   <Sun className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#F2D675] hover:rotate-90 transition-transform duration-500" />
                 ) : (
-                  <Moon className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#3A2116] hover:-rotate-45 transition-transform duration-500" />
+                  <Moon className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#120B06] hover:-rotate-45 transition-transform duration-500" />
                 )}
               </button>
 
@@ -262,7 +264,7 @@ export default function Header({ onOpenSearch }) {
                 aria-label="Shopping Bag"
               >
                 <ShoppingBag className={`w-4.5 h-4.5 sm:w-5 sm:h-5 group-hover:text-[#D4AF37] transition-colors ${
-                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                 }`} />
                 {totals.itemCount > 0 && (
                   <span className={`absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-lg ${
@@ -289,7 +291,7 @@ export default function Header({ onOpenSearch }) {
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
         <div className={`fixed inset-0 z-50 lg:hidden backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto ${
-          isDark ? 'bg-[#0B0A08]/98 text-[#F3E6D0]' : 'bg-[#FAF6F0]/98 text-[#21130D]'
+          isDark ? 'bg-[#0B0A08]/98 text-[#F3E6D0]' : 'bg-[#FAF6F0]/98 text-[#120B06]'
         }`}>
           <div className="space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#D4AF37]/20">
@@ -303,7 +305,7 @@ export default function Header({ onOpenSearch }) {
             </div>
 
             {/* Mobile Nav Links */}
-            <div className="space-y-4 font-cinzel text-base tracking-[0.18em] uppercase">
+            <div className="space-y-4 font-cinzel text-lg tracking-[0.2em] uppercase font-semibold">
               {navCategories.map((item) => {
                 const active = isItemActive(item.path);
                 return (
@@ -311,10 +313,10 @@ export default function Header({ onOpenSearch }) {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-2 transition-colors border-b border-black/5 dark:border-white/5 flex items-center justify-between relative ${
+                    className={`block py-2.5 transition-colors border-b border-black/5 dark:border-white/5 flex items-center justify-between relative ${
                       active
                         ? 'text-[#D4AF37] font-bold'
-                        : isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#21130D] hover:text-[#D4AF37]'
+                        : isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#120B06] hover:text-[#D4AF37]'
                     }`}
                   >
                     <span className="relative inline-block">
@@ -330,7 +332,7 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/discovery"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block py-2 font-semibold flex items-center justify-between relative text-[#D4AF37]`}
+                className={`block py-2.5 font-bold flex items-center justify-between relative text-[#D4AF37]`}
               >
                 <span className="relative inline-block">
                   Fragrance Finder Quiz
@@ -346,29 +348,29 @@ export default function Header({ onOpenSearch }) {
           {/* Mobile Bottom Utilities */}
           <div className="pt-6 border-t border-[#D4AF37]/20 space-y-4">
             <div className="flex items-center justify-between">
-              <span className={`text-xs uppercase tracking-widest ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Appearance:</span>
+              <span className={`text-xs uppercase tracking-widest font-semibold ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Appearance:</span>
               <button
                 onClick={toggleTheme}
-                className={`px-3 py-1.5 text-xs rounded border border-[#D4AF37]/40 flex items-center gap-1.5 font-cinzel uppercase tracking-wider ${
-                  isDark ? 'bg-white/5 text-[#F3E6D0]' : 'bg-black/5 text-[#21130D]'
+                className={`px-3.5 py-1.5 text-xs rounded-full border border-[#D4AF37]/40 flex items-center gap-1.5 font-cinzel uppercase tracking-wider font-bold ${
+                  isDark ? 'bg-white/5 text-[#F3E6D0]' : 'bg-white text-[#120B06] shadow-sm'
                 }`}
               >
-                {isDark ? <Sun className="w-3.5 h-3.5 text-[#F2D675]" /> : <Moon className="w-3.5 h-3.5 text-[#3A2116]" />}
+                {isDark ? <Sun className="w-3.5 h-3.5 text-[#F2D675]" /> : <Moon className="w-3.5 h-3.5 text-[#120B06]" />}
                 <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
               </button>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className={`text-xs uppercase tracking-widest ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Language:</span>
+              <span className={`text-xs uppercase tracking-widest font-semibold ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Language:</span>
               <div className="flex gap-2">
                 {languages.map((l) => (
                   <button
                     key={l.code}
                     onClick={() => setLanguage(l.code)}
-                    className={`px-2.5 py-1 text-xs rounded border ${
+                    className={`px-3 py-1 text-xs rounded-full border font-bold ${
                       language === l.code
-                        ? 'border-[#D4AF37] bg-[#D4AF37] text-black font-bold'
-                        : 'border-black/10 dark:border-white/20'
+                        ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
+                        : 'border-black/15 dark:border-white/20'
                     }`}
                   >
                     {l.code.toUpperCase()}
@@ -381,8 +383,8 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to={isAuthenticated ? '/account' : '/login'}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-center gap-2 py-2.5 border rounded text-xs uppercase tracking-wider ${
-                  isDark ? 'bg-white/5 border-white/10 text-[#F3E6D0]' : 'bg-black/5 border-black/10 text-[#21130D]'
+                className={`flex items-center justify-center gap-2 py-2.5 border rounded-xl text-xs uppercase tracking-wider font-semibold ${
+                  isDark ? 'bg-white/5 border-white/10 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/30 text-[#120B06] shadow-sm'
                 }`}
               >
                 <User className="w-4 h-4 text-[#D4AF37]" />
@@ -391,8 +393,8 @@ export default function Header({ onOpenSearch }) {
               <Link
                 to="/account/wishlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-center gap-2 py-2.5 border rounded text-xs uppercase tracking-wider ${
-                  isDark ? 'bg-white/5 border-white/10 text-[#F3E6D0]' : 'bg-black/5 border-black/10 text-[#21130D]'
+                className={`flex items-center justify-center gap-2 py-2.5 border rounded-xl text-xs uppercase tracking-wider font-semibold ${
+                  isDark ? 'bg-white/5 border-white/10 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/30 text-[#120B06] shadow-sm'
                 }`}
               >
                 <Heart className="w-4 h-4 text-[#D4AF37]" />
