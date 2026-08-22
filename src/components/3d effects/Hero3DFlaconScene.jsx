@@ -119,18 +119,16 @@ export default function Hero3DFlaconScene({
     });
     texturesRef.current = textures;
 
-    // 6. Bottle Plane Mesh (Standardized 1:1.4 Aspect: 2.3 x 3.22 with 15-degree lay angle)
+    // 6. Bottle Plane Mesh (Standardized 1:1.4 Aspect: 2.3 x 3.22 with 15-degree lay angle, pure non-reflective rendering)
     const BASE_ROT_Z = -15 * (Math.PI / 180); // 15-degree subtle luxury tilt
     const BASE_ROT_X = -4 * (Math.PI / 180);  // Subtle lay-back angle
     const BASE_ROT_Y = 8 * (Math.PI / 180);   // Luxury 3D perspective turn
 
     const bottleGeometry = new THREE.PlaneGeometry(2.3, 3.22);
-    const bottleMaterial = new THREE.MeshStandardMaterial({
+    const bottleMaterial = new THREE.MeshBasicMaterial({
       map: textures[0],
       transparent: true,
       alphaTest: 0.05,
-      roughness: 0.25,
-      metalness: 0.15,
       side: THREE.DoubleSide
     });
     const bottleMesh = new THREE.Mesh(bottleGeometry, bottleMaterial);
@@ -139,61 +137,14 @@ export default function Hero3DFlaconScene({
     scene.add(bottleMesh);
     bottleMeshRef.current = bottleMesh;
 
-    // 7. Ground Contact Shadow angled to match 15-degree flacon orientation
-    const shadowCanvas = document.createElement('canvas');
-    shadowCanvas.width = 128;
-    shadowCanvas.height = 128;
-    const ctx = shadowCanvas.getContext('2d');
-    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 60);
-    grad.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
-    grad.addColorStop(0.5, 'rgba(33, 19, 13, 0.35)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 128, 128);
-
-    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-    const shadowGeometry = new THREE.PlaneGeometry(2.8, 1.1);
-    const shadowMaterial = new THREE.MeshBasicMaterial({
-      map: shadowTexture,
-      transparent: true,
-      opacity: 0.65,
-      depthWrite: false
-    });
-    const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
-    shadowMesh.rotation.x = -Math.PI / 2.2;
-    shadowMesh.rotation.z = -12 * (Math.PI / 180);
-    shadowMesh.position.set(0.05, -1.5, 0.2);
-    scene.add(shadowMesh);
-    shadowMeshRef.current = shadowMesh;
-
-    // 8. Interactive Mouse Movement Tracking (Subtle 3D rotation only, no color sweep)
-    let targetRotX = 0;
-    let targetRotY = 0;
-
-    const handleMouseMove = (e) => {
-      const rect = container.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      targetRotY = x * 0.10;
-      targetRotX = -y * 0.05;
-    };
-
-    const handleMouseLeave = () => {
-      targetRotX = 0;
-      targetRotY = 0;
-    };
-
-    container.addEventListener('mousemove', handleMouseMove, { passive: true });
-    container.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-
-    // 9. Intersection Observer to Pause Loop when Offscreen
+    // 7. Intersection Observer to Pause Loop when Offscreen
     let isVisible = true;
     const observer = new IntersectionObserver(([entry]) => {
       isVisible = entry.isIntersecting;
     }, { threshold: 0.05 });
     observer.observe(container);
 
-    // 10. Render & Floating Animation Loop
+    // 8. Render & Floating Animation Loop (Steady, no mouse hover wobble, no reflection)
     let animationFrameId;
     const clock = new THREE.Clock();
 
@@ -204,23 +155,11 @@ export default function Hero3DFlaconScene({
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Subtle levitation hover
-      const floatY = Math.sin(elapsedTime * 1.5) * 0.06;
+      // Gentle floating levitation
+      const floatY = Math.sin(elapsedTime * 1.5) * 0.05;
       if (bottleMeshRef.current) {
         bottleMeshRef.current.position.y = 0.05 + floatY;
-        bottleMeshRef.current.rotation.z = BASE_ROT_Z;
-        bottleMeshRef.current.rotation.y += (BASE_ROT_Y + targetRotY - bottleMeshRef.current.rotation.y) * 0.08;
-        bottleMeshRef.current.rotation.x += (BASE_ROT_X + targetRotX - bottleMeshRef.current.rotation.x) * 0.08;
-      }
-
-      // Ground shadow breath syncing with hover
-      if (shadowMeshRef.current) {
-        shadowMeshRef.current.scale.set(
-          1 - floatY * 0.8,
-          1 - floatY * 0.8,
-          1
-        );
-        shadowMeshRef.current.material.opacity = 0.65 - floatY * 1.2;
+        bottleMeshRef.current.rotation.set(BASE_ROT_X, BASE_ROT_Y, BASE_ROT_Z);
       }
 
       renderer.render(scene, camera);
@@ -228,7 +167,7 @@ export default function Hero3DFlaconScene({
 
     animate();
 
-    // 11. Resize handler
+    // 9. Resize handler
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
       const w = container.clientWidth || 500;
@@ -247,15 +186,10 @@ export default function Hero3DFlaconScene({
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
       window.removeEventListener('resize', handleResize);
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseleave', handleMouseLeave);
       
       // Full resource disposal
       bottleGeometry.dispose();
       bottleMaterial.dispose();
-      shadowGeometry.dispose();
-      shadowMaterial.dispose();
-      shadowTexture.dispose();
       textures.forEach(t => t.dispose());
       renderer.dispose();
     };
@@ -312,11 +246,11 @@ export default function Hero3DFlaconScene({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full flex items-center justify-center select-none"
+      className="relative w-full h-full flex items-center justify-center select-none pointer-events-none"
     >
       <canvas
         ref={canvasRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing block"
+        className="w-full h-full block pointer-events-none"
       />
     </div>
   );
