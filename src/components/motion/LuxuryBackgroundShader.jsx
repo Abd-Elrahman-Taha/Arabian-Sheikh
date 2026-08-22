@@ -66,7 +66,6 @@ float fbm(vec2 p) {
 }
 
 void main() {
-  vec2 uv = gl_FragCoord.xy / iResolution.xy;
   vec2 p = (gl_FragCoord.xy * 2.0 - iResolution.xy) / min(iResolution.x, iResolution.y);
   
   float t = iTime * 0.05;
@@ -85,9 +84,9 @@ void main() {
   col = mix(col, uColor1, clamp(length(q) * 0.65, 0.0, 1.0));
   col = mix(col, vec3(1.0, 0.92, 0.75), clamp(pow(max(0.0, r.x * r.y), 1.8) * 1.6, 0.0, 1.0));
 
-  // Smooth circular alpha falloff that gracefully fades to 0.0 at the edges (No cutoffs or lines)
-  float dist = length(uv - 0.5);
-  float edgeFade = smoothstep(0.5, 0.15, dist);
+  // 100% mathematically perfect circular alpha falloff to pure zero
+  float dist = length(p);
+  float edgeFade = smoothstep(0.95, 0.25, dist);
   
   col *= edgeFade;
 
@@ -110,12 +109,6 @@ export default function LuxuryBackgroundShader({
   const [useCssFallback, setUseCssFallback] = useState(false);
 
   useEffect(() => {
-    // If low-end device, use ultra-smooth CSS gradient fallback with 0 GPU overhead
-    if (performanceManager.tier === 'low') {
-      setUseCssFallback(true);
-      return;
-    }
-
     const container = containerRef.current;
     if (!container) return;
 
@@ -123,8 +116,8 @@ export default function LuxuryBackgroundShader({
     let isVisible = true;
 
     try {
-      // Optimal sub-sampled DPR for ambient background (60-70% fewer fragment calls with identical visual fidelity)
-      const dpr = performanceManager.tier === 'balanced' ? 0.5 : 0.75;
+      // Optimal sub-sampled DPR for mobile & desktop (ultralight GPU footprint)
+      const dpr = performanceManager.isMobile ? 0.5 : 0.75;
 
       renderer = new Renderer({
         alpha: true,
@@ -190,12 +183,6 @@ export default function LuxuryBackgroundShader({
       }, { threshold: 0.01 });
       observer.observe(container);
 
-      const unsubscribe = performanceManager.subscribe(({ isTabVisible, tier }) => {
-        if (tier === 'low') {
-          setUseCssFallback(true);
-        }
-      });
-
       let lastTime = 0;
       const animate = (t) => {
         animationFrameId = requestAnimationFrame(animate);
@@ -203,8 +190,8 @@ export default function LuxuryBackgroundShader({
         // Sleep when hidden or offscreen
         if (!isVisible || !performanceManager.isTabVisible) return;
 
-        // Throttle to 40fps on balanced tier to preserve battery and keep 60fps interaction headroom
-        if (performanceManager.tier === 'balanced' && t - lastTime < 24) return;
+        // Throttle to 30fps on mobile to preserve battery
+        if (performanceManager.isMobile && t - lastTime < 32) return;
         lastTime = t;
 
         program.uniforms.iTime.value = t * 0.001;
@@ -217,7 +204,6 @@ export default function LuxuryBackgroundShader({
         cancelAnimationFrame(animationFrameId);
         window.removeEventListener('resize', resize);
         observer.disconnect();
-        unsubscribe();
         if (gl && gl.canvas && container.contains(gl.canvas)) {
           container.removeChild(gl.canvas);
         }
@@ -231,18 +217,15 @@ export default function LuxuryBackgroundShader({
   return (
     <div
       ref={containerRef}
-      className={`overflow-hidden pointer-events-none ${className}`}
+      className={`overflow-hidden pointer-events-none rounded-full ${className}`}
       aria-hidden="true"
     >
-      {/* Ultra-efficient CSS animated mesh gradient fallback for low-end / mobile power saving */}
+      {/* 100% Transparent CSS Radial Fallback (Zero cutoff lines) */}
       {useCssFallback && (
         <div
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none rounded-full"
           style={{
-            background: `radial-gradient(ellipse 80% 60% at 50% 20%, rgba(212, 175, 55, 0.15), transparent 70%),
-                         radial-gradient(circle at 80% 80%, rgba(58, 33, 22, 0.35), transparent 60%),
-                         radial-gradient(circle at 20% 60%, rgba(212, 175, 55, 0.08), transparent 50%),
-                         #0B0A08`,
+            background: `radial-gradient(circle at center, rgba(242, 214, 117, 0.45) 0%, rgba(184, 134, 11, 0.25) 45%, rgba(26, 16, 8, 0.0) 70%, transparent 100%)`,
             opacity: opacity
           }}
         />

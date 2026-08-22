@@ -39,10 +39,10 @@ class PerformanceManager {
     const prefersReducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
 
     // Check for low-end device constraints
-    if (prefersReducedMotion || cores <= 4 || memory < 4 || (this.isMobile && cores <= 6)) {
+    if (prefersReducedMotion || cores <= 2 || memory <= 2) {
       this.tier = 'low';
       this.isLowEnd = true;
-    } else if (cores <= 6 || memory <= 4 || this.isMobile) {
+    } else if (cores <= 4 || memory <= 4 || this.isMobile) {
       this.tier = 'balanced';
       this.isLowEnd = false;
     } else {
