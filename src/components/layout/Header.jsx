@@ -91,10 +91,10 @@ export default function Header({ onOpenSearch }) {
           isScrolled
             ? isDark
               ? 'bg-[#0B0A08]/95 backdrop-blur-md border-b border-[#D4AF37]/20 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)]'
-              : 'bg-[#FAF6F0]/95 backdrop-blur-md border-b border-[#D4AF37]/30 py-2.5 shadow-[0_10px_30px_rgba(33,19,13,0.06)]'
+              : 'bg-[#CBB198]/95 backdrop-blur-md border-b border-[#D4AF37]/30 py-2.5 shadow-[0_10px_30px_rgba(33,19,13,0.06)]'
             : isDark
               ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#0B0A08]/60 to-transparent py-4'
-              : 'bg-gradient-to-b from-[#FAF6F0]/95 via-[#FAF6F0]/70 to-transparent py-4'
+              : 'bg-gradient-to-b from-[#CBB198]/95 via-[#CBB198]/70 to-transparent py-4'
         }`}
       >
         {/* Top VIP Announcement Bar */}
@@ -290,8 +290,8 @@ export default function Header({ onOpenSearch }) {
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className={`fixed inset-0 z-50 lg:hidden backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-6 pt-3.5 pb-6 animate-fade-in overflow-y-auto ${
-          isDark ? 'bg-[#0B0A08]/98 text-[#F3E6D0]' : 'bg-[#FAF6F0]/98 text-[#120B06]'
+        <div className={`fixed inset-0 z-50 lg:hidden backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-6 pt-3.5 pb-6 animate-slide-down-smooth overflow-y-auto ${
+          isDark ? 'bg-[#0B0A08]/98 text-[#F3E6D0]' : 'bg-[#CBB198]/98 text-[#120B06]'
         }`}>
           <div className="space-y-5">
             <div className="flex items-center justify-between pb-3.5 border-b border-[#D4AF37]/20">

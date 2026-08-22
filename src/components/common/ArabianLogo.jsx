@@ -67,16 +67,16 @@ export default function ArabianLogo({
   // Crest styling filter per theme
   const crestFilter = isDark
     ? 'filter drop-shadow-[0_0_14px_rgba(212,175,55,0.45)] brightness-100'
-    : 'filter drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)] contrast-[1.35] brightness-[0.75]';
+    : 'filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] brightness-[0.15] contrast-[2]';
 
   // Text color per theme
   const brandTextColor = isDark
     ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]'
-    : 'text-[#120B06] group-hover:text-[#D4AF37]';
+    : 'text-[#0B0A08] font-black group-hover:text-[#D4AF37]';
 
   const subtitleColor = isDark
     ? 'text-[#D4AF37]'
-    : 'text-[#8C6239]';
+    : 'text-[#21130D] font-bold';
 
   // Header specific centered compact variant
   if (variant === 'header') {

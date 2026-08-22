@@ -93,7 +93,7 @@ export default function PalaceMemoryVideo({
 
   return (
     <section className={`relative py-20 lg:py-28 border-y transition-colors duration-500 overflow-hidden ${
-      isDark ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/30 text-[#120B06]'
+      isDark ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]' : 'bg-[#CBB198]/90 border-[#D4AF37]/30 text-[#120B06]'
     }`}>
       
       {/* Ambient background glow */}

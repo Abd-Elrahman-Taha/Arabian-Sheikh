@@ -97,7 +97,7 @@ export default function CartDrawer() {
 
       <div className="fixed inset-y-0 right-0 rtl:right-auto rtl:left-0 max-w-full flex">
         <div className={`w-screen max-w-md border-l rtl:border-l-0 rtl:border-r shadow-2xl flex flex-col justify-between transition-colors duration-500 ${
-          isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/40 text-[#120B06]'
+          isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#CBB198] border-[#D4AF37]/40 text-[#120B06]'
         }`}>
           
           {/* Header */}
@@ -116,7 +116,7 @@ export default function CartDrawer() {
             <button
               onClick={closeDrawer}
               className={`p-1.5 transition-colors cursor-pointer ${
-                isDark ? 'text-[#D8BE99] hover:text-[#D4AF37]' : 'text-[#5A3517] hover:text-black'
+                isDark ? 'text-[#D8BE99] hover:text-[#D4AF37]' : 'text-[#4A2A14] hover:text-black'
               }`}
               aria-label="Close Cart"
             >
@@ -126,7 +126,7 @@ export default function CartDrawer() {
 
           {/* Free Shipping Progress Bar */}
           <div className={`px-5 py-3 border-b ${
-            isDark ? 'bg-black/40 border-white/10 text-[#D8BE99]' : 'bg-[#F0E8DC] border-[#D4AF37]/20 text-[#5A3517]'
+            isDark ? 'bg-black/40 border-white/10 text-[#D8BE99]' : 'bg-[#DECABB] border-[#D4AF37]/20 text-[#4A2A14]'
           }`}>
             {totals.subtotal >= freeShippingThreshold ? (
               <div className="flex items-center gap-2 text-xs text-[#D4AF37] font-bold">

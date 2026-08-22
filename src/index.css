@@ -98,10 +98,10 @@
   /* ── LIGHT MODE (HIGH CONTRAST ARABIC LUXURY) ─────────────────────────── */
   --color-desert-primary:  #D4AF37; /* Shiny Gold */
   --color-desert-light:    #F2D675; /* Gold Highlight */
-  --color-creamy-beige:    #F8F5EE; /* Light Desert Cream */
-  --color-warm-sand:       #E8DEC8; /* Warm Sand */
-  --color-terracotta:      #2C180F; /* Dark Brown */
-  --color-terracotta-deep: #120B06; /* Deepest Espresso */
+  --color-creamy-beige:    #F3E6D0; /* Creamy Beige */
+  --color-warm-sand:       #CBB198; /* Main Light Mode Luxury Color */
+  --color-terracotta:      #3A2116; /* Dark Brown */
+  --color-terracotta-deep: #21130D; /* Deepest Espresso */
   --color-earth-dark:      #120B06; /* Deep Obsidian Espresso for all text */
 
   /* ── DERIVED SHADES ────────────────────────────────────────────────────── */
@@ -113,26 +113,26 @@
   --earth-subtle:          #7A4B24;
 
   /* ── SEMANTIC BACKGROUNDS ──────────────────────────────────────────────── */
-  --bg-primary:            #F8F5EE; /* Light Desert Cream Base */
+  --bg-primary:            #CBB198; /* Main Light Mode Luxury Base #CBB198 */
   --bg-surface:            #FFFFFF; /* Crisp Pure White Surface */
   --bg-card:               #FFFFFF; /* Pure Bright Card Base */
   --bg-card-hover:         #FFFDF9; /* Luminous Elevated Card */
-  --bg-secondary:          #F0E8DC; /* Soft Sand Neutral */
-  --bg-tertiary:           #E8DEC8; /* Sand Border Neutral */
-  --bg-glass:              rgba(255, 255, 255, 0.94);
+  --bg-secondary:          #DECABB; /* Soft Sand Neutral */
+  --bg-tertiary:           #BFA389; /* Sand Border Neutral */
+  --bg-glass:              rgba(203, 177, 152, 0.94);
   --bg-dark-section:       #120B06; /* Deep Espresso Dark Section */
   --bg-dark-section-text:  #FFFDF9;
 
   /* ── TYPOGRAPHY (CRISP DARK CONTRAST) ─────────────────────────────────── */
   --text-primary:          #120B06; /* Deep Obsidian Espresso for all headings & body */
   --text-secondary:        #2C180F; /* Dark Brown for subheadings */
-  --text-muted:            #5A3517; /* Dark Amber-Brown for secondary metadata */
+  --text-muted:            #4A2A14; /* Dark Amber-Brown for secondary metadata */
   --text-inverse:          #FFFDF9; /* Pure Light on dark buttons/sections */
-  --text-accent:           #B8860B; /* Deep Royal Gold */
+  --text-accent:           #8C6239; /* Deep Royal Gold / Bronze */
   --text-on-sand:          #120B06;
   --text-on-sand-sec:      #2C180F;
-  --text-on-sand-muted:    #5A3517;
-  --text-on-sand-gold:     #B8860B;
+  --text-on-sand-muted:    #4A2A14;
+  --text-on-sand-gold:     #8C6239;
 
   /* ── ACCENT COMPATIBILITY ──────────────────────────────────────────────── */
   --gold-primary:          #D4AF37;

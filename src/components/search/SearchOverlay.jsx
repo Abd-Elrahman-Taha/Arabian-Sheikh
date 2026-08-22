@@ -63,7 +63,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
 
   return (
     <div className={`fixed inset-0 z-50 overflow-y-auto backdrop-blur-2xl animate-fade-in p-4 sm:p-8 transition-colors duration-500 ${
-      isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#FAF7F2]/95 text-[#120B06]'
+      isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#CBB198]/98 text-[#120B06]'
     }`}>
       <div className="max-w-4xl mx-auto">
         {/* Top Bar with Close */}

@@ -191,7 +191,7 @@ function MainRouter() {
 
   return (
     <div className={`relative flex flex-col min-h-screen transition-colors duration-500 overflow-x-hidden ${
-      isDark ? 'text-[#F3E6D0] bg-[#0B0A08]' : 'text-[#21130D] bg-[#F3E6D0]'
+      isDark ? 'text-[#F3E6D0] bg-[#0B0A08]' : 'text-[#120B06] bg-[#CBB198]'
     }`}>
 
       {/* Global Luxury Gradient Background (Adaptive for Dark & Light Modes) */}
@@ -200,7 +200,7 @@ function MainRouter() {
         style={{
           background: isDark
             ? 'radial-gradient(ellipse 95% 75% at 50% 12%, #1C120C 0%, #130B07 45%, #0B0A08 100%), linear-gradient(180deg, #0B0A08 0%, #170E09 35%, #0F0A07 70%, #0B0A08 100%)'
-            : 'radial-gradient(ellipse 95% 75% at 50% 12%, #FAF6F0 0%, #F3E6D0 50%, #E8D9C2 100%), linear-gradient(180deg, #F3E6D0 0%, #FAF6F0 35%, #E8D9C2 70%, #F3E6D0 100%)'
+            : 'radial-gradient(ellipse 95% 75% at 50% 12%, #E5D5C6 0%, #CBB198 45%, #BFA389 100%), linear-gradient(180deg, #CBB198 0%, #D8C3AE 35%, #CBB198 70%, #BFA389 100%)'
         }}
       />
 

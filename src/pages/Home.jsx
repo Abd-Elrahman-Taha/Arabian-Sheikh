@@ -248,7 +248,7 @@ export default function Home() {
             <LuxuryBackgroundShader
               color1={isDark ? '#D4AF37' : '#F2D675'}
               color2={isDark ? '#8C6239' : '#D4AF37'}
-              color3={isDark ? '#140D07' : '#D8BE99'}
+              color3={isDark ? '#140D07' : '#CBB198'}
               opacity={0.90}
               className="w-full h-full rounded-full"
             />
@@ -621,7 +621,7 @@ export default function Home() {
               5. PRODUCT COMPARISON MATRIX
               ========================================================================= */}
           <section className={`py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
-            isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#FAF6F0]/95 text-[#21130D]'
+            isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#CBB198]/95 text-[#120B06]'
           }`}>
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
@@ -637,7 +637,7 @@ export default function Home() {
                   animateBy="words"
                   direction="top"
                   className={`text-3xl sm:text-4xl font-cinzel font-bold drop-shadow-md justify-center ${
-                    isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                    isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                   }`}
                   as="h2"
                 />
@@ -646,11 +646,11 @@ export default function Home() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse border border-[#D4AF37]/30 text-xs sm:text-sm">
                   <thead>
-                    <tr className={`border-b border-[#D4AF37]/30 ${isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'}`}>
+                    <tr className={`border-b border-[#D4AF37]/30 ${isDark ? 'bg-[#0B0A08]' : 'bg-[#CBB198]'}`}>
                       <th className="p-4 font-cinzel text-xs uppercase tracking-widest text-[#D4AF37] font-bold w-1/4">Metric</th>
                       {heroFlacons.map((f) => (
                         <th key={f.id} className={`p-4 font-cinzel text-base font-bold text-center w-1/4 ${
-                          isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
+                          isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                         }`}>
                           {f.name} ({f.tier})
                         </th>

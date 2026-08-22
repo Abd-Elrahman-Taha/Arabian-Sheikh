@@ -67,7 +67,7 @@ export default function GenderCategory({ genderType }) {
         <section className={`relative min-h-[42vh] flex items-center justify-center overflow-hidden pt-36 sm:pt-44 pb-12 border-b border-[#D4AF37]/20 ${
           isDark
             ? 'bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]'
-            : 'bg-gradient-to-b from-[#FAF6F0] via-[#F8F5EE] to-[#FAF7F2]'
+            : 'bg-gradient-to-b from-[#DECABB] via-[#CBB198] to-[#CBB198]'
         }`}>
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 border border-[#D4AF37]/40 bg-[#D4AF37]/15 rounded-full backdrop-blur-md shadow-sm">

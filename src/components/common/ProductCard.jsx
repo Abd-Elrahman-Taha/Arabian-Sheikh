@@ -92,7 +92,7 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Flacon Image Container with Full Editorial Background */}
       <div className={`relative aspect-[3/4] overflow-hidden flex items-center justify-center ${
-        isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF7F2]'
+        isDark ? 'bg-[#0B0A08]' : 'bg-white'
       }`}>
         <img
           src={product.originalImage || product.images?.[0] || product.cutoutImage || '/products/black_diamond_gold.png'}
