@@ -290,15 +290,16 @@ export default function Header({ onOpenSearch }) {
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className={`fixed inset-0 z-50 lg:hidden backdrop-blur-2xl flex flex-col justify-between p-6 pt-20 animate-fade-in overflow-y-auto ${
+        <div className={`fixed inset-0 z-50 lg:hidden backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-6 pt-3.5 pb-6 animate-fade-in overflow-y-auto ${
           isDark ? 'bg-[#0B0A08]/98 text-[#F3E6D0]' : 'bg-[#FAF6F0]/98 text-[#120B06]'
         }`}>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#D4AF37]/20">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#D4AF37]/20">
               <ArabianLogo variant="header" size="navbar" showSubtitle={true} subtitle="Andalusia" />
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-full"
+                className="p-1.5 text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-full cursor-pointer"
+                aria-label="Close Menu"
               >
                 <X className="w-6 h-6" />
               </button>
