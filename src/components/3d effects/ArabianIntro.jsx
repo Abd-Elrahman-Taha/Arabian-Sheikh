@@ -154,7 +154,7 @@ export default function ArabianIntro({ onComplete }) {
           variant="full"
           size="hero"
           showSubtitle={true}
-          subtitle="The Art of Modern Arabian Perfumery • Andalusia"
+          subtitle="أربيان شيخ"
         />
 
         {/* Subtle Ambient Radial Light behind logo */}

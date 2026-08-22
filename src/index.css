@@ -143,24 +143,16 @@ body {
   border-color: var(--border-sand);
 }
 
-/* Custom Desert Luxury Scrollbar */
+/* Hidden Luxury Scrollbar (Seamless and Clean) */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 0px;
+  height: 0px;
+  background: transparent;
 }
 
-::-webkit-scrollbar-track {
-  background: #D4AF37;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3A2116;
-  border-radius: 4px;
-  border: 1px solid rgba(93, 29, 1, 0.2);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #3A2116;
+html, body {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Hidden Scrollbar Utility */

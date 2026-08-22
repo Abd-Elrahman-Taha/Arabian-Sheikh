@@ -84,7 +84,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="pt-32 pb-24 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 animate-pulse">
           <div className="aspect-[3/4] bg-white/5 rounded" />
           <div className="space-y-6">
@@ -160,7 +160,7 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-28 sm:pt-32 pb-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-[#D8BE99] mb-8 font-cinzel uppercase tracking-wider">

@@ -226,7 +226,7 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-28 sm:pt-32 pb-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Page Banner Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">

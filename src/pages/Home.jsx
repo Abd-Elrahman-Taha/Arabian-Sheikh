@@ -298,7 +298,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#0B0A08]/40 via-transparent to-[#0B0A08] pointer-events-none" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
+        <div className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 w-full flex-1 flex flex-col justify-between">
           
           {/* Centered Product Flacon with Left & Right Flank Specs */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
@@ -342,42 +342,36 @@ export default function Home() {
               />
             </div>
 
-            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT (Smaller on the right side) */}
+            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT (Smaller on the right side, No hover color) */}
             <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
               <div
                 onClick={() => setActiveHeroIndex(nextHeroIndex)}
-                className="group relative cursor-pointer p-4 sm:p-5 rounded-3xl bg-[#0B0A08]/75 hover:bg-[#150D08]/90 border border-[#D4AF37]/35 hover:border-[#F2D675] shadow-2xl backdrop-blur-md transition-all duration-500 hover:scale-105 hover:shadow-[0_15px_40px_rgba(212,175,55,0.35)] max-w-xs flex flex-col items-center lg:items-end space-y-3"
+                className="group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl bg-[#0B0A08]/80 border border-[#D4AF37]/30 shadow-xl backdrop-blur-md transition-transform duration-300 hover:scale-[1.03] max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2"
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
                 {/* Header Tag */}
-                <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold">
-                  <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-                  <span>UPCOMING FLACON</span>
-                  <ChevronRight className="w-3 h-3 text-[#F2D675] group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center gap-1.5 text-[8.5px] uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold">
+                  <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                  <span>UPCOMING</span>
+                  <ChevronRight className="w-3 h-3 text-[#F2D675] group-hover:translate-x-0.5 transition-transform" />
                 </div>
 
-                {/* Smaller Next Flacon Preview with Soft Glow & 15-Degree Tilt */}
-                <div className="relative w-28 h-36 sm:w-32 sm:h-40 flex items-center justify-center my-1">
-                  {/* Subtle Gold Aura behind the smaller flacon */}
-                  <div className="absolute inset-0 bg-[#D4AF37]/15 rounded-full blur-xl group-hover:bg-[#D4AF37]/30 transition-all duration-500 pointer-events-none" />
-                  
+                {/* Smaller Next Flacon Preview (15-Degree Tilt, No hover color/aura) */}
+                <div className="relative w-16 h-24 sm:w-20 sm:h-28 flex items-center justify-center my-0.5">
                   <img
                     src={nextHeroFlacon.image}
                     alt={getDisplayName(nextHeroFlacon)}
-                    className="h-full w-auto object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] -rotate-12 group-hover:-rotate-6 group-hover:scale-110 transition-transform duration-500 relative z-10"
+                    className="h-full w-auto object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.9)] -rotate-12 group-hover:scale-105 transition-transform duration-300 relative z-10"
                   />
                 </div>
 
                 {/* Next Product Meta */}
                 <div className="space-y-0.5">
-                  <h4 className="font-cinzel text-sm sm:text-base font-bold text-[#F3E6D0] group-hover:text-[#F2D675] transition-colors leading-tight">
+                  <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#F3E6D0] leading-tight">
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
-                  <p className="text-[10px] text-[#D8BE99] font-mono font-medium">
+                  <p className="text-[9.5px] text-[#D8BE99] font-mono font-medium">
                     {nextHeroFlacon.tier} Tier • €{nextHeroFlacon.price}
-                  </p>
-                  <p className="text-[9px] text-[#D4AF37]/75 font-mono italic max-w-[170px] line-clamp-1">
-                    {nextHeroFlacon.notes}
                   </p>
                 </div>
               </div>
@@ -401,7 +395,7 @@ export default function Home() {
       {/* =========================================================================
           1.1 EDITORIAL PREVIEW CARDS (MATCHING CHRONOSWISS BOTTOM 3 CARDS)
           ========================================================================= */}
-      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12">
+      <section className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 pt-4 sm:pt-6 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           
           {/* Card 1: Master Alchemist */}
@@ -622,7 +616,7 @@ export default function Home() {
               5. PRODUCT COMPARISON MATRIX
               ========================================================================= */}
           <section className="py-24 bg-[#0B0A08]/95 border-t border-[#D4AF37]/20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
                 <span className="text-xs uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold">
@@ -718,7 +712,7 @@ export default function Home() {
               6. REVIEWS & SOCIAL PROOF
               ========================================================================= */}
           <section className="py-24 bg-[#0B0A08]/95 border-t border-[#D4AF37]/20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
                 <span className="text-xs uppercase tracking-[0.35em] text-[#F2D675] font-cinzel font-bold">
@@ -792,7 +786,7 @@ export default function Home() {
               7. TRUST & NEWSLETTER LAYER
               ========================================================================= */}
           <section className="py-20 border-t border-[#D4AF37]/20 bg-[#0B0A08]">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
               {/* 3 Pillars */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-16 border-b border-white/15 text-center">

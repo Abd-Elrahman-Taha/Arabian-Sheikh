@@ -92,7 +92,7 @@ export default function Header({ onOpenSearch }) {
         {/* Top VIP Announcement Bar */}
         {!isScrolled && (
           <div className="hidden lg:block border-b border-[#D4AF37]/15 pb-2 mb-2">
-            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#D4AF37]">
+            <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-[#D4AF37]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3 h-3 text-[#D4AF37]" />
                 <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
@@ -112,7 +112,7 @@ export default function Header({ onOpenSearch }) {
           </div>
         )}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="flex items-center justify-between gap-6">
             
             {/* 1. FIRST IN NAVBAR: OFFICIAL ARABIAN SHEIKH LOGO */}
@@ -210,11 +210,11 @@ export default function Header({ onOpenSearch }) {
                 )}
               </Link>
 
-              {/* Account */}
+              {/* Account / Login */}
               <Link
-                to={isAuthenticated ? '/account' : '/auth/login'}
+                to={isAuthenticated ? '/account' : '/login'}
                 className="p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block"
-                aria-label="Account"
+                aria-label="Account / Sign In"
               >
                 <User className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
               </Link>
@@ -326,12 +326,12 @@ export default function Header({ onOpenSearch }) {
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <Link
-                to="/account"
+                to={isAuthenticated ? '/account' : '/login'}
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 rounded text-xs uppercase tracking-wider text-[#F3E6D0]"
               >
                 <User className="w-4 h-4 text-[#D4AF37]" />
-                <span>Account</span>
+                <span>{isAuthenticated ? 'Account' : 'Sign In'}</span>
               </Link>
               <Link
                 to="/account/wishlist"

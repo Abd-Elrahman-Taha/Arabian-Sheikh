@@ -19,7 +19,7 @@ export function ProductSkeleton() {
 
 export function ProductDetailSkeleton() {
   return (
-    <div className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <div className="pt-28 pb-20 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-12">
       <div className="h-4 w-48 skeleton-shimmer" />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-6 space-y-4">

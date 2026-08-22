@@ -23,7 +23,7 @@ export default function Footer() {
     <footer className="bg-[var(--color-earth-dark)] border-t border-[var(--color-terracotta)]/30 text-[var(--color-desert-light)] mt-auto transition-colors duration-400">
       {/* Guarantees & Pillars Row */}
       <div className="border-b border-[var(--color-terracotta-deep)]/40 py-8 bg-[var(--color-earth-dark)]/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="flex flex-col items-center">
               <div className="w-10 h-10 rounded-full border border-[var(--color-terracotta)]/50 flex items-center justify-center mb-3 text-[var(--color-terracotta)] bg-[var(--color-earth-dark)]">
@@ -77,7 +77,7 @@ export default function Footer() {
       </div>
 
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">

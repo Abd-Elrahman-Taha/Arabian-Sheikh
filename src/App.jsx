@@ -164,12 +164,16 @@ function MainRouter() {
 
       // Auth
       case currentPath === '/login':
+      case currentPath === '/auth/login':
         return <Login />;
       case currentPath === '/signup':
+      case currentPath === '/auth/signup':
         return <Signup />;
       case currentPath === '/forgot-password':
+      case currentPath === '/auth/forgot-password':
         return <ForgotPassword />;
       case currentPath.startsWith('/reset-password'):
+      case currentPath.startsWith('/auth/reset-password'):
         return <ResetPassword />;
 
       // Commerce confirmation & tracking

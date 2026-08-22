@@ -166,24 +166,21 @@ export default function Hero3DFlaconScene({
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
-    // 8. Interactive Mouse Movement Tracking
+    // 8. Interactive Mouse Movement Tracking (Subtle 3D rotation only, no color sweep)
     let targetRotX = 0;
     let targetRotY = 0;
-    let targetLightX = 0;
 
     const handleMouseMove = (e) => {
       const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      targetRotY = x * 0.14;
-      targetRotX = -y * 0.08;
-      targetLightX = x * 2.2;
+      targetRotY = x * 0.10;
+      targetRotX = -y * 0.05;
     };
 
     const handleMouseLeave = () => {
       targetRotX = 0;
       targetRotY = 0;
-      targetLightX = 0;
     };
 
     container.addEventListener('mousemove', handleMouseMove, { passive: true });
@@ -224,12 +221,6 @@ export default function Hero3DFlaconScene({
           1
         );
         shadowMeshRef.current.material.opacity = 0.65 - floatY * 1.2;
-      }
-
-      // Dynamic warm light sweep
-      if (lightSweepRef.current) {
-        lightSweepRef.current.position.x += (targetLightX - lightSweepRef.current.position.x) * 0.05;
-        lightSweepRef.current.position.y = -1.5 + Math.cos(elapsedTime * 1.2) * 0.3;
       }
 
       renderer.render(scene, camera);

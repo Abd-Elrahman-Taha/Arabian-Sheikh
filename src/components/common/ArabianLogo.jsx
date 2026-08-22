@@ -122,6 +122,8 @@ export default function ArabianLogo({
     );
   }
 
+  const isArabicSubtitle = Boolean(subtitle && /[\u0600-\u06FF]/.test(subtitle));
+
   // Full stacked variant
   return (
     <div className={`inline-flex flex-col items-center justify-center text-center group ${className}`}>
@@ -137,7 +139,13 @@ export default function ArabianLogo({
           ARABIAN SHEIKH
         </span>
         {showSubtitle && (
-          <span className={`uppercase font-cinzel font-semibold text-[#D4AF37] tracking-[0.35em] mt-1.5 ${s.sub}`}>
+          <span
+            className={`font-semibold text-[#D4AF37] mt-1.5 ${
+              isArabicSubtitle
+                ? 'font-arabic text-lg sm:text-2xl tracking-normal text-[#F2D675] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]'
+                : `uppercase font-cinzel tracking-[0.35em] ${s.sub}`
+            }`}
+          >
             {subtitle || 'Haute Parfumerie • Andalusia'}
           </span>
         )}

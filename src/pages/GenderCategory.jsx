@@ -98,7 +98,7 @@ export default function GenderCategory({ genderType }) {
       </ScrollReveal>
 
       {/* Products Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
         <ScrollReveal direction="up">
           <div className="border-b border-[var(--color-terracotta-deep)]/20 pb-4 mb-8 flex justify-between items-center text-xs text-[var(--color-terracotta-deep)] font-medium">
             <span>Displaying {products.length} exclusive formulations</span>
