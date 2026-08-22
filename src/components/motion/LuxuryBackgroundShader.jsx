@@ -85,15 +85,17 @@ void main() {
   col = mix(col, uColor1, clamp(length(q) * 0.65, 0.0, 1.0));
   col = mix(col, vec3(1.0, 0.92, 0.75), clamp(pow(max(0.0, r.x * r.y), 1.8) * 1.6, 0.0, 1.0));
 
-  // Soft atmospheric radial vignette
-  float vig = 1.0 - length(uv - 0.5) * 0.7;
-  col *= clamp(vig, 0.0, 1.0);
+  // Smooth circular alpha falloff that gracefully fades to 0.0 at the edges (No cutoffs or lines)
+  float dist = length(uv - 0.5);
+  float edgeFade = smoothstep(0.5, 0.15, dist);
+  
+  col *= edgeFade;
 
   // Radiant gold glow
   float glow = pow(max(0.0, f), 1.8) * 0.55;
-  col += vec3(1.0, 0.85, 0.4) * glow;
+  col += vec3(1.0, 0.85, 0.4) * glow * edgeFade;
 
-  fragColor = vec4(col, uOpacity * clamp(vig * 1.2, 0.0, 1.0));
+  fragColor = vec4(col, uOpacity * edgeFade);
 }
 `;
 

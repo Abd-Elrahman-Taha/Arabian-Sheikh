@@ -217,25 +217,25 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]" />
           <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.12),transparent_70%)]" />
 
-          {/* 1. TOP-LEFT Radiant Luxury Fluid Shader */}
-          <div className="absolute -top-24 -left-24 w-[480px] sm:w-[680px] lg:w-[880px] h-[480px] sm:h-[680px] lg:h-[880px] rounded-full overflow-hidden pointer-events-none opacity-95 mix-blend-screen filter blur-md">
+          {/* 1. TOP-LEFT Radiant Luxury Fluid Shader Circle (Slightly Bigger) */}
+          <div className="absolute -top-28 -left-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none opacity-95 mix-blend-screen">
             <LuxuryBackgroundShader
               color1="#F2D675"
               color2="#B8860B"
               color3="#1A1008"
-              opacity={0.92}
-              className="w-full h-full"
+              opacity={0.95}
+              className="w-full h-full rounded-full"
             />
           </div>
 
-          {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader */}
-          <div className="absolute -bottom-24 -right-24 w-[480px] sm:w-[680px] lg:w-[880px] h-[480px] sm:h-[680px] lg:h-[880px] rounded-full overflow-hidden pointer-events-none opacity-90 mix-blend-screen filter blur-md">
+          {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader Circle (Slightly Bigger) */}
+          <div className="absolute -bottom-28 -right-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none opacity-90 mix-blend-screen">
             <LuxuryBackgroundShader
               color1="#D4AF37"
               color2="#8C6239"
               color3="#140D07"
-              opacity={0.88}
-              className="w-full h-full"
+              opacity={0.90}
+              className="w-full h-full rounded-full"
             />
           </div>
         </div>
