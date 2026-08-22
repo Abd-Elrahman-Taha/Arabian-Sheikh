@@ -234,8 +234,10 @@ export default function ProductDetail() {
                 className="max-h-[90%] w-auto object-contain filter drop-shadow-[0_25px_40px_rgba(0,0,0,0.4)] hover:scale-105 transition-transform duration-700 select-none"
               />
 
-              {/* Ambient ground drop shadow */}
-              <div className="absolute bottom-6 w-48 h-5 bg-black/40 rounded-full blur-lg pointer-events-none" />
+              {/* Ambient ground drop shadow (hidden on phones in light mode) */}
+              <div className={`absolute bottom-6 w-48 h-5 rounded-full blur-lg pointer-events-none ${
+                isDark ? 'bg-black/40' : 'hidden sm:block bg-black/15'
+              }`} />
             </div>
 
             {/* Thumbnail Navigation */}

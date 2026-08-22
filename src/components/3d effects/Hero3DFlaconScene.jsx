@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
+import { useTheme } from '../../context/ThemeContext';
 import performanceManager from '../../utils/performanceManager';
 
 const globalTextureCache = new Map();
@@ -11,6 +12,7 @@ export default function Hero3DFlaconScene({
   onSlideChange,
   products = []
 }) {
+  const { isDark } = useTheme();
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
@@ -167,65 +169,33 @@ export default function Hero3DFlaconScene({
     const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
     shadowMesh.rotation.x = -Math.PI / 2;
     shadowMesh.position.set(0, -1.52, 0);
+    // Remove shadow under bottle on phones in light mode only
+    shadowMesh.visible = isDark || !isMobile;
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
-    // 7. Interactive 3D Parallax & Mouse Tracking
-    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
-    const handleMouseMove = (e) => {
-      const rect = container.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      mouse.targetX = x * 0.08;
-      mouse.targetY = y * 0.05;
-    };
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-
-    // 8. Intersection Observer to Pause Loop when Offscreen
+    // 7. Intersection Observer to Pause Loop when Offscreen
     let isVisible = true;
     const observer = new IntersectionObserver(([entry]) => {
       isVisible = entry.isIntersecting;
     }, { threshold: 0.05 });
     observer.observe(container);
 
-    // 9. Render & Floating Animation Loop
+    // 8. Render Loop - Rock solid bottle stability with zero shaking
     let animationFrameId;
-    const clock = new THREE.Clock();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
       if (!isVisible || !performanceManager.isTabVisible) return;
 
-      const elapsedTime = clock.getElapsedTime();
-
-      // Smooth lerp mouse parallax for physical 3D presence
-      mouse.x += (mouse.targetX - mouse.x) * 0.06;
-      mouse.y += (mouse.targetY - mouse.y) * 0.06;
-
-      // Gentle realistic floating levitation
-      const floatY = Math.sin(elapsedTime * 1.6) * 0.04;
-      if (bottleMeshRef.current) {
-        bottleMeshRef.current.position.y = 0.02 + floatY;
-        bottleMeshRef.current.position.x = mouse.x * 0.3;
-        bottleMeshRef.current.rotation.y = BASE_ROT_Y + mouse.x * 0.8;
-        bottleMeshRef.current.rotation.x = BASE_ROT_X - mouse.y * 0.6;
-        bottleMeshRef.current.rotation.z = BASE_ROT_Z - mouse.x * 0.2;
-      }
-
-      // Shadow scales inversely with float height for realism
-      if (shadowMeshRef.current) {
-        const shadowScale = 1 - floatY * 1.5;
-        shadowMeshRef.current.scale.set(shadowScale, shadowScale, 1);
-        shadowMeshRef.current.material.opacity = 0.8 - floatY * 2.0;
-      }
-
+      // Bottle stays still and firmly planted
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // 10. Resize handler
+    // 9. Resize handler
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
       const w = container.clientWidth || 500;
@@ -235,6 +205,9 @@ export default function Hero3DFlaconScene({
       camera.position.z = isMob ? 4.8 : 5.4;
       camera.position.y = 0.02;
       camera.updateProjectionMatrix();
+      if (shadowMeshRef.current) {
+        shadowMeshRef.current.visible = isDark || !isMob;
+      }
       renderer.setSize(w, h);
     };
 
@@ -243,7 +216,6 @@ export default function Hero3DFlaconScene({
     return () => {
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       
       // Full resource disposal
@@ -256,6 +228,14 @@ export default function Hero3DFlaconScene({
       renderer.dispose();
     };
   }, []);
+
+  // Update shadow visibility when theme toggles
+  useEffect(() => {
+    if (shadowMeshRef.current) {
+      const isMob = window.innerWidth < 640;
+      shadowMeshRef.current.visible = isDark || !isMob;
+    }
+  }, [isDark]);
 
   // Smooth Flacon Transition when activeProductIndex changes
   useEffect(() => {
