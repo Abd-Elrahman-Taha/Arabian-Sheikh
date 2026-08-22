@@ -54,13 +54,13 @@ float snoise(vec2 v) {
 
 float fbm(vec2 p) {
   float value = 0.0;
-  float amplitude = 0.5;
-  float frequency = 0.9;
-  // 3 lightweight octaves
-  for (int i = 0; i < 3; i++) {
+  float amplitude = 0.6;
+  float frequency = 0.55;
+  // 2 ultra-smooth low frequency octaves (completely noise-free fluid silk motion)
+  for (int i = 0; i < 2; i++) {
     value += amplitude * snoise(p * frequency);
-    frequency *= 2.05;
-    amplitude *= 0.5;
+    frequency *= 1.8;
+    amplitude *= 0.45;
   }
   return value;
 }
@@ -69,31 +69,31 @@ void main() {
   vec2 uv = gl_FragCoord.xy / iResolution.xy;
   vec2 p = (gl_FragCoord.xy * 2.0 - iResolution.xy) / min(iResolution.x, iResolution.y);
   
-  float t = iTime * 0.08;
+  float t = iTime * 0.05;
 
-  // Fluid golden silk waves
-  vec2 q = vec2(fbm(p + vec2(t * 0.12, t * 0.08)),
-                fbm(p + vec2(5.2, 1.3) + vec2(-t * 0.08, t * 0.1)));
+  // Ultra-smooth liquid golden silk waves (zero noise)
+  vec2 q = vec2(fbm(p + vec2(t * 0.08, t * 0.05)),
+                fbm(p + vec2(4.2, 2.1) + vec2(-t * 0.06, t * 0.07)));
 
-  vec2 r = vec2(fbm(p + 2.5 * q + vec2(1.7, 9.2) + vec2(t * 0.06, -t * 0.05)),
-                fbm(p + 2.5 * q + vec2(8.3, 2.8) + vec2(-t * 0.05, t * 0.07)));
+  vec2 r = vec2(fbm(p + 1.8 * q + vec2(1.5, 8.2) + vec2(t * 0.04, -t * 0.03)),
+                fbm(p + 1.8 * q + vec2(7.2, 3.4) + vec2(-t * 0.03, t * 0.05)));
 
-  float f = fbm(p + 2.0 * r);
+  float f = fbm(p + 1.5 * r);
 
-  // Haute Parfumerie color synthesis
-  vec3 col = mix(uColor3, uColor2, clamp(f * f * 3.0, 0.0, 1.0));
-  col = mix(col, uColor1, clamp(length(q) * 0.45, 0.0, 1.0));
-  col = mix(col, vec3(0.95, 0.88, 0.75), clamp(pow(max(0.0, r.x * r.y), 2.0) * 1.5, 0.0, 1.0));
+  // Haute Parfumerie liquid color synthesis
+  vec3 col = mix(uColor3, uColor2, clamp(f * f * 2.5, 0.0, 1.0));
+  col = mix(col, uColor1, clamp(length(q) * 0.4, 0.0, 1.0));
+  col = mix(col, vec3(0.96, 0.88, 0.70), clamp(pow(max(0.0, r.x * r.y), 2.0) * 1.2, 0.0, 1.0));
 
   // Soft atmospheric radial vignette
-  float vig = 1.0 - length(uv - 0.5) * 0.6;
-  col *= clamp(vig, 0.2, 1.0);
+  float vig = 1.0 - length(uv - 0.5) * 0.8;
+  col *= clamp(vig, 0.0, 1.0);
 
   // Ambient gold glow
-  float glow = pow(max(0.0, f), 2.5) * 0.25;
-  col += vec3(0.85, 0.68, 0.28) * glow;
+  float glow = pow(max(0.0, f), 2.2) * 0.3;
+  col += vec3(0.95, 0.78, 0.35) * glow;
 
-  fragColor = vec4(col, uOpacity);
+  fragColor = vec4(col, uOpacity * clamp(vig, 0.0, 1.0));
 }
 `;
 

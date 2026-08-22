@@ -212,23 +212,32 @@ export default function Home() {
           ========================================================================= */}
       <section className="relative min-h-[86vh] lg:min-h-[90vh] flex flex-col justify-between overflow-hidden pt-20 sm:pt-24 lg:pt-28 pb-0">
         
-        {/* Luxury Photographic Background with Warm Bronze/Amber Corner Lighting & Subtle Shader */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-          <img
-            src="/hero/luxury_hero_bg.jpg"
-            alt="Luxury Atmosphere"
-            className="w-full h-full object-cover opacity-95 filter brightness-100"
-          />
-          {/* Soft Golden Fluid Shader Blend */}
-          <LuxuryBackgroundShader
-            color1="#D4AF37"
-            color2="#4A2E1B"
-            color3="#0B0A08"
-            opacity={0.35}
-            className="absolute inset-0 pointer-events-none"
-          />
-          {/* Soft Depth Fade */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0A08]/40 via-transparent to-[#0B0A08] pointer-events-none" />
+        {/* Clean, Smooth, Noise-Free Luxury Background with Top-Left & Bottom-Right Shaders */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#0B0A08]">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]" />
+          <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.09),transparent_70%)]" />
+
+          {/* 1. TOP-LEFT Ambient Luxury Fluid Shader */}
+          <div className="absolute -top-20 -left-20 w-[380px] sm:w-[520px] lg:w-[680px] h-[380px] sm:h-[520px] lg:h-[680px] rounded-full overflow-hidden pointer-events-none opacity-60 mix-blend-screen filter blur-xl">
+            <LuxuryBackgroundShader
+              color1="#D4AF37"
+              color2="#5A3517"
+              color3="#0B0A08"
+              opacity={0.65}
+              className="w-full h-full"
+            />
+          </div>
+
+          {/* 2. BOTTOM-RIGHT Ambient Luxury Fluid Shader */}
+          <div className="absolute -bottom-20 -right-20 w-[380px] sm:w-[520px] lg:w-[680px] h-[380px] sm:h-[520px] lg:h-[680px] rounded-full overflow-hidden pointer-events-none opacity-55 mix-blend-screen filter blur-xl">
+            <LuxuryBackgroundShader
+              color1="#F2D675"
+              color2="#4A2812"
+              color3="#0B0A08"
+              opacity={0.60}
+              className="w-full h-full"
+            />
+          </div>
         </div>
 
         <div className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 w-full flex-1 flex flex-col justify-between">
@@ -236,16 +245,9 @@ export default function Home() {
           {/* Centered Product Flacon with Left & Right Flank Specs */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: Product Name, Tagline and Discover Button */}
+            {/* Left Flank: Product Name Only and Action Button */}
             <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto">
               
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D4AF37]/40 bg-[#21130D]/80 backdrop-blur-md">
-                <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span className="text-[10px] uppercase font-cinzel tracking-[0.25em] text-[#F2D675] font-bold">
-                  {language === 'ar' ? 'التحفة الملكية المنحوتة' : 'Crown Masterpiece • 3D Atelier'}
-                </span>
-              </div>
-
               {/* Bold Minimalist Product Title */}
               <BlurText
                 key={currentHeroFlacon.id}
@@ -260,11 +262,11 @@ export default function Home() {
               {/* Ultra-Luxury Curved Caramel/Gold Pill CTA Button */}
               <div className="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
                 <Link
-                  to="/shop"
+                  to={`/product/${currentHeroFlacon.slug}`}
                   className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-[#FFFDF8] hover:text-[#0B0A08] border border-[#F2D675]/50 hover:border-[#FFF8E7] font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-105 overflow-hidden cursor-pointer"
                 >
                   <span className="relative z-10 drop-shadow-sm">
-                    {language === 'ar' ? 'استكشف التحفة' : 'EXPLORE THE FORMULATION'}
+                    {language === 'ar' ? 'استكشف العطر' : 'FIND OUT MORE'}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180" />
                 </Link>
@@ -282,64 +284,43 @@ export default function Home() {
               <div className="absolute -top-10 inset-x-0 mx-auto w-28 sm:w-40 h-28 sm:h-40 rounded-full bg-[#FFE899]/35 blur-3xl pointer-events-none -z-10" />
               
               <Hero3DFlaconScene
-                activeProductIndex={0}
-                onSlideChange={() => {}}
+                activeProductIndex={activeHeroIndex}
+                onSlideChange={setActiveHeroIndex}
                 products={heroFlacons}
               />
             </div>
 
-            {/* RIGHT FLANK: ARCHITECTURAL & OLFACTORY SPECS CARD */}
+            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT CARD */}
             <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
               <div
-                className="p-4 sm:p-5 rounded-2xl bg-[#0B0A08]/85 border border-[#D4AF37]/35 shadow-2xl backdrop-blur-md max-w-[220px] sm:max-w-[250px] flex flex-col items-center lg:items-end space-y-3"
+                onClick={() => setActiveHeroIndex(nextHeroIndex)}
+                className="group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl bg-[#0B0A08]/85 border border-[#D4AF37]/35 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2"
+                title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
                 {/* Header Tag */}
-                <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-[#F2D675] font-cinzel font-bold">
-                  <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-                  <span>{language === 'ar' ? 'مواصفات الإصدار' : 'IMPERIAL SPECIFICATION'}</span>
+                <div className="flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] text-[#F2D675] font-cinzel font-bold">
+                  <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                  <span>{language === 'ar' ? 'التالي' : 'NEXT'}</span>
+                  <ChevronRight className="w-3 h-3 text-[#F2D675] group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </div>
 
-                <div className="space-y-2 text-[11px] text-[#D8BE99] font-mono border-y border-white/10 py-2.5 w-full text-center lg:text-right">
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-white/60">CONCENTRATION</span>
-                    <span className="text-[#F2D675] font-bold font-cinzel">35% EXTRAIT</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-white/60">FLACON</span>
-                    <span className="text-[#F3E6D0]">24K GOLD 3D</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-white/60">VOLUME</span>
-                    <span className="text-[#F3E6D0]">60 ML / 2.0 OZ</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-white/60">LONGEVITY</span>
-                    <span className="text-[#F2D675] font-bold">24+ HOURS</span>
-                  </div>
+                {/* Smaller Next Flacon Preview */}
+                <div className="relative w-16 h-24 sm:w-20 sm:h-28 flex items-center justify-center my-0.5">
+                  <img
+                    src={nextHeroFlacon.image}
+                    alt={getDisplayName(nextHeroFlacon)}
+                    className="h-full w-auto object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.9)] group-hover:scale-105 transition-transform duration-300 relative z-10"
+                  />
                 </div>
 
-                {/* Price & Direct Bag CTA */}
-                <div className="w-full pt-1 flex items-center justify-between">
-                  <div>
-                    <span className="text-[9px] text-[#D8BE99] block font-mono">PRICE</span>
-                    <span className="font-cinzel text-base font-bold text-[#F3E6D0]">€65</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addToCart({
-                      id: 'as-royal-arabian-stallion',
-                      name: 'Arabian Stallion',
-                      price: 65,
-                      size: '60 ml / 2.0 fl oz',
-                      image: '/products/stallion_royal_flacon.png',
-                      tier: 'Imperial Reserve',
-                      quantity: 1
-                    })}
-                    className="px-4 py-2 rounded-full bg-[#D4AF37] hover:bg-[#F2D675] text-[#0B0A08] font-cinzel font-bold text-[10px] uppercase tracking-wider transition-all duration-300 hover:scale-105 shadow-md cursor-pointer flex items-center gap-1"
-                  >
-                    <ShoppingBag className="w-3 h-3" />
-                    <span>{language === 'ar' ? 'إضافة للحقيبة' : 'Add to Bag'}</span>
-                  </button>
+                {/* Next Product Title & Tier */}
+                <div className="space-y-0.5">
+                  <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#F3E6D0] leading-tight">
+                    {getDisplayName(nextHeroFlacon)}
+                  </h4>
+                  <p className="text-[9.5px] text-[#D8BE99] font-mono font-medium">
+                    €{nextHeroFlacon.price} • {nextHeroFlacon.tier}
+                  </p>
                 </div>
               </div>
             </div>
