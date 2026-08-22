@@ -125,32 +125,70 @@ export default function Hero3DFlaconScene({
     });
     texturesRef.current = textures;
 
-    // 6. Bottle Plane Mesh (Aspect 2.4 x 3.1 for high-res 3D model render)
-    const BASE_ROT_Z = -2 * (Math.PI / 180);
+    // 6. Bottle Plane Mesh & Dynamic Studio Contact Shadow (Minimized & Balanced Height)
+    const BASE_ROT_Z = 0;
     const BASE_ROT_X = 0;
     const BASE_ROT_Y = 0;
 
-    const bottleGeometry = new THREE.PlaneGeometry(2.4, 3.1);
+    const bottleGeometry = new THREE.PlaneGeometry(1.62, 2.5);
     const bottleMaterial = new THREE.MeshBasicMaterial({
       map: textures[0],
       transparent: true,
-      alphaTest: 0.05,
+      alphaTest: 0.02,
       side: THREE.DoubleSide
     });
     const bottleMesh = new THREE.Mesh(bottleGeometry, bottleMaterial);
-    bottleMesh.position.set(0, 0.05, 0);
+    bottleMesh.position.set(0, 0.02, 0);
     bottleMesh.rotation.set(BASE_ROT_X, BASE_ROT_Y, BASE_ROT_Z);
     scene.add(bottleMesh);
     bottleMeshRef.current = bottleMesh;
 
-    // 7. Intersection Observer to Pause Loop when Offscreen
+    // Realistic Studio Contact Shadow under bottle base
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = 256;
+    shadowCanvas.height = 256;
+    const shadowCtx = shadowCanvas.getContext('2d');
+    const grad = shadowCtx.createRadialGradient(128, 128, 0, 128, 128, 120);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+    grad.addColorStop(0.35, 'rgba(0, 0, 0, 0.55)');
+    grad.addColorStop(0.7, 'rgba(10, 6, 2, 0.2)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    shadowCtx.fillStyle = grad;
+    shadowCtx.fillRect(0, 0, 256, 256);
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+
+    const shadowGeometry = new THREE.PlaneGeometry(1.5, 0.55);
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      map: shadowTexture,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
+    shadowMesh.rotation.x = -Math.PI / 2;
+    shadowMesh.position.set(0, -1.52, 0);
+    scene.add(shadowMesh);
+    shadowMeshRef.current = shadowMesh;
+
+    // 7. Interactive 3D Parallax & Mouse Tracking
+    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    const handleMouseMove = (e) => {
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      mouse.targetX = x * 0.08;
+      mouse.targetY = y * 0.05;
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+    // 8. Intersection Observer to Pause Loop when Offscreen
     let isVisible = true;
     const observer = new IntersectionObserver(([entry]) => {
       isVisible = entry.isIntersecting;
     }, { threshold: 0.05 });
     observer.observe(container);
 
-    // 8. Render & Floating Animation Loop (Steady, no mouse hover wobble, no reflection)
+    // 9. Render & Floating Animation Loop
     let animationFrameId;
     const clock = new THREE.Clock();
 
@@ -161,11 +199,25 @@ export default function Hero3DFlaconScene({
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Gentle floating levitation
-      const floatY = Math.sin(elapsedTime * 1.5) * 0.05;
+      // Smooth lerp mouse parallax for physical 3D presence
+      mouse.x += (mouse.targetX - mouse.x) * 0.06;
+      mouse.y += (mouse.targetY - mouse.y) * 0.06;
+
+      // Gentle realistic floating levitation
+      const floatY = Math.sin(elapsedTime * 1.6) * 0.04;
       if (bottleMeshRef.current) {
-        bottleMeshRef.current.position.y = 0.05 + floatY;
-        bottleMeshRef.current.rotation.set(BASE_ROT_X, BASE_ROT_Y, BASE_ROT_Z);
+        bottleMeshRef.current.position.y = 0.02 + floatY;
+        bottleMeshRef.current.position.x = mouse.x * 0.3;
+        bottleMeshRef.current.rotation.y = BASE_ROT_Y + mouse.x * 0.8;
+        bottleMeshRef.current.rotation.x = BASE_ROT_X - mouse.y * 0.6;
+        bottleMeshRef.current.rotation.z = BASE_ROT_Z - mouse.x * 0.2;
+      }
+
+      // Shadow scales inversely with float height for realism
+      if (shadowMeshRef.current) {
+        const shadowScale = 1 - floatY * 1.5;
+        shadowMeshRef.current.scale.set(shadowScale, shadowScale, 1);
+        shadowMeshRef.current.material.opacity = 0.8 - floatY * 2.0;
       }
 
       renderer.render(scene, camera);
@@ -173,15 +225,15 @@ export default function Hero3DFlaconScene({
 
     animate();
 
-    // 9. Resize handler
+    // 10. Resize handler
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
       const w = container.clientWidth || 500;
       const h = container.clientHeight || 650;
       const isMob = w < 640;
       camera.aspect = w / h;
-      camera.position.z = isMob ? 5.2 : 6.0;
-      camera.position.y = 0.05;
+      camera.position.z = isMob ? 4.8 : 5.4;
+      camera.position.y = 0.02;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
@@ -191,11 +243,15 @@ export default function Hero3DFlaconScene({
     return () => {
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
+      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       
       // Full resource disposal
       bottleGeometry.dispose();
       bottleMaterial.dispose();
+      shadowGeometry.dispose();
+      shadowMaterial.dispose();
+      shadowTexture.dispose();
       textures.forEach(t => t.dispose());
       renderer.dispose();
     };

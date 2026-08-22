@@ -275,13 +275,13 @@ export default function Home() {
             </div>
 
             {/* DEAD CENTER: The Active 3D Flacon Standing in the Middle with Overhead Theatrical Spotlight */}
-            <div className="w-full max-w-xl mx-auto relative flex items-center justify-center h-[46vh] sm:h-[54vh] lg:h-[600px] order-1 lg:order-2 z-10">
+            <div className="w-full max-w-2xl mx-auto relative flex items-center justify-center h-[48vh] sm:h-[58vh] lg:h-[620px] scale-115 sm:scale-120 order-1 lg:order-2 z-10">
               
               {/* Theatrical Overhead Golden Spotlight Conical Beam */}
-              <div className="absolute -top-16 inset-x-0 mx-auto w-64 sm:w-80 lg:w-96 h-[420px] sm:h-[520px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FFF5D1]/45 via-[#D4AF37]/20 to-transparent blur-2xl pointer-events-none -z-10" />
+              <div className="absolute -top-20 inset-x-0 mx-auto w-72 sm:w-96 lg:w-[440px] h-[440px] sm:h-[540px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FFF5D1]/45 via-[#D4AF37]/20 to-transparent blur-2xl pointer-events-none -z-10" />
               
               {/* Spotlight Core Flare Glow */}
-              <div className="absolute -top-10 inset-x-0 mx-auto w-28 sm:w-40 h-28 sm:h-40 rounded-full bg-[#FFE899]/35 blur-3xl pointer-events-none -z-10" />
+              <div className="absolute -top-12 inset-x-0 mx-auto w-32 sm:w-48 h-32 sm:h-48 rounded-full bg-[#FFE899]/35 blur-3xl pointer-events-none -z-10" />
               
               <Hero3DFlaconScene
                 activeProductIndex={activeHeroIndex}
