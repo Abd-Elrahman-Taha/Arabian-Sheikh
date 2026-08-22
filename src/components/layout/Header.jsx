@@ -124,11 +124,11 @@ export default function Header({ onOpenSearch }) {
           </div>
         )}
 
-        <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex items-center justify-between gap-6">
+        <div className="max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-12 xl:px-16">
+          <div className="flex items-center justify-between gap-2 sm:gap-6">
             
             {/* 1. FIRST IN NAVBAR: OFFICIAL ARABIAN SHEIKH LOGO */}
-            <div className="flex items-center shrink-0 py-0.5">
+            <div className="flex items-center shrink min-w-0 py-0.5">
               <Link
                 to="/"
                 className="inline-block focus:outline-none"
@@ -169,7 +169,7 @@ export default function Header({ onOpenSearch }) {
             </nav>
 
             {/* 3. RIGHT: UTILITIES & ACTIONS */}
-            <div className={`flex items-center space-x-3 sm:space-x-4 ${
+            <div className={`flex items-center space-x-1.5 sm:space-x-3 md:space-x-4 shrink-0 ${
               isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}>
               {/* Language Switcher */}
@@ -212,32 +212,32 @@ export default function Header({ onOpenSearch }) {
               {/* Theme Toggle Button (Light / Dark Mode Switcher) */}
               <button
                 onClick={toggleTheme}
-                className={`p-1.5 hover:text-[#D4AF37] transition-all duration-300 focus:outline-none cursor-pointer rounded-full border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:scale-110 flex items-center justify-center ${
+                className={`p-1.5 sm:p-2 hover:text-[#D4AF37] transition-all duration-300 focus:outline-none cursor-pointer rounded-full border border-[#D4AF37]/30 hover:border-[#D4AF37] flex items-center justify-center shrink-0 ${
                   isDark ? 'bg-black/40' : 'bg-white shadow-xs'
                 }`}
                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 aria-label="Toggle Luxury Theme"
               >
                 {isDark ? (
-                  <Sun className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#F2D675] hover:rotate-90 transition-transform duration-500" />
+                  <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-[#F2D675] hover:rotate-90 transition-transform duration-500" />
                 ) : (
-                  <Moon className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#120B06] hover:-rotate-45 transition-transform duration-500" />
+                  <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-[#120B06] hover:-rotate-45 transition-transform duration-500" />
                 )}
               </button>
 
               {/* Search Trigger */}
               <button
                 onClick={onOpenSearch}
-                className="p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer"
+                className="p-1.5 sm:p-2 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer shrink-0"
                 aria-label="Search Fragrances"
               >
-                <Search className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               {/* Wishlist */}
               <Link
                 to="/account/wishlist"
-                className="relative p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block"
+                className="relative p-1.5 sm:p-2 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block shrink-0"
                 aria-label="Wishlist"
               >
                 <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
@@ -251,7 +251,7 @@ export default function Header({ onOpenSearch }) {
               {/* Account / Login */}
               <Link
                 to={isAuthenticated ? '/account' : '/login'}
-                className="p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block"
+                className="p-1.5 sm:p-2 hover:text-[#D4AF37] transition-colors focus:outline-none hidden sm:block shrink-0"
                 aria-label="Account / Sign In"
               >
                 <User className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
@@ -260,14 +260,14 @@ export default function Header({ onOpenSearch }) {
               {/* Shopping Bag / Cart */}
               <button
                 onClick={openDrawer}
-                className="relative p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer group"
+                className="relative p-1.5 sm:p-2 hover:text-[#D4AF37] transition-colors focus:outline-none cursor-pointer group shrink-0"
                 aria-label="Shopping Bag"
               >
-                <ShoppingBag className={`w-4.5 h-4.5 sm:w-5 sm:h-5 group-hover:text-[#D4AF37] transition-colors ${
+                <ShoppingBag className={`w-4 h-4 sm:w-5 sm:h-5 group-hover:text-[#D4AF37] transition-colors ${
                   isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
                 }`} />
                 {totals.itemCount > 0 && (
-                  <span className={`absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-lg ${
+                  <span className={`absolute top-0 right-0 bg-[#D4AF37] text-black text-[9px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-lg ${
                     cartBadgeAnimated ? 'animate-bounce' : ''
                   }`}>
                     {totals.itemCount}
@@ -278,10 +278,10 @@ export default function Header({ onOpenSearch }) {
               {/* Mobile Menu Trigger */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-1.5 hover:text-[#D4AF37] transition-colors focus:outline-none"
+                className="lg:hidden p-1.5 sm:p-2 hover:text-[#D4AF37] transition-colors focus:outline-none shrink-0"
                 aria-label="Toggle Menu"
               >
-                {mobileMenuOpen ? <X className="w-6 h-6 text-[#D4AF37]" /> : <Menu className="w-6 h-6" />}
+                {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6 text-[#D4AF37]" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
               </button>
             </div>
           </div>

@@ -25,13 +25,13 @@ export default function ArabianLogo({
 
   const sizeMap = {
     navbar: {
-      crestWrap: 'h-10 sm:h-11 w-10 sm:w-11',
+      crestWrap: 'h-8 sm:h-11 w-8 sm:w-11 shrink-0',
       imgScale: 'scale-[1.32] -translate-y-[8%]',
-      text: 'text-sm sm:text-[15px] md:text-base tracking-[0.25em]',
-      sub: 'text-[8.5px] sm:text-[9.5px] tracking-[0.34em]'
+      text: 'text-xs sm:text-[15px] md:text-base tracking-[0.14em] sm:tracking-[0.25em] whitespace-nowrap',
+      sub: 'text-[7.5px] sm:text-[9.5px] tracking-[0.24em] sm:tracking-[0.34em] whitespace-nowrap'
     },
     sm: {
-      crestWrap: 'h-12 sm:h-14 w-12 sm:w-14',
+      crestWrap: 'h-12 sm:h-14 w-12 sm:w-14 shrink-0',
       imgScale: 'scale-[1.28] -translate-y-[10%]',
       text: 'text-sm sm:text-base tracking-[0.22em]',
       sub: 'text-[8.5px] tracking-[0.35em]'
