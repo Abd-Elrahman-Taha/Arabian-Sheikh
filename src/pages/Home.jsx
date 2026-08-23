@@ -461,7 +461,7 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative z-10">
           
-          {/* Card 1: Master Alchemist */}
+          {/* Card 1: Navigates to About Page (/about) */}
           <div
             onClick={() => navigate('/about')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
@@ -472,24 +472,30 @@ export default function Home() {
           >
             <img
               src="/editorial/master_alchemist.jpg"
-              alt="Master Alchemist"
+              alt={language === 'ar' ? 'قصة وتاريخ الدار' : 'The House Heritage'}
               className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-108 transition-transform duration-700 opacity-75 group-hover:opacity-95"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
-            <div className="absolute bottom-0 inset-x-0 p-6 space-y-2">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                HAUTE PARFUMERIE
+                {language === 'ar' ? 'عن دار العطور • ABOUT US' : 'ABOUT THE MAISON'}
               </span>
-              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors">
-                The Master Alchemist
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
+                {language === 'ar' ? 'قصة وتاريخ الدار' : 'The House Heritage'}
               </h3>
-              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed">
-                Centuries of Andalusian distillation wisdom crafted in numbered crystal flacons.
+              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
+                {language === 'ar'
+                  ? 'تعرف على تاريخ الدار الأندلسي، سر الخلاصات النقية، وصالوناتنا الملكية حول العالم.'
+                  : 'Explore our Andalusian heritage, artisanal distillation legacy, and global private salons.'}
               </p>
+              <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+                <span>{language === 'ar' ? 'زيارة صفحة عن الدار' : 'Visit About Page'}</span>
+                <span className="rtl:rotate-180">→</span>
+              </div>
             </div>
           </div>
 
-          {/* Card 2: Flacon Craftsmanship */}
+          {/* Card 2: Navigates to The Palace Page (/the-palace) */}
           <div
             onClick={() => navigate('/the-palace')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
@@ -500,24 +506,30 @@ export default function Home() {
           >
             <img
               src="/editorial/flacon_craftsmanship.jpg"
-              alt="Flacon Craftsmanship"
+              alt={language === 'ar' ? 'جولة في قصر العطور' : 'Enter The Palace'}
               className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
-            <div className="absolute bottom-0 inset-x-0 p-6 space-y-2">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                MIRROR-GOLD ATELIER
+                {language === 'ar' ? 'قصر العطور • THE PALACE' : 'THE SOVEREIGN PALACE'}
               </span>
-              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors">
-                Flacon Craftsmanship
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
+                {language === 'ar' ? 'جولة في قصر العطور' : 'Enter The Palace'}
               </h3>
-              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed">
-                Mirror-finished 24K solid gold and obsidian glass sculpted for royal sovereignty.
+              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
+                {language === 'ar'
+                  ? 'استكشف أندر المكونات الطبيعية، صناعة القوارير المذهبة، وطقوس العطور الحية.'
+                  : 'Discover our sacred raw ingredients, 24K gold flacon artistry, and living palace rituals.'}
               </p>
+              <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+                <span>{language === 'ar' ? 'دخول قصر العطور' : 'Tour The Palace'}</span>
+                <span className="rtl:rotate-180">→</span>
+              </div>
             </div>
           </div>
 
-          {/* Card 3: Imperial Monograph */}
+          {/* Card 3: Navigates to Fragrance Discovery Quiz (/discovery) */}
           <div
             onClick={() => navigate('/discovery')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
@@ -528,20 +540,26 @@ export default function Home() {
           >
             <img
               src="/editorial/imperial_monograph.jpg"
-              alt="Imperial Monograph"
+              alt={language === 'ar' ? 'اختبار اكتشاف العطر' : 'Fragrance Discovery'}
               className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/40 to-transparent" />
-            <div className="absolute bottom-0 inset-x-0 p-6 space-y-2">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                THE PALACE ARCHIVE
+                {language === 'ar' ? 'مستشار العطور • DISCOVERY' : 'FRAGRANCE FINDER'}
               </span>
-              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors">
-                Imperial Monograph
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
+                {language === 'ar' ? 'اختبار اكتشاف العطر' : 'Fragrance Discovery'}
               </h3>
-              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed">
-                The historical formulation treatise and sacred Oud accords of Arabian Sheikh.
+              <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
+                {language === 'ar'
+                  ? 'خض اختباراً تفاعلياً ليكشف لك مستشارنا عن العطر الأنسب لشخصيتك ومناسبتك.'
+                  : 'Take our bespoke interactive quiz to find the signature flacon tailored to your royal persona.'}
               </p>
+              <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+                <span>{language === 'ar' ? 'بدء اختبار العطور' : 'Start Discovery Quiz'}</span>
+                <span className="rtl:rotate-180">→</span>
+              </div>
             </div>
           </div>
 
