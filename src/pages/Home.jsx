@@ -14,6 +14,7 @@ import TopSellingShowcase from '../components/home/TopSellingShowcase';
 import OffersDiscountSection from '../components/home/OffersDiscountSection';
 import BlurText from '../components/common/BlurText';
 import HeroRulerPagination from '../components/home/HeroRulerPagination';
+import AnimatedCounter from '../components/common/AnimatedCounter';
 import {
   Sparkles,
   ArrowRight,
@@ -78,6 +79,33 @@ export default function Home() {
       notes: 'Wild Assamese Oud • Taif Royal Rose • Ambergris • Kashmiri Saffron',
       color: '#D4AF37',
       image: '/products/stallion_royal_flacon.webp'
+    }
+  ];
+
+  const stats = [
+    {
+      target: 46,
+      suffix: '+',
+      label: language === 'ar' ? 'تحفة عطرية استثنائية' : 'Haute Parfumerie Masterpieces',
+      sub: language === 'ar' ? 'عطور، دهن عود، وبخور ملكي' : 'Extraits, Oils & Rare Bakhoor'
+    },
+    {
+      target: 35,
+      suffix: '%',
+      label: language === 'ar' ? 'تركيز الزيوت الخالصة' : 'Pure Extrait Concentration',
+      sub: language === 'ar' ? 'أعلى درجات الفوحان والثبات' : 'Uncompromising Sillage'
+    },
+    {
+      target: 60,
+      suffix: '+',
+      label: language === 'ar' ? 'عاماً عمر أشجار العود' : 'Years Wild Agarwood Age',
+      sub: language === 'ar' ? 'تقطير نحاسي بطيء وأصيل' : 'Slow Copper Artisanal Stills'
+    },
+    {
+      target: 18,
+      suffix: 'h+',
+      label: language === 'ar' ? 'ثبات متواصل على البشرة' : 'Continuous Skin Longevity',
+      sub: language === 'ar' ? 'أثر ملكي لا يُمحى' : 'Lasting Sovereign Presence'
     }
   ];
 
@@ -517,6 +545,37 @@ export default function Home() {
             </div>
           </div>
 
+        </div>
+
+        {/* Animated Imperial Stats Bar */}
+        <div className={`mt-10 sm:mt-14 p-8 sm:p-10 rounded-3xl transition-all duration-500 border relative z-10 ${
+          isDark
+            ? 'bg-gradient-to-r from-[#170E09]/90 via-[#120B06]/90 to-[#170E09]/90 border-[#D4AF37]/30 shadow-2xl backdrop-blur-md'
+            : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_15px_35px_rgba(212,175,55,0.18)] backdrop-blur-md'
+        }`}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 divide-y sm:divide-y-0 sm:divide-x divide-[#D4AF37]/20 rtl:divide-x-reverse">
+            {stats.map((st, i) => (
+              <div key={i} className="text-center space-y-1.5 pt-6 sm:pt-0">
+                <div className="font-cinzel text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#D4AF37] tracking-tight">
+                  <AnimatedCounter
+                    target={st.target}
+                    suffix={st.suffix}
+                    duration={1800}
+                  />
+                </div>
+                <div className={`font-cinzel text-xs sm:text-sm font-bold uppercase tracking-wider ${
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+                }`}>
+                  {st.label}
+                </div>
+                <div className={`text-[11px] sm:text-xs font-sans ${
+                  isDark ? 'text-[#C5A880]' : 'text-[#5A3517]'
+                }`}>
+                  {st.sub}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
