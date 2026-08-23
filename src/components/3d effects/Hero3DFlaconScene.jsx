@@ -13,7 +13,7 @@ const textureLoader = typeof window !== 'undefined' ? new THREE.TextureLoader() 
 export const BOTTLE_SETTINGS = {
   // Desktop Three.js WebGL (in 3D coordinate units)
   desktopWidth: 2,       // Width in 3D scene (Higher = wider, Lower = narrower, default: 1.62)
-  desktopHeight: 2,       // Height in 3D scene (Higher = taller, Lower = shorter, default: 2.5)
+  desktopHeight: 2.2,       // Height in 3D scene (Higher = taller, Lower = shorter, default: 2.5)
   desktopScale: 1.0,        // Overall scale on desktop (e.g. 1.15 for 15% larger, default: 1.0)
 
   // Mobile / Phones Viewport (CSS & Pixels)
