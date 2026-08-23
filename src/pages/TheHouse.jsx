@@ -3,7 +3,6 @@ import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollRevea
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import BackgroundAtmosphere from '../components/motion/BackgroundAtmosphere';
-import CamelCaravan from '../components/motion/CamelCaravan';
 import {
   Crown,
   Trees,
@@ -54,11 +53,6 @@ export default function TheHouse() {
           </div>
         </div>
       </section>
-
-      {/* Panoramic Desert Caravan Horizon Transition — Below First Section */}
-      <div className="relative w-full h-36 sm:h-48 md:h-56 overflow-hidden -my-8 sm:-my-12 pointer-events-none">
-        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
-      </div>
 
       {/* 2. OUR ROYAL STORY */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

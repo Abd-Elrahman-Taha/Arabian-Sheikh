@@ -4,7 +4,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
-import CamelCaravan from '../components/motion/CamelCaravan';
 import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 
 export default function Contact() {
@@ -60,12 +59,7 @@ export default function Contact() {
         </div>
       </ScrollReveal>
 
-      {/* Desert Camel Caravan — Below First Section */}
-      <div className="relative w-full h-32 sm:h-44 md:h-52 overflow-hidden -my-4 pointer-events-none">
-        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-4">
         {/* Left: Concierge Inquiry Form */}
         <div className="lg:col-span-7">
           <ScrollReveal direction="right" className="bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 p-8 sm:p-10 shadow-xl space-y-6 h-full">

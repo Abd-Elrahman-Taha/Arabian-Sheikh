@@ -6,7 +6,6 @@ import { productService } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
-import CamelCaravan from '../components/motion/CamelCaravan';
 import BlurText from '../components/common/BlurText';
 import { Crown, Feather, Sun, ArrowRight } from 'lucide-react';
 
@@ -94,18 +93,15 @@ export default function Collections() {
           <p className={`text-xs sm:text-sm max-w-2xl mx-auto font-medium ${
             isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
           }`}>
-            Explore the three sovereign collections distilled by our master perfumers in limited batches.
+            {language === 'ar'
+              ? 'استكشف المجموعات الملكية الثلاث المصنوعة بأيدي كبار صانعي العطور بدفعات محدودة.'
+              : 'Explore the three sovereign collections distilled by our master perfumers in limited batches.'}
           </p>
         </div>
       </ScrollReveal>
 
-      {/* Desert Camel Caravan */}
-      <div className="relative w-full h-32 sm:h-44 md:h-52 overflow-hidden -my-4 pointer-events-none">
-        <CamelCaravan speedMultiplier={0.9} opacity={0.95} scale={1.05} />
-      </div>
-
       {/* Collection Tab Selector */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
         {COLLECTIONS.map((c, index) => {
           const Icon = c.icon;
           const isActive = activeCollection === c.id;
