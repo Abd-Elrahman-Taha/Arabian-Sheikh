@@ -1,14 +1,29 @@
 import React from 'react';
 import { useTranslation } from '../i18n/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { Sparkles, ShieldCheck, Heart, Award } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 import CamelCaravan from '../components/motion/CamelCaravan';
+import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 
 export default function About() {
   const { t } = useTranslation();
+  const { isDark } = useTheme();
 
   return (
-    <div className="pt-36 sm:pt-40 pb-6 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--color-earth-dark)]">
+    <div className="pt-36 sm:pt-40 pb-6 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 animate-fade-in text-[var(--color-earth-dark)] relative overflow-hidden">
+      {/* Ambient Fluid Background Shader */}
+      <div className={`absolute top-28 -right-28 w-[550px] lg:w-[750px] h-[550px] lg:h-[750px] rounded-full pointer-events-none transition-all duration-700 ${
+        isDark ? 'opacity-35 mix-blend-screen' : 'opacity-25 mix-blend-multiply'
+      }`}>
+        <LuxuryBackgroundShader
+          color1={isDark ? '#F2D675' : '#D4AF37'}
+          color2={isDark ? '#8C6239' : '#FAF1DF'}
+          color3={isDark ? '#140D07' : '#CBB198'}
+          opacity={0.55}
+          className="w-full h-full rounded-full"
+        />
+      </div>
       {/* Header */}
       <ScrollReveal direction="up">
         <div className="text-center max-w-3xl mx-auto space-y-3">

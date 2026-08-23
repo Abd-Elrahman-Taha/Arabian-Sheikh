@@ -8,6 +8,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import ProductCard from '../components/common/ProductCard';
 import BlurText from '../components/common/BlurText';
+import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import {
   Heart,
   ShoppingBag,
@@ -162,10 +163,23 @@ export default function ProductDetail() {
     : product.name;
 
   return (
-    <div className={`min-h-screen bg-transparent pt-28 sm:pt-32 pb-12 transition-colors duration-500 ${
+    <div className={`min-h-screen bg-transparent pt-28 sm:pt-32 pb-12 transition-colors duration-500 relative overflow-hidden ${
       isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
     }`}>
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+      {/* Ambient Fluid Background Shaders */}
+      <div className={`absolute top-20 -left-28 w-[600px] lg:w-[850px] h-[600px] lg:h-[850px] rounded-full pointer-events-none transition-all duration-700 ${
+        isDark ? 'opacity-40 mix-blend-screen' : 'opacity-30 mix-blend-multiply'
+      }`}>
+        <LuxuryBackgroundShader
+          color1={isDark ? '#F2D675' : '#D4AF37'}
+          color2={isDark ? '#8C6239' : '#FAF1DF'}
+          color3={isDark ? '#140D07' : '#CBB198'}
+          opacity={0.6}
+          className="w-full h-full rounded-full"
+        />
+      </div>
+
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10">
         
         {/* Breadcrumb */}
         <div className={`flex items-center gap-2 text-xs mb-8 font-cinzel uppercase tracking-wider ${

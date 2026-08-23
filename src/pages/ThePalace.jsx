@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
 import ArabianLogo from '../components/common/ArabianLogo';
 import BlurText from '../components/common/BlurText';
+import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import {
   Crown,
   Trees,
@@ -95,6 +96,18 @@ export default function ThePalace() {
               : 'bg-gradient-to-t from-[#CBB198] via-[#CBB198]/75 to-[#CBB198]/90'
           }`} />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.15)_0%,transparent_70%)] pointer-events-none" />
+          {/* Ambient Living Shader */}
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] lg:w-[1000px] h-[700px] lg:h-[1000px] rounded-full pointer-events-none transition-all duration-700 ${
+            isDark ? 'opacity-40 mix-blend-screen' : 'opacity-30 mix-blend-multiply'
+          }`}>
+            <LuxuryBackgroundShader
+              color1={isDark ? '#D4AF37' : '#C59B27'}
+              color2={isDark ? '#8C6239' : '#FAF1DF'}
+              color3={isDark ? '#0B0A08' : '#CBB198'}
+              opacity={0.65}
+              className="w-full h-full rounded-full"
+            />
+          </div>
         </div>
 
         <div className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center space-y-6">

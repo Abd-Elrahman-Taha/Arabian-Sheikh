@@ -28,8 +28,9 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import SearchPage from './pages/SearchPage';
 
-// 3D Effects
+// 3D Effects & Smooth Motion Shaders
 import ArabianIntro from './components/3d effects/ArabianIntro';
+import LuxuryBackgroundShader from './components/motion/LuxuryBackgroundShader';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -194,15 +195,54 @@ function MainRouter() {
       isDark ? 'text-[#F3E6D0] bg-[#0B0A08]' : 'text-[#120B06] bg-[#CBB198]'
     }`}>
 
-      {/* Global Luxury Gradient Background (Adaptive for Dark & Light Modes) */}
+      {/* Global Luxury Gradient Background (Adaptive for Dark & Light Modes) with Smooth Living Shaders */}
       <div
-        className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-700"
+        className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-700 overflow-hidden"
         style={{
           background: isDark
             ? 'radial-gradient(ellipse 95% 75% at 50% 12%, #1C120C 0%, #130B07 45%, #0B0A08 100%), linear-gradient(180deg, #0B0A08 0%, #170E09 35%, #0F0A07 70%, #0B0A08 100%)'
             : 'radial-gradient(ellipse 95% 75% at 50% 12%, #E5D5C6 0%, #CBB198 45%, #BFA389 100%), linear-gradient(180deg, #CBB198 0%, #D8C3AE 35%, #CBB198 70%, #BFA389 100%)'
         }}
-      />
+      >
+        {/* 1. Top-Right Radiant Luxury Fluid Shader */}
+        <div className={`absolute -top-32 -right-32 w-[600px] lg:w-[900px] h-[600px] lg:h-[900px] rounded-full pointer-events-none transition-all duration-700 ${
+          isDark ? 'opacity-40 mix-blend-screen' : 'opacity-35 mix-blend-multiply'
+        }`}>
+          <LuxuryBackgroundShader
+            color1={isDark ? '#D4AF37' : '#C59B27'}
+            color2={isDark ? '#8C6239' : '#D4AF37'}
+            color3={isDark ? '#140D07' : '#BFA389'}
+            opacity={isDark ? 0.45 : 0.35}
+            className="w-full h-full rounded-full"
+          />
+        </div>
+
+        {/* 2. Middle-Left Fluid Shader */}
+        <div className={`absolute top-1/2 -left-36 -translate-y-1/2 w-[550px] lg:w-[800px] h-[550px] lg:h-[800px] rounded-full pointer-events-none transition-all duration-700 ${
+          isDark ? 'opacity-30 mix-blend-screen' : 'opacity-25 mix-blend-multiply'
+        }`}>
+          <LuxuryBackgroundShader
+            color1={isDark ? '#F2D675' : '#D4AF37'}
+            color2={isDark ? '#5A3517' : '#FAF1DF'}
+            color3={isDark ? '#0B0A08' : '#CBB198'}
+            opacity={isDark ? 0.35 : 0.25}
+            className="w-full h-full rounded-full"
+          />
+        </div>
+
+        {/* 3. Bottom-Right Ambient Shader */}
+        <div className={`absolute -bottom-32 right-1/4 w-[500px] lg:w-[750px] h-[500px] lg:h-[750px] rounded-full pointer-events-none transition-all duration-700 ${
+          isDark ? 'opacity-35 mix-blend-screen' : 'opacity-30 mix-blend-multiply'
+        }`}>
+          <LuxuryBackgroundShader
+            color1={isDark ? '#D4AF37' : '#B8860B'}
+            color2={isDark ? '#3A2116' : '#E8D9C2'}
+            color3={isDark ? '#0B0A08' : '#CBB198'}
+            opacity={isDark ? 0.4 : 0.3}
+            className="w-full h-full rounded-full"
+          />
+        </div>
+      </div>
 
       {/* Standalone Cinematic Intro */}
       {showIntro && !isAdminRoute && (
