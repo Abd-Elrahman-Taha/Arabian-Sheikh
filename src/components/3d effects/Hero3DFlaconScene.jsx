@@ -8,6 +8,22 @@ const globalTextureCache = new Map();
 const textureLoader = typeof window !== 'undefined' ? new THREE.TextureLoader() : null;
 
 // ============================================================================
+// 🎛️ BOTTLE SIZE & DIMENSION CONTROLS (Easily customize Width & Height here)
+// ============================================================================
+export const BOTTLE_SETTINGS = {
+  // Desktop Three.js WebGL (in 3D coordinate units)
+  desktopWidth: 2,       // Width in 3D scene (Higher = wider, Lower = narrower, default: 1.62)
+  desktopHeight: 2,       // Height in 3D scene (Higher = taller, Lower = shorter, default: 2.5)
+  desktopScale: 1.0,        // Overall scale on desktop (e.g. 1.15 for 15% larger, default: 1.0)
+
+  // Mobile / Phones Viewport (CSS & Pixels)
+  mobileHeight: '50vh',     // Height on phones in viewport units (e.g. '45vh', '52vh', '60vh', default: '50vh')
+  mobileMaxHeight: 480,     // Max height in pixels on phones (e.g. 400, 480, 560, default: 480)
+  mobileMaxWidth: '90%',    // Max width percentage on phones (e.g. '80%', '90%', '100%', default: '90%')
+  mobileScale: 1.0,         // Overall scale multiplier on phones (e.g. 1.1, default: 1.0)
+};
+
+// ============================================================================
 // 🎛️ FLOATING & SHAKING CONTROLS (Easily customize speed and height here)
 // ============================================================================
 export const FLOAT_SETTINGS = {
@@ -16,14 +32,21 @@ export const FLOAT_SETTINGS = {
   desktopHeight: 0.12,   // Higher = bigger up/down movement, Lower = subtle
 
   // Mobile / Phones (GSAP)
-  mobileSpeed: 1,      // Seconds per cycle (Lower number = faster, Higher = slower)
+  mobileSpeed: 1,        // Seconds per cycle (Lower number = faster, Higher = slower)
   mobileHeight: 20,      // Pixels to float up and down (e.g. 15 for small, 30 for big)
 };
 
 export default function Hero3DFlaconScene({
   activeProductIndex = 0,
   onSlideChange,
-  products = []
+  products = [],
+  desktopWidth = BOTTLE_SETTINGS.desktopWidth,
+  desktopHeight = BOTTLE_SETTINGS.desktopHeight,
+  desktopScale = BOTTLE_SETTINGS.desktopScale,
+  mobileHeight = BOTTLE_SETTINGS.mobileHeight,
+  mobileMaxHeight = BOTTLE_SETTINGS.mobileMaxHeight,
+  mobileMaxWidth = BOTTLE_SETTINGS.mobileMaxWidth,
+  mobileScale = BOTTLE_SETTINGS.mobileScale,
 }) {
   const { isDark } = useTheme();
   const containerRef = useRef(null);
@@ -183,7 +206,9 @@ export default function Hero3DFlaconScene({
       texturesRef.current = textures;
 
       // 6. Bottle Plane Mesh & Dynamic Studio Contact Shadow
-      const bottleGeometry = new THREE.PlaneGeometry(1.62, 2.5);
+      const actualWidth = desktopWidth * desktopScale;
+      const actualHeight = desktopHeight * desktopScale;
+      const bottleGeometry = new THREE.PlaneGeometry(actualWidth, actualHeight);
       const bottleMaterial = new THREE.MeshBasicMaterial({
         map: textures[activeProductIndex] || textures[0],
         transparent: true,
@@ -209,7 +234,8 @@ export default function Hero3DFlaconScene({
       shadowCtx.fillRect(0, 0, 256, 256);
       const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
 
-      const shadowGeometry = new THREE.PlaneGeometry(1.5, 0.55);
+      const shadowWidth = actualWidth * 0.95;
+      const shadowGeometry = new THREE.PlaneGeometry(shadowWidth, 0.55);
       const shadowMaterial = new THREE.MeshBasicMaterial({
         map: shadowTexture,
         transparent: true,
@@ -218,7 +244,8 @@ export default function Hero3DFlaconScene({
       });
       const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
       shadowMesh.rotation.x = -Math.PI / 2;
-      shadowMesh.position.set(0, -1.52, 0);
+      const shadowY = -(actualHeight / 2) - 0.27;
+      shadowMesh.position.set(0, shadowY, 0);
       shadowMesh.visible = isDark || window.innerWidth >= 640;
       scene.add(shadowMesh);
       shadowMeshRef.current = shadowMesh;
@@ -231,13 +258,13 @@ export default function Hero3DFlaconScene({
       observer.observe(container);
 
       // 8. Render Loop with Smooth & Slow Floating Levitation
-      const clock = new THREE.Clock();
+      const startTime = performance.now();
 
-      const animate = () => {
+      const animate = (currentTime) => {
         animationFrameId = requestAnimationFrame(animate);
         if (!isVisible || !performanceManager.isTabVisible) return;
 
-        const elapsedTime = clock.getElapsedTime();
+        const elapsedTime = (currentTime - startTime) * 0.001;
 
         // Smooth, slow, visible up & down hovering oscillation controlled by FLOAT_SETTINGS
         if (bottleMeshRef.current) {
@@ -341,15 +368,21 @@ export default function Hero3DFlaconScene({
     return (
       <div className="relative w-full h-full flex flex-col items-center justify-center p-2 sm:p-6 select-none pointer-events-none">
         {/* Crisp Flacon with Smooth Transition */}
-        <div className="relative flex items-center justify-center max-h-[500px] w-full h-full">
+        <div className="relative flex items-center justify-center max-h-[600px] w-full h-full">
           <img
             ref={mobileImgRef}
             src={currentImage}
             alt="Arabian Sheikh Perfume Flacon"
-            className="h-[46vh] sm:h-[56vh] max-h-[480px] w-auto max-w-[88%] object-contain filter drop-shadow-[0_15px_35px_rgba(0,0,0,0.5)] transition-all duration-300 transform-gpu"
+            style={{
+              height: mobileHeight,
+              maxHeight: typeof mobileMaxHeight === 'number' ? `${mobileMaxHeight}px` : mobileMaxHeight,
+              maxWidth: mobileMaxWidth,
+              transform: `scale(${mobileScale})`
+            }}
+            className="w-auto object-contain filter drop-shadow-[0_15px_35px_rgba(0,0,0,0.5)] transition-all duration-300 transform-gpu"
             loading="eager"
             decoding="async"
-            fetchpriority="high"
+            fetchPriority="high"
           />
 
           {/* Contact Shadow beneath bottle base on mobile */}
