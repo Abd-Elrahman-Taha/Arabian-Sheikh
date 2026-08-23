@@ -295,26 +295,24 @@ export default function Home() {
           }`} />
           <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.15),transparent_70%)]" />
 
-          {/* 1. TOP-LEFT Radiant Luxury Fluid Shader Circle (Slightly Bigger) */}
+          {/* 1. TOP-LEFT Radiant Luxury Fluid Shader Circle */}
           <div className={`absolute -top-28 -left-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none transition-all duration-700 ${
             isDark ? 'opacity-95 mix-blend-screen' : 'opacity-85 mix-blend-multiply'
           }`}>
             <LuxuryBackgroundShader
-              color1={isDark ? '#F2D675' : '#D4AF37'}
-              color2={isDark ? '#B8860B' : '#F2D675'}
+              color1={isDark ? '#F2D675' : '#D4AF37'}       color2={isDark ? '#B8860B' : '#F2D675'}
               color3={isDark ? '#1A1008' : '#D8BE99'}
               opacity={0.95}
               className="w-full h-full rounded-full"
             />
           </div>
 
-          {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader Circle (Slightly Bigger) */}
+          {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader Circle */}
           <div className={`absolute -bottom-28 -right-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none transition-all duration-700 ${
             isDark ? 'opacity-90 mix-blend-screen' : 'opacity-80 mix-blend-multiply'
           }`}>
             <LuxuryBackgroundShader
-              color1={isDark ? '#D4AF37' : '#F2D675'}
-              color2={isDark ? '#8C6239' : '#D4AF37'}
+              color1={isDark ? '#D4AF37' : '#F2D675'}    color2={isDark ? '#8C6239' : '#D4AF37'}
               color3={isDark ? '#140D07' : '#CBB198'}
               opacity={0.90}
               className="w-full h-full rounded-full"
@@ -446,19 +444,6 @@ export default function Home() {
           1.1 EDITORIAL PREVIEW CARDS (MATCHING CHRONOSWISS BOTTOM 3 CARDS)
           ========================================================================= */}
       <section className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 pt-4 sm:pt-6 pb-12 overflow-hidden">
-        {/* Ambient Fluid Background Shader */}
-        <div className={`absolute top-1/2 -left-20 -translate-y-1/2 w-[550px] lg:w-[750px] h-[550px] lg:h-[750px] rounded-full pointer-events-none transition-all duration-700 ${
-          isDark ? 'opacity-35 mix-blend-screen' : 'opacity-25 mix-blend-multiply'
-        }`}>
-          <LuxuryBackgroundShader
-            color1={isDark ? '#F2D675' : '#D4AF37'}
-            color2={isDark ? '#8C6239' : '#FAF1DF'}
-            color3={isDark ? '#140D07' : '#CBB198'}
-            opacity={0.55}
-            className="w-full h-full rounded-full"
-          />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative z-10">
           
           {/* Card 1: Navigates to About Page (/about) */}
@@ -638,22 +623,7 @@ export default function Home() {
           {/* =========================================================================
               4. INTERACTIVE FRAGRANCE FINDER QUIZ
               ========================================================================= */}
-          <section className={`py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 ${
-            isDark ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#21130D]/90 to-[#0B0A08]/95' : 'bg-transparent'
-          }`}>
-            {/* Ambient Fluid Background Shader */}
-            <div className={`absolute top-1/2 -right-24 -translate-y-1/2 w-[600px] lg:w-[850px] h-[600px] lg:h-[850px] rounded-full pointer-events-none transition-all duration-700 ${
-              isDark ? 'opacity-35 mix-blend-screen' : 'opacity-25 mix-blend-multiply'
-            }`}>
-              <LuxuryBackgroundShader
-                color1={isDark ? '#D4AF37' : '#C59B27'}
-                color2={isDark ? '#3A2116' : '#FAF1DF'}
-                color3={isDark ? '#0B0A08' : '#CBB198'}
-                opacity={0.55}
-                className="w-full h-full rounded-full"
-              />
-            </div>
-
+          <section className="py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 bg-transparent">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               
               <div className={`border p-8 sm:p-12 shadow-2xl space-y-8 rounded-2xl transition-colors duration-500 ${
@@ -786,22 +756,7 @@ export default function Home() {
           {/* =========================================================================
               5. PRODUCT COMPARISON MATRIX
               ========================================================================= */}
-          <section className={`py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 ${
-            isDark ? 'bg-[#0B0A08]/95 text-[#F3E6D0]' : 'bg-[#CBB198]/95 text-[#120B06]'
-          }`}>
-            {/* Ambient Fluid Background Shader */}
-            <div className={`absolute -bottom-24 -left-24 w-[600px] lg:w-[850px] h-[600px] lg:h-[850px] rounded-full pointer-events-none transition-all duration-700 ${
-              isDark ? 'opacity-30 mix-blend-screen' : 'opacity-20 mix-blend-multiply'
-            }`}>
-              <LuxuryBackgroundShader
-                color1={isDark ? '#F2D675' : '#D4AF37'}
-                color2={isDark ? '#8C6239' : '#E8D9C2'}
-                color3={isDark ? '#0B0A08' : '#BFA389'}
-                opacity={0.5}
-                className="w-full h-full rounded-full"
-              />
-            </div>
-
+          <section className="py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 bg-transparent">
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10">
               
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
@@ -903,22 +858,7 @@ export default function Home() {
           {/* =========================================================================
               6. REVIEWS & SOCIAL PROOF
               ========================================================================= */}
-          <section className={`py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 ${
-            isDark ? 'bg-[#0B0A08]/95' : 'bg-[#F3E6D0]/30'
-          }`}>
-            {/* Ambient Fluid Background Shader */}
-            <div className={`absolute top-1/2 right-10 -translate-y-1/2 w-[600px] lg:w-[850px] h-[600px] lg:h-[850px] rounded-full pointer-events-none transition-all duration-700 ${
-              isDark ? 'opacity-30 mix-blend-screen' : 'opacity-20 mix-blend-multiply'
-            }`}>
-              <LuxuryBackgroundShader
-                color1={isDark ? '#D4AF37' : '#B8860B'}
-                color2={isDark ? '#3A2116' : '#FAF1DF'}
-                color3={isDark ? '#0B0A08' : '#CBB198'}
-                opacity={0.5}
-                className="w-full h-full rounded-full"
-              />
-            </div>
-
+          <section className="py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 bg-transparent">
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10">
               
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">

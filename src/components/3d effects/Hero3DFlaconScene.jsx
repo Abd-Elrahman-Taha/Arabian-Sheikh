@@ -12,7 +12,7 @@ const textureLoader = typeof window !== 'undefined' ? new THREE.TextureLoader() 
 // ============================================================================
 export const FLOAT_SETTINGS = {
   // Desktop (Three.js WebGL)
-  desktopSpeed: 1.3,     // Higher = faster (e.g. 2.0), Lower = slower (e.g. 0.8)
+  desktopSpeed: 0.8,     // Higher = faster (e.g. 2.0), Lower = slower (e.g. 0.8)
   desktopHeight: 0.12,   // Higher = bigger up/down movement, Lower = subtle
 
   // Mobile / Phones (GSAP)

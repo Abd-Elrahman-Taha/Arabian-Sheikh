@@ -157,9 +157,7 @@ export default function HorizontalCollectionShowcase({
   return (
     <section
       ref={sectionRef}
-      className={`relative py-16 sm:py-20 lg:py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
-        isDark ? (isEven ? 'bg-[#0B0A08]' : 'bg-[#140D07]') : (isEven ? 'bg-[#CBB198]' : 'bg-[#CBB198]/90')
-      }`}
+      className="relative py-16 sm:py-20 lg:py-24 border-t border-[#D4AF37]/20 transition-colors duration-500 bg-transparent overflow-hidden"
     >
       <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-8 sm:space-y-10">
         

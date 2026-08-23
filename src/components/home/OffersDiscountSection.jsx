@@ -15,7 +15,6 @@ import {
   Clock
 } from 'lucide-react';
 import BlurText from '../common/BlurText';
-import LuxuryBackgroundShader from '../motion/LuxuryBackgroundShader';
 
 export default function OffersDiscountSection({ products = [] }) {
   const { navigate } = useRouter();
@@ -54,22 +53,7 @@ export default function OffersDiscountSection({ products = [] }) {
   };
 
   return (
-    <section className={`py-20 sm:py-28 relative overflow-hidden transition-colors duration-500 border-t border-[#D4AF37]/20 ${
-      isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'
-    }`}>
-      {/* Background Smooth Fluid Shader Orb */}
-      <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] lg:w-[1000px] h-[700px] lg:h-[1000px] rounded-full pointer-events-none transition-all duration-700 ${
-        isDark ? 'opacity-45 mix-blend-screen' : 'opacity-35 mix-blend-multiply'
-      }`}>
-        <LuxuryBackgroundShader
-          color1={isDark ? '#D4AF37' : '#C59B27'}
-          color2={isDark ? '#8C6239' : '#FAF1DF'}
-          color3={isDark ? '#0B0A08' : '#CBB198'}
-          opacity={0.65}
-          className="w-full h-full rounded-full"
-        />
-      </div>
-
+    <section className="py-20 sm:py-28 relative overflow-hidden transition-colors duration-500 border-t border-[#D4AF37]/20 bg-transparent">
       <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10 space-y-16">
         
         {/* Section Title */}

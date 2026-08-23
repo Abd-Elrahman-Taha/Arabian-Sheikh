@@ -4,7 +4,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
-import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -31,19 +30,6 @@ export default function Contact() {
 
   return (
     <div className="pt-36 sm:pt-40 pb-6 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 animate-fade-in text-[var(--color-earth-dark)] relative overflow-hidden">
-      {/* Ambient Fluid Background Shader */}
-      <div className={`absolute top-28 -right-28 w-[550px] lg:w-[750px] h-[550px] lg:h-[750px] rounded-full pointer-events-none transition-all duration-700 ${
-        isDark ? 'opacity-35 mix-blend-screen' : 'opacity-25 mix-blend-multiply'
-      }`}>
-        <LuxuryBackgroundShader
-          color1={isDark ? '#F2D675' : '#D4AF37'}
-          color2={isDark ? '#8C6239' : '#FAF1DF'}
-          color3={isDark ? '#140D07' : '#CBB198'}
-          opacity={0.55}
-          className="w-full h-full rounded-full"
-        />
-      </div>
-
       {/* Header */}
       <ScrollReveal direction="up" delay={0}>
         <div className="text-center max-w-2xl mx-auto space-y-3">

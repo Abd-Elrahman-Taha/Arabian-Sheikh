@@ -15,7 +15,6 @@ import {
   Crown
 } from 'lucide-react';
 import BlurText from '../common/BlurText';
-import LuxuryBackgroundShader from '../motion/LuxuryBackgroundShader';
 
 export default function TopSellingShowcase({ products = [] }) {
   const { navigate } = useRouter();
@@ -61,33 +60,7 @@ export default function TopSellingShowcase({ products = [] }) {
   };
 
   return (
-    <section className={`py-20 sm:py-28 relative overflow-hidden transition-colors duration-500 border-t border-[#D4AF37]/20 ${
-      isDark ? 'bg-gradient-to-b from-[#0B0A08] via-[#140D07] to-[#0B0A08]' : 'bg-gradient-to-b from-[#F3E6D0]/60 via-[#FAF1DF]/80 to-[#F3E6D0]/60'
-    }`}>
-      {/* Background Smooth Fluid Shaders */}
-      <div className={`absolute -top-24 -right-24 w-[500px] lg:w-[700px] h-[500px] lg:h-[700px] rounded-full pointer-events-none transition-all duration-700 ${
-        isDark ? 'opacity-40 mix-blend-screen' : 'opacity-30 mix-blend-multiply'
-      }`}>
-        <LuxuryBackgroundShader
-          color1={isDark ? '#D4AF37' : '#C59B27'}
-          color2={isDark ? '#8C6239' : '#F2D675'}
-          color3={isDark ? '#140D07' : '#CBB198'}
-          opacity={0.6}
-          className="w-full h-full rounded-full"
-        />
-      </div>
-      <div className={`absolute -bottom-24 -left-24 w-[450px] lg:w-[650px] h-[450px] lg:h-[650px] rounded-full pointer-events-none transition-all duration-700 ${
-        isDark ? 'opacity-35 mix-blend-screen' : 'opacity-25 mix-blend-multiply'
-      }`}>
-        <LuxuryBackgroundShader
-          color1={isDark ? '#F2D675' : '#D4AF37'}
-          color2={isDark ? '#5A3517' : '#E8D9C2'}
-          color3={isDark ? '#0B0A08' : '#BFA389'}
-          opacity={0.5}
-          className="w-full h-full rounded-full"
-        />
-      </div>
-
+    <section className="py-20 sm:py-28 relative overflow-hidden transition-colors duration-500 border-t border-[#D4AF37]/20 bg-transparent">
       <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-10 relative z-10">
         
         {/* Header with Navigation Controls */}
