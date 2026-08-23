@@ -299,24 +299,41 @@ export default function Home() {
           {/* Centered Product Flacon with Left & Right Flank Specs */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: Product Name Only and Action Button */}
-            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto">
+            {/* Left Flank: Product Name and Action Button */}
+            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-5 order-2 lg:order-1 z-20 pointer-events-auto">
               
-              {/* Bold Minimalist Product Title */}
-              <BlurText
-                key={`${currentHeroFlacon.id}-${isDark}`}
-                text={getDisplayName(currentHeroFlacon).toUpperCase()}
-                delay={60}
-                animateBy="words"
-                direction="top"
-                className={`text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold tracking-[0.03em] leading-tight drop-shadow-2xl justify-center lg:justify-start ${
-                  isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
-                }`}
-                as="h1"
-              />
+              {/* Product Title Luxury Container (Ensures High Contrast & Readability in Light Mode & on Phones) */}
+              <div className={`p-4 sm:p-5 rounded-2xl transition-all duration-400 max-w-sm mx-auto lg:mx-0 ${
+                isDark
+                  ? 'bg-[#0B0A08]/75 border border-[#D4AF37]/30 backdrop-blur-md shadow-2xl'
+                  : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border border-[#D4AF37]/50 shadow-[0_10px_28px_rgba(212,175,55,0.22)] backdrop-blur-md'
+              }`}>
+                {/* Small Subtitle / Tier */}
+                <div className="flex items-center justify-center lg:justify-start gap-1.5 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                  <span className={`text-[10px] uppercase font-cinzel font-bold tracking-[0.25em] ${
+                    isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                  }`}>
+                    {currentHeroFlacon.tier || 'HAUTE PARFUMERIE'}
+                  </span>
+                </div>
+
+                {/* Bold Product Title */}
+                <BlurText
+                  key={`${currentHeroFlacon.id}-${isDark}`}
+                  text={getDisplayName(currentHeroFlacon).toUpperCase()}
+                  delay={60}
+                  animateBy="words"
+                  direction="top"
+                  className={`text-2xl sm:text-3xl lg:text-4xl font-cinzel font-bold tracking-[0.03em] leading-tight justify-center lg:justify-start ${
+                    isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+                  }`}
+                  as="h1"
+                />
+              </div>
 
               {/* Ultra-Luxury Curved Caramel/Gold Pill CTA Button */}
-              <div className="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
+              <div className="pt-1 flex flex-wrap justify-center lg:justify-start gap-3">
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
                   className={`group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 border overflow-hidden cursor-pointer ${
