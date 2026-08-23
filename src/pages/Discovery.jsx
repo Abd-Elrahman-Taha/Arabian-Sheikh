@@ -214,13 +214,13 @@ export default function Discovery() {
               Your Olfactory Signature Match
             </div>
 
-            <div className={`aspect-[3/4] max-h-72 mx-auto flex items-center justify-center p-4 border rounded-2xl ${
+            <div className={`aspect-[3/4] max-h-72 mx-auto flex items-center justify-center p-0 overflow-hidden border rounded-2xl ${
               isDark ? 'bg-black/50 border-white/10' : 'bg-white/90 border-[#D4AF37]/35 shadow-inner'
             }`}>
               <img
                 src={result.image}
                 alt={result.name}
-                className="max-h-full object-contain filter drop-shadow-2xl"
+                className="w-full h-full object-contain filter drop-shadow-2xl"
               />
             </div>
 

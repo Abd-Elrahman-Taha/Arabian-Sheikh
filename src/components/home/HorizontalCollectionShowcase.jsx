@@ -315,7 +315,7 @@ export default function HorizontalCollectionShowcase({
                   {/* Flacon Visual */}
                   <div
                     onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                    className={`aspect-[4/5] flex items-center justify-center p-2.5 mb-4 border relative overflow-hidden cursor-pointer rounded-xl transition-colors ${
+                    className={`aspect-[4/5] flex items-center justify-center p-0 mb-4 border relative overflow-hidden cursor-pointer rounded-xl transition-colors ${
                       isDark
                         ? 'bg-black/70 border-white/10 group-hover:border-[#D4AF37]/50'
                         : 'bg-white/80 border-[#D4AF37]/30 group-hover:border-[#D4AF37]'
@@ -324,7 +324,7 @@ export default function HorizontalCollectionShowcase({
                     <img
                       src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
                       alt={product.name}
-                      className="h-full max-h-[96%] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.35)] group-hover:scale-110 transition-transform duration-700 pointer-events-none"
+                      className="w-full h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.35)] group-hover:scale-108 transition-transform duration-700 pointer-events-none"
                     />
                   </div>
 

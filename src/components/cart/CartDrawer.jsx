@@ -186,7 +186,7 @@ export default function CartDrawer() {
                   <img
                     src={item.image || '/products/black_diamond_gold.png'}
                     alt={item.name}
-                    className={`w-16 h-20 object-contain p-1 shrink-0 border rounded-xl ${
+                    className={`w-16 h-20 object-contain p-0 shrink-0 border rounded-xl overflow-hidden ${
                       isDark ? 'bg-black/50 border-white/5' : 'bg-white/80 border-[#D4AF37]/30'
                     }`}
                   />
@@ -273,7 +273,7 @@ export default function CartDrawer() {
                         <img
                           src={rec.cutoutImage || rec.images?.[0] || '/products/black_diamond_gold.png'}
                           alt={rec.name}
-                          className={`w-10 h-12 object-contain p-0.5 border rounded-lg ${
+                          className={`w-10 h-12 object-contain p-0 shrink-0 border rounded-lg overflow-hidden ${
                             isDark ? 'bg-black/40 border-white/5' : 'bg-white border-[#D4AF37]/25'
                           }`}
                         />

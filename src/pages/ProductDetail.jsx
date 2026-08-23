@@ -193,7 +193,7 @@ export default function ProductDetail() {
           <div className="lg:col-span-6 space-y-4">
             
             {/* Main Stage */}
-            <div className={`relative aspect-[3/4] p-8 sm:p-12 flex items-center justify-center overflow-hidden rounded-2xl border transition-all duration-500 ${
+            <div className={`relative aspect-[3/4] p-0 flex items-center justify-center overflow-hidden rounded-2xl border transition-all duration-500 ${
               isDark
                 ? 'bg-gradient-to-b from-[#0B0A08] via-[#0B0A08] to-[#0B0A08] border-[#D4AF37]/25 shadow-2xl'
                 : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 shadow-[0_20px_50px_rgba(212,175,55,0.22)]'
@@ -231,7 +231,7 @@ export default function ProductDetail() {
               <img
                 src={galleryImages[selectedImage] || galleryImages[0]}
                 alt={displayName}
-                className="max-h-[90%] w-auto object-contain filter drop-shadow-[0_25px_40px_rgba(0,0,0,0.4)] hover:scale-105 transition-transform duration-700 select-none"
+                className="w-full h-full object-contain filter drop-shadow-[0_25px_40px_rgba(0,0,0,0.4)] hover:scale-105 transition-transform duration-700 select-none"
               />
 
               {/* Ambient ground drop shadow (hidden on phones in light mode) */}
@@ -247,7 +247,7 @@ export default function ProductDetail() {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`h-20 w-20 flex-shrink-0 border p-2 flex items-center justify-center rounded-xl transition-all ${
+                    className={`h-20 w-20 flex-shrink-0 border p-0 overflow-hidden flex items-center justify-center rounded-xl transition-all ${
                       selectedImage === idx
                         ? 'border-[#D4AF37] bg-[#D4AF37]/25 ring-2 ring-[#D4AF37]/60'
                         : isDark
@@ -255,7 +255,7 @@ export default function ProductDetail() {
                         : 'bg-gradient-to-br from-[#FFFDF8] to-[#FAF1DF] border-[#D4AF37]/35 hover:border-[#D4AF37]'
                     }`}
                   >
-                    <img src={img} alt="Thumbnail" className="max-h-full max-w-full object-contain" />
+                    <img src={img} alt="Thumbnail" className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
