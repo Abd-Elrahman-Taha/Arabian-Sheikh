@@ -38,9 +38,23 @@ export default function ArabianIntro({ onComplete }) {
       setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener('resize', checkMobile, { passive: true });
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Force immediate video play on mount (0ms buffer delay)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {});
+      }
+    }
+  }, [isMobile]);
 
   // Motion reduction check
   useEffect(() => {
@@ -198,10 +212,17 @@ export default function ArabianIntro({ onComplete }) {
           muted
           playsInline
           preload="auto"
+          disablePictureInPicture
+          disableRemotePlayback
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleVideoEnded}
+          onLoadedData={() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(() => {});
+            }
+          }}
           onError={() => triggerLogoTransition()}
-          className="w-full h-full object-cover filter brightness-100"
+          className="w-full h-full object-cover filter brightness-100 will-change-transform transform-gpu"
         />
         {/* Soft Dark Vignette on Video */}
         <div className="absolute inset-0 bg-radial-vignette opacity-50 pointer-events-none" />
