@@ -27,7 +27,7 @@ export default function Hero3DFlaconScene({
 
   const flaconImages = (products && products.length > 0)
     ? products.map(p => p.image || p.cutoutImage)
-    : ['/products/stallion_royal_flacon.png'];
+    : ['/products/stallion_royal_flacon.webp'];
 
   // Pre-cache textures at module level
   flaconImages.forEach(src => {

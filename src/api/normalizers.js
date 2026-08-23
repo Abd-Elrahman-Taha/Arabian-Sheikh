@@ -70,8 +70,8 @@ export function normalizeProduct(raw) {
     longevity: p.longevity || '14+ Hours',
     sillage: p.sillage || 'Regal & Intimate',
     concentration: p.concentration || '35% Pure Extrait Oil',
-    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : ['/products/luxury_designs/07_arabian_gold.png']),
-    cutoutImage: p.cutoutImage || p.cutout_image || (p.images ? p.images[0] : '/products/luxury_designs/07_arabian_gold.png'),
+    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : ['/products/luxury_designs/07_arabian_gold.webp']),
+    cutoutImage: p.cutoutImage || p.cutout_image || (p.images ? p.images[0] : '/products/luxury_designs/07_arabian_gold.webp'),
     badge: p.badge || null,
     reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview) : []
   };

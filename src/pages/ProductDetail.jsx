@@ -119,7 +119,7 @@ export default function ProductDetail() {
 
   const isSaved = isInWishlist(product.id);
   const isOutOfStock = product.status === 'OUT_OF_STOCK' || product.stock === 0;
-  const galleryImages = product.images && product.images.length > 0 ? product.images : ['/products/luxury_designs/07_arabian_gold.png'];
+  const galleryImages = product.images && product.images.length > 0 ? product.images : ['/products/luxury_designs/07_arabian_gold.webp'];
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -673,7 +673,7 @@ export default function ProductDetail() {
                     >
                       <div className="w-24 sm:w-28 h-28 sm:h-32 bg-black/60 border border-[#D4AF37]/30 group-hover:border-[#D4AF37] p-2 flex items-center justify-center transition-colors">
                         <img
-                          src={relatedProducts[0].cutoutImage || relatedProducts[0].images?.[0] || '/products/luxury_designs/07_arabian_gold.png'}
+                          src={relatedProducts[0].cutoutImage || relatedProducts[0].images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
                           alt={relatedProducts[0].name}
                           className="max-h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform"
                         />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
@@ -12,6 +12,7 @@ export default function ProductCard({ product, onCompare }) {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist, heartAnimatedId } = useWishlist();
   const { isDark } = useTheme();
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   if (!product) return null;
 
@@ -38,6 +39,12 @@ export default function ProductCard({ product, onCompare }) {
     toggleWishlist(product);
   };
 
+  const handleCardClick = () => {
+    navigate(`/product/${product.slug || product.id}`);
+  };
+
+  const imageSrc = product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';
+
   // Tier color styling
   const tierBadges = {
     Luxury: 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]',
@@ -47,10 +54,10 @@ export default function ProductCard({ product, onCompare }) {
 
   return (
     <div
-      onClick={() => navigate(`/product/${product.slug || product.id}`)}
-      className={`group cursor-pointer relative border transition-all duration-500 flex flex-col justify-between overflow-hidden rounded-2xl hover:-translate-y-1 ${
+      onClick={handleCardClick}
+      className={`group relative flex flex-col justify-between border cursor-pointer transition-all duration-500 rounded-2xl overflow-hidden hover:-translate-y-1.5 ${
         isDark
-          ? 'bg-[#0B0A08]/80 border-[#D4AF37]/15 hover:border-[#D4AF37]/60 shadow-lg hover:shadow-[0_15px_35px_rgba(0,0,0,0.85)]'
+          ? 'bg-[#0B0A08]/95 border-[#D4AF37]/25 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_40px_rgba(212,175,55,0.18)]'
           : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)]'
       }`}
     >
@@ -94,11 +101,18 @@ export default function ProductCard({ product, onCompare }) {
       <div className={`relative aspect-[3/4] overflow-hidden flex items-center justify-center ${
         isDark ? 'bg-[#0B0A08]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#FAF1DF]'
       }`}>
+        {!imgLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/5 via-[#D4AF37]/15 to-[#D4AF37]/5 animate-pulse" />
+        )}
         <img
-          src={product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.png'}
+          src={imageSrc}
           alt={displayName}
-          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+          onLoad={() => setImgLoaded(true)}
+          decoding="async"
           loading="lazy"
+          className={`w-full h-full object-cover group-hover:scale-108 transition-all duration-500 ease-out ${
+            imgLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-98'
+          }`}
         />
 
         {/* Ambient subtle vignette */}

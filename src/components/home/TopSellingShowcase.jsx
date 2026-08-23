@@ -208,13 +208,14 @@ export default function TopSellingShowcase({ products = [] }) {
                 {/* Product Visual */}
                 <div
                   onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                  className="aspect-[4/5] relative rounded-xl overflow-hidden cursor-pointer mb-4 border border-[#D4AF37]/20"
+                  className="aspect-[4/5] relative rounded-xl overflow-hidden cursor-pointer mb-4 border border-[#D4AF37]/20 bg-black/20"
                 >
                   <img
                     src={imageSrc}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>

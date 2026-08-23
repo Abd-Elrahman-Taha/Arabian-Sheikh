@@ -77,7 +77,7 @@ export default function Home() {
       spanishTagline: 'Frasco Esculpido en 3D de Alta Perfumería • 35% Extrait Puro',
       notes: 'Wild Assamese Oud • Taif Royal Rose • Ambergris • Kashmiri Saffron',
       color: '#D4AF37',
-      image: '/products/stallion_royal_flacon.png'
+      image: '/products/stallion_royal_flacon.webp'
     }
   ];
 
@@ -765,7 +765,7 @@ export default function Home() {
                       {heroFlacons.map((f) => (
                         <td key={f.id} className="p-4 text-center">
                           <img
-                            src={f.tier === 'Luxury' ? '/products/luxury_designs/07_arabian_gold.png' : f.tier === 'Royal' ? '/products/millionaire_black.jpg?v=6' : '/products/ana_sukkar_white.jpg?v=6'}
+                            src={f.tier === 'Luxury' ? '/products/luxury_designs/07_arabian_gold.webp' : f.tier === 'Royal' ? '/products/millionaire_black.webp' : '/products/ana_sukkar_white.webp'}
                             alt={f.name}
                             className="h-28 mx-auto object-contain filter drop-shadow-lg"
                           />
