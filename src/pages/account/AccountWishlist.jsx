@@ -43,7 +43,7 @@ export default function AccountWishlist() {
         {wishlist.map((item) => (
           <div key={item.id} className="p-4 bg-[#21130D] border border-[#3A2116]/60 flex flex-col justify-between space-y-3">
             <img
-              src={item.cutoutImage || item.images?.[0] || '/products/black_diamond_gold.png'}
+              src={item.cutoutImage || item.images?.[0] || '/products/luxury_designs/07_arabian_gold.png'}
               alt={item.name}
               className="h-32 mx-auto object-contain"
             />

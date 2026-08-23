@@ -95,7 +95,7 @@ export default function ProductCard({ product, onCompare }) {
         isDark ? 'bg-[#0B0A08]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#FAF1DF]'
       }`}>
         <img
-          src={product.originalImage || product.images?.[0] || product.cutoutImage || '/products/black_diamond_gold.png'}
+          src={product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.png'}
           alt={displayName}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
           loading="lazy"

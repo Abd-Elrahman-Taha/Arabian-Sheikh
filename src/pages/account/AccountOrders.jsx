@@ -11,8 +11,8 @@ export default function AccountOrders() {
       status: 'DELIVERED',
       tracking: 'DHL-EXP-990142851',
       items: [
-        { name: 'Black Diamond Flacon (Luxury €50)', qty: 2, price: 50 },
-        { name: 'Palace Keepsake Gift Wrap', qty: 1, price: 20 }
+        { name: 'Arabian Gold Sovereign Flacon (Luxury €55)', qty: 2, price: 55 },
+        { name: 'Palace Keepsake Gift Wrap', qty: 1, price: 10 }
       ]
     },
     {

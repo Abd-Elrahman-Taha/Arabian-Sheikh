@@ -148,7 +148,7 @@ export default function AdminProducts() {
                 <tr key={p.id} className="hover:bg-white/2 transition-colors">
                   <td className="p-4">
                     <img
-                      src={p.cutoutImage || p.images?.[0] || '/products/black_diamond_gold.png'}
+                      src={p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.png'}
                       alt={p.name}
                       className="w-10 h-14 object-contain bg-black/50 p-1 border border-white/10"
                     />

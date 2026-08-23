@@ -204,7 +204,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
                     }`}
                   >
                     <img
-                      src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
+                      src={product.cutoutImage || product.images?.[0] || '/products/luxury_designs/07_arabian_gold.png'}
                       alt={product.name}
                       className={`w-16 h-20 object-contain p-1 border rounded-lg shrink-0 ${
                         isDark ? 'bg-black/40 border-white/10' : 'bg-[#FAF7F2] border-black/10'

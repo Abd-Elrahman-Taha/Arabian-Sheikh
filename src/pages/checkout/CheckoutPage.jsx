@@ -373,7 +373,7 @@ export default function CheckoutPage() {
               {items.map((item, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 text-xs pb-3 border-b border-white/5">
                   <img
-                    src={item.image || '/products/black_diamond_gold.png'}
+                    src={item.image || '/products/luxury_designs/07_arabian_gold.png'}
                     alt={item.name}
                     className="w-12 h-14 object-contain bg-black/40 p-1 border border-white/10"
                   />

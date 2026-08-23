@@ -32,7 +32,7 @@ export default function AdminProductEdit() {
     stock: 30,
     longevity: '12+ Hours',
     sillage: 'Strong & Sophisticated',
-    images: '/products/black_diamond_gold.png',
+    images: '/products/luxury_designs/07_arabian_gold.png',
     featured: true,
     isBestSeller: false,
     status: 'ACTIVE'
@@ -85,7 +85,7 @@ export default function AdminProductEdit() {
           base: baseArr
         },
         images: imagesArr,
-        cutoutImage: imagesArr[0] || '/products/black_diamond_gold.png'
+        cutoutImage: imagesArr[0] || '/products/luxury_designs/07_arabian_gold.png'
       };
 
       if (isNew) {
@@ -258,7 +258,7 @@ export default function AdminProductEdit() {
             type="text"
             value={formData.images}
             onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-            placeholder="/products/black_diamond_gold.png, /products/black_diamond_gold.jpg"
+            placeholder="/products/luxury_designs/07_arabian_gold.png, /products/luxury_designs/07_arabian_gold.png"
             className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] font-mono text-xs focus:border-[#D4AF37] focus:outline-none"
           />
           <p className="text-[10px] text-[#D8BE99]">

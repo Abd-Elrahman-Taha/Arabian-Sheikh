@@ -10,6 +10,8 @@ import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
 import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
 import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
+import TopSellingShowcase from '../components/home/TopSellingShowcase';
+import OffersDiscountSection from '../components/home/OffersDiscountSection';
 import BlurText from '../components/common/BlurText';
 import HeroRulerPagination from '../components/home/HeroRulerPagination';
 import {
@@ -47,7 +49,7 @@ export default function Home() {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { isDark } = useTheme();
 
-  // 3D Hero active flacon (0: Luxury Black Diamond, 1: Royal Millionaire, 2: Classic Ana Sukkar)
+  // 3D Hero active flacon (0: Luxury Arabian Gold, 1: Royal Millionaire, 2: Classic Ana Sukkar)
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [allProducts, setAllProducts] = useState([]);
   const [collections, setCollections] = useState([]);
@@ -63,7 +65,7 @@ export default function Home() {
   const heroFlacons = [
     {
       id: 'as-royal-arabian-stallion',
-      slug: 'black-diamond-luxury',
+      slug: 'arabian-gold-luxury',
       tier: 'Imperial Reserve',
       name: 'Arabian Stallion',
       arabicName: 'الفارس العربي',
@@ -85,13 +87,24 @@ export default function Home() {
         const prods = await productService.getAllProducts();
         setAllProducts(prods);
 
-        // Group products into curated Collections
+        // Group products into rich curated Collections
         const imperialTiersProducts = prods.filter(p => p.tier === 'Luxury' || p.tier === 'Royal' || p.tier === 'Classic');
         const oudAmberProducts = prods.filter(p => 
           p.fragranceFamily?.toLowerCase().includes('woody') || 
           p.fragranceFamily?.toLowerCase().includes('amber') || 
           p.scentFamily?.toLowerCase().includes('oriental') ||
           p.topNotes?.some(n => n.toLowerCase().includes('oud') || n.toLowerCase().includes('amber'))
+        );
+        const floralGourmandProducts = prods.filter(p =>
+          p.fragranceFamily?.toLowerCase().includes('floral') ||
+          p.scentFamily?.toLowerCase().includes('gourmand') ||
+          p.scentFamily?.toLowerCase().includes('rose') ||
+          p.scentFamily?.toLowerCase().includes('sweet')
+        );
+        const freshCitrusProducts = prods.filter(p =>
+          p.fragranceFamily?.toLowerCase().includes('fresh') ||
+          p.scentFamily?.toLowerCase().includes('citrus') ||
+          p.scentFamily?.toLowerCase().includes('green')
         );
         const bakhoorProducts = prods.filter(p => p.category === 'bakhoor' || p.scentFamily?.toLowerCase().includes('incense'));
         const oilsProducts = prods.filter(p => p.category === 'oils' || p.size?.includes('12 ml') || p.name?.toLowerCase().includes('oil') || p.name?.toLowerCase().includes('attar'));
@@ -109,7 +122,7 @@ export default function Home() {
             spanishDescription: 'Nuestros extraits emblemáticos embotellados en frascos numerados de 60 ml.',
             bulgarianDescription: 'Нашите емблематични екстракти в номерирани флакони от 60 мл.',
             accentColor: '#D4AF37',
-            products: imperialTiersProducts.length > 0 ? imperialTiersProducts : prods.slice(0, 3)
+            products: imperialTiersProducts.length > 0 ? imperialTiersProducts : prods
           },
           {
             id: 'col-oud-amber',
@@ -122,11 +135,37 @@ export default function Home() {
             spanishDescription: 'Destilaciones resinosas de madera de agar rara de Assam y Camboya.',
             bulgarianDescription: 'Смолисти дестилации от рядък агарово дърво от Асам и Камбоджа.',
             accentColor: '#D4AF37',
-            products: oudAmberProducts.length > 0 ? oudAmberProducts : prods.slice(0, 4)
+            products: oudAmberProducts.length > 0 ? oudAmberProducts : prods
+          },
+          {
+            id: 'col-floral-gourmand',
+            number: 3,
+            title: 'Floral & Gourmand Delights',
+            spanishTitle: 'Delicias Florales y Gourmand',
+            bulgarianTitle: 'Цветни и Гурме Изкушения',
+            tag: 'TURKISH ROSES & VANILLA',
+            description: 'Intoxicating Damask roses, Sicilian pistachios, candied fruits, and royal vanilla.',
+            spanishDescription: 'Rosas de Damasco, pistacho siciliano y vainilla real.',
+            bulgarianDescription: 'Дамаски рози, сицилиански шамфъстък и кралска ванилия.',
+            accentColor: '#F2D675',
+            products: floralGourmandProducts.length > 0 ? floralGourmandProducts : prods
+          },
+          {
+            id: 'col-fresh-citrus',
+            number: 4,
+            title: 'Fresh & Citrus Sovereigns',
+            spanishTitle: 'Frescura y Cítricos Nobles',
+            bulgarianTitle: 'Свежи и Цитрусови Аромати',
+            tag: 'MEDITERRANEAN CITRUS & WOODS',
+            description: 'Calabrian bergamot, fresh ginger, ocean salt breeze, and crisp mountain woods.',
+            spanishDescription: 'Bergamota de Calabria, jengibre fresco y maderas nobles.',
+            bulgarianDescription: 'Калабрийски бергамот, пресен джинджифил и свежи гори.',
+            accentColor: '#D8BE99',
+            products: freshCitrusProducts.length > 0 ? freshCitrusProducts : prods
           },
           {
             id: 'col-bakhoor',
-            number: 3,
+            number: 5,
             title: 'Sacred Bakhoor & Incense',
             spanishTitle: 'Bakhoor e Incienso Sagrado',
             bulgarianTitle: 'Бахур и Свещен Тамян',
@@ -135,11 +174,11 @@ export default function Home() {
             spanishDescription: 'Virutas naturales infusionadas a mano con rosa de Taif y resinas de ámbar.',
             bulgarianDescription: 'Напоени дървесни частици с роза Таиф и кехлибар.',
             accentColor: '#F2D675',
-            products: bakhoorProducts.length > 0 ? bakhoorProducts : prods.slice(1, 4)
+            products: bakhoorProducts.length > 0 ? bakhoorProducts : prods
           },
           {
             id: 'col-pure-oils',
-            number: 4,
+            number: 6,
             title: 'Concentrated Attars & Oils',
             spanishTitle: 'Attars y Aceites Puros',
             bulgarianTitle: 'Чисти Масла и Атари',
@@ -148,11 +187,11 @@ export default function Home() {
             spanishDescription: 'Aceites puros concentrados sin alcohol con estela continua de 24+ horas.',
             bulgarianDescription: '100% чисти концентрирани масла без алкохол с трайност 24+ часа.',
             accentColor: '#D8BE99',
-            products: oilsProducts.length > 0 ? oilsProducts : prods.slice(0, 3)
+            products: oilsProducts.length > 0 ? oilsProducts : prods
           },
           {
             id: 'col-palace-bundles',
-            number: 5,
+            number: 7,
             title: 'Palace Coffrets & Sets',
             spanishTitle: 'Estuches Exclusivos',
             bulgarianTitle: 'Дворцови Комплекти',
@@ -161,7 +200,7 @@ export default function Home() {
             spanishDescription: 'Presentaciones exclusivas en estuches lacados de terciopelo.',
             bulgarianDescription: 'Специални сетове в лакирани кутии с кадифе.',
             accentColor: '#D4AF37',
-            products: bundlesProducts.length > 0 ? bundlesProducts : prods.slice(0, 3)
+            products: bundlesProducts.length > 0 ? bundlesProducts : prods
           }
         ];
 
@@ -469,13 +508,18 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          2. CURATED COLLECTIONS EXPERIENCE
+          2. TOP SELLING / BEST SELLERS SHOWCASE
+          ========================================================================= */}
+      <TopSellingShowcase products={allProducts} />
+
+      {/* =========================================================================
+          3. CURATED COLLECTIONS EXPERIENCE
           ========================================================================= */}
       <div className="relative overflow-hidden">
         <div className="relative z-10">
 
           {/* =========================================================================
-              2. CURATED COLLECTIONS EXPERIENCE (VERTICAL STACK + HORIZONTAL PRODUCTS)
+              CURATED COLLECTIONS EXPERIENCE (VERTICAL STACK + HORIZONTAL PRODUCTS)
               ========================================================================= */}
           <div ref={firstCollectionRef} className="space-y-0">
             {collections.map((col, idx) => (
@@ -489,7 +533,12 @@ export default function Home() {
           </div>
 
           {/* =========================================================================
-              3. CINEMATIC VIDEO: SCENT AS LIVING MEMORY
+              4. EXCLUSIVE PALACE OFFERS & DISCOUNTS SECTION
+              ========================================================================= */}
+          <OffersDiscountSection products={allProducts} />
+
+          {/* =========================================================================
+              5. CINEMATIC VIDEO: SCENT AS LIVING MEMORY
               ========================================================================= */}
           <PalaceMemoryVideo
             videoSrc="/intro.mp4"
@@ -677,7 +726,7 @@ export default function Home() {
                       {heroFlacons.map((f) => (
                         <td key={f.id} className="p-4 text-center">
                           <img
-                            src={f.tier === 'Luxury' ? '/products/black_diamond_gold.png?v=5' : f.tier === 'Royal' ? '/products/millionaire_black.png?v=5' : '/products/ana_sukkar_white.png?v=5'}
+                            src={f.tier === 'Luxury' ? '/products/luxury_designs/07_arabian_gold.png' : f.tier === 'Royal' ? '/products/millionaire_black.jpg?v=6' : '/products/ana_sukkar_white.jpg?v=6'}
                             alt={f.name}
                             className="h-28 mx-auto object-contain filter drop-shadow-lg"
                           />

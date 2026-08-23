@@ -1,0 +1,254 @@
+import React, { useState } from 'react';
+import { useRouter, Link } from '../../router/RouterContext';
+import { useTranslation } from '../../i18n/LanguageContext';
+import { useCart } from '../../context/CartContext';
+import { useTheme } from '../../context/ThemeContext';
+import {
+  Tag,
+  Percent,
+  Copy,
+  Check,
+  Sparkles,
+  ShoppingBag,
+  ArrowRight,
+  Gift,
+  Clock
+} from 'lucide-react';
+import BlurText from '../common/BlurText';
+
+export default function OffersDiscountSection({ products = [] }) {
+  const { navigate } = useRouter();
+  const { language } = useTranslation();
+  const { addToCart } = useCart();
+  const { isDark } = useTheme();
+
+  const [copiedCode, setCopiedCode] = useState(null);
+
+  // Bundles or discounted items
+  const offerBundles = products.filter(p => p.isOffer || p.category === 'bundles').slice(0, 3);
+
+  const promoCodes = [
+    {
+      code: 'SHEIKH10',
+      discount: '10% OFF',
+      arabicDiscount: 'خصم 10%',
+      minSpend: '€50',
+      desc: 'Applied instantly on all sovereign orders exceeding €50.',
+      arabicDesc: 'يطبق فوراً على كافة الطلبات التي تتجاوز 50 يورو.'
+    },
+    {
+      code: 'ROYALTY20',
+      discount: '20% OFF',
+      arabicDiscount: 'خصم 20%',
+      minSpend: '€100',
+      desc: 'Exclusive VIP royal discount for grand orders over €100.',
+      arabicDesc: 'خصم ملكي خاص للطلبات الكبيرة التي تتجاوز 100 يورو.'
+    }
+  ];
+
+  const handleCopy = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 3000);
+  };
+
+  return (
+    <section className={`py-20 sm:py-28 relative overflow-hidden transition-colors duration-500 border-t border-[#D4AF37]/20 ${
+      isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'
+    }`}>
+      {/* Background Ambient Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4AF37]/10 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10 space-y-16">
+        
+        {/* Section Title */}
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
+            <Percent className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>{language === 'ar' ? 'العروض والتخفيضات الحصرية' : 'EXCLUSIVE PALACE OFFERS & DISCOUNTS'}</span>
+          </div>
+
+          <BlurText
+            text={language === 'ar' ? 'عروض القصر الملكي والمجموعات الحصرية' : 'ROYAL COFFRETS & VOUCHER CODES'}
+            delay={50}
+            animateBy="words"
+            direction="top"
+            className={`text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold drop-shadow-md justify-center ${
+              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+            }`}
+            as="h2"
+          />
+
+          <p className={`text-xs sm:text-sm font-medium leading-relaxed max-w-2xl mx-auto ${
+            isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'
+          }`}>
+            {language === 'ar'
+              ? 'استمتع بمجموعات الهدايا الفاخرة المعبأة في صناديق مخملية مذهبة مع أكواد خصم حصرية لفترة محدودة.'
+              : 'Indulge in limited-edition presentation coffrets, gift bundles, and royal voucher codes for an extraordinary olfactory experience.'}
+          </p>
+        </div>
+
+        {/* 1. VOUCHER CARDS GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {promoCodes.map((promo) => (
+            <div
+              key={promo.code}
+              className={`p-6 sm:p-7 rounded-2xl border relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all duration-300 ${
+                isDark
+                  ? 'bg-gradient-to-r from-[#140D07] via-[#0B0A08] to-[#140D07] border-[#D4AF37]/40 shadow-xl'
+                  : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_10px_25px_rgba(212,175,55,0.2)]'
+              }`}
+            >
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-md">
+                    {language === 'ar' ? promo.arabicDiscount : promo.discount}
+                  </span>
+                  <span className={`text-xs font-mono ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                    Min. {promo.minSpend}
+                  </span>
+                </div>
+                <h4 className={`font-cinzel text-lg font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
+                  {promo.code}
+                </h4>
+                <p className={`text-xs ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                  {language === 'ar' ? promo.arabicDesc : promo.desc}
+                </p>
+              </div>
+
+              {/* Interactive Copy Button */}
+              <button
+                onClick={() => handleCopy(promo.code)}
+                className={`px-5 py-3 rounded-xl border flex items-center justify-center gap-2 font-cinzel font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                  copiedCode === promo.code
+                    ? 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDark
+                    ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black'
+                    : 'bg-white border-[#D4AF37] text-[#120B06] hover:bg-[#D4AF37] hover:text-black shadow-md'
+                }`}
+              >
+                {copiedCode === promo.code ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'تم النسخ!' : 'Copied!'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'نسخ الكود' : 'Copy Code'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* 2. EXCLUSIVE FEATURED BUNDLE OFFERS */}
+        {offerBundles.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gift className="w-4 h-4 text-[#D4AF37]" />
+                <h3 className={`font-cinzel text-xl sm:text-2xl font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
+                  {language === 'ar' ? 'باقات الهدايا الملكية المخفضة' : 'Discounted Sovereign Gift Coffrets'}
+                </h3>
+              </div>
+
+              <Link
+                to="/shop?category=bundles"
+                className="text-xs font-cinzel font-bold text-[#D4AF37] hover:underline flex items-center gap-1"
+              >
+                <span>{language === 'ar' ? 'عرض الكل' : 'View All Bundles'}</span>
+                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+              {offerBundles.map((bundle) => {
+                const imageSrc = bundle.originalImage || bundle.images?.[0] || bundle.cutoutImage;
+
+                return (
+                  <div
+                    key={bundle.id}
+                    className={`group rounded-2xl border p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-2 ${
+                      isDark
+                        ? 'bg-[#0B0A08]/90 border-[#D4AF37]/35 hover:border-[#D4AF37] shadow-xl'
+                        : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_12px_30px_rgba(212,175,55,0.22)]'
+                    }`}
+                  >
+                    {/* Offer Tag Badge */}
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <span className="px-3 py-1 rounded-full bg-red-800/90 text-white font-cinzel font-bold text-[10px] uppercase tracking-widest shadow-md">
+                        {bundle.offerLabel || '15% OFF SPECIAL'}
+                      </span>
+                      <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                        <Clock className="w-3 h-3 text-[#D4AF37]" />
+                        <span>Limited Edition</span>
+                      </span>
+                    </div>
+
+                    {/* Image */}
+                    <div
+                      onClick={() => navigate(`/product/${bundle.slug || bundle.id}`)}
+                      className="aspect-[4/3] rounded-xl overflow-hidden cursor-pointer mb-5 border border-[#D4AF37]/20 relative"
+                    >
+                      <img
+                        src={imageSrc}
+                        alt={bundle.name}
+                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                        loading="lazy"
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-4">
+                      <div>
+                        <h4
+                          onClick={() => navigate(`/product/${bundle.slug || bundle.id}`)}
+                          className={`font-cinzel text-lg font-bold cursor-pointer transition-colors ${
+                            isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#120B06] group-hover:text-[#5A3517]'
+                          }`}
+                        >
+                          {language === 'ar' ? bundle.arabicName || bundle.name : bundle.name}
+                        </h4>
+                        <p className={`text-xs line-clamp-2 mt-1 leading-relaxed ${
+                          isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                        }`}>
+                          {bundle.tagline || bundle.description}
+                        </p>
+                      </div>
+
+                      {/* Pricing and Action */}
+                      <div className="pt-3 border-t border-black/10 dark:border-white/10 flex items-center justify-between gap-3">
+                        <div>
+                          <span className="font-cinzel text-xl font-bold text-[#D4AF37]">
+                            €{bundle.price}
+                          </span>
+                          {bundle.originalPrice && (
+                            <span className="text-xs line-through ml-2 text-gray-400 font-mono">
+                              €{bundle.originalPrice}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => addToCart(bundle, bundle.size || 'Full Set', 1)}
+                          className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full transition-all duration-300 flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>{language === 'ar' ? 'اقتنِ العرض' : 'Claim Offer'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </section>
+  );
+}

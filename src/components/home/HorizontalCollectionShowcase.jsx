@@ -322,7 +322,7 @@ export default function HorizontalCollectionShowcase({
                     }`}
                   >
                     <img
-                      src={product.cutoutImage || product.images?.[0] || '/products/black_diamond_gold.png'}
+                      src={product.cutoutImage || product.images?.[0] || '/products/luxury_designs/07_arabian_gold.png'}
                       alt={product.name}
                       className="w-full h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.35)] group-hover:scale-108 transition-transform duration-700 pointer-events-none"
                     />

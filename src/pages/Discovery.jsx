@@ -38,7 +38,7 @@ export default function Discovery() {
       title: 'Which olfactory family speaks to your senses?',
       key: 'family',
       options: [
-        { id: 'amber', label: 'Fossilized Amber & Precious Resins', match: 'Black Diamond' },
+        { id: 'amber', label: 'Fossilized Amber & Precious Resins', match: 'Arabian Gold Sovereign' },
         { id: 'woody', label: 'Smoky Leather & Aged Agarwood', match: 'Millionaire' },
         { id: 'floral', label: 'Orange Blossom & Spun Sugar Nectar', match: 'Ana Sukkar' }
       ]
@@ -75,13 +75,13 @@ export default function Discovery() {
       // Calculate match
       if (updated.mood === 'luxury' || updated.family === 'amber') {
         setResult({
-          slug: 'black-diamond-luxury',
-          name: 'Black Diamond',
+          slug: 'arabian-gold-luxury',
+          name: 'Arabian Gold Sovereign',
           tier: 'Luxury Tier',
-          price: 50,
+          price: 55,
           size: '60 ml',
-          image: '/products/black_diamond_gold.png?v=5',
-          reason: 'Matches your desire for pure imperial majesty and unmatched 14+ hour ambergris sillage.'
+          image: '/products/luxury_designs/07_arabian_gold.png',
+          reason: 'Matches your desire for pure imperial majesty, 24K liquid gold, and rare Assamese agarwood.'
         });
       } else if (updated.mood === 'royal' || updated.family === 'woody') {
         setResult({
