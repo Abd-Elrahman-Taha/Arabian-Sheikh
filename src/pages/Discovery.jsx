@@ -91,7 +91,7 @@ export default function Discovery() {
           tier: 'Royal Tier',
           price: 40,
           size: '60 ml',
-          image: '/products/millionaire_black.webp',
+          image: '/products/luxury_designs/17_million_elixir.webp',
           reason: 'Matches your preference for commanding leather, cardamom spice, and dark charisma.'
         });
       } else {
@@ -101,7 +101,7 @@ export default function Discovery() {
           tier: 'Classic Tier',
           price: 30,
           size: '60 ml',
-          image: '/products/ana_sukkar_white.webp',
+          image: '/products/luxury_designs/02_ameerah_al_arab.webp',
           reason: 'Matches your affinity for velvety spun sugar, vanilla comfort, and ethereal florals.'
         });
       }

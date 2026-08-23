@@ -2,7 +2,7 @@ import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 import { productApi } from '../api/product.api';
 import { apiClient } from '../api/client';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v13';
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v14';
 let inMemoryProducts = null;
 
 function preloadProductAssets(products) {

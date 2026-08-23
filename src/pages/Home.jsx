@@ -765,7 +765,7 @@ export default function Home() {
                       {heroFlacons.map((f) => (
                         <td key={f.id} className="p-4 text-center">
                           <img
-                            src={f.tier === 'Luxury' ? '/products/luxury_designs/07_arabian_gold.webp' : f.tier === 'Royal' ? '/products/millionaire_black.webp' : '/products/ana_sukkar_white.webp'}
+                            src={f.tier === 'Luxury' ? '/products/luxury_designs/07_arabian_gold.webp' : f.tier === 'Royal' ? '/products/luxury_designs/17_million_elixir.webp' : '/products/luxury_designs/02_ameerah_al_arab.webp'}
                             alt={f.name}
                             className="h-28 mx-auto object-contain filter drop-shadow-lg"
                           />

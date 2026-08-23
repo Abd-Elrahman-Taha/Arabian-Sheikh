@@ -157,10 +157,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 55,
     "concentration": "35% Extrait de Parfum",
     "images": [
-      "/products/billionaire_gold.webp"
+      "/products/luxury_designs/16_celebrity.webp"
     ],
-    "cutoutImage": "/products/billionaire_gold.webp",
-    "originalImage": "/products/billionaire_gold.webp",
+    "cutoutImage": "/products/luxury_designs/16_celebrity.webp",
+    "originalImage": "/products/luxury_designs/16_celebrity.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -823,10 +823,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 36,
     "concentration": "30% Extrait de Parfum",
     "images": [
-      "/products/queens_secret_gold.webp"
+      "/products/luxury_designs/17_paradise_amour.webp"
     ],
-    "cutoutImage": "/products/queens_secret_gold.webp",
-    "originalImage": "/products/queens_secret_gold.webp",
+    "cutoutImage": "/products/luxury_designs/17_paradise_amour.webp",
+    "originalImage": "/products/luxury_designs/17_paradise_amour.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -899,10 +899,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 42,
     "concentration": "30% Extrait de Parfum",
     "images": [
-      "/products/millionaire_black.webp"
+      "/products/luxury_designs/17_million_elixir.webp"
     ],
-    "cutoutImage": "/products/millionaire_black.webp",
-    "originalImage": "/products/millionaire_black.webp",
+    "cutoutImage": "/products/luxury_designs/17_million_elixir.webp",
+    "originalImage": "/products/luxury_designs/17_million_elixir.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -974,10 +974,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 28,
     "concentration": "30% Extrait de Parfum",
     "images": [
-      "/products/sheikh_supreme_white.webp"
+      "/products/luxury_designs/03_immensity.webp"
     ],
-    "cutoutImage": "/products/sheikh_supreme_white.webp",
-    "originalImage": "/products/sheikh_supreme_white.webp",
+    "cutoutImage": "/products/luxury_designs/03_immensity.webp",
+    "originalImage": "/products/luxury_designs/03_immensity.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -1641,10 +1641,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 18,
     "concentration": "28% Extrait de Parfum",
     "images": [
-      "/products/euphoria_nights_white.webp"
+      "/products/luxury_designs/18_midnight_mystique.webp"
     ],
-    "cutoutImage": "/products/euphoria_nights_white.webp",
-    "originalImage": "/products/euphoria_nights_white.webp",
+    "cutoutImage": "/products/luxury_designs/18_midnight_mystique.webp",
+    "originalImage": "/products/luxury_designs/18_midnight_mystique.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -1864,10 +1864,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 29,
     "concentration": "25% Eau de Parfum Intense",
     "images": [
-      "/products/ana_sukkar_white.webp"
+      "/products/luxury_designs/02_ameerah_al_arab.webp"
     ],
-    "cutoutImage": "/products/ana_sukkar_white.webp",
-    "originalImage": "/products/ana_sukkar_white.webp",
+    "cutoutImage": "/products/luxury_designs/02_ameerah_al_arab.webp",
+    "originalImage": "/products/luxury_designs/02_ameerah_al_arab.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -1938,10 +1938,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 24,
     "concentration": "25% Eau de Parfum Intense",
     "images": [
-      "/products/invictus_prestige_white.webp"
+      "/products/luxury_designs/04_le_beau_parfum.webp"
     ],
-    "cutoutImage": "/products/invictus_prestige_white.webp",
-    "originalImage": "/products/invictus_prestige_white.webp",
+    "cutoutImage": "/products/luxury_designs/04_le_beau_parfum.webp",
+    "originalImage": "/products/luxury_designs/04_le_beau_parfum.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -2012,10 +2012,10 @@ export const INITIAL_PRODUCTS = [
     "reviewsCount": 31,
     "concentration": "25% Eau de Parfum Intense",
     "images": [
-      "/products/red_poison_white.webp"
+      "/products/luxury_designs/14_si_passione.webp"
     ],
-    "cutoutImage": "/products/red_poison_white.webp",
-    "originalImage": "/products/red_poison_white.webp",
+    "cutoutImage": "/products/luxury_designs/14_si_passione.webp",
+    "originalImage": "/products/luxury_designs/14_si_passione.webp",
     "status": "ACTIVE",
     "reviews": []
   },
@@ -3431,14 +3431,14 @@ export const INITIAL_ORDERS = [
         "name": "Billionaire",
         "price": 50,
         "quantity": 1,
-        "image": "/products/billionaire_gold.webp"
+        "image": "/products/luxury_designs/16_celebrity.webp"
       },
       {
         "id": "as-classic-invictus-prestige",
         "name": "Invictus Prestige",
         "price": 35,
         "quantity": 1,
-        "image": "/products/invictus_prestige_white.webp"
+        "image": "/products/luxury_designs/04_le_beau_parfum.webp"
       }
     ],
     "shippingAddress": {
