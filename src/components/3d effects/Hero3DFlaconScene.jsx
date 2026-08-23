@@ -7,6 +7,19 @@ import performanceManager from '../../utils/performanceManager';
 const globalTextureCache = new Map();
 const textureLoader = typeof window !== 'undefined' ? new THREE.TextureLoader() : null;
 
+// ============================================================================
+// 🎛️ FLOATING & SHAKING CONTROLS (Easily customize speed and height here)
+// ============================================================================
+export const FLOAT_SETTINGS = {
+  // Desktop (Three.js WebGL)
+  desktopSpeed: 1.3,     // Higher = faster (e.g. 2.0), Lower = slower (e.g. 0.8)
+  desktopHeight: 0.12,   // Higher = bigger up/down movement, Lower = subtle
+
+  // Mobile / Phones (GSAP)
+  mobileSpeed: 1,      // Seconds per cycle (Lower number = faster, Higher = slower)
+  mobileHeight: 20,      // Pixels to float up and down (e.g. 15 for small, 30 for big)
+};
+
 export default function Hero3DFlaconScene({
   activeProductIndex = 0,
   onSlideChange,
@@ -23,6 +36,7 @@ export default function Hero3DFlaconScene({
   const lightSweepRef = useRef(null);
   const texturesRef = useRef([]);
   const mobileImgRef = useRef(null);
+  const mobileShadowRef = useRef(null);
 
   // Immediate detection for mobile or weak devices (0ms blocking time)
   const isMobileOrWeak = typeof window !== 'undefined' && (
@@ -50,6 +64,36 @@ export default function Hero3DFlaconScene({
       );
     }
   }, [activeProductIndex, useFallback]);
+
+  // Smooth & slow floating levitation loop on mobile/fallback (clearly visible & majestic)
+  useEffect(() => {
+    if (!useFallback || !mobileImgRef.current) return;
+
+    const floatTween = gsap.to(mobileImgRef.current, {
+      y: -FLOAT_SETTINGS.mobileHeight,
+      duration: FLOAT_SETTINGS.mobileSpeed,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+
+    let shadowTween = null;
+    if (mobileShadowRef.current) {
+      shadowTween = gsap.to(mobileShadowRef.current, {
+        scale: 0.84,
+        opacity: isDark ? 0.55 : 0.3,
+        duration: FLOAT_SETTINGS.mobileSpeed,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut'
+      });
+    }
+
+    return () => {
+      floatTween.kill();
+      shadowTween?.kill();
+    };
+  }, [useFallback, isDark]);
 
   // Desktop Three.js WebGL Scene
   useEffect(() => {
@@ -186,10 +230,30 @@ export default function Hero3DFlaconScene({
       }, { threshold: 0.05 });
       observer.observe(container);
 
-      // 8. Render Loop
+      // 8. Render Loop with Smooth & Slow Floating Levitation
+      const clock = new THREE.Clock();
+
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
         if (!isVisible || !performanceManager.isTabVisible) return;
+
+        const elapsedTime = clock.getElapsedTime();
+
+        // Smooth, slow, visible up & down hovering oscillation controlled by FLOAT_SETTINGS
+        if (bottleMeshRef.current) {
+          const floatOffset = Math.sin(elapsedTime * FLOAT_SETTINGS.desktopSpeed) * FLOAT_SETTINGS.desktopHeight;
+          bottleMeshRef.current.position.y = 0.02 + floatOffset;
+        }
+
+        // Dynamic shadow breathing in sync with hover
+        if (shadowMeshRef.current) {
+          const shadowScale = 1 - Math.sin(elapsedTime * FLOAT_SETTINGS.desktopSpeed) * (FLOAT_SETTINGS.desktopHeight);
+          shadowMeshRef.current.scale.set(shadowScale, shadowScale, 1);
+          if (shadowMeshRef.current.material) {
+            shadowMeshRef.current.material.opacity = 0.78 - Math.sin(elapsedTime * FLOAT_SETTINGS.desktopSpeed) * 0.18;
+          }
+        }
+
         renderer.render(scene, camera);
       };
       animate();
@@ -288,8 +352,9 @@ export default function Hero3DFlaconScene({
             fetchpriority="high"
           />
 
-          {/* Contact Shadow beneath bottle base on mobile in dark mode */}
+          {/* Contact Shadow beneath bottle base on mobile */}
           <div
+            ref={mobileShadowRef}
             className={`absolute -bottom-2 inset-x-0 mx-auto w-36 sm:w-48 h-6 rounded-full blur-md pointer-events-none transition-opacity duration-300 ${
               isDark ? 'bg-black/75 opacity-90' : 'bg-[#5A3517]/25 opacity-60'
             }`}

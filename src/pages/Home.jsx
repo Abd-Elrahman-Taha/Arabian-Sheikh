@@ -327,8 +327,8 @@ export default function Home() {
           {/* Centered Product Flacon with Left & Right Flank Specs */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: Product Name and Action Button (Shifted down slightly) */}
-            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-[56%] lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto mt-6 lg:mt-0 pt-2 sm:pt-4">
+            {/* Left Flank: Product Name and Action Button (Shifted down slightly on mobile) */}
+            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-[56%] lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto mt-10 sm:mt-12 lg:mt-0 pt-4 sm:pt-6">
               
               {/* Bold Minimalist Product Title */}
               <BlurText
