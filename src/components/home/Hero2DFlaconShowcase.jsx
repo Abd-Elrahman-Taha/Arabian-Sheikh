@@ -134,15 +134,6 @@ export default function Hero2DFlaconShowcase({
                   loading="eager"
                   fetchPriority="high"
                 />
-
-                {/* Pedestal Contact Shadow */}
-                <div
-                  className={`absolute -bottom-3 inset-x-0 mx-auto rounded-full blur-md pointer-events-none transition-all duration-700 ${
-                    isActive
-                      ? 'w-36 lg:w-44 h-5 bg-black/85 opacity-90'
-                      : 'w-24 lg:w-28 h-4 bg-black/60 opacity-50'
-                  }`}
-                />
               </div>
 
               {/* Flacon Name Tag */}
@@ -222,13 +213,6 @@ export default function Hero2DFlaconShowcase({
                     className="h-[50vh] max-h-[340px] sm:max-h-[400px] w-auto max-w-[85%] object-contain filter drop-shadow-[0_18px_32px_rgba(0,0,0,0.6)] transform-gpu"
                     loading="eager"
                     fetchPriority="high"
-                  />
-
-                  {/* Mobile Contact Shadow */}
-                  <div
-                    className={`absolute -bottom-3 inset-x-0 mx-auto rounded-full blur-md bg-black/80 pointer-events-none transition-all duration-700 ${
-                      isActive ? 'w-36 sm:w-42 h-5 opacity-90' : 'w-24 h-3 opacity-40'
-                    }`}
                   />
                 </div>
               </div>
