@@ -91,7 +91,7 @@ export default function OffersDiscountSection({ products = [] }) {
               className={`p-6 sm:p-7 rounded-2xl border-2 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all duration-300 ${
                 isDark
                   ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 shadow-[0_12px_35px_rgba(212,175,55,0.3)]'
-                  : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 shadow-[0_10px_25px_rgba(212,175,55,0.2)]'
+                  : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
               }`}
             >
               <div className="space-y-2 flex-1">
@@ -99,14 +99,14 @@ export default function OffersDiscountSection({ products = [] }) {
                   <span className="px-3 py-1 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-md">
                     {language === 'ar' ? promo.arabicDiscount : promo.discount}
                   </span>
-                  <span className={`text-xs font-mono font-semibold ${isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'}`}>
+                  <span className={`text-xs font-mono font-semibold ${isDark ? 'text-[#FFF2B2]' : 'text-[#8A6540]'}`}>
                     Min. {promo.minSpend}
                   </span>
                 </div>
-                <h4 className={`font-cinzel text-lg font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'}`}>
+                <h4 className={`font-cinzel text-lg font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#704622]'}`}>
                   {promo.code}
                 </h4>
-                <p className={`text-xs ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                <p className={`text-xs ${isDark ? 'text-[#D8BE99]' : 'text-[#4A2A14]'}`}>
                   {language === 'ar' ? promo.arabicDesc : promo.desc}
                 </p>
               </div>
@@ -119,7 +119,7 @@ export default function OffersDiscountSection({ products = [] }) {
                     ? 'bg-emerald-600 border-emerald-500 text-white'
                     : isDark
                     ? 'bg-[#0B0A08] border-[#D4AF37]/70 text-[#FFF2B2] hover:bg-[#1A1008] hover:text-[#D4AF37]'
-                    : 'bg-white/90 border-[#D4AF37]/60 text-[#120B06] hover:bg-[#D4AF37] hover:text-black shadow-md'
+                    : 'bg-[#704622] hover:bg-[#4A2A14] border-[#A8853B]/50 text-[#FFFDF8] hover:text-[#FFDF8A] shadow-sm'
                 }`}
               >
                 {copiedCode === promo.code ? (
@@ -144,14 +144,14 @@ export default function OffersDiscountSection({ products = [] }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Gift className="w-4 h-4 text-[#D4AF37]" />
-                <h3 className={`font-cinzel text-xl sm:text-2xl font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'}`}>
+                <h3 className={`font-cinzel text-xl sm:text-2xl font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#704622]'}`}>
                   {language === 'ar' ? 'باقات الهدايا الملكية المخفضة' : 'Discounted Sovereign Gift Coffrets'}
                 </h3>
               </div>
 
               <Link
                 to="/shop?category=bundles"
-                className="text-xs font-cinzel font-bold text-[#D4AF37] hover:underline flex items-center gap-1"
+                className="text-xs font-cinzel font-bold text-[#A8853B] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
               >
                 <span>{language === 'ar' ? 'عرض الكل' : 'View All Bundles'}</span>
                 <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
@@ -168,7 +168,7 @@ export default function OffersDiscountSection({ products = [] }) {
                     className={`group rounded-2xl border-2 p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-2 ${
                       isDark
                         ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
-                        : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 hover:border-[#D4AF37] shadow-[0_12px_30px_rgba(212,175,55,0.22)]'
+                        : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_15px_35px_rgba(112,70,34,0.14)]'
                     }`}
                   >
                     {/* Offer Tag Badge */}
@@ -176,8 +176,8 @@ export default function OffersDiscountSection({ products = [] }) {
                       <span className="px-3 py-1 rounded-full bg-red-800/90 text-white font-cinzel font-bold text-[10px] uppercase tracking-widest shadow-md">
                         {bundle.offerLabel || '15% OFF SPECIAL'}
                       </span>
-                      <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'}`}>
-                        <Clock className="w-3 h-3 text-[#D4AF37]" />
+                      <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${isDark ? 'text-[#FFF2B2]' : 'text-[#8A6540]'}`}>
+                        <Clock className="w-3 h-3 text-[#A8853B] dark:text-[#D4AF37]" />
                         <span>Limited Edition</span>
                       </span>
                     </div>
@@ -185,7 +185,9 @@ export default function OffersDiscountSection({ products = [] }) {
                     {/* Image */}
                     <div
                       onClick={() => navigate(`/product/${bundle.slug || bundle.id}`)}
-                      className="aspect-[4/3] rounded-xl overflow-hidden cursor-pointer mb-5 border border-[#D4AF37]/35 relative bg-black/40"
+                      className={`aspect-[4/3] rounded-xl overflow-hidden cursor-pointer mb-5 border relative ${
+                        isDark ? 'border-[#D4AF37]/35 bg-black/40' : 'border-[#A8853B]/25 bg-[#EAE0CC]/30'
+                      }`}
                     >
                       <img
                         src={imageSrc}
@@ -201,22 +203,22 @@ export default function OffersDiscountSection({ products = [] }) {
                         <h4
                           onClick={() => navigate(`/product/${bundle.slug || bundle.id}`)}
                           className={`font-cinzel text-lg font-bold cursor-pointer transition-colors ${
-                            isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#120B06] group-hover:text-[#5A3517]'
+                            isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#704622] group-hover:text-[#A8853B]'
                           }`}
                         >
                           {language === 'ar' ? bundle.arabicName || bundle.name : bundle.name}
                         </h4>
                         <p className={`text-xs line-clamp-2 mt-1 leading-relaxed ${
-                          isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                          isDark ? 'text-[#D8BE99]' : 'text-[#4A2A14]'
                         }`}>
                           {bundle.tagline || bundle.description}
                         </p>
                       </div>
 
                       {/* Pricing and Action */}
-                      <div className="pt-3 border-t border-[#D4AF37]/30 flex items-center justify-between gap-3">
+                      <div className="pt-3 border-t border-[#A8853B]/20 dark:border-[#D4AF37]/30 flex items-center justify-between gap-3">
                         <div>
-                          <span className="font-cinzel text-xl font-bold text-[#D4AF37]">
+                          <span className="font-cinzel text-xl font-bold text-[#A8853B] dark:text-[#D4AF37]">
                             €{bundle.price}
                           </span>
                           {bundle.originalPrice && (

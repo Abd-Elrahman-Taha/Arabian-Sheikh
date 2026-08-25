@@ -48,8 +48,8 @@ export default function ProductCard({ product, onCompare }) {
   // Tier color styling
   const tierBadges = {
     Luxury: 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]',
-    Royal: isDark ? 'bg-[#0B0A08] text-[#F3E6D0] border border-[#D4AF37]/50' : 'bg-[#FAF7F2] text-[#120B06] border border-[#D4AF37]/50',
-    Classic: isDark ? 'bg-[#F3E6D0] text-black border border-[#D4AF37]/40' : 'bg-[#F0E8DC] text-[#120B06] border border-[#D4AF37]/40'
+    Royal: isDark ? 'bg-[#180F08] text-[#F5EAD3] border border-[#D4AF37]/50' : 'bg-[#E2D5BC] text-[#704622] border border-[#A8853B]/40',
+    Classic: isDark ? 'bg-[#F5EAD3] text-black border border-[#D4AF37]/40' : 'bg-[#FBF6EC] text-[#704622] border border-[#A8853B]/30'
   };
 
   return (
@@ -58,7 +58,7 @@ export default function ProductCard({ product, onCompare }) {
       className={`group relative flex flex-col justify-between border-2 cursor-pointer transition-all duration-500 rounded-2xl overflow-hidden hover:-translate-y-1.5 ${
         isDark
           ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
-          : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 hover:border-[#D4AF37] shadow-[0_12px_35px_rgba(212,175,55,0.25)] hover:shadow-[0_20px_45px_rgba(212,175,55,0.4)]'
+          : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_15px_35px_rgba(112,70,34,0.14)]'
       }`}
     >
       {/* Top Badges */}
@@ -91,7 +91,7 @@ export default function ProductCard({ product, onCompare }) {
             ? 'bg-[#D4AF37] text-black shadow-md scale-105'
             : isDark
             ? 'bg-black/75 text-[#FFF2B2] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/40 shadow-sm'
-            : 'bg-white/90 text-[#120B06] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/50 shadow-sm'
+            : 'bg-[#FFFDF8]/90 text-[#704622] hover:bg-[#A8853B] hover:text-white border border-[#A8853B]/40 shadow-sm'
         }`}
       >
         <Heart className={`w-3.5 h-3.5 transition-transform duration-200 ${isSaved ? 'fill-current' : ''}`} />
@@ -99,7 +99,7 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Flacon Image Container with Full Editorial Background */}
       <div className={`relative aspect-[3/4] overflow-hidden flex items-center justify-center ${
-        isDark ? 'bg-gradient-to-b from-[#26190C] via-[#1F1308] to-[#140C05]' : 'bg-gradient-to-b from-[#FFFBF2] to-[#FAF1DF]'
+        isDark ? 'bg-gradient-to-b from-[#26190C] via-[#1F1308] to-[#140C05]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#EAE0CC]/40'
       }`}>
         {!imgLoaded && (
           <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/10 via-[#D4AF37]/25 to-[#D4AF37]/10 animate-pulse" />
@@ -132,7 +132,7 @@ export default function ProductCard({ product, onCompare }) {
                 ? 'bg-neutral-900/90 text-neutral-500 border border-neutral-800 cursor-not-allowed'
                 : isDark
                 ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70 shadow-[0_8px_25px_rgba(0,0,0,0.7)] hover:border-[#FFF2B2] hover:scale-[1.02]'
-                : 'bg-[#1A1008] hover:bg-[#2C180F] text-[#FFFDF9] hover:text-[#D4AF37] border border-[#D4AF37]/60 shadow-[0_8px_25px_rgba(0,0,0,0.18)] hover:scale-[1.02]'
+                : 'bg-[#704622] hover:bg-[#4A2A14] text-[#FFFDF8] hover:text-[#FFDF8A] border border-[#A8853B]/50 shadow-[0_8px_25px_rgba(112,70,34,0.18)] hover:scale-[1.02]'
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
@@ -143,12 +143,12 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Details Area */}
       <div className={`p-4 sm:p-5 flex flex-col flex-1 justify-between border-t ${
-        isDark ? 'bg-gradient-to-b from-[#2E1E0F]/95 to-[#1C1209]/98 border-[#D4AF37]/40' : 'bg-gradient-to-b from-[#FAF1DF]/95 to-[#F3E2C3]/95 border-[#D4AF37]/40'
+        isDark ? 'bg-gradient-to-b from-[#2E1E0F]/95 to-[#1C1209]/98 border-[#D4AF37]/40' : 'bg-[#FFFDF8] border-[rgba(122,95,44,0.16)]'
       }`}>
         <div>
           {/* Scent family / volume */}
           <div className={`flex items-center justify-between text-[11px] uppercase tracking-[0.18em] mb-1.5 font-medium ${
-            isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+            isDark ? 'text-[#D8BE99]' : 'text-[#8A6540]'
           }`}>
             <span>{product.fragranceFamily || product.scentFamily || 'Haute Parfumerie'}</span>
             <span>{product.size || '60 ml'}</span>
@@ -156,14 +156,14 @@ export default function ProductCard({ product, onCompare }) {
 
           {/* Title */}
           <h3 className={`font-cinzel font-semibold transition-colors text-sm sm:text-base leading-snug line-clamp-1 ${
-            isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#120B06] group-hover:text-[#D4AF37]'
+            isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#704622] group-hover:text-[#A8853B]'
           }`}>
             {displayName}
           </h3>
 
           {/* Tagline / short description */}
           <p className={`text-[12px] line-clamp-2 mt-1 font-sans leading-relaxed ${
-            isDark ? 'text-[#D8BE99]' : 'text-[#2C180F]'
+            isDark ? 'text-[#D8BE99]' : 'text-[#4A2A14]'
           }`}>
             {product.tagline || product.description}
           </p>
@@ -172,7 +172,7 @@ export default function ProductCard({ product, onCompare }) {
         {/* Bottom Price & Rating */}
         <div className="pt-3 mt-3 border-t border-black/10 dark:border-white/5 flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="font-cinzel text-base sm:text-lg font-bold text-[#D4AF37]">
+            <span className="font-cinzel text-base sm:text-lg font-bold text-[#A8853B] dark:text-[#D4AF37]">
               €{product.price}
             </span>
             {product.originalPrice && (
@@ -182,9 +182,9 @@ export default function ProductCard({ product, onCompare }) {
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-[#D4AF37] text-xs">
+          <div className="flex items-center gap-1 text-[#A8853B] dark:text-[#D4AF37] text-xs">
             <Star className="w-3.5 h-3.5 fill-current" />
-            <span className={`font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>{product.rating || '5.0'}</span>
+            <span className={`font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#704622]'}`}>{product.rating || '5.0'}</span>
           </div>
         </div>
       </div>

@@ -407,15 +407,15 @@ export default function Home() {
                 className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border-2 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
                   isDark
                     ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 hover:border-[#FFF2B2] text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
+                    : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
                 }`}
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
                 {/* Header Tag */}
                 <div className={`flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] font-cinzel font-bold ${
-                  isDark ? 'text-[#FFF2B2]' : 'text-[#8C6239]'
+                  isDark ? 'text-[#FFF2B2]' : 'text-[#8A6540]'
                 }`}>
-                  <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                  <Sparkles className="w-2.5 h-2.5 text-[#A8853B] dark:text-[#D4AF37]" />
                   <span>{language === 'ar' ? 'التالي' : 'NEXT'}</span>
                   <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </div>
@@ -432,12 +432,12 @@ export default function Home() {
                 {/* Next Product Title & Tier */}
                 <div className="space-y-0.5">
                   <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight ${
-                    isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'
+                    isDark ? 'text-[#FFF5E6]' : 'text-[#704622]'
                   }`}>
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
                   <p className={`text-[9.5px] font-mono font-medium ${
-                    isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'
+                    isDark ? 'text-[#FFF2B2]' : 'text-[#A8853B]'
                   }`}>
                     €{nextHeroFlacon.price} • {nextHeroFlacon.tier}
                   </p>

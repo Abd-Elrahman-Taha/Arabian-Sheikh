@@ -191,16 +191,16 @@ function MainRouter() {
 
   return (
     <div className={`relative flex flex-col min-h-screen transition-colors duration-500 overflow-x-hidden ${
-      isDark ? 'text-[#F3E6D0] bg-[#0B0A08]' : 'text-[#120B06] bg-[#FAF7F2]'
+      isDark ? 'text-[#F5EAD3] bg-[#100A06]' : 'text-[#704622] bg-[#EAE0CC]'
     }`}>
 
-      {/* Global Luxury Gradient Background */}
+      {/* Global Luxury Gradient Background (DV2 & LV1 Design Tokens) */}
       <div
         className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-700 overflow-hidden"
         style={{
           background: isDark
-            ? 'radial-gradient(ellipse 95% 75% at 50% 12%, #1C120C 0%, #130B07 45%, #0B0A08 100%), linear-gradient(180deg, #0B0A08 0%, #170E09 35%, #0F0A07 70%, #0B0A08 100%)'
-            : 'radial-gradient(ellipse 95% 75% at 50% 12%, #FFFDF8 0%, #FAF3E6 45%, #F5EADB 100%), linear-gradient(180deg, #FFFDF8 0%, #FAF3E6 35%, #F5EADB 70%, #FAF3E6 100%)'
+            ? 'radial-gradient(ellipse 95% 75% at 50% 10%, #221408 0%, #150D06 50%, #100A06 100%), linear-gradient(180deg, #100A06 0%, #1B1008 50%, #100A06 100%)'
+            : 'radial-gradient(ellipse 95% 75% at 50% 10%, #F6EFDF 0%, #EAE0CC 50%, #DFD1B6 100%), linear-gradient(180deg, #EAE0CC 0%, #F3EBDA 50%, #E7DBC4 100%)'
         }}
       />
 

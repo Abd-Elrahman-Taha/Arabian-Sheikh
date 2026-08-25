@@ -153,7 +153,7 @@ export default function TopSellingShowcase({ products = [] }) {
                 className={`flex-none w-[280px] sm:w-[320px] snap-start group relative rounded-2xl border-2 p-4 sm:p-5 flex flex-col justify-between transition-all duration-500 hover:-translate-y-1.5 ${
                   isDark
                     ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
-                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 hover:border-[#D4AF37] shadow-[0_12px_35px_rgba(212,175,55,0.25)] hover:shadow-[0_20px_45px_rgba(212,175,55,0.4)]'
+                    : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_15px_35px_rgba(112,70,34,0.14)]'
                 }`}
               >
                 {/* Top Badges */}
@@ -170,7 +170,7 @@ export default function TopSellingShowcase({ products = [] }) {
                         ? 'bg-[#D4AF37] text-black border-[#D4AF37]'
                         : isDark
                         ? 'bg-black/75 text-[#FFF2B2] border-[#D4AF37]/50 hover:border-[#FFF2B2]'
-                        : 'bg-white/90 text-[#120B06] border-[#D4AF37]/50 hover:border-[#D4AF37]'
+                        : 'bg-[#FFFDF8]/90 text-[#704622] border-[#A8853B]/40 hover:border-[#A8853B]'
                     }`}
                     aria-label="Wishlist"
                   >
@@ -181,7 +181,9 @@ export default function TopSellingShowcase({ products = [] }) {
                 {/* Product Visual */}
                 <div
                   onClick={() => navigate(`/product/${product.slug || product.id}`)}
-                  className="aspect-[4/5] relative rounded-xl overflow-hidden cursor-pointer mb-4 border border-[#D4AF37]/30 bg-black/40"
+                  className={`aspect-[4/5] relative rounded-xl overflow-hidden cursor-pointer mb-4 border ${
+                    isDark ? 'border-[#D4AF37]/30 bg-black/40' : 'border-[#A8853B]/25 bg-[#EAE0CC]/30'
+                  }`}
                 >
                   <img
                     src={imageSrc}
@@ -197,12 +199,12 @@ export default function TopSellingShowcase({ products = [] }) {
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-1 text-[#D4AF37]">
+                      <div className="flex items-center gap-1 text-[#A8853B] dark:text-[#D4AF37]">
                         <Star className="w-3.5 h-3.5 fill-current" />
                         <span className="text-xs font-mono font-bold">{product.rating || 5.0}</span>
                       </div>
                       <span className={`text-[10px] font-mono uppercase tracking-wider ${
-                        isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'
+                        isDark ? 'text-[#FFF2B2]' : 'text-[#8A6540]'
                       }`}>
                         {product.size || '60 ml'}
                       </span>
@@ -211,23 +213,23 @@ export default function TopSellingShowcase({ products = [] }) {
                     <h3
                       onClick={() => navigate(`/product/${product.slug || product.id}`)}
                       className={`font-cinzel text-base font-bold line-clamp-1 cursor-pointer transition-colors ${
-                        isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#120B06] group-hover:text-[#5A3517]'
+                        isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#704622] group-hover:text-[#A8853B]'
                       }`}
                     >
                       {getDisplayName(product)}
                     </h3>
 
                     {product.tagline && (
-                      <p className={`text-xs line-clamp-1 mt-0.5 ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                      <p className={`text-xs line-clamp-1 mt-0.5 ${isDark ? 'text-[#D8BE99]' : 'text-[#4A2A14]'}`}>
                         {product.tagline}
                       </p>
                     )}
                   </div>
 
                   {/* Price and Add to Cart */}
-                  <div className="pt-2 border-t border-[#D4AF37]/30 flex items-center justify-between gap-2">
+                  <div className="pt-2 border-t border-[#A8853B]/20 dark:border-[#D4AF37]/30 flex items-center justify-between gap-2">
                     <div>
-                      <span className="font-cinzel text-lg font-bold text-[#D4AF37]">
+                      <span className="font-cinzel text-lg font-bold text-[#A8853B] dark:text-[#D4AF37]">
                         €{product.price}
                       </span>
                       {product.originalPrice && (
@@ -242,7 +244,7 @@ export default function TopSellingShowcase({ products = [] }) {
                       className={`px-4 py-2 font-cinzel font-bold text-xs uppercase tracking-wider rounded-full transition-all duration-300 flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105 ${
                         isDark
                           ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70'
-                          : 'bg-[#1A1008] hover:bg-[#2C180F] text-[#FFFDF9] hover:text-[#D4AF37] border border-[#D4AF37]/60'
+                          : 'bg-[#704622] hover:bg-[#4A2A14] text-[#FFFDF8] hover:text-[#FFDF8A] border border-[#A8853B]/50 shadow-sm'
                       }`}
                     >
                       <ShoppingBag className="w-3.5 h-3.5" />
