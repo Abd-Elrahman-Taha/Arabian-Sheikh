@@ -5,9 +5,10 @@ import { Sparkles, Crown } from 'lucide-react';
 
 /**
  * Hero2DFlaconShowcase
- * Ultra-smooth transitions for 2D flagship flacons:
- * - Desktop: 3 bottles visible side-by-side with fluid scaling, active pedestal spotlight, and organic floating motion.
- * - Mobile: 1 bottle at a time with 1000ms seamless GPU-accelerated crossfade every 3.5 seconds.
+ * 3D Depth-Swap Carousel:
+ * - Active flacon is positioned in front (scale 1.0 / 1.15, full opacity, radiant gold aura).
+ * - Next & previous flacons are receded behind in 3D perspective space (scale 0.68 / 0.85, dimmed, lower z-index).
+ * - When swapping, the active one smoothly moves to get behind while the next one swoops forward into the foreground.
  */
 export default function Hero2DFlaconShowcase({
   activeProductIndex = 0,
@@ -24,7 +25,7 @@ export default function Hero2DFlaconShowcase({
     setCurrentIndex(activeProductIndex);
   }, [activeProductIndex]);
 
-  // Mobile automated 3.5s carousel cycle with smooth crossfade
+  // Automated 3.5s carousel cycle with smooth 3D depth rotation
   useEffect(() => {
     if (!products || products.length <= 1) return;
 
@@ -34,7 +35,7 @@ export default function Hero2DFlaconShowcase({
         if (onSlideChange) onSlideChange(next);
         return next;
       });
-    }, 3500); // 3.5s interval
+    }, 3500); // 3.5 seconds
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -52,25 +53,44 @@ export default function Hero2DFlaconShowcase({
   };
 
   const activeProduct = products[currentIndex] || products[0] || {};
+  const total = products.length || 3;
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center select-none">
+    <div className="relative w-full h-full flex flex-col items-center justify-center select-none overflow-visible">
 
       {/* =========================================================================
-          1. DESKTOP VIEW (3 BOTTLES SIDE-BY-SIDE WITH GENTLE FLOATING MOTION)
+          1. DESKTOP VIEW (3D TURNTABLE DEPTH SWAP: SIDES BEHIND, CENTER FORWARD)
           ========================================================================= */}
-      <div className="hidden md:flex items-center justify-center gap-6 lg:gap-10 xl:gap-14 w-full max-w-4xl mx-auto h-[480px] lg:h-[560px] relative px-4">
+      <div
+        className="hidden md:flex items-center justify-center w-full max-w-4xl mx-auto h-[480px] lg:h-[560px] relative px-4"
+        style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
+      >
         {products.map((product, idx) => {
-          const isActive = idx === currentIndex;
-          const isLeft = (currentIndex === 0 && idx === 2) || (currentIndex === 1 && idx === 0) || (currentIndex === 2 && idx === 1);
-          const isRight = !isActive && !isLeft;
+          const diff = (idx - currentIndex + total) % total;
+          const isActive = diff === 0;
+          const isRight = diff === 1;
+          const isLeft = diff === total - 1 || (!isActive && !isRight);
 
-          // Distinct gentle floating animation per bottle
-          const floatAnim = idx === 0 
-            ? 'floatGentleLeft 5.6s ease-in-out infinite alternate'
-            : idx === 1
-            ? 'floatGentleCenter 6.2s ease-in-out infinite alternate'
-            : 'floatGentleRight 5.9s ease-in-out infinite alternate';
+          // Smooth 3D depth transform coordinates for Desktop
+          let desktopTransform = 'translate(-50%, -50%) translateZ(0px) scale(1.15)';
+          let desktopOpacity = 1;
+          let desktopZIndex = 30;
+
+          if (isRight) {
+            desktopTransform = 'translate(calc(-50% + 230px), calc(-50% + 10px)) translateZ(-90px) scale(0.82) rotateY(-6deg)';
+            desktopOpacity = 0.65;
+            desktopZIndex = 10;
+          } else if (isLeft) {
+            desktopTransform = 'translate(calc(-50% - 230px), calc(-50% + 10px)) translateZ(-90px) scale(0.82) rotateY(6deg)';
+            desktopOpacity = 0.65;
+            desktopZIndex = 10;
+          }
+
+          const floatAnim = isActive
+            ? 'floatGentleCenter 6s ease-in-out infinite alternate'
+            : isRight
+            ? 'floatGentleRight 5.7s ease-in-out infinite alternate'
+            : 'floatGentleLeft 5.5s ease-in-out infinite alternate';
 
           const imgSrc = getFlaconImage(product);
 
@@ -78,25 +98,23 @@ export default function Hero2DFlaconShowcase({
             <div
               key={product.id || idx}
               onClick={() => handleSelect(idx)}
-              className={`group relative flex flex-col items-center justify-center cursor-pointer transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) transform-gpu ${
-                isActive
-                  ? 'z-20 scale-110 sm:scale-115 lg:scale-120 opacity-100'
-                  : 'z-10 scale-85 lg:scale-90 opacity-60 hover:opacity-95 hover:scale-95'
-              }`}
+              className="absolute left-1/2 top-1/2 flex flex-col items-center justify-center cursor-pointer transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) transform-gpu"
               style={{
-                order: isLeft ? 1 : isActive ? 2 : 3
+                transform: desktopTransform,
+                opacity: desktopOpacity,
+                zIndex: desktopZIndex
               }}
             >
-              {/* Active Golden Aura & Spotlight Base */}
+              {/* Active Golden Aura Spotlight */}
               <div
-                className={`absolute -inset-6 rounded-full bg-radial from-[#D4AF37]/35 via-[#F2D675]/15 to-transparent blur-2xl pointer-events-none -z-10 transition-opacity duration-700 ${
+                className={`absolute -inset-8 rounded-full bg-radial from-[#D4AF37]/40 via-[#F2D675]/15 to-transparent blur-3xl pointer-events-none -z-10 transition-opacity duration-700 ${
                   isActive ? 'opacity-100 animate-pulse' : 'opacity-0'
                 }`}
               />
 
-              {/* Active Imperial Crown Badge on Center Flacon */}
+              {/* Imperial Crown Badge on Forward Flacon */}
               <div
-                className={`absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/60 text-[#D4AF37] text-[10px] font-cinzel font-bold uppercase tracking-widest backdrop-blur-md shadow-lg pointer-events-none transition-all duration-500 ${
+                className={`absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/25 border border-[#D4AF37]/70 text-[#D4AF37] text-[10px] font-cinzel font-bold uppercase tracking-widest backdrop-blur-md shadow-lg pointer-events-none transition-all duration-500 ${
                   isActive ? 'opacity-100 transform translate-y-0 scale-100' : 'opacity-0 transform translate-y-2 scale-90'
                 }`}
               >
@@ -104,7 +122,7 @@ export default function Hero2DFlaconShowcase({
                 <span>{product.tier || 'Imperial Tier'}</span>
               </div>
 
-              {/* 2D Bottle Image with Smooth Gentle Floating */}
+              {/* 2D Bottle with Gentle Organic Hovering */}
               <div
                 className="relative flex items-center justify-center"
                 style={{ animation: floatAnim }}
@@ -112,22 +130,22 @@ export default function Hero2DFlaconShowcase({
                 <img
                   src={imgSrc}
                   alt={product.name || 'Haute Parfumerie Flacon'}
-                  className="h-[280px] sm:h-[340px] lg:h-[400px] w-auto object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.55)] transition-transform duration-500 transform-gpu group-hover:scale-105"
+                  className="h-[280px] sm:h-[340px] lg:h-[390px] w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transition-transform duration-500 transform-gpu group-hover:scale-105"
                   loading="eager"
                   fetchPriority="high"
                 />
 
-                {/* Contact Shadow beneath each bottle */}
+                {/* Pedestal Contact Shadow */}
                 <div
-                  className={`absolute -bottom-3 inset-x-0 mx-auto rounded-full blur-md pointer-events-none transition-all duration-500 ${
+                  className={`absolute -bottom-3 inset-x-0 mx-auto rounded-full blur-md pointer-events-none transition-all duration-700 ${
                     isActive
-                      ? 'w-32 lg:w-40 h-5 bg-black/80 opacity-90'
-                      : 'w-24 lg:w-28 h-4 bg-black/60 opacity-60'
+                      ? 'w-36 lg:w-44 h-5 bg-black/85 opacity-90'
+                      : 'w-24 lg:w-28 h-4 bg-black/60 opacity-50'
                   }`}
                 />
               </div>
 
-              {/* Flacon Name Tag underneath on desktop */}
+              {/* Flacon Name Tag */}
               <div className={`mt-4 text-center transition-all duration-500 ${
                 isActive ? 'opacity-100 transform translate-y-0' : 'opacity-0 group-hover:opacity-75 transform translate-y-1'
               }`}>
@@ -144,48 +162,82 @@ export default function Hero2DFlaconShowcase({
       </div>
 
       {/* =========================================================================
-          2. MOBILE VIEW (1 BOTTLE AT A TIME, SEAMLESS 1000ms GPU CROSSFADE)
+          2. MOBILE VIEW (3D TURNTABLE DEPTH SWAP: OLD RECEDES BEHIND, NEXT MOVES FORWARD)
           ========================================================================= */}
-      <div className="flex md:hidden flex-col items-center justify-center w-full max-w-sm mx-auto min-h-[380px] sm:min-h-[440px] relative px-4">
+      <div
+        className="flex md:hidden flex-col items-center justify-center w-full max-w-sm mx-auto min-h-[380px] sm:min-h-[440px] relative px-4"
+        style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
+      >
         
-        {/* Active Bottle Presentation with Overlapping Silky Crossfade */}
-        <div className="relative flex items-center justify-center w-full h-[320px] sm:h-[380px]">
+        {/* 3D Orbit Track on Mobile */}
+        <div className="relative w-full h-[320px] sm:h-[380px] overflow-visible">
           
-          {/* Ambient Golden Glow */}
-          <div className="absolute inset-0 mx-auto w-48 h-48 rounded-full bg-radial from-[#D4AF37]/30 via-[#F2D675]/10 to-transparent blur-2xl pointer-events-none -z-10" />
+          {/* Ambient Golden Glow Spotlight */}
+          <div className="absolute inset-0 mx-auto w-48 h-48 rounded-full bg-radial from-[#D4AF37]/35 via-[#F2D675]/10 to-transparent blur-3xl pointer-events-none -z-10" />
 
-          {/* Stact of All 3 Bottles for Instant, Seamless Crossfade */}
+          {/* Render All 3 Bottles in 3D Depth Orbit */}
           {products.map((product, idx) => {
-            const isCurrent = idx === currentIndex;
+            const diff = (idx - currentIndex + total) % total;
+            const isActive = diff === 0;
+            const isRight = diff === 1;
+            const isLeft = diff === total - 1 || (!isActive && !isRight);
+
+            // 3D Depth-swap positioning on Mobile
+            let mobileTransform = 'translate(-50%, -50%) translateZ(0px) scale(1)';
+            let mobileOpacity = 1;
+            let mobileZIndex = 30;
+
+            if (isRight) {
+              // Right & Behind in depth
+              mobileTransform = 'translate(calc(-50% + 55px), calc(-50% - 10px)) translateZ(-110px) scale(0.68) rotateY(-8deg)';
+              mobileOpacity = 0.35;
+              mobileZIndex = 10;
+            } else if (isLeft) {
+              // Left & Behind in depth
+              mobileTransform = 'translate(calc(-50% - 55px), calc(-50% - 10px)) translateZ(-110px) scale(0.68) rotateY(8deg)';
+              mobileOpacity = 0.35;
+              mobileZIndex = 10;
+            }
+
             const imgSrc = getFlaconImage(product);
 
             return (
               <div
                 key={product.id || idx}
-                className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) transform-gpu ${
-                  isCurrent
-                    ? 'opacity-100 scale-100 pointer-events-auto z-10'
-                    : 'opacity-0 scale-95 pointer-events-none z-0'
-                }`}
-                style={{ animation: 'floatGentleCenter 4.8s ease-in-out infinite alternate' }}
+                onClick={() => handleSelect(idx)}
+                className="absolute left-1/2 top-1/2 flex items-center justify-center transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) transform-gpu cursor-pointer"
+                style={{
+                  transform: mobileTransform,
+                  opacity: mobileOpacity,
+                  zIndex: mobileZIndex
+                }}
               >
-                <img
-                  src={imgSrc}
-                  alt={product.name || 'Arabian Sheikh Flacon'}
-                  className="h-[52vh] max-h-[360px] sm:max-h-[420px] w-auto max-w-[90%] object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)] transform-gpu"
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                <div
+                  className="relative flex items-center justify-center"
+                  style={{ animation: isActive ? 'floatGentleCenter 4.8s ease-in-out infinite alternate' : 'none' }}
+                >
+                  <img
+                    src={imgSrc}
+                    alt={product.name || 'Arabian Sheikh Flacon'}
+                    className="h-[50vh] max-h-[340px] sm:max-h-[400px] w-auto max-w-[85%] object-contain filter drop-shadow-[0_18px_32px_rgba(0,0,0,0.6)] transform-gpu"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
 
-                {/* Mobile Contact Shadow */}
-                <div className="absolute -bottom-3 inset-x-0 mx-auto w-36 sm:w-44 h-5 rounded-full blur-md bg-black/80 pointer-events-none" />
+                  {/* Mobile Contact Shadow */}
+                  <div
+                    className={`absolute -bottom-3 inset-x-0 mx-auto rounded-full blur-md bg-black/80 pointer-events-none transition-all duration-700 ${
+                      isActive ? 'w-36 sm:w-42 h-5 opacity-90' : 'w-24 h-3 opacity-40'
+                    }`}
+                  />
+                </div>
               </div>
             );
           })}
         </div>
 
         {/* Mobile 3.5s Step Indicator & Interactive Selectors */}
-        <div className="flex items-center gap-2 mt-4 z-20">
+        <div className="flex items-center gap-2 mt-4 z-40">
           {products.map((p, idx) => {
             const isDotActive = idx === currentIndex;
             return (
@@ -203,13 +255,13 @@ export default function Hero2DFlaconShowcase({
           })}
         </div>
 
-        {/* Small Timer Note on Mobile */}
-        <span className="text-[9px] font-cinzel tracking-widest uppercase text-[#D4AF37]/90 mt-1.5 font-bold transition-opacity duration-300">
+        {/* Status Tag on Mobile */}
+        <span className="text-[9px] font-cinzel tracking-widest uppercase text-[#D4AF37]/90 mt-1.5 font-bold transition-opacity duration-300 z-40">
           {currentIndex + 1} / {products.length} • {activeProduct.tier || 'Imperial Tier'}
         </span>
       </div>
 
-      {/* Embedded High-Performance Gentle Float Keyframes */}
+      {/* Embedded High-Performance Floating Keyframes */}
       <style>{`
         @keyframes floatGentleCenter {
           0% { transform: translateY(0px) rotate(0deg); }
