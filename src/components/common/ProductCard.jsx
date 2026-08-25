@@ -57,7 +57,7 @@ export default function ProductCard({ product, onCompare }) {
       onClick={handleCardClick}
       className={`group relative flex flex-col justify-between border-2 cursor-pointer transition-all duration-500 rounded-2xl overflow-hidden hover:-translate-y-1.5 ${
         isDark
-          ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
+          ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] hover:border-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
           : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_15px_35px_rgba(112,70,34,0.14)]'
       }`}
     >
@@ -90,7 +90,7 @@ export default function ProductCard({ product, onCompare }) {
           isSaved
             ? 'bg-[#D4AF37] text-black shadow-md scale-105'
             : isDark
-            ? 'bg-black/75 text-[#FFF2B2] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/40 shadow-sm'
+            ? 'bg-black/75 text-[#FFF2B2] hover:bg-[#D4AF37] hover:text-black border border-[#F2D675]/60 shadow-sm'
             : 'bg-[#FFFDF8]/90 text-[#704622] hover:bg-[#A8853B] hover:text-white border border-[#A8853B]/40 shadow-sm'
         }`}
       >
@@ -99,10 +99,10 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Flacon Image Container with Full Editorial Background */}
       <div className={`relative aspect-[3/4] overflow-hidden flex items-center justify-center ${
-        isDark ? 'bg-gradient-to-b from-[#26190C] via-[#1F1308] to-[#140C05]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#EAE0CC]/40'
+        isDark ? 'bg-gradient-to-b from-[#2D1B0B] via-[#1F1308] to-[#140C05]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#EAE0CC]/40'
       }`}>
         {!imgLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/10 via-[#D4AF37]/25 to-[#D4AF37]/10 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/15 via-[#F2D675]/30 to-[#D4AF37]/15 animate-pulse" />
         )}
         <img
           src={imageSrc}
@@ -118,7 +118,7 @@ export default function ProductCard({ product, onCompare }) {
         {/* Ambient subtle vignette */}
         <div className={`absolute inset-0 pointer-events-none ${
           isDark
-            ? 'bg-gradient-to-t from-[#1A1008]/80 via-transparent to-black/25'
+            ? 'bg-gradient-to-t from-[#140C03]/80 via-transparent to-black/20'
             : 'bg-gradient-to-t from-black/20 via-transparent to-transparent'
         }`} />
 
@@ -131,7 +131,7 @@ export default function ProductCard({ product, onCompare }) {
               isOutOfStock
                 ? 'bg-neutral-900/90 text-neutral-500 border border-neutral-800 cursor-not-allowed'
                 : isDark
-                ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70 shadow-[0_8px_25px_rgba(0,0,0,0.7)] hover:border-[#FFF2B2] hover:scale-[1.02]'
+                ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border-2 border-[#F2D675] shadow-[0_8px_25px_rgba(0,0,0,0.7)] hover:border-[#FFFDF8] hover:scale-[1.02]'
                 : 'bg-[#704622] hover:bg-[#4A2A14] text-[#FFFDF8] hover:text-[#FFDF8A] border border-[#A8853B]/50 shadow-[0_8px_25px_rgba(112,70,34,0.18)] hover:scale-[1.02]'
             }`}
           >
@@ -142,37 +142,39 @@ export default function ProductCard({ product, onCompare }) {
       </div>
 
       {/* Details Area */}
-      <div className={`p-4 sm:p-5 flex flex-col flex-1 justify-between border-t ${
-        isDark ? 'bg-gradient-to-b from-[#2E1E0F]/95 to-[#1C1209]/98 border-[#D4AF37]/40' : 'bg-[#FFFDF8] border-[rgba(122,95,44,0.16)]'
+      <div className={`p-4 sm:p-5 flex flex-col flex-1 justify-between border-t-2 ${
+        isDark ? 'bg-gradient-to-b from-[#3D250C]/95 via-[#231506]/98 to-[#140C03]/98 border-[#F2D675]/70' : 'bg-[#FFFDF8] border-[rgba(122,95,44,0.16)]'
       }`}>
         <div>
           {/* Scent family / volume */}
-          <div className={`flex items-center justify-between text-[11px] uppercase tracking-[0.18em] mb-1.5 font-medium ${
-            isDark ? 'text-[#D8BE99]' : 'text-[#8A6540]'
+          <div className={`flex items-center justify-between text-[11px] uppercase tracking-[0.18em] mb-1.5 font-semibold ${
+            isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'
           }`}>
             <span>{product.fragranceFamily || product.scentFamily || 'Haute Parfumerie'}</span>
             <span>{product.size || '60 ml'}</span>
           </div>
 
           {/* Title */}
-          <h3 className={`font-cinzel font-semibold transition-colors text-sm sm:text-base leading-snug line-clamp-1 ${
-            isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#704622] group-hover:text-[#A8853B]'
+          <h3 className={`font-cinzel font-bold transition-colors text-sm sm:text-base leading-snug line-clamp-1 ${
+            isDark ? 'text-[#FFFDF8] group-hover:text-[#F2D675] drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]' : 'text-[#704622] group-hover:text-[#A8853B]'
           }`}>
             {displayName}
           </h3>
 
           {/* Tagline / short description */}
           <p className={`text-[12px] line-clamp-2 mt-1 font-sans leading-relaxed ${
-            isDark ? 'text-[#D8BE99]' : 'text-[#4A2A14]'
+            isDark ? 'text-[#F3E6D0]' : 'text-[#4A2A14]'
           }`}>
             {product.tagline || product.description}
           </p>
         </div>
 
         {/* Bottom Price & Rating */}
-        <div className="pt-3 mt-3 border-t border-black/10 dark:border-white/5 flex items-center justify-between">
+        <div className="pt-3 mt-3 border-t border-black/10 dark:border-[#F2D675]/30 flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="font-cinzel text-base sm:text-lg font-bold text-[#A8853B] dark:text-[#D4AF37]">
+            <span className={`font-cinzel text-base sm:text-lg font-extrabold ${
+              isDark ? 'text-[#FFDF8A] drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]' : 'text-[#A8853B]'
+            }`}>
               €{product.price}
             </span>
             {product.originalPrice && (
@@ -182,9 +184,9 @@ export default function ProductCard({ product, onCompare }) {
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-[#A8853B] dark:text-[#D4AF37] text-xs">
+          <div className={`flex items-center gap-1 text-xs ${isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'}`}>
             <Star className="w-3.5 h-3.5 fill-current" />
-            <span className={`font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#704622]'}`}>{product.rating || '5.0'}</span>
+            <span className={`font-bold ${isDark ? 'text-[#FFFDF8]' : 'text-[#704622]'}`}>{product.rating || '5.0'}</span>
           </div>
         </div>
       </div>

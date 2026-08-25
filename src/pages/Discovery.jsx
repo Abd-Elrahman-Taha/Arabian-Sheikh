@@ -164,11 +164,11 @@ export default function Discovery() {
         {step <= 4 && (
           <div className={`p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in border-2 rounded-2xl ${
             isDark
-              ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_15px_45px_rgba(212,175,55,0.35)]'
-              : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.22)]'
+              ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] text-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)]'
+              : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
           }`}>
             <h2 className={`text-xl font-cinzel font-bold text-center ${
-              isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'
+              isDark ? 'text-[#FFFDF8] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]' : 'text-[#704622]'
             }`}>
               {steps[step - 1].title}
             </h2>
@@ -178,24 +178,24 @@ export default function Discovery() {
                 <button
                   key={opt.id}
                   onClick={() => handleSelectOption(steps[step - 1].key, opt.id, opt)}
-                  className={`p-5 border text-left rtl:text-right rounded-xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
+                  className={`p-5 border-2 text-left rtl:text-right rounded-xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
                     isDark
-                      ? 'bg-black/75 border-[#D4AF37]/50 hover:border-[#FFF2B2] hover:bg-black/90'
-                      : 'bg-white/90 border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-white shadow-xs'
+                      ? 'bg-black/75 border-[#F2D675]/60 hover:border-[#FFFDF8] hover:bg-black/90'
+                      : 'bg-[#FFFDF8] border-[#A8853B]/35 hover:border-[#A8853B] hover:bg-[#FBF6EC] shadow-xs'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className={`font-cinzel font-bold text-sm transition-colors ${
-                      isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#120B06] group-hover:text-[#D4AF37]'
+                      isDark ? 'text-[#FFFDF8] group-hover:text-[#F2D675]' : 'text-[#704622] group-hover:text-[#A8853B]'
                     }`}>
                       {opt.label}
                     </span>
                     <ArrowRight className={`w-4 h-4 transition-colors rtl:rotate-180 ${
-                      isDark ? 'text-[#FFF2B2] group-hover:text-[#FFF2B2]' : 'text-[#5A3517] group-hover:text-[#D4AF37]'
+                      isDark ? 'text-[#FFDF8A] group-hover:text-[#FFFDF8]' : 'text-[#A8853B] group-hover:text-[#704622]'
                     }`} />
                   </div>
                   {opt.desc && (
-                    <p className={`text-xs mt-1 font-sans ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>{opt.desc}</p>
+                    <p className={`text-xs mt-1 font-sans ${isDark ? 'text-[#F3E6D0]' : 'text-[#4A2A14]'}`}>{opt.desc}</p>
                   )}
                 </button>
               ))}
@@ -207,8 +207,8 @@ export default function Discovery() {
         {step === 5 && result && (
           <div className={`p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in border-2 rounded-2xl ${
             isDark
-              ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_20px_50px_rgba(212,175,55,0.4)]'
-              : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_20px_45px_rgba(212,175,55,0.25)]'
+              ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] text-[#FFFDF8] shadow-[0_20px_55px_rgba(212,175,55,0.5)]'
+              : 'bg-[#FFFDF8] border-[#A8853B]/35 text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
           }`}>
             <div className="inline-flex px-3.5 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
               Your Olfactory Signature Match

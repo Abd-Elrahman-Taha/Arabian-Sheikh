@@ -406,16 +406,16 @@ export default function Home() {
                 onClick={() => setActiveHeroIndex(nextHeroIndex)}
                 className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border-2 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
                   isDark
-                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 hover:border-[#FFF2B2] text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                    ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] hover:border-[#FFFDF8] text-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
                     : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
                 }`}
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
                 {/* Header Tag */}
                 <div className={`flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] font-cinzel font-bold ${
-                  isDark ? 'text-[#FFF2B2]' : 'text-[#8A6540]'
+                  isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'
                 }`}>
-                  <Sparkles className="w-2.5 h-2.5 text-[#A8853B] dark:text-[#D4AF37]" />
+                  <Sparkles className="w-2.5 h-2.5 text-[#FFDF8A] dark:text-[#FFDF8A]" />
                   <span>{language === 'ar' ? 'التالي' : 'NEXT'}</span>
                   <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </div>
@@ -432,12 +432,12 @@ export default function Home() {
                 {/* Next Product Title & Tier */}
                 <div className="space-y-0.5">
                   <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight ${
-                    isDark ? 'text-[#FFF5E6]' : 'text-[#704622]'
+                    isDark ? 'text-[#FFFDF8] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]' : 'text-[#704622]'
                   }`}>
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
-                  <p className={`text-[9.5px] font-mono font-medium ${
-                    isDark ? 'text-[#FFF2B2]' : 'text-[#A8853B]'
+                  <p className={`text-[9.5px] font-mono font-extrabold ${
+                    isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'
                   }`}>
                     €{nextHeroFlacon.price} • {nextHeroFlacon.tier}
                   </p>
@@ -471,8 +471,8 @@ export default function Home() {
             onClick={() => navigate('/about')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
-                ? 'border-[#D4AF37]/80 bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                : 'border-[#D4AF37]/75 bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] shadow-[0_10px_30px_rgba(212,175,55,0.22)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+                ? 'border-[#F2D675] bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 hover:border-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
+                : 'border-[#A8853B]/35 bg-[#FFFDF8] hover:bg-[#FBF6EC] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_18px_40px_rgba(112,70,34,0.18)] hover:border-[#A8853B]'
             }`}
           >
             <img
@@ -505,8 +505,8 @@ export default function Home() {
             onClick={() => navigate('/the-palace')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
-                ? 'border-[#D4AF37]/80 bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                : 'border-[#D4AF37]/75 bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] shadow-[0_10px_30px_rgba(212,175,55,0.22)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+                ? 'border-[#F2D675] bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 hover:border-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
+                : 'border-[#A8853B]/35 bg-[#FFFDF8] hover:bg-[#FBF6EC] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_18px_40px_rgba(112,70,34,0.18)] hover:border-[#A8853B]'
             }`}
           >
             <img
@@ -539,8 +539,8 @@ export default function Home() {
             onClick={() => navigate('/discovery')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
-                ? 'border-[#D4AF37]/80 bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                : 'border-[#D4AF37]/75 bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] shadow-[0_10px_30px_rgba(212,175,55,0.22)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+                ? 'border-[#F2D675] bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 hover:border-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
+                : 'border-[#A8853B]/35 bg-[#FFFDF8] hover:bg-[#FBF6EC] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_18px_40px_rgba(112,70,34,0.18)] hover:border-[#A8853B]'
             }`}
           >
             <img
@@ -897,20 +897,20 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className={`border-2 p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
                   isDark
-                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
+                    ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] text-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)]'
+                    : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
                 }`}>
                   <div className="space-y-3">
-                    <div className="flex gap-1 text-[#D4AF37]">
+                    <div className="flex gap-1 text-[#FFDF8A] dark:text-[#FFDF8A]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Pure Royalty in a Bottle"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#FFF2B2]' : 'text-[#3A2116]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#F3E6D0]' : 'text-[#4A2A14]'}`}>
                       "The projection lasts well past 14 hours with amber and oud notes that develop magnificently."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-[#D4AF37]">Tariq Al-Hashemi</span>
+                  <div className="pt-4 border-t border-[#A8853B]/20 dark:border-[#F2D675]/30 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-[#A8853B] dark:text-[#FFDF8A]">Tariq Al-Hashemi</span>
                     <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
@@ -919,20 +919,20 @@ export default function Home() {
 
                 <div className={`border-2 p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
                   isDark
-                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
+                    ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] text-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)]'
+                    : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
                 }`}>
                   <div className="space-y-3">
-                    <div className="flex gap-1 text-[#D4AF37]">
+                    <div className="flex gap-1 text-[#FFDF8A] dark:text-[#FFDF8A]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Masterpiece of Modern Luxury"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#FFF2B2]' : 'text-[#3A2116]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#F3E6D0]' : 'text-[#4A2A14]'}`}>
                       "Millionaire has commanding leather and spiced cardamom resonance. Highly recommended."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-[#D4AF37]">Alexander D.</span>
+                  <div className="pt-4 border-t border-[#A8853B]/20 dark:border-[#F2D675]/30 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-[#A8853B] dark:text-[#FFDF8A]">Alexander D.</span>
                     <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
@@ -941,20 +941,20 @@ export default function Home() {
 
                 <div className={`border-2 p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
                   isDark
-                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
-                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
+                    ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] text-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)]'
+                    : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
                 }`}>
                   <div className="space-y-3">
-                    <div className="flex gap-1 text-[#D4AF37]">
+                    <div className="flex gap-1 text-[#FFDF8A] dark:text-[#FFDF8A]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Delicious & Elegant"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#FFF2B2]' : 'text-[#3A2116]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#F3E6D0]' : 'text-[#4A2A14]'}`}>
                       "Ana Sukkar is sweet and delicate. The spun sugar and white musk blend is heavenly."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-[#D4AF37]">Layla K.</span>
+                  <div className="pt-4 border-t border-[#A8853B]/20 dark:border-[#F2D675]/30 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-[#A8853B] dark:text-[#FFDF8A]">Layla K.</span>
                     <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>

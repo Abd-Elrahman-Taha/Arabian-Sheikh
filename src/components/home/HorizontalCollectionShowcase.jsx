@@ -272,7 +272,7 @@ export default function HorizontalCollectionShowcase({
                 key={product.id || pIdx}
                 className={`collection-product-card shrink-0 w-[290px] sm:w-[340px] md:w-[360px] border-2 p-6 flex flex-col justify-between transition-all duration-500 rounded-2xl group hover:-translate-y-2 ${
                   isDark
-                    ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
+                    ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] hover:border-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
                     : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)] hover:shadow-[0_15px_35px_rgba(112,70,34,0.14)]'
                 }`}
                 style={{ scrollSnapAlign: 'start' }}
@@ -286,7 +286,7 @@ export default function HorizontalCollectionShowcase({
                       </span>
                     ) : (
                       <span className={`px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider border ${
-                        isDark ? 'bg-black/75 text-[#FFF2B2] border-[#D4AF37]/50' : 'bg-[#E2D5BC] text-[#704622] border-[#A8853B]/40 font-bold'
+                        isDark ? 'bg-black/75 text-[#FFF2B2] border-[#F2D675]/50' : 'bg-[#E2D5BC] text-[#704622] border-[#A8853B]/40 font-bold'
                       }`}>
                         {product.category || 'Palace Reserve'}
                       </span>
@@ -301,7 +301,7 @@ export default function HorizontalCollectionShowcase({
                         isSaved
                           ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-sm'
                           : isDark
-                          ? 'border-[#D4AF37]/40 bg-black/75 text-[#FFF2B2] hover:text-white'
+                          ? 'border-[#F2D675]/60 bg-black/75 text-[#FFF2B2] hover:text-white'
                           : 'border-[#A8853B]/40 bg-[#FFFDF8] text-[#704622] hover:bg-[#A8853B] hover:text-white shadow-xs'
                       }`}
                       title="Save to Wishlist"
@@ -315,7 +315,7 @@ export default function HorizontalCollectionShowcase({
                     onClick={() => navigate(`/product/${product.slug || product.id}`)}
                     className={`aspect-[4/5] flex items-center justify-center p-0 mb-4 border relative overflow-hidden cursor-pointer rounded-xl transition-colors ${
                       isDark
-                        ? 'bg-gradient-to-b from-[#26190C] via-[#1F1308] to-[#140C05] border-[#D4AF37]/35 group-hover:border-[#D4AF37]'
+                        ? 'bg-gradient-to-b from-[#2D1B0B] via-[#1F1308] to-[#140C05] border-[#F2D675]/50 group-hover:border-[#FFFDF8]'
                         : 'bg-gradient-to-b from-[#FFFDF8] to-[#EAE0CC]/40 border-[#A8853B]/30 group-hover:border-[#A8853B]'
                     }`}
                   >
@@ -327,11 +327,11 @@ export default function HorizontalCollectionShowcase({
                   </div>
 
                   {/* High Contrast Product Info */}
-                  <div className="space-y-2.5">
+                  <div className={`space-y-2.5 p-3 rounded-xl ${isDark ? 'bg-gradient-to-b from-[#3D250C]/90 to-[#1A0E04]/95 border-t border-[#F2D675]/40' : ''}`}>
                     <h3
                       onClick={() => navigate(`/product/${product.slug || product.id}`)}
                       className={`font-cinzel text-lg font-bold transition-colors cursor-pointer line-clamp-1 ${
-                        isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#704622] group-hover:text-[#A8853B]'
+                        isDark ? 'text-[#FFFDF8] group-hover:text-[#F2D675] drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]' : 'text-[#704622] group-hover:text-[#A8853B]'
                       }`}
                     >
                       {displayName}
@@ -339,21 +339,23 @@ export default function HorizontalCollectionShowcase({
 
                     <div className="flex items-center justify-between text-xs">
                       <span className={`font-mono text-xs font-semibold ${
-                        isDark ? 'text-[#FFF2B2]' : 'text-[#8A6540]'
+                        isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'
                       }`}>
                         {product.size || '60 ml'} • {product.fragranceFamily || 'Oriental'}
                       </span>
-                      <span className="font-cinzel font-bold text-[#A8853B] dark:text-[#D4AF37] text-lg">
+                      <span className={`font-cinzel font-extrabold text-lg ${
+                        isDark ? 'text-[#FFDF8A] drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]' : 'text-[#A8853B]'
+                      }`}>
                         €{product.price}
                       </span>
                     </div>
 
                     {/* Scent Notes Highlights */}
                     <div className={`py-2 px-3 border text-xs space-y-0.5 rounded-lg ${
-                      isDark ? 'bg-black/60 border-[#D4AF37]/30 text-[#FFF5E6]' : 'bg-[#FFFDF8] border-[rgba(122,95,44,0.16)] text-[#4A2A14]'
+                      isDark ? 'bg-black/60 border-[#F2D675]/40 text-[#FFF5E6]' : 'bg-[#FFFDF8] border-[rgba(122,95,44,0.16)] text-[#4A2A14]'
                     }`}>
                       <div className="flex justify-between items-center">
-                        <span className="text-[#A8853B] dark:text-[#D4AF37] font-semibold text-[11px] uppercase tracking-wider">Notes:</span>
+                        <span className={`font-semibold text-[11px] uppercase tracking-wider ${isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'}`}>Notes:</span>
                         <span className="text-right truncate ml-2 text-[11px] font-medium">{topNote} • {heartNote}</span>
                       </div>
                     </div>
@@ -361,13 +363,13 @@ export default function HorizontalCollectionShowcase({
                 </div>
 
                 {/* Ultra-Luxury Card Actions */}
-                <div className="grid grid-cols-2 gap-2.5 pt-4 mt-4 border-t border-[#A8853B]/20 dark:border-[#D4AF37]/30">
+                <div className="grid grid-cols-2 gap-2.5 pt-4 mt-4 border-t border-[#A8853B]/20 dark:border-[#F2D675]/30">
                   <button
                     onClick={() => addToCart(product, product.size || '60 ml', 1)}
                     disabled={isOutOfStock}
                     className={`group/btn relative py-3 px-3 rounded-full font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-400 flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer overflow-hidden ${
                       isDark
-                        ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70 shadow-[0_6px_20px_rgba(0,0,0,0.6)]'
+                        ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border-2 border-[#F2D675]'
                         : 'bg-[#704622] hover:bg-[#4A2A14] text-[#FFFDF8] hover:text-[#FFDF8A] border border-[#A8853B]/50 shadow-sm'
                     }`}
                   >
@@ -379,7 +381,7 @@ export default function HorizontalCollectionShowcase({
                     to={`/product/${product.slug || product.id}`}
                     className={`group/btn relative py-3 px-3 rounded-full border font-cinzel font-bold text-[10px] sm:text-[11px] uppercase tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1.5 text-center shadow-sm hover:scale-[1.02] ${
                       isDark
-                        ? 'border-[#D4AF37]/70 bg-gradient-to-r from-[#8C6239]/40 to-[#5A3E1B]/50 hover:bg-[#D4AF37] text-[#FFF2B2] hover:text-black'
+                        ? 'border-2 border-[#F2D675] bg-[#1A1008] hover:bg-[#F2D675] text-[#FFDF8A] hover:text-black font-extrabold'
                         : 'border-[#A8853B]/40 bg-[#FFFDF8] hover:bg-[#E2D5BC] text-[#704622]'
                     }`}
                   >
