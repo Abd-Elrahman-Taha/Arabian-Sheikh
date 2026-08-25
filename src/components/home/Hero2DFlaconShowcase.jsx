@@ -207,6 +207,14 @@ export default function Hero2DFlaconShowcase({
                   className="relative flex items-center justify-center"
                   style={{ animation: isActive ? 'floatGentleCenter 4.8s ease-in-out infinite alternate' : 'none' }}
                 >
+                  {/* Glowing Imperial Crown Badge on Active Bottle for Phones */}
+                  {isActive && (
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#0B0A08]/80 border border-[#D4AF37] text-[#FFF2B2] text-[9.5px] font-cinzel font-bold uppercase tracking-widest backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.6)] pointer-events-none z-30 animate-fade-in">
+                      <Crown className="w-3 h-3 text-[#D4AF37]" />
+                      <span>{product.tier || 'Imperial Tier'}</span>
+                    </div>
+                  )}
+
                   <img
                     src={imgSrc}
                     alt={product.name || 'Arabian Sheikh Flacon'}
@@ -231,8 +239,8 @@ export default function Hero2DFlaconShowcase({
                 aria-label={`View ${p.name}`}
                 className={`relative h-2 rounded-full transition-all duration-500 cursor-pointer ${
                   isDotActive
-                    ? 'w-8 bg-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.7)]'
-                    : 'w-2 bg-white/20 hover:bg-white/40'
+                    ? 'w-9 bg-gradient-to-r from-[#FFF2B2] via-[#D4AF37] to-[#F2D675] shadow-[0_0_16px_rgba(212,175,55,0.9)]'
+                    : 'w-2.5 bg-white/30 hover:bg-white/60'
                 }`}
               />
             );
@@ -240,7 +248,7 @@ export default function Hero2DFlaconShowcase({
         </div>
 
         {/* Status Tag on Mobile */}
-        <span className="text-[9px] font-cinzel tracking-widest uppercase text-[#D4AF37]/90 mt-1.5 font-bold transition-opacity duration-300 z-40">
+        <span className="text-[9.5px] font-cinzel tracking-widest uppercase text-[#FFF2B2] mt-1.5 font-bold transition-opacity duration-300 z-40 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]">
           {currentIndex + 1} / {products.length} • {activeProduct.tier || 'Imperial Tier'}
         </span>
       </div>

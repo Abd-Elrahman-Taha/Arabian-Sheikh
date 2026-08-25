@@ -343,33 +343,46 @@ export default function Home() {
           {/* Centered Product Flacon with Left & Right Flank Specs */}
           <div className="relative w-full flex-1 flex flex-col lg:flex-row items-center justify-between my-auto min-h-[46vh] sm:min-h-[52vh] lg:min-h-[580px]">
             
-            {/* Left Flank: Product Name and Action Button (Shifted down slightly on mobile) */}
-            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-[56%] lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-4 sm:space-y-6 order-2 lg:order-1 z-20 pointer-events-auto mt-10 sm:mt-12 lg:mt-0 pt-4 sm:pt-6">
+            {/* Left Flank: Product Name and Action Button (Illuminated Luminous Luxury Styling) */}
+            <div className="w-full lg:w-auto lg:absolute lg:left-0 lg:top-[56%] lg:-translate-y-1/2 lg:max-w-md text-center lg:text-left space-y-3 sm:space-y-4 order-2 lg:order-1 z-20 pointer-events-auto mt-6 sm:mt-8 lg:mt-0 pt-2 sm:pt-4">
               
-              {/* Bold Minimalist Product Title */}
-              <BlurText
-                key={`${currentHeroFlacon.id}-${isDark}`}
-                text={getDisplayName(currentHeroFlacon).toUpperCase()}
-                delay={60}
-                animateBy="words"
-                direction="top"
-                className={`text-3xl sm:text-4xl lg:text-5xl font-cinzel font-bold tracking-[0.03em] leading-tight drop-shadow-md justify-center lg:justify-start ${
-                  isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
-                }`}
-                as="h1"
-              />
+              {/* Sovereign Royal Tier Luminous Pill Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/25 border border-[#D4AF37]/70 shadow-[0_0_18px_rgba(212,175,55,0.45)] backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="font-cinzel text-[10.5px] sm:text-xs font-bold uppercase tracking-[0.25em] text-[#FFF2B2]">
+                  {currentHeroFlacon.tier} Tier • {language === 'ar' ? 'خلاصة نقية 100%' : '100% Pure Extrait'}
+                </span>
+              </div>
 
-              {/* Ultra-Luxury Obsidian / Gold Action Button */}
+              {/* Radiant Metallic Gold Luminous Title (Glows prominently on phones) */}
+              <div className="relative">
+                <h1 className={`font-cinzel font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.04em] leading-tight drop-shadow-[0_0_25px_rgba(212,175,55,0.6)] ${
+                  isDark
+                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#FFFDF9] via-[#F2D675] to-[#D4AF37]'
+                    : 'text-[#120B06]'
+                }`}>
+                  {getDisplayName(currentHeroFlacon).toUpperCase()}
+                </h1>
+              </div>
+
+              {/* Luminous Notes & Price Specs on Phone */}
+              <p className={`text-xs sm:text-sm font-sans font-medium line-clamp-2 leading-relaxed max-w-sm mx-auto lg:mx-0 ${
+                isDark ? 'text-[#FFF2B2] drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'text-[#3A2116]'
+              }`}>
+                {getTagline(currentHeroFlacon)}
+              </p>
+
+              {/* Luminous Action Button with Golden Radiant Rim */}
               <div className="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
-                  className={`group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 border overflow-hidden cursor-pointer ${
+                  className={`group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 border-2 overflow-hidden cursor-pointer ${
                     isDark
-                      ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#F3E6D0] hover:text-[#D4AF37] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.65)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.35)] hover:scale-105'
-                      : 'bg-gradient-to-r from-[#2C180F] via-[#120B06] to-[#2C180F] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#FFFDF8] hover:text-[#120B06] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(44,24,15,0.25)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.45)] hover:scale-105'
+                      ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border-[#D4AF37] hover:border-[#FFF2B2] shadow-[0_0_25px_rgba(212,175,55,0.5)] hover:shadow-[0_0_35px_rgba(212,175,55,0.8)] hover:scale-105'
+                      : 'bg-gradient-to-r from-[#2C180F] via-[#120B06] to-[#2C180F] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#FFFDF8] hover:text-[#120B06] border-[#D4AF37] hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(44,24,15,0.25)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.45)] hover:scale-105'
                   }`}
                 >
-                  <span className="relative z-10 drop-shadow-sm">
+                  <span className="relative z-10 drop-shadow-sm font-extrabold">
                     {language === 'ar' ? 'استكشف العطر' : 'FIND OUT MORE'}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180" />
