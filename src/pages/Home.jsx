@@ -6,9 +6,9 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useTheme } from '../context/ThemeContext';
 import ArabianLogo from '../components/common/ArabianLogo';
-import Hero3DFlaconScene from '../components/3d effects/Hero3DFlaconScene';
+import Hero2DFlaconShowcase from '../components/home/Hero2DFlaconShowcase';
 import PalaceMemoryVideo from '../components/media/PalaceMemoryVideo';
-import LuxuryBackgroundShader from '../components/motion/LuxuryBackgroundShader';
+import OttomanEightStar from '../components/motion/OttomanEightStar';
 import HorizontalCollectionShowcase from '../components/home/HorizontalCollectionShowcase';
 import TopSellingShowcase from '../components/home/TopSellingShowcase';
 import OffersDiscountSection from '../components/home/OffersDiscountSection';
@@ -65,20 +65,52 @@ export default function Home() {
 
   const heroFlacons = [
     {
-      id: 'as-royal-arabian-stallion',
+      id: 'as-luxury-arabian-gold',
       slug: 'arabian-gold-luxury',
-      tier: 'Imperial Reserve',
-      name: 'Arabian Stallion',
-      arabicName: 'الفارس العربي',
-      spanishName: 'Arabian Stallion',
-      bulgarianName: 'Арабски Жребец',
-      price: 65,
+      tier: 'Luxury',
+      name: 'Arabian Gold Sovereign',
+      arabicName: 'ذهب عربي سيادي',
+      spanishName: 'Arabian Gold Sovereign',
+      bulgarianName: 'Арабско Злато',
+      price: 55,
       size: '60 ml / 2.0 fl oz',
-      tagline: 'Sculpted 3D Haute Parfumerie Flacon • 35% Pure Extrait',
-      spanishTagline: 'Frasco Esculpido en 3D de Alta Perfumería • 35% Extrait Puro',
+      tagline: 'Liquid 24K gold distilled with precious Assam agarwood and royal amber.',
+      spanishTagline: 'Oro líquido de 24K destilado con preciosa madera de agar de Assam y ámbar real.',
       notes: 'Wild Assamese Oud • Taif Royal Rose • Ambergris • Kashmiri Saffron',
       color: '#D4AF37',
-      image: '/products/stallion_royal_flacon.webp'
+      image: '/products/luxury_designs/07_arabian_gold.webp'
+    },
+    {
+      id: 'as-royal-million-elixir',
+      slug: 'million-elixir',
+      tier: 'Royal',
+      name: 'Million Elixir',
+      arabicName: 'إكسير المليون الملكي',
+      spanishName: 'Million Elixir',
+      bulgarianName: 'Милион Еликсир',
+      price: 45,
+      size: '60 ml / 2.0 fl oz',
+      tagline: 'A triumphant royal accord of golden osmanthus, smoked tonka, and roasted amber.',
+      spanishTagline: 'Un triunfante acorde real de osmanto dorado, haba tonka ahumada y ámbar tostado.',
+      notes: 'Damask Rose • Wild Honey • Smoked Tonka • Cashmere Woods',
+      color: '#F2D675',
+      image: '/products/luxury_designs/17_million_elixir.webp'
+    },
+    {
+      id: 'as-classic-ameerah-al-arab',
+      slug: 'ameerah-al-arab',
+      tier: 'Classic',
+      name: 'Ameerah Al Arab',
+      arabicName: 'أميرة العرب',
+      spanishName: 'Ameerah Al Arab',
+      bulgarianName: 'Принцесата на Арабия',
+      price: 35,
+      size: '60 ml / 2.0 fl oz',
+      tagline: 'Velvety white jasmine draped over sweet Madagascar vanilla and radiant white musk.',
+      spanishTagline: 'Jazmín blanco aterciopelado envuelto en dulce vainilla de Madagascar y almizcle blanco.',
+      notes: 'White Jasmine • Madagascar Vanilla • Golden Musk • Cotton Blossom',
+      color: '#ECC557',
+      image: '/products/luxury_designs/02_ameerah_al_arab.webp'
     }
   ];
 
@@ -295,28 +327,14 @@ export default function Home() {
           }`} />
           <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.15),transparent_70%)]" />
 
-          {/* 1. TOP-LEFT Radiant Luxury Fluid Shader Circle */}
-          <div className={`absolute -top-28 -left-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none transition-all duration-700 ${
-            isDark ? 'opacity-95 mix-blend-screen' : 'opacity-85 mix-blend-multiply'
-          }`}>
-            <LuxuryBackgroundShader
-              color1={isDark ? '#F2D675' : '#D4AF37'}       color2={isDark ? '#B8860B' : '#F2D675'}
-              color3={isDark ? '#1A1008' : '#D8BE99'}
-              opacity={0.95}
-              className="w-full h-full rounded-full"
-            />
+          {/* 1. TOP-LEFT Ottoman 8-Pointed Star Geometric Ornament */}
+          <div className="absolute -top-20 -left-20 sm:-top-28 sm:-left-28 pointer-events-none transition-all duration-700 z-0">
+            <OttomanEightStar size={640} opacity={isDark ? 0.75 : 0.6} rotateSpeed={80} />
           </div>
 
-          {/* 2. BOTTOM-RIGHT Radiant Luxury Fluid Shader Circle */}
-          <div className={`absolute -bottom-28 -right-28 w-[520px] sm:w-[700px] lg:w-[880px] h-[520px] sm:h-[700px] lg:h-[880px] rounded-full pointer-events-none transition-all duration-700 ${
-            isDark ? 'opacity-90 mix-blend-screen' : 'opacity-80 mix-blend-multiply'
-          }`}>
-            <LuxuryBackgroundShader
-              color1={isDark ? '#D4AF37' : '#F2D675'}    color2={isDark ? '#8C6239' : '#D4AF37'}
-              color3={isDark ? '#140D07' : '#CBB198'}
-              opacity={0.90}
-              className="w-full h-full rounded-full"
-            />
+          {/* 2. BOTTOM-RIGHT Ottoman 8-Pointed Star Geometric Ornament */}
+          <div className="absolute -bottom-20 -right-20 sm:-bottom-28 sm:-right-28 pointer-events-none transition-all duration-700 z-0">
+            <OttomanEightStar size={640} opacity={isDark ? 0.7 : 0.55} rotateSpeed={95} reverse={true} />
           </div>
         </div>
 
@@ -341,14 +359,14 @@ export default function Home() {
                 as="h1"
               />
 
-              {/* Ultra-Luxury Curved Caramel/Gold Pill CTA Button */}
+              {/* Ultra-Luxury Obsidian / Gold Action Button */}
               <div className="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
                 <Link
                   to={`/product/${currentHeroFlacon.slug}`}
                   className={`group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.24em] transition-all duration-400 border overflow-hidden cursor-pointer ${
                     isDark
-                      ? 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-[#FFFDF8] hover:text-[#0B0A08] border-[#F2D675]/50 hover:border-[#FFF8E7] shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-105'
-                      : 'bg-gradient-to-r from-[#3A2116] via-[#21130D] to-[#3A2116] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#F3E6D0] hover:text-[#21130D] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(58,33,22,0.25)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.45)] hover:scale-105'
+                      ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#F3E6D0] hover:text-[#D4AF37] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.65)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.35)] hover:scale-105'
+                      : 'bg-gradient-to-r from-[#2C180F] via-[#120B06] to-[#2C180F] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#FFFDF8] hover:text-[#120B06] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(44,24,15,0.25)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.45)] hover:scale-105'
                   }`}
                 >
                   <span className="relative z-10 drop-shadow-sm">
@@ -360,40 +378,29 @@ export default function Home() {
 
             </div>
 
-            {/* DEAD CENTER: The Active 3D Flacon Standing in the Middle with Overhead Theatrical Spotlight */}
-            <div className="w-full max-w-2xl mx-auto relative flex items-center justify-center h-[48vh] sm:h-[58vh] lg:h-[620px] scale-115 sm:scale-120 order-1 lg:order-2 z-10">
-              
-              {/* Theatrical Overhead Golden Spotlight Conical Beam */}
-              <div className={`absolute -top-20 inset-x-0 mx-auto w-72 sm:w-96 lg:w-[440px] h-[440px] sm:h-[540px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${
-                isDark ? 'from-[#FFF5D1]/45 via-[#D4AF37]/20' : 'from-[#D4AF37]/35 via-[#F2D675]/20'
-              } to-transparent blur-2xl pointer-events-none -z-10`} />
-              
-              {/* Spotlight Core Flare Glow */}
-              <div className={`absolute -top-12 inset-x-0 mx-auto w-32 sm:w-48 h-32 sm:h-48 rounded-full ${
-                isDark ? 'bg-[#FFE899]/35' : 'bg-[#D4AF37]/30'
-              } blur-3xl pointer-events-none -z-10`} />
-              
-              <Hero3DFlaconScene
+            {/* DEAD CENTER: 2D Showcase (3 Bottles Side-by-Side on Desktop, 3.5s Carousel on Mobile) */}
+            <div className="w-full max-w-4xl mx-auto relative flex items-center justify-center order-1 lg:order-2 z-10 py-4 lg:py-0">
+              <Hero2DFlaconShowcase
                 activeProductIndex={activeHeroIndex}
                 onSlideChange={setActiveHeroIndex}
                 products={heroFlacons}
               />
             </div>
 
-            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT CARD */}
+            {/* RIGHT FLANK: NEXT UPCOMING PRODUCT CARD (Golden Tone in Dark Mode) */}
             <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
               <div
                 onClick={() => setActiveHeroIndex(nextHeroIndex)}
-                className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
+                className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border-2 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
                   isDark
-                    ? 'bg-[#0B0A08]/85 border-[#D4AF37]/35 text-[#F3E6D0]'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
+                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 hover:border-[#FFF2B2] text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
                 }`}
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
                 {/* Header Tag */}
                 <div className={`flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] font-cinzel font-bold ${
-                  isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
+                  isDark ? 'text-[#FFF2B2]' : 'text-[#8C6239]'
                 }`}>
                   <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
                   <span>{language === 'ar' ? 'التالي' : 'NEXT'}</span>
@@ -412,12 +419,12 @@ export default function Home() {
                 {/* Next Product Title & Tier */}
                 <div className="space-y-0.5">
                   <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight ${
-                    isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+                    isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'
                   }`}>
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
                   <p className={`text-[9.5px] font-mono font-medium ${
-                    isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
+                    isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'
                   }`}>
                     €{nextHeroFlacon.price} • {nextHeroFlacon.tier}
                   </p>
@@ -449,10 +456,10 @@ export default function Home() {
           {/* Card 1: Navigates to About Page (/about) */}
           <div
             onClick={() => navigate('/about')}
-            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
+            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
-                ? 'border-[#D4AF37]/25 bg-black/60 hover:border-[#D4AF37]'
-                : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+                ? 'border-[#D4AF37]/80 bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                : 'border-[#D4AF37]/75 bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] shadow-[0_10px_30px_rgba(212,175,55,0.22)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
             }`}
           >
             <img
@@ -483,10 +490,10 @@ export default function Home() {
           {/* Card 2: Navigates to The Palace Page (/the-palace) */}
           <div
             onClick={() => navigate('/the-palace')}
-            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
+            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
-                ? 'border-[#D4AF37]/25 bg-black/60 hover:border-[#D4AF37]'
-                : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+                ? 'border-[#D4AF37]/80 bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                : 'border-[#D4AF37]/75 bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] shadow-[0_10px_30px_rgba(212,175,55,0.22)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
             }`}
           >
             <img
@@ -517,10 +524,10 @@ export default function Home() {
           {/* Card 3: Navigates to Fragrance Discovery Quiz (/discovery) */}
           <div
             onClick={() => navigate('/discovery')}
-            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
+            className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
-                ? 'border-[#D4AF37]/25 bg-black/60 hover:border-[#D4AF37]'
-                : 'border-[#D4AF37]/45 bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
+                ? 'border-[#D4AF37]/80 bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                : 'border-[#D4AF37]/75 bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] shadow-[0_10px_30px_rgba(212,175,55,0.22)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)] hover:border-[#D4AF37]'
             }`}
           >
             <img
@@ -626,10 +633,10 @@ export default function Home() {
           <section className="py-24 border-t border-[#D4AF37]/20 relative overflow-hidden transition-colors duration-500 bg-transparent">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               
-              <div className={`border p-8 sm:p-12 shadow-2xl space-y-8 rounded-2xl transition-colors duration-500 ${
+              <div className={`border-2 p-8 sm:p-12 shadow-2xl space-y-8 rounded-2xl transition-colors duration-500 ${
                 isDark
-                  ? 'bg-[#0B0A08]/95 border-[#D4AF37]/30 text-[#F3E6D0]'
-                  : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.2)]'
+                  ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_15px_45px_rgba(212,175,55,0.35)]'
+                  : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.22)]'
               }`}>
                 <div className="text-center space-y-2">
                   <div className="inline-flex p-3 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] mb-2 shadow-sm">
@@ -875,67 +882,67 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
+                <div className={`border-2 p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
                   isDark
-                    ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
+                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
                 }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Pure Royalty in a Bottle"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#FFF2B2]' : 'text-[#3A2116]'}`}>
                       "The projection lasts well past 14 hours with amber and oud notes that develop magnificently."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs sm:text-sm">
+                  <div className="pt-4 border-t border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
                     <span className="font-bold text-[#D4AF37]">Tariq Al-Hashemi</span>
-                    <span className="text-emerald-500 text-xs flex items-center gap-1 font-semibold">
+                    <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
                   </div>
                 </div>
 
-                <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
+                <div className={`border-2 p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
                   isDark
-                    ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
+                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
                 }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Masterpiece of Modern Luxury"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#FFF2B2]' : 'text-[#3A2116]'}`}>
                       "Millionaire has commanding leather and spiced cardamom resonance. Highly recommended."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs sm:text-sm">
+                  <div className="pt-4 border-t border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
                     <span className="font-bold text-[#D4AF37]">Alexander D.</span>
-                    <span className="text-emerald-500 text-xs flex items-center gap-1 font-semibold">
+                    <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
                   </div>
                 </div>
 
-                <div className={`border p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
+                <div className={`border-2 p-8 flex flex-col justify-between space-y-4 shadow-xl rounded-2xl transition-colors duration-500 ${
                   isDark
-                    ? 'bg-[#21130D] border-[#D4AF37]/25 text-[#F3E6D0]'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
+                    ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_12px_40px_rgba(212,175,55,0.35)]'
+                    : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.22)]'
                 }`}>
                   <div className="space-y-3">
                     <div className="flex gap-1 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                     </div>
                     <h4 className="font-cinzel font-bold text-base">"Delicious & Elegant"</h4>
-                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#D8BE99]' : 'text-[#3A2116]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDark ? 'text-[#FFF2B2]' : 'text-[#3A2116]'}`}>
                       "Ana Sukkar is sweet and delicate. The spun sugar and white musk blend is heavenly."
                     </p>
                   </div>
-                  <div className="pt-4 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs sm:text-sm">
+                  <div className="pt-4 border-t border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
                     <span className="font-bold text-[#D4AF37]">Layla K.</span>
-                    <span className="text-emerald-500 text-xs flex items-center gap-1 font-semibold">
+                    <span className="text-emerald-400 text-xs flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Verified Patron
                     </span>
                   </div>

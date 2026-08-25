@@ -162,13 +162,13 @@ export default function Discovery() {
 
         {/* Quiz Steps */}
         {step <= 4 && (
-          <div className={`p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in border rounded-2xl ${
+          <div className={`p-8 sm:p-10 shadow-2xl space-y-8 animate-fade-in border-2 rounded-2xl ${
             isDark
-              ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]'
-              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.2)]'
+              ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_15px_45px_rgba(212,175,55,0.35)]'
+              : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_15px_35px_rgba(212,175,55,0.22)]'
           }`}>
             <h2 className={`text-xl font-cinzel font-bold text-center ${
-              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+              isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'
             }`}>
               {steps[step - 1].title}
             </h2>
@@ -180,18 +180,18 @@ export default function Discovery() {
                   onClick={() => handleSelectOption(steps[step - 1].key, opt.id, opt)}
                   className={`p-5 border text-left rtl:text-right rounded-xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
                     isDark
-                      ? 'bg-black/60 border-white/10 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10'
-                      : 'bg-white/80 border-[#D4AF37]/35 hover:border-[#D4AF37] hover:bg-white shadow-xs'
+                      ? 'bg-black/75 border-[#D4AF37]/50 hover:border-[#FFF2B2] hover:bg-black/90'
+                      : 'bg-white/90 border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-white shadow-xs'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className={`font-cinzel font-bold text-sm transition-colors ${
-                      isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#120B06] group-hover:text-[#D4AF37]'
+                      isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#120B06] group-hover:text-[#D4AF37]'
                     }`}>
                       {opt.label}
                     </span>
                     <ArrowRight className={`w-4 h-4 transition-colors rtl:rotate-180 ${
-                      isDark ? 'text-[#D8BE99] group-hover:text-[#D4AF37]' : 'text-[#5A3517] group-hover:text-[#D4AF37]'
+                      isDark ? 'text-[#FFF2B2] group-hover:text-[#FFF2B2]' : 'text-[#5A3517] group-hover:text-[#D4AF37]'
                     }`} />
                   </div>
                   {opt.desc && (
@@ -205,17 +205,17 @@ export default function Discovery() {
 
         {/* Results Screen */}
         {step === 5 && result && (
-          <div className={`p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in border rounded-2xl ${
+          <div className={`p-8 sm:p-12 shadow-2xl space-y-8 text-center animate-fade-in border-2 rounded-2xl ${
             isDark
-              ? 'bg-[#0B0A08] border-[#D4AF37]/50 text-[#F3E6D0]'
-              : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 text-[#120B06] shadow-[0_20px_45px_rgba(212,175,55,0.25)]'
+              ? 'bg-gradient-to-br from-[#8C6239]/45 via-[#D4AF37]/30 to-[#5A3E1B]/55 border-[#D4AF37]/80 text-[#FFF5E6] shadow-[0_20px_50px_rgba(212,175,55,0.4)]'
+              : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 text-[#120B06] shadow-[0_20px_45px_rgba(212,175,55,0.25)]'
           }`}>
             <div className="inline-flex px-3.5 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
               Your Olfactory Signature Match
             </div>
 
             <div className={`aspect-[3/4] max-h-72 mx-auto flex items-center justify-center p-0 overflow-hidden border rounded-2xl ${
-              isDark ? 'bg-black/50 border-white/10' : 'bg-white/90 border-[#D4AF37]/35 shadow-inner'
+              isDark ? 'bg-gradient-to-b from-[#26190C] to-[#140C05] border-[#D4AF37]/40' : 'bg-white/90 border-[#D4AF37]/35 shadow-inner'
             }`}>
               <img
                 src={result.image}
@@ -226,15 +226,13 @@ export default function Discovery() {
 
             <div className="space-y-2">
               <span className={`text-xs uppercase tracking-widest font-cinzel font-bold ${
-                isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
+                isDark ? 'text-[#FFF2B2]' : 'text-[#8C6239]'
               }`}>{result.tier}</span>
               <h2 className="text-3xl font-cinzel font-bold text-[#D4AF37]">{result.name}</h2>
               <p className={`text-xs sm:text-sm max-w-md mx-auto ${
-                isDark ? 'text-[#F3E6D0]' : 'text-[#2C180F]'
+                isDark ? 'text-[#FFF5E6]' : 'text-[#2C180F]'
               }`}>{result.reason}</p>
-              <p className={`text-xl font-cinzel font-bold pt-2 ${
-                isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
-              }`}>€{result.price} / {result.size}</p>
+              <p className={`text-xl font-cinzel font-bold pt-2 text-[#D4AF37]`}>€{result.price} / {result.size}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -243,7 +241,11 @@ export default function Discovery() {
                   const prod = await productService.getProductById(result.slug);
                   if (prod) addToCart(prod, '60 ml', 1);
                 }}
-                className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2 rounded-full cursor-pointer"
+                className={`px-8 py-3.5 font-cinzel font-bold text-xs uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2 rounded-full cursor-pointer hover:scale-105 ${
+                  isDark
+                    ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70'
+                    : 'bg-[#1A1008] hover:bg-[#2C180F] text-[#FFFDF9] hover:text-[#D4AF37] border border-[#D4AF37]/60'
+                }`}
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Add to Bag (€{result.price})</span>
@@ -253,7 +255,7 @@ export default function Discovery() {
                 to={`/product/${result.slug}`}
                 className={`px-8 py-3.5 border font-cinzel text-xs uppercase tracking-wider transition-colors flex items-center justify-center rounded-full ${
                   isDark
-                    ? 'bg-white/5 hover:bg-white/10 border-white/20 text-[#F3E6D0]'
+                    ? 'bg-[#1A1008] hover:bg-[#0B0A08] border-[#D4AF37]/50 text-[#FFF2B2]'
                     : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] border-[#D4AF37]/40 text-[#120B06]'
                 }`}
               >

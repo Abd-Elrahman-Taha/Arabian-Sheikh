@@ -55,10 +55,10 @@ export default function ProductCard({ product, onCompare }) {
   return (
     <div
       onClick={handleCardClick}
-      className={`group relative flex flex-col justify-between border cursor-pointer transition-all duration-500 rounded-2xl overflow-hidden hover:-translate-y-1.5 ${
+      className={`group relative flex flex-col justify-between border-2 cursor-pointer transition-all duration-500 rounded-2xl overflow-hidden hover:-translate-y-1.5 ${
         isDark
-          ? 'bg-[#0B0A08]/95 border-[#D4AF37]/25 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_40px_rgba(212,175,55,0.18)]'
-          : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 hover:border-[#D4AF37] shadow-[0_10px_30px_rgba(212,175,55,0.18)] hover:shadow-[0_18px_40px_rgba(212,175,55,0.35)]'
+          ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
+          : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 hover:border-[#D4AF37] shadow-[0_12px_35px_rgba(212,175,55,0.25)] hover:shadow-[0_20px_45px_rgba(212,175,55,0.4)]'
       }`}
     >
       {/* Top Badges */}
@@ -69,7 +69,7 @@ export default function ProductCard({ product, onCompare }) {
           </span>
         )}
         {product.featured && !product.tier && (
-          <span className="bg-[#D4AF37]/90 text-black text-[10px] font-bold font-cinzel tracking-widest uppercase px-2 py-0.5 rounded-full shadow-md">
+          <span className="bg-[#D4AF37] text-black text-[10px] font-bold font-cinzel tracking-widest uppercase px-2 py-0.5 rounded-full shadow-md">
             Featured
           </span>
         )}
@@ -90,8 +90,8 @@ export default function ProductCard({ product, onCompare }) {
           isSaved
             ? 'bg-[#D4AF37] text-black shadow-md scale-105'
             : isDark
-            ? 'bg-black/60 text-[#F3E6D0] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/20 shadow-sm'
-            : 'bg-[#FAF1DF]/90 text-[#120B06] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/40 shadow-sm'
+            ? 'bg-black/75 text-[#FFF2B2] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/40 shadow-sm'
+            : 'bg-white/90 text-[#120B06] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/50 shadow-sm'
         }`}
       >
         <Heart className={`w-3.5 h-3.5 transition-transform duration-200 ${isSaved ? 'fill-current' : ''}`} />
@@ -99,10 +99,10 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Flacon Image Container with Full Editorial Background */}
       <div className={`relative aspect-[3/4] overflow-hidden flex items-center justify-center ${
-        isDark ? 'bg-[#0B0A08]' : 'bg-gradient-to-b from-[#FFFDF8] to-[#FAF1DF]'
+        isDark ? 'bg-gradient-to-b from-[#26190C] via-[#1F1308] to-[#140C05]' : 'bg-gradient-to-b from-[#FFFBF2] to-[#FAF1DF]'
       }`}>
         {!imgLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/5 via-[#D4AF37]/15 to-[#D4AF37]/5 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/10 via-[#D4AF37]/25 to-[#D4AF37]/10 animate-pulse" />
         )}
         <img
           src={imageSrc}
@@ -118,7 +118,7 @@ export default function ProductCard({ product, onCompare }) {
         {/* Ambient subtle vignette */}
         <div className={`absolute inset-0 pointer-events-none ${
           isDark
-            ? 'bg-gradient-to-t from-[#0B0A08]/70 via-transparent to-black/20'
+            ? 'bg-gradient-to-t from-[#1A1008]/80 via-transparent to-black/25'
             : 'bg-gradient-to-t from-black/20 via-transparent to-transparent'
         }`} />
 
@@ -131,8 +131,8 @@ export default function ProductCard({ product, onCompare }) {
               isOutOfStock
                 ? 'bg-neutral-900/90 text-neutral-500 border border-neutral-800 cursor-not-allowed'
                 : isDark
-                ? 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 shadow-[0_8px_25px_rgba(140,98,57,0.45)] hover:scale-[1.02]'
-                : 'bg-gradient-to-r from-[#2C180F] via-[#120B06] to-[#2C180F] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#FFFDF9] hover:text-[#120B06] border border-[#D4AF37]/50 shadow-[0_8px_25px_rgba(0,0,0,0.15)] hover:scale-[1.02]'
+                ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70 shadow-[0_8px_25px_rgba(0,0,0,0.7)] hover:border-[#FFF2B2] hover:scale-[1.02]'
+                : 'bg-[#1A1008] hover:bg-[#2C180F] text-[#FFFDF9] hover:text-[#D4AF37] border border-[#D4AF37]/60 shadow-[0_8px_25px_rgba(0,0,0,0.18)] hover:scale-[1.02]'
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
@@ -143,7 +143,7 @@ export default function ProductCard({ product, onCompare }) {
 
       {/* Details Area */}
       <div className={`p-4 sm:p-5 flex flex-col flex-1 justify-between border-t ${
-        isDark ? 'bg-[#0B0A08]/95 border-[#D4AF37]/10' : 'bg-[#FAF1DF]/90 border-[#D4AF37]/30'
+        isDark ? 'bg-gradient-to-b from-[#2E1E0F]/95 to-[#1C1209]/98 border-[#D4AF37]/40' : 'bg-gradient-to-b from-[#FAF1DF]/95 to-[#F3E2C3]/95 border-[#D4AF37]/40'
       }`}>
         <div>
           {/* Scent family / volume */}

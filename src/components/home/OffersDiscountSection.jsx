@@ -88,10 +88,10 @@ export default function OffersDiscountSection({ products = [] }) {
           {promoCodes.map((promo) => (
             <div
               key={promo.code}
-              className={`p-6 sm:p-7 rounded-2xl border relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all duration-300 ${
+              className={`p-6 sm:p-7 rounded-2xl border-2 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all duration-300 ${
                 isDark
-                  ? 'bg-gradient-to-r from-[#140D07] via-[#0B0A08] to-[#140D07] border-[#D4AF37]/40 shadow-xl'
-                  : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_10px_25px_rgba(212,175,55,0.2)]'
+                  ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 shadow-[0_12px_35px_rgba(212,175,55,0.3)]'
+                  : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 shadow-[0_10px_25px_rgba(212,175,55,0.2)]'
               }`}
             >
               <div className="space-y-2 flex-1">
@@ -99,11 +99,11 @@ export default function OffersDiscountSection({ products = [] }) {
                   <span className="px-3 py-1 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-md">
                     {language === 'ar' ? promo.arabicDiscount : promo.discount}
                   </span>
-                  <span className={`text-xs font-mono ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                  <span className={`text-xs font-mono font-semibold ${isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'}`}>
                     Min. {promo.minSpend}
                   </span>
                 </div>
-                <h4 className={`font-cinzel text-lg font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
+                <h4 className={`font-cinzel text-lg font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'}`}>
                   {promo.code}
                 </h4>
                 <p className={`text-xs ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
@@ -118,8 +118,8 @@ export default function OffersDiscountSection({ products = [] }) {
                   copiedCode === promo.code
                     ? 'bg-emerald-600 border-emerald-500 text-white'
                     : isDark
-                    ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black'
-                    : 'bg-white border-[#D4AF37] text-[#120B06] hover:bg-[#D4AF37] hover:text-black shadow-md'
+                    ? 'bg-[#0B0A08] border-[#D4AF37]/70 text-[#FFF2B2] hover:bg-[#1A1008] hover:text-[#D4AF37]'
+                    : 'bg-white/90 border-[#D4AF37]/60 text-[#120B06] hover:bg-[#D4AF37] hover:text-black shadow-md'
                 }`}
               >
                 {copiedCode === promo.code ? (
@@ -144,7 +144,7 @@ export default function OffersDiscountSection({ products = [] }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Gift className="w-4 h-4 text-[#D4AF37]" />
-                <h3 className={`font-cinzel text-xl sm:text-2xl font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
+                <h3 className={`font-cinzel text-xl sm:text-2xl font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#120B06]'}`}>
                   {language === 'ar' ? 'باقات الهدايا الملكية المخفضة' : 'Discounted Sovereign Gift Coffrets'}
                 </h3>
               </div>
@@ -165,10 +165,10 @@ export default function OffersDiscountSection({ products = [] }) {
                 return (
                   <div
                     key={bundle.id}
-                    className={`group rounded-2xl border p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-2 ${
+                    className={`group rounded-2xl border-2 p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-2 ${
                       isDark
-                        ? 'bg-[#0B0A08]/90 border-[#D4AF37]/35 hover:border-[#D4AF37] shadow-xl'
-                        : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 hover:border-[#D4AF37] shadow-[0_12px_30px_rgba(212,175,55,0.22)]'
+                        ? 'bg-gradient-to-br from-[#8C6239]/40 via-[#D4AF37]/25 to-[#5A3E1B]/50 border-[#D4AF37]/80 hover:border-[#FFF2B2] shadow-[0_12px_40px_rgba(212,175,55,0.35)] hover:shadow-[0_22px_55px_rgba(212,175,55,0.55)]'
+                        : 'bg-gradient-to-br from-[#FFF8E7] via-[#F7E7C4] to-[#EBD29B] border-[#D4AF37]/75 hover:border-[#D4AF37] shadow-[0_12px_30px_rgba(212,175,55,0.22)]'
                     }`}
                   >
                     {/* Offer Tag Badge */}
@@ -176,7 +176,7 @@ export default function OffersDiscountSection({ products = [] }) {
                       <span className="px-3 py-1 rounded-full bg-red-800/90 text-white font-cinzel font-bold text-[10px] uppercase tracking-widest shadow-md">
                         {bundle.offerLabel || '15% OFF SPECIAL'}
                       </span>
-                      <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                      <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${isDark ? 'text-[#FFF2B2]' : 'text-[#5A3517]'}`}>
                         <Clock className="w-3 h-3 text-[#D4AF37]" />
                         <span>Limited Edition</span>
                       </span>
@@ -185,7 +185,7 @@ export default function OffersDiscountSection({ products = [] }) {
                     {/* Image */}
                     <div
                       onClick={() => navigate(`/product/${bundle.slug || bundle.id}`)}
-                      className="aspect-[4/3] rounded-xl overflow-hidden cursor-pointer mb-5 border border-[#D4AF37]/20 relative"
+                      className="aspect-[4/3] rounded-xl overflow-hidden cursor-pointer mb-5 border border-[#D4AF37]/35 relative bg-black/40"
                     >
                       <img
                         src={imageSrc}
@@ -201,7 +201,7 @@ export default function OffersDiscountSection({ products = [] }) {
                         <h4
                           onClick={() => navigate(`/product/${bundle.slug || bundle.id}`)}
                           className={`font-cinzel text-lg font-bold cursor-pointer transition-colors ${
-                            isDark ? 'text-[#F3E6D0] group-hover:text-[#D4AF37]' : 'text-[#120B06] group-hover:text-[#5A3517]'
+                            isDark ? 'text-[#FFF5E6] group-hover:text-[#FFF2B2]' : 'text-[#120B06] group-hover:text-[#5A3517]'
                           }`}
                         >
                           {language === 'ar' ? bundle.arabicName || bundle.name : bundle.name}
@@ -214,7 +214,7 @@ export default function OffersDiscountSection({ products = [] }) {
                       </div>
 
                       {/* Pricing and Action */}
-                      <div className="pt-3 border-t border-black/10 dark:border-white/10 flex items-center justify-between gap-3">
+                      <div className="pt-3 border-t border-[#D4AF37]/30 flex items-center justify-between gap-3">
                         <div>
                           <span className="font-cinzel text-xl font-bold text-[#D4AF37]">
                             €{bundle.price}
@@ -228,7 +228,11 @@ export default function OffersDiscountSection({ products = [] }) {
 
                         <button
                           onClick={() => addToCart(bundle, bundle.size || 'Full Set', 1)}
-                          className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full transition-all duration-300 flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105"
+                          className={`px-5 py-2.5 font-cinzel font-bold text-xs uppercase tracking-wider rounded-full transition-all duration-300 flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105 ${
+                            isDark
+                              ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border border-[#D4AF37]/70'
+                              : 'bg-[#1A1008] hover:bg-[#2C180F] text-[#FFFDF9] hover:text-[#D4AF37] border border-[#D4AF37]/60'
+                          }`}
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />
                           <span>{language === 'ar' ? 'اقتنِ العرض' : 'Claim Offer'}</span>
