@@ -65,13 +65,13 @@ export default function Home() {
 
   const heroFlacons = [
     {
-      id: 'as-luxury-black-diamond',
-      slug: 'black-diamond-luxury',
+      id: 'as-luxury-arabian-gold',
+      slug: 'arabian-gold-luxury',
       tier: 'Luxury',
-      name: 'Black Diamond',
-      arabicName: 'بلاك دايموند',
-      spanishName: 'Black Diamond',
-      bulgarianName: 'Черен Диамант',
+      name: 'Arabian Gold Sovereign',
+      arabicName: 'ذهب عربي سيادي',
+      spanishName: 'Arabian Gold Sovereign',
+      bulgarianName: 'Арабско Злато',
       price: 55,
       size: '60 ml / 2.0 fl oz',
       tagline: 'Liquid 24K gold distilled with precious Assam agarwood, sparkling diamond accord, and royal amber.',

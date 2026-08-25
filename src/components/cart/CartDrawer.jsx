@@ -43,7 +43,7 @@ export default function CartDrawer() {
     async function loadPairings() {
       if (!isDrawerOpen) return;
       try {
-        const firstItemId = items[0]?.productId || 'as-luxury-black-diamond';
+        const firstItemId = items[0]?.productId || 'as-luxury-arabian-gold';
         const related = await productService.getRelatedProducts(firstItemId, 4);
         const cartIds = items.map(i => i.productId);
         const filtered = related.filter(r => !cartIds.includes(r.id));
