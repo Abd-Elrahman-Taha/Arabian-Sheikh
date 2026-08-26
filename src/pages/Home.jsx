@@ -62,6 +62,7 @@ export default function Home() {
   const [selectedOccasion, setSelectedOccasion] = useState('all');
 
   const firstCollectionRef = useRef(null);
+  const flaconShowcaseRef = useRef(null);
 
   const heroFlacons = [
     {
@@ -306,15 +307,135 @@ export default function Home() {
     }
   };
 
+  const scrollToFlaconShowcase = () => {
+    if (flaconShowcaseRef.current) {
+      flaconShowcaseRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className={`w-full bg-transparent overflow-x-hidden transition-colors duration-500 ${
       isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
     }`}>
       
       {/* =========================================================================
-          1. HERO SECTION: CENTERED PRODUCT WITH GOLDEN SHADER & BLURRED GRADIENT AURA
+          1. PALACE ARCHITECTURE HERO SECTION: GRAND DRY PALACE 24K WALLPAPER
           ========================================================================= */}
-      <section className="relative min-h-[86vh] lg:min-h-[90vh] flex flex-col justify-between overflow-hidden pt-20 sm:pt-24 lg:pt-28 pb-0">
+      <section className="relative w-full min-h-[92vh] sm:min-h-screen flex flex-col justify-between items-center overflow-hidden pt-24 sm:pt-28 pb-8 z-10">
+        
+        {/* Full-Bleed 24K Architecture Visual: 9:16 for phones, 16:9 for desktop */}
+        <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
+          <picture className="w-full h-full">
+            {/* 1. Mobile Phone WebP (< 768px, ~312 KB) */}
+            <source
+              media="(max-width: 767px)"
+              type="image/webp"
+              srcSet="/editorial/arabian_palace_phone_opt.webp"
+            />
+            {/* 2. Mobile Phone JPG Fallback (< 768px, ~425 KB) */}
+            <source
+              media="(max-width: 767px)"
+              srcSet="/editorial/arabian_palace_phone_opt.jpg"
+            />
+            {/* 3. Desktop / Tablet WebP (>= 768px, ~426 KB) */}
+            <source
+              type="image/webp"
+              srcSet="/editorial/arabian_palace_desktop_opt.webp"
+            />
+            {/* 4. Desktop JPG Standard Fallback */}
+            <img
+              src="/editorial/arabian_palace_desktop_opt.jpg"
+              alt="The Grand Sovereign Palace of Arabian Sheikh"
+              className="w-full h-full object-cover object-center transform scale-100 sm:scale-105 transition-transform duration-1000"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </picture>
+
+          {/* Top Vignette for Navbar readability */}
+          <div className="absolute top-0 inset-x-0 h-44 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+          {/* Center Subtle Golden Radiant Bloom */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(212,175,55,0.18),transparent_65%)] pointer-events-none" />
+
+          {/* Bottom Seamless Fade into Section 2 (Flacon Turntable Showcase) */}
+          <div className={`absolute bottom-0 inset-x-0 h-52 pointer-events-none transition-colors duration-700 ${
+            isDark
+              ? 'bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/75 to-transparent'
+              : 'bg-gradient-to-t from-[#F3E6D0] via-[#F3E6D0]/80 to-transparent'
+          }`} />
+        </div>
+
+        {/* Center Royal Monogram & Headline Content */}
+        <div className="relative z-20 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 w-full mt-auto mb-2 sm:my-auto pt-[36vh] sm:pt-0 text-center flex flex-col items-center space-y-3 sm:space-y-6 pointer-events-auto">
+          
+          {/* Sovereign Royal Seal Badge */}
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-black/65 border-2 border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.55)] backdrop-blur-md animate-fade-in">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFDF8A]" />
+            <span className="font-cinzel text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.2em] sm:tracking-[0.28em] text-[#FFFDF8]">
+              {language === 'ar' ? 'دار العطور الملكية الأندلسية' : 'HAUTE PARFUMERIE ROYALE • PALACE RESERVE'}
+            </span>
+          </div>
+
+          {/* Majestic Royal Title */}
+          <div className="space-y-1 sm:space-y-2 max-w-3xl">
+            <h1 className="font-cinzel font-extrabold text-3xl sm:text-6xl lg:text-7xl tracking-[0.08em] leading-tight text-transparent bg-clip-text bg-gradient-to-b from-[#FFFDF8] via-[#F2D675] to-[#D4AF37] drop-shadow-[0_4px_25px_rgba(0,0,0,0.9)]">
+              {language === 'ar' ? 'قصر الشيخ العربي' : 'ARABIAN SHEIKH'}
+            </h1>
+            <p className="font-cinzel text-[11px] sm:text-base lg:text-lg font-bold tracking-[0.18em] sm:tracking-[0.22em] text-[#FFF2B2] drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] uppercase max-w-xl mx-auto">
+              {language === 'ar'
+                ? 'فخامة الخلاصات النقية في بلاط الملوك'
+                : 'The Sanctuary of Pure Extrait & Andalusian Alchemy'}
+            </p>
+          </div>
+
+          {/* Action CTAs */}
+          <div className="pt-2 sm:pt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
+            <button
+              onClick={scrollToFlaconShowcase}
+              className="group relative inline-flex items-center gap-2 sm:gap-3 px-6 py-2.5 sm:px-10 sm:py-4 rounded-full font-cinzel font-bold text-[11px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.24em] transition-all duration-400 border-2 border-[#F2D675] bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black hover:scale-105 shadow-[0_0_25px_rgba(212,175,55,0.65)] hover:shadow-[0_0_40px_rgba(242,214,117,0.9)] cursor-pointer overflow-hidden"
+            >
+              <span className="relative z-10 font-extrabold">
+                {language === 'ar' ? 'استكشف القوارير الملكية' : 'EXPLORE THE FLACONS'}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 relative z-10 transition-transform duration-300 group-hover:translate-y-0.5" />
+            </button>
+
+            <Link
+              to="/the-palace"
+              className="group relative inline-flex items-center gap-1.5 sm:gap-2 px-5 py-2.5 sm:px-8 sm:py-4 rounded-full font-cinzel font-bold text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.22em] transition-all duration-300 border-2 border-[#FFFDF8]/60 bg-black/60 hover:bg-black/80 text-[#FFFDF8] hover:border-[#F2D675] hover:text-[#FFDF8A] backdrop-blur-md shadow-lg hover:scale-105 cursor-pointer"
+            >
+              <span>{language === 'ar' ? 'جولة في القصر' : 'TOUR THE PALACE'}</span>
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 rtl:rotate-180 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+        </div>
+
+        {/* Bottom Scroll Prompt pointing to Flacon Showcase */}
+        <div
+          onClick={scrollToFlaconShowcase}
+          className="relative z-20 flex flex-col items-center gap-1 cursor-pointer group pb-2 pt-2 sm:pt-4 transition-transform hover:translate-y-1"
+        >
+          <span className="font-cinzel text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.25em] text-[#FFF2B2] group-hover:text-[#F2D675] drop-shadow-md font-bold">
+            {language === 'ar' ? 'انتقل إلى المعرض الملكي' : 'SCROLL TO FLACON SHOWCASE'}
+          </span>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#D4AF37] bg-black/50 backdrop-blur-md flex items-center justify-center text-[#FFDF8A] shadow-[0_0_15px_rgba(212,175,55,0.5)] group-hover:border-[#FFFDF8] animate-bounce">
+            <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </div>
+        </div>
+
+      </section>
+
+      {/* =========================================================================
+          2. FLACON TURNTABLE SHOWCASE (PREVIOUS HERO SECTION - 100% PRESERVED)
+          ========================================================================= */}
+      <section
+        ref={flaconShowcaseRef}
+        id="flacon-showcase"
+        className="relative min-h-[86vh] lg:min-h-[90vh] flex flex-col justify-between overflow-hidden pt-12 sm:pt-16 lg:pt-20 pb-0"
+      >
         
         {/* Clean, Smooth, Noise-Free Luxury Background with Radiant Top-Left & Bottom-Right Shaders */}
         <div className={`absolute inset-0 z-0 pointer-events-none overflow-hidden transition-colors duration-700 ${
