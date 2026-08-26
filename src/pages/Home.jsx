@@ -446,16 +446,26 @@ export default function Home() {
               ? 'bg-gradient-to-b from-[#140D07] via-[#0B0A08] to-[#0B0A08]'
               : 'bg-gradient-to-b from-[#FAF6F0] via-[#F3E6D0] to-[#E8D9C2]'
           }`} />
-          <div className="absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.15),transparent_70%)]" />
+          <div className=" absolute top-0 inset-x-0 h-full bg-[radial-gradient(ellipse_at_50%_15%,rgba(212,175,55,0.15),transparent_70%)]" />
 
           {/* 1. TOP-LEFT Ottoman 8-Pointed Star Geometric Ornament */}
-          <div className="absolute -top-20 -left-20 sm:-top-28 sm:-left-28 pointer-events-none transition-all duration-700 z-0">
-            <OttomanEightStar size={640} opacity={isDark ? 0.75 : 0.6} rotateSpeed={80} />
+          {/* 1. TOP-LEFT Ottoman 8-Pointed Star Geometric Ornament */}
+          <div className="  absolute -top-20 -left-20 sm:-top-28 sm:-left-28 pointer-events-none transition-all duration-700 z-0">
+          <OttomanEightStar
+            size={640}
+            opacity={isDark ? 0.75 : 0.6}
+            rotateSpeed={80}
+          />
           </div>
 
           {/* 2. BOTTOM-RIGHT Ottoman 8-Pointed Star Geometric Ornament */}
-          <div className="absolute -bottom-20 -right-20 sm:-bottom-28 sm:-right-28 pointer-events-none transition-all duration-700 z-0">
-            <OttomanEightStar size={640} opacity={isDark ? 0.7 : 0.55} rotateSpeed={95} reverse={true} />
+          <div className=" hidden sm:block absolute -bottom-20 -right-20 sm:-bottom-28 sm:-right-28 pointer-events-none transition-all duration-700 z-0">
+            <OttomanEightStar
+              size={640}
+              opacity={isDark ? 0.7 : 0.55}
+              rotateSpeed={95}
+              reverse={true}
+            />
           </div>
         </div>
 
