@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 /**
  * OttomanEightStar (النجمة الثمانية للزخرفة العثمانية / Seljuk 8-Pointed Star)
  * Authentic Islamic Geometric Rosette featuring dual 45-degree interlocking squares,
  * interlaced geometric latticework, central rosette, and glowing sovereign gold styling.
+ * Uses isolated unique SVG definition IDs to ensure zero rendering conflicts when conditionally hidden.
  */
 export default function OttomanEightStar({
   size = 520,
@@ -12,6 +13,10 @@ export default function OttomanEightStar({
   rotateSpeed = 75, // seconds for 360 degree rotation
   reverse = false
 }) {
+  const reactId = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const gradId = `goldOttomanGrad_${reactId}`;
+  const radialId = `goldRadialCenter_${reactId}`;
+
   return (
     <div
       className={`relative flex items-center justify-center select-none pointer-events-none ${className}`}
@@ -40,7 +45,7 @@ export default function OttomanEightStar({
       >
         <defs>
           {/* Sovereign Gold Gradient */}
-          <linearGradient id="goldOttomanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#FFF2B2" />
             <stop offset="35%" stopColor="#D4AF37" />
             <stop offset="70%" stopColor="#8C6239" />
@@ -48,7 +53,7 @@ export default function OttomanEightStar({
           </linearGradient>
 
           {/* Glowing Radial Gold */}
-          <radialGradient id="goldRadialCenter" cx="50%" cy="50%" r="50%">
+          <radialGradient id={radialId} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#FFF9E0" stopOpacity="0.85" />
             <stop offset="45%" stopColor="#D4AF37" stopOpacity="0.45" />
             <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
@@ -60,7 +65,7 @@ export default function OttomanEightStar({
           cx="200"
           cy="200"
           r="190"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="1.4"
           strokeDasharray="4 6"
           opacity="0.65"
@@ -69,7 +74,7 @@ export default function OttomanEightStar({
           cx="200"
           cy="200"
           r="182"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="0.9"
           opacity="0.45"
         />
@@ -77,9 +82,9 @@ export default function OttomanEightStar({
         {/* 8 Radiating Cardinal & Ordinal Ray Spikes */}
         {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
           <g key={`ray-${i}`} transform={`rotate(${angle} 200 200)`}>
-            <line x1="200" y1="10" x2="200" y2="42" stroke="url(#goldOttomanGrad)" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="200" y1="10" x2="200" y2="42" stroke={`url(#${gradId})`} strokeWidth="1.8" strokeLinecap="round" />
             <circle cx="200" cy="8" r="2.8" fill="#F2D675" />
-            <polygon points="200,18 195,34 205,34" fill="url(#goldOttomanGrad)" opacity="0.85" />
+            <polygon points="200,18 195,34 205,34" fill={`url(#${gradId})`} opacity="0.85" />
           </g>
         ))}
 
@@ -89,7 +94,7 @@ export default function OttomanEightStar({
           y="75"
           width="250"
           height="250"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="2.2"
           opacity="0.9"
           transform="rotate(0 200 200)"
@@ -101,7 +106,7 @@ export default function OttomanEightStar({
           y="75"
           width="250"
           height="250"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="2.2"
           opacity="0.9"
           transform="rotate(45 200 200)"
@@ -110,7 +115,7 @@ export default function OttomanEightStar({
         {/* Intermediate Octagram Interlacing Ring */}
         <polygon
           points="200,45 235,115 310,90 285,165 355,200 285,235 310,310 235,285 200,355 165,285 90,310 115,235 45,200 115,165 90,90 165,115"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="1.6"
           opacity="0.75"
         />
@@ -121,7 +126,7 @@ export default function OttomanEightStar({
           y="110"
           width="180"
           height="180"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="1.3"
           opacity="0.65"
           transform="rotate(22.5 200 200)"
@@ -131,15 +136,15 @@ export default function OttomanEightStar({
           y="110"
           width="180"
           height="180"
-          stroke="url(#goldOttomanGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth="1.3"
           opacity="0.65"
           transform="rotate(67.5 200 200)"
         />
 
         {/* Inner Rosette Floral Geometry */}
-        <circle cx="200" cy="200" r="60" stroke="url(#goldOttomanGrad)" strokeWidth="1.3" opacity="0.75" />
-        <circle cx="200" cy="200" r="45" stroke="url(#goldOttomanGrad)" strokeWidth="1.0" strokeDasharray="3 3" opacity="0.65" />
+        <circle cx="200" cy="200" r="60" stroke={`url(#${gradId})`} strokeWidth="1.3" opacity="0.75" />
+        <circle cx="200" cy="200" r="45" stroke={`url(#${gradId})`} strokeWidth="1.0" strokeDasharray="3 3" opacity="0.65" />
 
         {/* Central 8-Petal Rosette */}
         {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => (
@@ -149,9 +154,9 @@ export default function OttomanEightStar({
             cy="172"
             rx="10"
             ry="24"
-            stroke="url(#goldOttomanGrad)"
+            stroke={`url(#${gradId})`}
             strokeWidth="1.2"
-            fill="url(#goldRadialCenter)"
+            fill={`url(#${radialId})`}
             opacity="0.85"
             transform={`rotate(${deg} 200 200)`}
           />
@@ -160,7 +165,7 @@ export default function OttomanEightStar({
         {/* Sacred Central 8-Point Core */}
         <polygon
           points="200,180 206,194 220,200 206,206 200,220 194,206 180,200 194,194"
-          fill="url(#goldOttomanGrad)"
+          fill={`url(#${gradId})`}
           stroke="#FFF9E0"
           strokeWidth="1"
         />
