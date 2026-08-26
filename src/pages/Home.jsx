@@ -535,15 +535,15 @@ export default function Home() {
             <div className="w-full lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center lg:items-end text-center lg:text-right order-3 z-20 pointer-events-auto mt-4 lg:mt-0">
               <div
                 onClick={() => setActiveHeroIndex(nextHeroIndex)}
-                className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border-2 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 max-w-[170px] sm:max-w-[190px] flex flex-col items-center lg:items-end space-y-2 ${
+                className={`group relative cursor-pointer p-3 sm:p-3.5 rounded-2xl border-2 shadow-2xl backdrop-blur-md transition-transform duration-300 hover:scale-105 w-[165px] sm:w-[185px] shrink-0 flex flex-col items-center text-center space-y-2 box-border ${
                   isDark
                     ? 'bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 border-[#F2D675] hover:border-[#FFFDF8] text-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
                     : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 hover:border-[#A8853B] text-[#704622] shadow-[0_10px_30px_-5px_rgba(112,70,34,0.08)]'
                 }`}
                 title={`Next: ${getDisplayName(nextHeroFlacon)}`}
               >
-                {/* Header Tag */}
-                <div className={`flex items-center gap-1 text-[8.5px] uppercase tracking-[0.2em] font-cinzel font-bold ${
+                {/* Header Tag Centered */}
+                <div className={`w-full flex items-center justify-center gap-1.5 text-[8.5px] uppercase tracking-[0.2em] font-cinzel font-bold ${
                   isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'
                 }`}>
                   <Sparkles className="w-2.5 h-2.5 text-[#FFDF8A] dark:text-[#FFDF8A]" />
@@ -551,23 +551,23 @@ export default function Home() {
                   <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </div>
 
-                {/* Smaller Next Flacon Preview */}
-                <div className="relative w-16 h-24 sm:w-20 sm:h-28 flex items-center justify-center my-0.5">
+                {/* Next Flacon Preview Exactly in Middle of Container */}
+                <div className="relative w-full h-24 sm:h-28 flex items-center justify-center my-0.5 overflow-hidden">
                   <img
                     src={nextHeroFlacon.image}
                     alt={getDisplayName(nextHeroFlacon)}
-                    className="h-full w-auto object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.4)] group-hover:scale-105 transition-transform duration-300 relative z-10"
+                    className="max-h-full max-w-full object-contain mx-auto filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.4)] group-hover:scale-105 transition-transform duration-300 relative z-10"
                   />
                 </div>
 
-                {/* Next Product Title & Tier */}
-                <div className="space-y-0.5">
-                  <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight ${
+                {/* Next Product Title & Tier Centered */}
+                <div className="space-y-0.5 w-full text-center overflow-hidden">
+                  <h4 className={`font-cinzel text-xs sm:text-sm font-bold leading-tight truncate ${
                     isDark ? 'text-[#FFFDF8] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]' : 'text-[#704622]'
                   }`}>
                     {getDisplayName(nextHeroFlacon)}
                   </h4>
-                  <p className={`text-[9.5px] font-mono font-extrabold ${
+                  <p className={`text-[9.5px] font-mono font-extrabold truncate ${
                     isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'
                   }`}>
                     €{nextHeroFlacon.price} • {nextHeroFlacon.tier}

@@ -32,7 +32,9 @@ export default function Hero2DFlaconShowcase({
     timerRef.current = setInterval(() => {
       setCurrentIndex((prev) => {
         const next = (prev + 1) % products.length;
-        if (onSlideChange) onSlideChange(next);
+        setTimeout(() => {
+          if (onSlideChange) onSlideChange(next);
+        }, 0);
         return next;
       });
     }, 3500); // 3.5 seconds
