@@ -1,6 +1,7 @@
 import { INITIAL_USERS } from './mockData';
 import { authApi } from '../api/auth.api';
 import { apiClient } from '../api/client';
+import { liveCloudSync } from './liveCloudSync';
 
 const USERS_STORAGE_KEY = 'arabian_sheikh_users';
 const CURRENT_USER_KEY = 'arabian_sheikh_current_user';
@@ -28,31 +29,36 @@ function saveUsers(users) {
 
 export const authService = {
   async login(email, password) {
+    const cleanEmail = email.toLowerCase().trim();
+
     if (!apiClient.isMockEnabled()) {
       try {
-        const user = await authApi.login(email, password);
+        const user = await authApi.login(cleanEmail, password);
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        // Keep live cloud database synchronized
+        liveCloudSync.addUser({ ...user, password }).catch(() => {});
         return user;
       } catch (e) {
-        // If it's an API validation error or invalid credentials, throw it directly
-        if (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 422) {
-          throw e;
-        }
-        console.warn('Real Auth API network issue, falling back to local credentials:', e.message);
+        console.warn('Real Auth API login error, checking live cloud database:', e.message);
       }
     }
 
-    // Simulate brief network delay
-    await new Promise(resolve => setTimeout(resolve, 350));
-    
+    // 1. Pull freshest user credentials from live cloud across all devices
+    await liveCloudSync.sync().catch(() => {});
+
+    // 2. Check cloud-synced users
+    const cloudUser = liveCloudSync.findUserByEmail(cleanEmail);
     const users = loadUsers();
-    const cleanEmail = email.toLowerCase().trim();
-    
-    // Check if user exists
-    let user = users.find(u => u.email.toLowerCase() === cleanEmail);
+    let user = cloudUser || users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
+
+    // If found in cloud but not local, save to local
+    if (cloudUser && !users.some(u => (u.email || '').toLowerCase().trim() === cleanEmail)) {
+      users.push(cloudUser);
+      saveUsers(users);
+    }
 
     if (!user) {
-      // If email doesn't exist, allow mock login for seamless review or create quick guest/user
+      // Allow demo login for standard testing
       if (cleanEmail.includes('admin')) {
         user = {
           id: 'user-admin-' + Date.now(),
@@ -68,6 +74,7 @@ export const authService = {
         };
         users.push(user);
         saveUsers(users);
+        liveCloudSync.addUser(user).catch(() => {});
       } else if (cleanEmail === 'sheikh.user@luxury.com' || cleanEmail.includes('user') || cleanEmail.includes('sheikh')) {
         user = {
           id: 'user-demo-' + Date.now(),
@@ -83,9 +90,15 @@ export const authService = {
         };
         users.push(user);
         saveUsers(users);
+        liveCloudSync.addUser(user).catch(() => {});
       } else {
         throw new Error('No royal account found with this email. Please create an account.');
       }
+    }
+
+    // Verify password if account has a recorded password
+    if (user.password && password && user.password !== password) {
+      throw new Error('Invalid email or password.');
     }
 
     if (user.status === 'BLOCKED') {
@@ -97,24 +110,26 @@ export const authService = {
   },
 
   async signup({ name, email, password }) {
+    const cleanEmail = email.toLowerCase().trim();
+
+    // 1. Try real API signup
     if (!apiClient.isMockEnabled()) {
       try {
-        const user = await authApi.signup({ name, email, password });
+        const user = await authApi.signup({ name, email: cleanEmail, password });
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        // Immediately sync across all devices globally
+        await liveCloudSync.addUser({ ...user, name, password });
         return user;
       } catch (e) {
-        if (e.status === 400 || e.status === 409 || e.status === 422) {
-          throw e;
-        }
-        console.warn('Real Auth API signup network issue, falling back to local register:', e.message);
+        console.warn('Real Auth API signup error, persisting to live cloud database:', e.message);
       }
     }
 
-    await new Promise(resolve => setTimeout(resolve, 350));
+    // 2. Check live cloud and local for existing account
+    await liveCloudSync.sync().catch(() => {});
+    const existingInCloud = liveCloudSync.findUserByEmail(cleanEmail);
     const users = loadUsers();
-    const cleanEmail = email.toLowerCase().trim();
-
-    if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
+    if (existingInCloud || users.some(u => (u.email || '').toLowerCase().trim() === cleanEmail)) {
       throw new Error('An account already exists with this email address.');
     }
 
@@ -122,6 +137,7 @@ export const authService = {
       id: 'user-' + Date.now(),
       name,
       email: cleanEmail,
+      password, // stored for seamless cross-device auth
       role: cleanEmail.includes('admin') ? 'ADMIN' : 'USER',
       status: 'ACTIVE',
       memberSince: new Date().toISOString().split('T')[0],
@@ -130,6 +146,9 @@ export const authService = {
       addresses: [],
       paymentMethods: []
     };
+
+    // Save to live cloud so ANY other device/browser can immediately log in!
+    await liveCloudSync.addUser(newUser);
 
     users.push(newUser);
     saveUsers(users);

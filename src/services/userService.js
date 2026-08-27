@@ -2,31 +2,36 @@ import { INITIAL_USERS } from './mockData';
 import { userApi } from '../api/user.api';
 import { wishlistApi } from '../api/wishlist.api';
 import { apiClient } from '../api/client';
+import { liveCloudSync } from './liveCloudSync';
 
 const USERS_STORAGE_KEY = 'arabian_sheikh_users';
 const WISHLIST_STORAGE_KEY = 'arabian_sheikh_wishlist';
 let inMemoryUsers = null;
 
 function loadUsers() {
-  if (inMemoryUsers && inMemoryUsers.length > 0) {
-    return inMemoryUsers;
+  const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
+  let list = [];
+  if (data) {
+    try {
+      list = JSON.parse(data);
+    } catch {
+      list = [...INITIAL_USERS];
+    }
+  } else {
+    list = [...INITIAL_USERS];
   }
 
-  const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
-  if (!data) {
-    inMemoryUsers = [...INITIAL_USERS];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
-    }
-    return inMemoryUsers;
+  // Merge cloud users
+  const cloudUsers = liveCloudSync.getUsers();
+  if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+    const map = new Map();
+    list.forEach(u => { if (u?.email) map.set(u.email.toLowerCase().trim(), u); });
+    cloudUsers.forEach(u => { if (u?.email) map.set(u.email.toLowerCase().trim(), u); });
+    list = Array.from(map.values());
   }
-  try {
-    inMemoryUsers = JSON.parse(data);
-    return inMemoryUsers;
-  } catch {
-    inMemoryUsers = [...INITIAL_USERS];
-    return inMemoryUsers;
-  }
+
+  inMemoryUsers = list;
+  return inMemoryUsers;
 }
 
 function saveUsers(users) {

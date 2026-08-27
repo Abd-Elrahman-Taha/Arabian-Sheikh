@@ -12,6 +12,7 @@ const LOCAL_STORAGE_KEY = 'arabian_sheikh_live_cloud_state_v1';
 // In-memory state structure
 let state = {
   orders: [],
+  users: [],              // Registered customer and admin accounts
   inactiveProductIds: [], // IDs of products marked inactive
   activeProductIds: [],   // IDs explicitly marked active
   deletedProductIds: [],  // IDs of deleted products
@@ -28,6 +29,7 @@ function loadLocalState() {
       const parsed = JSON.parse(raw);
       state = {
         orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+        users: Array.isArray(parsed.users) ? parsed.users : [],
         inactiveProductIds: Array.isArray(parsed.inactiveProductIds) ? parsed.inactiveProductIds : [],
         activeProductIds: Array.isArray(parsed.activeProductIds) ? parsed.activeProductIds : [],
         deletedProductIds: Array.isArray(parsed.deletedProductIds) ? parsed.deletedProductIds : [],
@@ -144,8 +146,14 @@ async function pullFromCloud() {
         (remoteData.newProducts || []).forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
         state.newProducts.forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
 
+        // Merge users (union by lowercase email, remote + local)
+        const userMap = new Map();
+        (remoteData.users || []).forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
+        state.users.forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
+
         state = {
           orders: Array.from(orderMap.values()),
+          users: Array.from(userMap.values()),
           inactiveProductIds: Array.from(inactiveSet),
           activeProductIds: Array.from(activeSet),
           deletedProductIds: Array.from(deletedSet),
@@ -333,5 +341,32 @@ export const liveCloudSync = {
 
       return item;
     });
+  },
+
+  // Get all cloud-synced user accounts
+  getUsers() {
+    return state.users || [];
+  },
+
+  // Find user by email in live cloud
+  findUserByEmail(email) {
+    if (!email) return null;
+    const clean = email.toLowerCase().trim();
+    return (state.users || []).find(u => (u.email || '').toLowerCase().trim() === clean) || null;
+  },
+
+  // Save new user or update existing user across all devices
+  async addUser(user) {
+    if (!user || !user.email) return;
+    const clean = user.email.toLowerCase().trim();
+    const list = Array.isArray(state.users) ? state.users : [];
+    const idx = list.findIndex(u => (u.email || '').toLowerCase().trim() === clean);
+    if (idx > -1) {
+      list[idx] = { ...list[idx], ...user };
+    } else {
+      list.push(user);
+    }
+    state.users = list;
+    await pushToCloud();
   }
 };
