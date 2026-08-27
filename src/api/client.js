@@ -152,12 +152,20 @@ async function request(endpoint, options = {}) {
     if (contentType.includes('application/json')) {
       data = await response.json().catch(() => null);
     } else {
-      data = await response.text().catch(() => null);
+      const text = await response.text().catch(() => '');
+      if (text && text.trim().startsWith('<')) {
+        throw new ApiError('Gateway proxy returned HTML instead of API JSON', 502, null, 'INVALID_GATEWAY_RESPONSE');
+      }
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = text;
+      }
     }
 
     // Handle HTTP Error Codes
     if (!response.ok) {
-      const errorMessage = data?.message || data?.error || `Request failed with status ${response.status}`;
+      const errorMessage = data?.message || data?.error || (typeof data === 'string' ? data : `Request failed with status ${response.status}`);
       const errorCode = data?.code || `HTTP_${response.status}`;
 
       // Global Interceptor: 401 Unauthorized

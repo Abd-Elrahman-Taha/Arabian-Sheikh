@@ -215,7 +215,7 @@ export const productService = {
    */
   async getAllProducts(filters = {}) {
     // 1. Sync latest changes from live cloud
-    liveCloudSync.sync().catch(() => {});
+    await liveCloudSync.sync().catch(() => {});
 
     try {
       const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
@@ -231,7 +231,8 @@ export const productService = {
     }
 
     const cached = loadProducts();
-    return this.applyFilters(cached || [], filters);
+    const transformed = liveCloudSync.applyToProducts(cached || []);
+    return this.applyFilters(transformed, filters);
   },
 
   getProductByIdSync(idOrSlug) {

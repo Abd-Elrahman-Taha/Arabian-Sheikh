@@ -31,22 +31,47 @@ export const authService = {
   async login(email, password) {
     const cleanEmail = email.toLowerCase().trim();
 
-    if (!apiClient.isMockEnabled()) {
+    // 1. If admin email or superadmin, try Admin Login first
+    if (cleanEmail.includes('admin') || cleanEmail.includes('perfumestore')) {
       try {
-        const user = await authApi.login(cleanEmail, password);
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-        // Keep live cloud database synchronized
-        liveCloudSync.addUser({ ...user, password }).catch(() => {});
-        return user;
-      } catch (e) {
-        console.warn('Real Auth API login error, checking live cloud database:', e.message);
+        const adminUser = await authApi.adminLogin(cleanEmail, password);
+        if (adminUser && (adminUser.id || adminUser.email)) {
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
+          liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
+          return adminUser;
+        }
+      } catch (adminErr) {
+        console.warn('Admin API login failed, checking customer endpoint:', adminErr.message);
       }
     }
 
-    // 1. Pull freshest user credentials from live cloud across all devices
+    // 2. Try Customer Login
+    try {
+      const user = await authApi.login(cleanEmail, password);
+      if (user && (user.id || user.email)) {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        liveCloudSync.addUser({ ...user, password }).catch(() => {});
+        return user;
+      }
+    } catch (custErr) {
+      // Fallback: If not tried yet, try Admin Login as well
+      if (!cleanEmail.includes('admin') && !cleanEmail.includes('perfumestore')) {
+        try {
+          const adminUser = await authApi.adminLogin(cleanEmail, password);
+          if (adminUser && (adminUser.id || adminUser.email)) {
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
+            liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
+            return adminUser;
+          }
+        } catch {}
+      }
+      console.warn('Customer API login error, checking live cloud database:', custErr.message);
+    }
+
+    // 3. Pull freshest user credentials from live cloud across all devices
     await liveCloudSync.sync().catch(() => {});
 
-    // 2. Check cloud-synced users
+    // 4. Check cloud-synced users
     const cloudUser = liveCloudSync.findUserByEmail(cleanEmail);
     const users = loadUsers();
     let user = cloudUser || users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
