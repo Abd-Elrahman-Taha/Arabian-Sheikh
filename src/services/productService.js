@@ -110,13 +110,19 @@ export const productService = {
 
     // Filter by gender
     if (filters.gender && filters.gender !== 'all') {
-      const targetGender = filters.gender.toLowerCase();
+      const target = filters.gender.toLowerCase();
       result = result.filter(p => {
         const pg = (p.gender || '').toLowerCase();
-        if (pg === targetGender || pg === 'unisex') return true;
-        if ((targetGender === 'men' || targetGender === 'male') && (pg === 'men' || pg === 'male')) return true;
-        if ((targetGender === 'women' || targetGender === 'female') && (pg === 'women' || pg === 'female')) return true;
-        return false;
+        if (target === 'men' || target === 'male' || target === 'masculine') {
+          return pg === 'male' || pg === 'men' || pg === 'masculine';
+        }
+        if (target === 'women' || target === 'female' || target === 'feminine') {
+          return pg === 'female' || pg === 'women' || pg === 'feminine';
+        }
+        if (target === 'unisex') {
+          return pg === 'unisex';
+        }
+        return pg === target;
       });
     }
 

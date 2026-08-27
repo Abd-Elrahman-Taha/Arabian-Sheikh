@@ -184,21 +184,33 @@ export default function Shop() {
           Gender Profile
         </label>
         <div className="grid grid-cols-2 gap-1.5">
-          {['all', 'Unisex', 'Masculine', 'Feminine'].map((g) => (
-            <button
-              key={g}
-              onClick={() => setGender(g)}
-              className={`px-2.5 py-1.5 rounded-lg border text-center text-[11px] transition-colors font-medium ${
-                gender === g
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37] font-bold'
-                  : isDark
-                  ? 'border-white/10 text-[#F3E6D0] hover:border-white/30'
-                  : 'border-black/10 text-[#120B06] hover:border-black/30'
-              }`}
-            >
-              {g === 'all' ? 'All' : g}
-            </button>
-          ))}
+          {[
+            { id: 'all', label: isRtl ? 'الكل' : 'All' },
+            { id: 'men', label: isRtl ? 'رجالي' : 'Men' },
+            { id: 'women', label: isRtl ? 'نسائي' : 'Women' },
+            { id: 'unisex', label: isRtl ? 'للجنسين' : 'Unisex' }
+          ].map((g) => {
+            const gLower = (gender || '').toLowerCase();
+            const isActive = gLower === g.id.toLowerCase() ||
+              (g.id === 'men' && (gLower === 'masculine' || gLower === 'male')) ||
+              (g.id === 'women' && (gLower === 'feminine' || gLower === 'female'));
+
+            return (
+              <button
+                key={g.id}
+                onClick={() => setGender(g.id)}
+                className={`px-2.5 py-1.5 rounded-lg border text-center text-[11px] transition-colors font-medium ${
+                  isActive
+                    ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37] font-bold'
+                    : isDark
+                    ? 'border-white/10 text-[#F3E6D0] hover:border-white/30'
+                    : 'border-black/10 text-[#120B06] hover:border-black/30'
+                }`}
+              >
+                {g.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -47,8 +47,8 @@ export const productApi = {
 
     // Gender enum: STRICTLY 'Male' | 'Female' | 'Unisex'. Never send 'all'!
     const rawGender = (filters.gender || filters.Gender || '').toString().toLowerCase().trim();
-    if (rawGender === 'men' || rawGender === 'male') params.Gender = 'Male';
-    else if (rawGender === 'women' || rawGender === 'female') params.Gender = 'Female';
+    if (rawGender === 'men' || rawGender === 'male' || rawGender === 'masculine') params.Gender = 'Male';
+    else if (rawGender === 'women' || rawGender === 'female' || rawGender === 'feminine') params.Gender = 'Female';
     else if (rawGender === 'unisex') params.Gender = 'Unisex';
 
     // Price range (must be numbers > 0)

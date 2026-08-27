@@ -148,28 +148,33 @@ export default function Home() {
         const prods = await productService.getAllProducts();
         setAllProducts(prods);
 
-        // Group products into rich curated Collections
-        const imperialTiersProducts = prods.filter(p => p.tier === 'Luxury' || p.tier === 'Royal' || p.tier === 'Classic');
+        // Group products into rich curated Collections without duplicate fallbacks
+        const imperialTiersProducts = prods.filter(p => p.category === 'perfumes' || p.tier === 'Luxury' || p.tier === 'Royal' || p.tier === 'Classic');
         const oudAmberProducts = prods.filter(p => 
+          p.name?.toLowerCase().includes('oud') ||
+          p.name?.toLowerCase().includes('amber') ||
           p.fragranceFamily?.toLowerCase().includes('woody') || 
           p.fragranceFamily?.toLowerCase().includes('amber') || 
           p.scentFamily?.toLowerCase().includes('oriental') ||
           p.topNotes?.some(n => n.toLowerCase().includes('oud') || n.toLowerCase().includes('amber'))
         );
         const floralGourmandProducts = prods.filter(p =>
+          p.name?.toLowerCase().includes('rose') ||
+          p.name?.toLowerCase().includes('mademoiselle') ||
           p.fragranceFamily?.toLowerCase().includes('floral') ||
           p.scentFamily?.toLowerCase().includes('gourmand') ||
           p.scentFamily?.toLowerCase().includes('rose') ||
           p.scentFamily?.toLowerCase().includes('sweet')
         );
         const freshCitrusProducts = prods.filter(p =>
+          p.name?.toLowerCase().includes('sauvage') ||
           p.fragranceFamily?.toLowerCase().includes('fresh') ||
           p.scentFamily?.toLowerCase().includes('citrus') ||
           p.scentFamily?.toLowerCase().includes('green')
         );
         const bakhoorProducts = prods.filter(p => p.category === 'bakhoor' || p.scentFamily?.toLowerCase().includes('incense'));
         const oilsProducts = prods.filter(p => p.category === 'oils' || p.size?.includes('12 ml') || p.name?.toLowerCase().includes('oil') || p.name?.toLowerCase().includes('attar'));
-        const bundlesProducts = prods.filter(p => p.category === 'bundles' || p.size?.includes('Set') || p.size?.includes('Full Set'));
+        const bundlesProducts = prods.filter(p => p.category === 'bundles' || p.category === 'gift sets' || p.size?.includes('Set') || p.size?.includes('Full Set'));
 
         const curatedCollections = [
           {
@@ -183,7 +188,7 @@ export default function Home() {
             spanishDescription: 'Nuestros extraits emblemáticos embotellados en frascos numerados de 60 ml.',
             bulgarianDescription: 'Нашите емблематични екстракти в номерирани флакони от 60 мл.',
             accentColor: '#D4AF37',
-            products: imperialTiersProducts.length > 0 ? imperialTiersProducts : prods
+            products: imperialTiersProducts
           },
           {
             id: 'col-oud-amber',
@@ -196,7 +201,7 @@ export default function Home() {
             spanishDescription: 'Destilaciones resinosas de madera de agar rara de Assam y Camboya.',
             bulgarianDescription: 'Смолисти дестилации от рядък агарово дърво от Асам и Камбоджа.',
             accentColor: '#D4AF37',
-            products: oudAmberProducts.length > 0 ? oudAmberProducts : prods
+            products: oudAmberProducts
           },
           {
             id: 'col-floral-gourmand',
@@ -209,7 +214,7 @@ export default function Home() {
             spanishDescription: 'Rosas de Damasco, pistacho siciliano y vainilla real.',
             bulgarianDescription: 'Дамаски рози, сицилиански шамфъстък и кралска ванилия.',
             accentColor: '#F2D675',
-            products: floralGourmandProducts.length > 0 ? floralGourmandProducts : prods
+            products: floralGourmandProducts
           },
           {
             id: 'col-fresh-citrus',
@@ -222,7 +227,7 @@ export default function Home() {
             spanishDescription: 'Bergamota de Calabria, jengibre fresco y maderas nobles.',
             bulgarianDescription: 'Калабрийски бергамот, пресен джинджифил и свежи гори.',
             accentColor: '#D8BE99',
-            products: freshCitrusProducts.length > 0 ? freshCitrusProducts : prods
+            products: freshCitrusProducts
           },
           {
             id: 'col-bakhoor',
@@ -235,7 +240,7 @@ export default function Home() {
             spanishDescription: 'Virutas naturales infusionadas a mano con rosa de Taif y resinas de ámbar.',
             bulgarianDescription: 'Напоени дървесни частици с роза Таиф и кехлибар.',
             accentColor: '#F2D675',
-            products: bakhoorProducts.length > 0 ? bakhoorProducts : prods
+            products: bakhoorProducts
           },
           {
             id: 'col-pure-oils',
@@ -248,7 +253,7 @@ export default function Home() {
             spanishDescription: 'Aceites puros concentrados sin alcohol con estela continua de 24+ horas.',
             bulgarianDescription: '100% чисти концентрирани масла без алкохол с трайност 24+ часа.',
             accentColor: '#D8BE99',
-            products: oilsProducts.length > 0 ? oilsProducts : prods
+            products: oilsProducts
           },
           {
             id: 'col-palace-bundles',
@@ -261,9 +266,9 @@ export default function Home() {
             spanishDescription: 'Presentaciones exclusivas en estuches lacados de terciopelo.',
             bulgarianDescription: 'Специални сетове в лакирани кутии с кадифе.',
             accentColor: '#D4AF37',
-            products: bundlesProducts.length > 0 ? bundlesProducts : prods
+            products: bundlesProducts
           }
-        ];
+        ].filter(c => c.products && c.products.length > 0);
 
         setCollections(curatedCollections);
       } catch (err) {
@@ -747,21 +752,25 @@ export default function Home() {
           {/* =========================================================================
               CURATED COLLECTIONS EXPERIENCE (VERTICAL STACK + HORIZONTAL PRODUCTS)
               ========================================================================= */}
-          <div ref={firstCollectionRef} className="space-y-0">
-            {collections.map((col, idx) => (
-              <HorizontalCollectionShowcase
-                key={col.id}
-                collection={col}
-                index={idx}
-                isEven={idx % 2 === 1}
-              />
-            ))}
-          </div>
+          {collections.length > 0 && (
+            <div ref={firstCollectionRef} className="space-y-0">
+              {collections.map((col, idx) => (
+                <HorizontalCollectionShowcase
+                  key={col.id}
+                  collection={col}
+                  index={idx}
+                  isEven={idx % 2 === 1}
+                />
+              ))}
+            </div>
+          )}
 
           {/* =========================================================================
               4. EXCLUSIVE PALACE OFFERS & DISCOUNTS SECTION
               ========================================================================= */}
-          <OffersDiscountSection products={allProducts} />
+          {allProducts.some(p => p.hasDiscount || (p.discountPercent && p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer) && (
+            <OffersDiscountSection products={allProducts} />
+          )}
 
           {/* =========================================================================
               5. CINEMATIC VIDEO: SCENT AS LIVING MEMORY
