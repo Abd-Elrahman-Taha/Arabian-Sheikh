@@ -47,8 +47,25 @@ export default function GenderCategory({ genderType }) {
     async function loadCategory() {
       setLoading(true);
       try {
-        const data = await productService.getAllProducts({ gender: currentGender });
-        setProducts(data);
+        if (currentGender === 'men' || currentGender === 'women') {
+          // Fetch specific gender + unisex separately, then merge & deduplicate
+          const [genderData, unisexData] = await Promise.all([
+            productService.getAllProducts({ gender: currentGender }),
+            productService.getAllProducts({ gender: 'unisex' })
+          ]);
+          const seen = new Set();
+          const merged = [];
+          for (const p of [...genderData, ...unisexData]) {
+            if (!seen.has(p.id)) {
+              seen.add(p.id);
+              merged.push(p);
+            }
+          }
+          setProducts(merged);
+        } else {
+          const data = await productService.getAllProducts({ gender: currentGender });
+          setProducts(data);
+        }
       } catch (err) {
         console.error(err);
       } finally {

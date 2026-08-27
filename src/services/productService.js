@@ -114,10 +114,10 @@ export const productService = {
       result = result.filter(p => {
         const pg = (p.gender || '').toLowerCase();
         if (target === 'men' || target === 'male' || target === 'masculine') {
-          return pg === 'male' || pg === 'men' || pg === 'masculine';
+          return pg === 'male' || pg === 'men' || pg === 'masculine' || pg === 'unisex';
         }
         if (target === 'women' || target === 'female' || target === 'feminine') {
-          return pg === 'female' || pg === 'women' || pg === 'feminine';
+          return pg === 'female' || pg === 'women' || pg === 'feminine' || pg === 'unisex';
         }
         if (target === 'unisex') {
           return pg === 'unisex';
