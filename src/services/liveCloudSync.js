@@ -103,20 +103,16 @@ async function pushToCloud() {
 function mergeRemoteData(remoteData) {
   if (!remoteData || typeof remoteData !== 'object') return;
 
-  const inactiveSet = new Set([
-    ...(remoteData.inactiveProductIds || []),
-    ...state.inactiveProductIds
-  ]);
-
-  const activeSet = new Set([
-    ...(remoteData.activeProductIds || []),
-    ...state.activeProductIds
-  ]);
-
-  const deletedSet = new Set([
-    ...(remoteData.deletedProductIds || []),
-    ...state.deletedProductIds
-  ]);
+  // Direct adoption from latest broadcast
+  if (Array.isArray(remoteData.inactiveProductIds)) {
+    state.inactiveProductIds = remoteData.inactiveProductIds.map(String);
+  }
+  if (Array.isArray(remoteData.activeProductIds)) {
+    state.activeProductIds = remoteData.activeProductIds.map(String);
+  }
+  if (Array.isArray(remoteData.deletedProductIds)) {
+    state.deletedProductIds = remoteData.deletedProductIds.map(String);
+  }
 
   const orderMap = new Map();
   (remoteData.orders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
@@ -138,9 +134,9 @@ function mergeRemoteData(remoteData) {
   state = {
     orders: Array.from(orderMap.values()),
     users: Array.from(userMap.values()),
-    inactiveProductIds: Array.from(inactiveSet),
-    activeProductIds: Array.from(activeSet),
-    deletedProductIds: Array.from(deletedSet),
+    inactiveProductIds: state.inactiveProductIds,
+    activeProductIds: state.activeProductIds,
+    deletedProductIds: state.deletedProductIds,
     modifiedProducts: modified,
     newProducts: Array.from(newProdMap.values())
   };
@@ -350,13 +346,13 @@ export const liveCloudSync = {
         item = { ...item, ...state.modifiedProducts[slugStr] };
       }
 
-      // Apply active / inactive status
-      if (inactiveSet.has(idStr) || (slugStr && inactiveSet.has(slugStr))) {
-        item.isActive = false;
-        item.status = 'INACTIVE';
-      } else if (activeSet.has(idStr) || (slugStr && activeSet.has(slugStr))) {
+      // Apply active / inactive status (active takes precedence)
+      if (activeSet.has(idStr) || (slugStr && activeSet.has(slugStr))) {
         item.isActive = true;
         item.status = 'ACTIVE';
+      } else if (inactiveSet.has(idStr) || (slugStr && inactiveSet.has(slugStr))) {
+        item.isActive = false;
+        item.status = 'INACTIVE';
       }
 
       return item;
