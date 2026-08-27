@@ -1,6 +1,7 @@
 import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 import { productApi } from '../api/product.api';
 import { apiClient } from '../api/client';
+import { liveCloudSync } from './liveCloudSync';
 
 const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_api_products_v4';
 let inMemoryProducts = [];
@@ -27,26 +28,22 @@ function preloadProductAssets(products) {
 }
 
 function loadProducts() {
-  if (inMemoryProducts && inMemoryProducts.length > 0) {
-    return inMemoryProducts;
+  let base = inMemoryProducts;
+  if (!base || base.length === 0) {
+    const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        base = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_PRODUCTS];
+      } catch {
+        base = [...INITIAL_PRODUCTS];
+      }
+    } else {
+      base = [...INITIAL_PRODUCTS];
+    }
+    inMemoryProducts = base;
   }
-
-  const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
-  if (!data) {
-    inMemoryProducts = [...INITIAL_PRODUCTS];
-    preloadProductAssets(inMemoryProducts);
-    return inMemoryProducts;
-  }
-  try {
-    const parsed = JSON.parse(data);
-    inMemoryProducts = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_PRODUCTS];
-    preloadProductAssets(inMemoryProducts);
-    return inMemoryProducts;
-  } catch (e) {
-    console.error('Error parsing products from storage:', e);
-    inMemoryProducts = [...INITIAL_PRODUCTS];
-    return inMemoryProducts;
-  }
+  return liveCloudSync.applyToProducts(base);
 }
 
 function saveProducts(products) {
@@ -56,6 +53,7 @@ function saveProducts(products) {
   }
   preloadProductAssets(inMemoryProducts);
 }
+
 
 export const productService = {
   /**
@@ -174,10 +172,10 @@ export const productService = {
     }
 
     // Status filter
-    if (filters.status) {
+    if (filters.status && filters.status !== 'ALL') {
       result = result.filter(p => p.status === filters.status);
     } else if (!filters.includeDrafts) {
-      result = result.filter(p => !p.status || p.status === 'ACTIVE');
+      result = result.filter(p => p.isActive !== false && p.status !== 'INACTIVE');
     }
 
     // Sorting
@@ -216,16 +214,17 @@ export const productService = {
    * Zero hardcoded/local products are returned.
    */
   async getAllProducts(filters = {}) {
+    // 1. Sync latest changes from live cloud
+    liveCloudSync.sync().catch(() => {});
+
     try {
-      // Strip gender and category from the remote API query so we fetch all items
-      // without backend 500 errors on CategoryId/Gender, and let client-side applyFilters
-      // handle robust filtering (including unisex in men/women and all perfume tiers).
       const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
       const response = await productApi.getProducts(apiFilters);
       const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
       if (Array.isArray(items) && items.length > 0) {
         saveProducts(items);
-        return this.applyFilters(items, filters);
+        const transformed = liveCloudSync.applyToProducts(items);
+        return this.applyFilters(transformed, filters);
       }
     } catch (err) {
       console.warn('API getProducts error:', err.message);
@@ -246,27 +245,53 @@ export const productService = {
    */
   async getProductById(idOrSlug) {
     if (!idOrSlug) return null;
+    await liveCloudSync.sync().catch(() => {});
+
+    // Try backend API first for direct detail fetch
     try {
       const remote = await productApi.getProductById(idOrSlug);
       if (remote) {
-        const prods = loadProducts();
-        const idx = prods.findIndex(p => String(p.id) === String(remote.id) || p.slug === remote.slug);
-        if (idx >= 0) prods[idx] = remote;
-        else prods.push(remote);
-        saveProducts(prods);
-        return remote;
+        const transformed = liveCloudSync.applyToProducts([remote])[0];
+        return transformed;
       }
     } catch (err) {
-      console.warn('API getProductById error:', err.message);
+      console.warn('API getProductById fallback:', err.message);
     }
 
-    const cached = this.getProductByIdSync(idOrSlug);
-    return cached;
+    const products = loadProducts();
+    return products.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug) || null;
   },
 
-  async getFeaturedProducts() {
+  getFeaturedProductsSync(limit = 4) {
+    const products = loadProducts();
+    return products.filter(p => p.featured).slice(0, limit);
+  },
+
+  async getFeaturedProducts(limit = 4) {
     const products = await this.getAllProducts();
-    return products.filter(p => p.featured && (!p.status || p.status === 'ACTIVE'));
+    return products.filter(p => p.featured && (!p.status || p.status === 'ACTIVE')).slice(0, limit);
+  },
+
+  getProductsByCategorySync(category, limit) {
+    const products = loadProducts();
+    const filtered = this.applyFilters(products, { category });
+    return limit ? filtered.slice(0, limit) : filtered;
+  },
+
+  async getProductsByCategory(category, limit) {
+    const products = await this.getAllProducts({ category });
+    return limit ? products.slice(0, limit) : products;
+  },
+
+  getProductsByTierSync(tier, limit) {
+    const products = loadProducts();
+    const filtered = this.applyFilters(products, { tier });
+    return limit ? filtered.slice(0, limit) : filtered;
+  },
+
+  async getProductsByTier(tier, limit) {
+    const products = await this.getAllProducts({ tier });
+    return limit ? products.slice(0, limit) : products;
   },
 
   async getBestSellers() {
@@ -288,54 +313,18 @@ export const productService = {
   },
 
   getRelatedProductsSync(currentId, limit = 4) {
-    const products = loadProducts();
-    const current = products.find(p => String(p.id) === String(currentId) || p.slug === currentId);
-    
-    // Filter active candidates excluding current product
-    const candidates = products.filter(p => 
-      (!p.status || p.status === 'ACTIVE') && 
-      String(p.id) !== String(currentId) && 
-      p.slug !== currentId && 
-      (!current || (String(p.id) !== String(current.id) && p.slug !== current.slug))
-    );
+    const all = loadProducts();
+    const current = all.find(p => String(p.id) === String(currentId) || p.slug === currentId);
+    if (!current) return all.slice(0, limit);
 
-    if (!current) {
-      return candidates.slice(0, limit);
-    }
-
-    // Extract current notes for olfactory matching
-    const currentNotes = [
-      ...(current.topNotes || []),
-      ...(current.heartNotes || []),
-      ...(current.baseNotes || []),
-      ...(current.notes?.top || []),
-      ...(current.notes?.heart || []),
-      ...(current.notes?.base || [])
-    ].map(n => String(n).toLowerCase());
-
-    const scored = candidates.map(p => {
+    const candidates = all.filter(p => String(p.id) !== String(currentId) && p.slug !== currentId);
+    const scored = candidates.map(product => {
       let score = 0;
-      if (p.tier && current.tier && p.tier.toLowerCase() === current.tier.toLowerCase()) score += 5;
-      const pFamily = (p.fragranceFamily || p.scentFamily || '').toLowerCase();
-      const cFamily = (current.fragranceFamily || current.scentFamily || '').toLowerCase();
-      if (pFamily && cFamily && (pFamily.includes(cFamily) || cFamily.includes(pFamily))) score += 4;
-      if (p.category && current.category && p.category === current.category) score += 3;
-      if (p.gender === current.gender || p.gender === 'Unisex' || current.gender === 'Unisex') score += 2;
-
-      const pNotes = [
-        ...(p.topNotes || []),
-        ...(p.heartNotes || []),
-        ...(p.baseNotes || []),
-        ...(p.notes?.top || []),
-        ...(p.notes?.heart || []),
-        ...(p.notes?.base || [])
-      ].map(n => String(n).toLowerCase());
-
-      pNotes.forEach(note => {
-        if (currentNotes.some(cn => cn.includes(note) || note.includes(cn))) score += 3;
-      });
-
-      return { product: p, score };
+      if (product.tier && current.tier && product.tier === current.tier) score += 3;
+      if (product.fragranceFamily && current.fragranceFamily && product.fragranceFamily === current.fragranceFamily) score += 4;
+      if (product.category && current.category && product.category === current.category) score += 2;
+      if (product.gender && current.gender && product.gender === current.gender) score += 1;
+      return { product, score };
     });
 
     scored.sort((a, b) => b.score - a.score);
@@ -359,66 +348,89 @@ export const productService = {
   },
 
   // ==========================================
-  // Admin & Back-Office API Integration
+  // Admin & Back-Office API Integration with Live Cloud Sync
   // ==========================================
   async createProduct(productData) {
-    const remote = await productApi.adminCreateProduct(productData);
-    const prods = loadProducts();
-    prods.unshift(remote);
-    saveProducts(prods);
-    return remote;
+    let remote = null;
+    try {
+      remote = await productApi.adminCreateProduct(productData);
+    } catch (e) {
+      console.warn('Remote backend create product fallback to cloud sync:', e.message);
+    }
+
+    const newProd = {
+      id: remote?.id || `AS-PROD-${Date.now()}`,
+      slug: remote?.slug || (productData.name ? productData.name.toLowerCase().replace(/\s+/g, '-') : `prod-${Date.now()}`),
+      ...productData,
+      ...(remote || {}),
+      isActive: productData.isActive !== false,
+      status: productData.isActive !== false ? 'ACTIVE' : 'INACTIVE',
+      createdAt: new Date().toISOString()
+    };
+
+    await liveCloudSync.addProduct(newProd);
+    inMemoryProducts = [newProd, ...loadProducts()];
+    saveProducts(inMemoryProducts);
+    return newProd;
   },
 
   async updateProduct(id, productData) {
-    const remote = await productApi.adminUpdateProduct(id, productData);
+    let remote = null;
+    try {
+      remote = await productApi.adminUpdateProduct(id, productData);
+    } catch (e) {
+      console.warn('Remote backend update product fallback to cloud sync:', e.message);
+    }
+
+    const patch = { ...productData, ...(remote || {}) };
+    await liveCloudSync.updateProduct(id, patch);
+
     const prods = loadProducts();
     const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
     if (idx >= 0) {
-      prods[idx] = { ...prods[idx], ...remote };
+      prods[idx] = { ...prods[idx], ...patch };
+      saveProducts(prods);
+      return prods[idx];
     }
-    saveProducts(prods);
-    return remote;
+    return patch;
   },
 
   async deleteProduct(id) {
-    await productApi.adminDeleteProduct(id);
-    let prods = loadProducts();
-    prods = prods.filter(p => String(p.id) !== String(id) && p.slug !== id);
-    saveProducts(prods);
+    await liveCloudSync.deleteProduct(id);
+    try {
+      await productApi.adminDeleteProduct(id);
+    } catch (e) {
+      console.warn('Remote backend delete product fallback to cloud sync:', e.message);
+    }
+
+    inMemoryProducts = inMemoryProducts.filter(p => String(p.id) !== String(id) && p.slug !== id);
+    saveProducts(inMemoryProducts);
     return true;
   },
 
   async toggleProductActive(id, isActive) {
     const activeBool = Boolean(isActive);
-    let remote = null;
+    
+    // 1. Immediately persist to live cloud sync
+    await liveCloudSync.setProductActive(id, activeBool);
+    const prods = loadProducts();
+    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
+    if (product && product.slug) {
+      await liveCloudSync.setProductActive(product.slug, activeBool);
+    }
+
+    // 2. Also try backend API
     try {
       const numId = Number(id);
       const targetId = !isNaN(numId) && numId > 0 ? numId : id;
-      remote = await productApi.adminUpdateProduct(targetId, { isActive: activeBool });
+      await productApi.adminUpdateProduct(targetId, { isActive: activeBool });
     } catch (err) {
-      console.warn('API toggleProductActive error (using robust local update):', err.message);
+      console.warn('Backend API update (persisted via cloud sync):', err.message);
     }
 
-    const prods = loadProducts();
-    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
-    if (idx >= 0) {
-      prods[idx] = {
-        ...prods[idx],
-        isActive: activeBool,
-        status: activeBool ? 'ACTIVE' : 'INACTIVE'
-      };
-      if (remote && typeof remote === 'object') {
-        prods[idx] = {
-          ...prods[idx],
-          ...remote,
-          isActive: activeBool,
-          status: activeBool ? 'ACTIVE' : 'INACTIVE'
-        };
-      }
-      saveProducts(prods);
-      return prods[idx];
-    }
-    return { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
+    // 3. Return updated product
+    const all = loadProducts();
+    return all.find(p => String(p.id) === String(id) || p.slug === id) || { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
   },
 
   async updateStock(id, newStock) {

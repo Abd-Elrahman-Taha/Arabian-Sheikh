@@ -30,9 +30,8 @@ export default function AdminInventory() {
   const fetchInventory = async () => {
     setLoadingInventory(true);
     try {
-      const list = await productService.getAllProducts({});
-      const finalList = list.length > 0 ? list : productService.getAllProductsSync({ includeDrafts: true });
-      setProducts(finalList);
+      const list = await productService.getAllProducts({ includeDrafts: true });
+      setProducts(list);
     } catch (err) {
       const list = productService.getAllProductsSync({ includeDrafts: true });
       setProducts(list);

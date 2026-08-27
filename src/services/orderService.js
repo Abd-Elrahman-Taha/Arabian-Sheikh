@@ -1,31 +1,36 @@
 import { INITIAL_ORDERS } from './mockData';
 import { orderApi } from '../api/order.api';
 import { apiClient } from '../api/client';
+import { liveCloudSync } from './liveCloudSync';
 
 const ORDERS_STORAGE_KEY = 'arabian_sheikh_orders';
 const PLACED_ORDERS_STORAGE_KEY = 'arabian_sheikh_placed_order_ids';
 let inMemoryOrders = null;
 
 function loadOrders() {
-  if (inMemoryOrders && inMemoryOrders.length > 0) {
-    return inMemoryOrders;
+  let base = inMemoryOrders;
+  if (!base || base.length === 0) {
+    const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        base = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_ORDERS];
+      } catch {
+        base = [...INITIAL_ORDERS];
+      }
+    } else {
+      base = [...INITIAL_ORDERS];
+    }
   }
 
-  const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
-  if (!data) {
-    inMemoryOrders = [...INITIAL_ORDERS];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
-    }
-    return inMemoryOrders;
-  }
-  try {
-    inMemoryOrders = JSON.parse(data);
-    return inMemoryOrders;
-  } catch {
-    inMemoryOrders = [...INITIAL_ORDERS];
-    return inMemoryOrders;
-  }
+  // Merge live cloud orders
+  const cloudOrders = liveCloudSync.getOrders();
+  const orderMap = new Map();
+  (base || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+  (cloudOrders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+
+  inMemoryOrders = Array.from(orderMap.values());
+  return inMemoryOrders;
 }
 
 function saveOrders(orders) {
@@ -149,30 +154,33 @@ export const orderService = {
   },
 
   /**
-   * Get orders for Admin back-office with server sync
+   * Get orders for Admin back-office with server sync & live cloud sync
    */
   async getAdminOrders(filters = {}) {
+    // 1. Pull latest orders from live cloud sync
+    await liveCloudSync.sync().catch(() => {});
+    const cloudOrders = liveCloudSync.getOrders();
+
     if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
       try {
         const response = await orderApi.adminGetOrders(filters);
         const remoteItems = response?.items || (Array.isArray(response) ? response : []);
         if (Array.isArray(remoteItems) && remoteItems.length > 0) {
-          const current = loadOrders();
-          const merged = [...current];
           for (const item of remoteItems) {
-            const idx = merged.findIndex(o => o.id === item.id);
-            if (idx > -1) {
-              merged[idx] = { ...merged[idx], ...item };
-            } else {
-              merged.unshift(item);
-            }
+            await liveCloudSync.addOrder(item);
           }
-          saveOrders(merged);
         }
       } catch (e) {
         console.warn('Real API adminGetOrders fallback:', e.message);
       }
     }
+
+    const current = loadOrders();
+    const orderMap = new Map();
+    (current || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+    (cloudOrders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+    const merged = Array.from(orderMap.values());
+    saveOrders(merged);
 
     return this.getAllOrdersSync(filters);
   },
@@ -229,9 +237,6 @@ export const orderService = {
       }
     }
 
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const orders = loadOrders();
-
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const orderId = apiOrder?.id || `ORD-${randomNum}`;
     const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || `${randomNum}04-AE`;
@@ -260,7 +265,11 @@ export const orderService = {
       ]
     };
 
-    // Save to list
+    // Save to live cloud sync so all admins and accounts see it immediately!
+    await liveCloudSync.addOrder(newOrder);
+
+    // Save to local list
+    const orders = loadOrders();
     const existingIndex = orders.findIndex(o => o.id === newOrder.id);
     if (existingIndex > -1) {
       orders[existingIndex] = newOrder;
@@ -276,6 +285,10 @@ export const orderService = {
   },
 
   async updateOrderStatus(orderId, newStatus) {
+    // 1. Update in live cloud sync
+    await liveCloudSync.updateOrderStatus(orderId, newStatus);
+
+    // 2. Update remote API
     if (!apiClient.isMockEnabled()) {
       try {
         await orderApi.adminUpdateOrderStatus(orderId, newStatus);
@@ -285,13 +298,21 @@ export const orderService = {
     }
 
     const orders = loadOrders();
-    const index = orders.findIndex(o => o.id === orderId);
-    if (index === -1) throw new Error('Order not found');
-
-    orders[index].status = newStatus;
-    orders[index].orderStatus = newStatus;
-    saveOrders(orders);
-    return orders[index];
+    const index = orders.findIndex(o => String(o.id) === String(orderId) || o.orderNumber === orderId);
+    if (index > -1) {
+      orders[index].status = newStatus;
+      orders[index].orderStatus = newStatus;
+      orders[index].updatedAt = new Date().toISOString();
+      if (!orders[index].timeline) orders[index].timeline = [];
+      orders[index].timeline.push({
+        status: newStatus,
+        title: `Status: ${newStatus}`,
+        timestamp: new Date().toISOString()
+      });
+      saveOrders(orders);
+      return orders[index];
+    }
+    return { id: orderId, status: newStatus };
   },
 
   async trackOrder(trackingCode) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService, ORDER_STATUSES } from '../../services/orderService';
 import { useToast } from '../../context/ToastContext';
-import { Search } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 
 export default function AdminOrders() {
   const { t } = useTranslation();
@@ -16,11 +16,18 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(false);
 
   const fetchOrders = async () => {
-    const list = await orderService.getAdminOrders({
-      search,
-      status: statusFilter
-    });
-    setOrders(list);
+    setLoading(true);
+    try {
+      const list = await orderService.getAdminOrders({
+        search,
+        status: statusFilter
+      });
+      setOrders(list);
+    } catch (err) {
+      console.warn('Fetch orders error:', err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -45,9 +52,18 @@ export default function AdminOrders() {
             {t('admin.orders')}
           </h1>
           <p className="text-xs sm:text-sm text-[#D8BE99] font-medium mt-1">
-            Monitor fulfillment, update dispatch milestones, and inspect client invoices.
+            Monitor live customer orders across all accounts and update fulfillment milestones in real time.
           </p>
         </div>
+
+        <button
+          onClick={fetchOrders}
+          disabled={loading}
+          className="group/btn relative px-5 py-2.5 rounded-full bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 text-xs font-cinzel font-bold text-[#F3E6D0] hover:text-[#F2D675] flex items-center gap-2 transition-all duration-300 shadow-md cursor-pointer self-start sm:self-auto disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+          <span>Synchronize Orders</span>
+        </button>
       </div>
 
       {/* Filter Bar */}
