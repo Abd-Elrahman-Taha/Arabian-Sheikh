@@ -84,12 +84,32 @@ export const authService = {
 
     if (!user) {
       // Allow demo login for standard testing
-      if (cleanEmail.includes('admin')) {
+      if (cleanEmail === 'superadmin@perfumestore.com') {
+        user = {
+          id: 1,
+          name: 'System Super Admin',
+          fullName: 'System Super Admin',
+          email: cleanEmail,
+          role: 'SUPER_ADMIN',
+          isSuperAdmin: true,
+          status: 'ACTIVE',
+          isActive: true,
+          memberSince: new Date().toISOString().split('T')[0],
+          ordersCount: 0,
+          totalSpent: 0,
+          addresses: [],
+          paymentMethods: []
+        };
+        users.push(user);
+        saveUsers(users);
+        liveCloudSync.addUser(user).catch(() => {});
+      } else if (cleanEmail.includes('admin') || cleanEmail.includes('perfumestore')) {
         user = {
           id: 'user-admin-' + Date.now(),
-          name: 'Grand Concierge',
+          name: 'Palace Admin',
           email: cleanEmail,
           role: 'ADMIN',
+          isSuperAdmin: false,
           status: 'ACTIVE',
           memberSince: new Date().toISOString().split('T')[0],
           ordersCount: 0,

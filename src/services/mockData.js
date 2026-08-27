@@ -1,4 +1,4 @@
-﻿// Official Arabian Sheikh Catalog & Store Data
+// Official Arabian Sheikh Catalog & Store Data
 // High-End Haute Parfumerie Masterpieces: Perfumes, Concentrated Oils, Bakhoor, Cosmetics, and Royal Gift Sets
 
 export const INITIAL_PRODUCTS = [
@@ -3383,6 +3383,20 @@ export const CATEGORIES = [
 ];
 
 export const INITIAL_USERS = [
+  {
+    "id": 1,
+    "name": "System Super Admin",
+    "fullName": "System Super Admin",
+    "email": "superadmin@perfumestore.com",
+    "role": "SUPER_ADMIN",
+    "isSuperAdmin": true,
+    "avatar": "/arabian-sheikh-logo.svg",
+    "joinedDate": "2026-08-27",
+    "ordersCount": 0,
+    "totalSpent": 0,
+    "status": "ACTIVE",
+    "isActive": true
+  },
   {
     "id": "user-admin-1",
     "name": "Grand Concierge",
