@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { userService } from '../../services/userService';
 import { useToast } from '../../context/ToastContext';
-import { Search, Ban, Trash2, Check, RefreshCw } from 'lucide-react';
+import { Search, Ban, Trash2, Check, RefreshCw, Phone } from 'lucide-react';
 
 export default function AdminUsers() {
   const { t } = useTranslation();
@@ -118,6 +118,7 @@ export default function AdminUsers() {
               <tr className="border-b border-[#D4AF37]/25 text-[#F2D675] uppercase font-cinzel font-bold">
                 <th className="py-3.5 px-4">Patron</th>
                 <th className="py-3.5 px-4">Email</th>
+                <th className="py-3.5 px-4">Shipping Contact</th>
                 <th className="py-3.5 px-4">Role</th>
                 <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4">Member Since</th>
@@ -127,7 +128,7 @@ export default function AdminUsers() {
             <tbody className="divide-y divide-[#D4AF37]/15 text-[#F3E6D0]">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-[#D8BE99] font-medium">
+                  <td colSpan={7} className="py-8 text-center text-[#D8BE99] font-medium">
                     No patrons found.
                   </td>
                 </tr>
@@ -140,6 +141,20 @@ export default function AdminUsers() {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-[#D8BE99] font-medium">{u.email}</td>
+                    <td className="py-3.5 px-4">
+                      {u.phone ? (
+                        <a
+                          href={`tel:${u.phone}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#F2D675] font-mono text-[11px] hover:bg-[#D4AF37]/20 transition-colors"
+                          title="Click to contact patron for shipping"
+                        >
+                          <Phone className="w-3 h-3 text-[#D4AF37]" />
+                          <span>{u.phone}</span>
+                        </a>
+                      ) : (
+                        <span className="text-[#D8BE99]/40 font-mono text-[11px] italic">Not provided</span>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">
                       <select
                         value={u.role}

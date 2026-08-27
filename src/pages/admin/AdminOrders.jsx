@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService, ORDER_STATUSES } from '../../services/orderService';
 import { useToast } from '../../context/ToastContext';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, Phone } from 'lucide-react';
 
 export default function AdminOrders() {
   const { t } = useTranslation();
@@ -131,7 +131,17 @@ export default function AdminOrders() {
                       <span className="text-xs sm:text-sm text-[#D8BE99] block font-medium">
                         {order.shippingAddress?.city || 'Dubai'}, {order.shippingAddress?.country || 'UAE'}
                       </span>
-                      <span className="text-xs text-[#F2D675] font-mono font-semibold">{order.customerEmail || '—'}</span>
+                      <span className="text-xs text-[#F2D675] font-mono font-semibold block">{order.customerEmail || '—'}</span>
+                      {(order.customerPhone || order.phone || order.shippingAddress?.phone) && (
+                        <a
+                          href={`tel:${order.customerPhone || order.phone || order.shippingAddress?.phone}`}
+                          className="inline-flex items-center gap-1 text-[11px] text-[#D4AF37] hover:underline font-mono mt-0.5"
+                          title="Call for courier dispatch"
+                        >
+                          <Phone className="w-2.5 h-2.5" />
+                          <span>{order.customerPhone || order.phone || order.shippingAddress?.phone}</span>
+                        </a>
+                      )}
                     </td>
 
                     <td className="py-4 px-4">

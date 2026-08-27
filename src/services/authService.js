@@ -154,21 +154,35 @@ export const authService = {
     return user;
   },
 
-  async signup({ name, email, password }) {
+  async signup({ name, email, password, phone = '', countryCode = '' }) {
     const cleanEmail = email.toLowerCase().trim();
 
     // 1. Send registration directly to live ASP.NET backend database
     if (!apiClient.isMockEnabled()) {
       try {
-        const user = await authApi.signup({ name, email: cleanEmail, password });
+        const user = await authApi.signup({ name, email: cleanEmail, password, phone, countryCode });
         if (user && (user.id || user.email)) {
-          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+          const userWithPhone = {
+            ...user,
+            name: user.name || name || 'Royal Patron',
+            phone: phone || user.phone || '',
+            countryCode: countryCode || user.countryCode || '',
+            joinedDate: new Date().toISOString().split('T')[0],
+            memberSince: new Date().toISOString().split('T')[0],
+            ordersCount: 0,
+            totalSpent: 0
+          };
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithPhone));
           const users = loadUsers();
-          if (!users.some(u => (u.email || '').toLowerCase().trim() === cleanEmail)) {
-            users.push({ ...user, name, email: cleanEmail });
-            saveUsers(users);
+          const existingIdx = users.findIndex(u => (u.email || '').toLowerCase().trim() === cleanEmail);
+          if (existingIdx > -1) {
+            users[existingIdx] = { ...users[existingIdx], ...userWithPhone };
+          } else {
+            users.unshift(userWithPhone);
           }
-          return user;
+          saveUsers(users);
+          await liveCloudSync.addUser(userWithPhone).catch(() => {});
+          return userWithPhone;
         }
       } catch (e) {
         console.error('ASP.NET Registration error:', e.message);
@@ -188,6 +202,8 @@ export const authService = {
       id: 'user-' + Date.now(),
       name,
       email: cleanEmail,
+      phone,
+      countryCode,
       password, // stored for seamless cross-device auth
       role: cleanEmail.includes('admin') ? 'ADMIN' : 'USER',
       status: 'ACTIVE',

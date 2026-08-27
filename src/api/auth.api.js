@@ -52,18 +52,21 @@ export const authApi = {
    * Customer Registration
    * POST /api/auth/register
    */
-  async register({ firstName, lastName, email, password, phone, preferredLanguage = 'En' }) {
+  async register({ firstName, lastName, email, password, phone, countryCode, preferredLanguage = 'En' }) {
     const langCode = preferredLanguage ? (preferredLanguage.charAt(0).toUpperCase() + preferredLanguage.slice(1).toLowerCase()) : 'En';
+    const payload = {
+      firstName: firstName?.trim() || 'Royal',
+      lastName: lastName?.trim() || 'Patron',
+      email: email.trim().toLowerCase(),
+      password,
+      phone: phone || null,
+      preferredLanguage: langCode
+    };
+    if (countryCode) payload.countryCode = countryCode;
+
     const response = await apiClient.post(
       ENDPOINTS.AUTH.REGISTER,
-      {
-        firstName: firstName?.trim() || 'Royal',
-        lastName: lastName?.trim() || 'Patron',
-        email: email.trim().toLowerCase(),
-        password,
-        phone: phone || null,
-        preferredLanguage: langCode
-      },
+      payload,
       { requiresAuth: false }
     );
 
@@ -88,7 +91,8 @@ export const authApi = {
       lastName,
       email: payload.email,
       password: payload.password,
-      phone: payload.phone,
+      phone: payload.phone || null,
+      countryCode: payload.countryCode || null,
       preferredLanguage: payload.preferredLanguage || 'En'
     });
   },
