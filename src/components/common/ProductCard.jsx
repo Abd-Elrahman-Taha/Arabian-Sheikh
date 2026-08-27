@@ -4,7 +4,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Heart, ShoppingBag, Star, Sparkles, Scale } from 'lucide-react';
+import { Heart, ShoppingBag, Star, Sparkles, Scale, Percent } from 'lucide-react';
 
 export default function ProductCard({ product, onCompare }) {
   const { navigate } = useRouter();
@@ -63,6 +63,12 @@ export default function ProductCard({ product, onCompare }) {
     >
       {/* Top Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
+        {(product.hasDiscount || (product.discountPercent && product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) && (
+          <span className="bg-gradient-to-r from-red-700 via-amber-600 to-red-800 text-white text-[10px] font-bold font-cinzel tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-amber-300/50 flex items-center gap-1">
+            <Percent className="w-2.5 h-2.5" />
+            <span>-{product.discountPercent || Math.round((1 - product.price / product.originalPrice) * 100)}%</span>
+          </span>
+        )}
         {product.tier && (
           <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || 'bg-[#D4AF37] text-black'}`}>
             {product.tier}

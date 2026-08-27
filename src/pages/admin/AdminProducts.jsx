@@ -10,7 +10,9 @@ import {
   Edit2,
   Trash2,
   ExternalLink,
-  Crown
+  Crown,
+  Percent,
+  Tag
 } from 'lucide-react';
 
 export default function AdminProducts() {
@@ -58,22 +60,47 @@ export default function AdminProducts() {
     }
   };
 
+  const handleToggleDiscount = async (product, isEnabling, percent = 20) => {
+    try {
+      if (isEnabling) {
+        await productService.applyProductDiscount(product.id, percent);
+        success(`Discount of ${percent}% applied to '${product.name}'.`);
+      } else {
+        await productService.removeProductDiscount(product.id);
+        success(`Discount removed from '${product.name}'.`);
+      }
+      fetchProducts();
+    } catch (err) {
+      error(err.message || 'Failed to update discount');
+    }
+  };
+
+  const handleUpdateDiscountPercent = async (product, newPercent) => {
+    try {
+      await productService.applyProductDiscount(product.id, newPercent);
+      success(`Discount updated to ${newPercent}% for '${product.name}'.`);
+      fetchProducts();
+    } catch (err) {
+      error(err.message || 'Failed to update discount');
+    }
+  };
+
   return (
     <div className="space-y-6 text-[#F3E6D0]">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-5 gap-4">
         <div>
-          <h1 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
+          <h1 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase tracking-wider text-[#F3E6D0]">
             Product Catalog Management
           </h1>
-          <p className="text-xs text-[#D8BE99]">
+          <p className="text-xs sm:text-sm text-[#D8BE99] mt-1">
             Manage all 60ml perfume tiers, pure oils, incense bakhoor, and cosmetic lines.
           </p>
         </div>
 
         <Link
           to="/admin/products/new"
-          className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 shadow-md"
+          className="px-6 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-colors flex items-center gap-2 shadow-md shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Product</span>
@@ -81,121 +108,172 @@ export default function AdminProducts() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-[#0B0A08] border border-[#D4AF37]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm text-xs">
-        <div className="relative w-full sm:w-80">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#0B0A08] p-4 border border-[#D4AF37]/20 rounded-xl shadow-lg">
+        <div className="relative sm:col-span-2">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-[#D8BE99]" />
           <input
             type="text"
+            placeholder="Search flacons by name, note, or code..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, notes..."
-            className="w-full bg-black/60 border border-white/10 pl-9 pr-3 py-2 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none rounded"
+            className="w-full bg-black/60 border border-[#D4AF37]/30 pl-9 pr-4 py-2.5 text-sm text-[#F3E6D0] rounded-lg focus:border-[#D4AF37] focus:outline-none placeholder:text-neutral-500"
           />
-          <Search className="w-4 h-4 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-black/60 border border-white/10 px-3 py-2 text-xs text-[#F3E6D0] rounded"
-          >
-            <option value="all">All Categories</option>
-            <option value="perfumes">Perfumes</option>
-            <option value="oils">Oils (Attar)</option>
-            <option value="bakhoor">Bakhoor & Incense</option>
-            <option value="cosmetics">Cosmetics</option>
-            <option value="bundles">Bundles</option>
-          </select>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 text-sm text-[#F3E6D0] rounded-lg focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
+        >
+          <option value="all">All Categories</option>
+          <option value="perfumes">Perfumes</option>
+          <option value="oils">Oils (Attar)</option>
+          <option value="bakhoor">Bakhoor & Incense</option>
+          <option value="cosmetics">Cosmetics</option>
+          <option value="bundles">Bundles</option>
+        </select>
 
-          <select
-            value={tierFilter}
-            onChange={(e) => setTierFilter(e.target.value)}
-            className="bg-black/60 border border-white/10 px-3 py-2 text-xs text-[#F3E6D0] rounded"
-          >
-            <option value="all">All Tiers</option>
-            <option value="Luxury">Luxury Tier (€50)</option>
-            <option value="Royal">Royal Tier (€40)</option>
-            <option value="Classic">Classic Tier (€30)</option>
-          </select>
-        </div>
+        <select
+          value={tierFilter}
+          onChange={(e) => setTierFilter(e.target.value)}
+          className="bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 text-sm text-[#F3E6D0] rounded-lg focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
+        >
+          <option value="all">All Tiers</option>
+          <option value="Luxury">Luxury Tier (€50)</option>
+          <option value="Royal">Royal Tier (€40)</option>
+          <option value="Classic">Classic Tier (€30)</option>
+        </select>
       </div>
 
       {/* Product List Table */}
-      <div className="bg-[#0B0A08] border border-[#D4AF37]/20 shadow-2xl overflow-x-auto">
-        <table className="w-full text-left rtl:text-right border-collapse text-xs">
+      <div className="bg-[#0B0A08] border border-[#D4AF37]/20 shadow-2xl overflow-x-auto rounded-xl">
+        <table className="w-full text-left rtl:text-right border-collapse text-sm">
           <thead>
-            <tr className="bg-[#0B0A08] border-b border-[#D4AF37]/20 font-cinzel text-[11px] uppercase tracking-wider text-[#D8BE99]">
-              <th className="p-4">Flacon</th>
-              <th className="p-4">Product Name</th>
-              <th className="p-4">Tier / Category</th>
-              <th className="p-4">Price</th>
-              <th className="p-4">Stock</th>
-              <th className="p-4">Status</th>
-              <th className="p-4 text-right rtl:text-left">Actions</th>
+            <tr className="bg-[#0B0A08] border-b border-[#D4AF37]/20 font-cinzel text-xs sm:text-sm uppercase tracking-wider text-[#D8BE99]">
+              <th className="py-4 px-4">Flacon</th>
+              <th className="py-4 px-4">Product Name</th>
+              <th className="py-4 px-4">Tier / Category</th>
+              <th className="py-4 px-4">Price</th>
+              <th className="py-4 px-4">Discount Offer</th>
+              <th className="py-4 px-4">Stock</th>
+              <th className="py-4 px-4">Status</th>
+              <th className="py-4 px-4 text-right rtl:text-left">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan="7" className="p-8 text-center text-neutral-500">Loading catalog...</td>
+                <td colSpan="8" className="p-8 text-center text-sm text-neutral-400">Loading catalog...</td>
               </tr>
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan="7" className="p-8 text-center text-neutral-500">No products found.</td>
+                <td colSpan="8" className="p-8 text-center text-sm text-neutral-400">No products found.</td>
               </tr>
             ) : (
               products.map((p) => (
-                <tr key={p.id} className="hover:bg-white/2 transition-colors">
-                  <td className="p-4">
+                <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                  <td className="py-4 px-4">
                     <img
                       src={p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
                       alt={p.name}
-                      className="w-10 h-14 object-contain bg-black/50 p-1 border border-white/10"
+                      className="w-12 h-16 object-contain bg-black/50 p-1 border border-white/10 rounded-lg"
                     />
                   </td>
-                  <td className="p-4">
-                    <div className="font-cinzel font-bold text-[#F3E6D0]">{p.name}</div>
-                    {p.arabicName && <div className="font-arabic text-[#D4AF37] text-[11px]">{p.arabicName}</div>}
-                    <div className="text-[10px] text-[#D8BE99]">{p.size || '60 ml'}</div>
+                  <td className="py-4 px-4">
+                    <div className="font-cinzel font-bold text-[#F3E6D0] text-sm sm:text-base">{p.name}</div>
+                    {p.arabicName && <div className="font-arabic text-[#D4AF37] text-xs sm:text-sm mt-0.5">{p.arabicName}</div>}
+                    <div className="text-xs text-[#D8BE99] mt-0.5">{p.size || '60 ml'}</div>
                   </td>
-                  <td className="p-4">
+                  <td className="py-4 px-4">
                     {p.tier ? (
-                      <span className="px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-cinzel text-[10px] font-bold">
+                      <span className="px-2.5 py-1 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-cinzel text-xs font-bold">
                         {p.tier} Tier
                       </span>
                     ) : (
-                      <span className="text-[#D8BE99] uppercase tracking-wider text-[10px]">
+                      <span className="text-[#D8BE99] uppercase tracking-wider text-xs font-semibold">
                         {p.category}
                       </span>
                     )}
                   </td>
-                  <td className="p-4 font-mono font-bold text-[#D4AF37] text-sm">
-                    €{p.price}
+                  <td className="py-4 px-4 font-mono">
+                    {p.originalPrice && p.originalPrice > p.price ? (
+                      <div>
+                        <div className="text-[#D4AF37] text-sm sm:text-base font-bold">€{p.price}</div>
+                        <div className="text-xs text-neutral-500 line-through">€{p.originalPrice}</div>
+                      </div>
+                    ) : (
+                      <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{p.price}</span>
+                    )}
                   </td>
-                  <td className="p-4 font-mono">
-                    <span className={p.stock > 10 ? 'text-emerald-400' : p.stock > 0 ? 'text-amber-400' : 'text-red-400'}>
+                  {/* Discount Controls Column */}
+                  <td className="py-4 px-4">
+                    {p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) ? (
+                      <div className="flex flex-col gap-1.5 min-w-[160px]">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-full bg-red-900/90 border border-red-500 text-white font-bold font-mono text-xs flex items-center gap-1 shadow-sm">
+                            <Percent className="w-3 h-3" />
+                            <span>{p.discountPercent || Math.round((1 - p.price / p.originalPrice) * 100)}% OFF</span>
+                          </span>
+                          <button
+                            onClick={() => handleToggleDiscount(p, false)}
+                            className="text-xs text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
+                            title="Remove Discount"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-[#D8BE99]">Rate:</span>
+                          <select
+                            value={p.discountPercent || 20}
+                            onChange={(e) => handleUpdateDiscountPercent(p, e.target.value)}
+                            className="bg-black/90 border border-[#D4AF37]/50 text-[#F2D675] text-xs rounded px-2 py-1 focus:outline-none cursor-pointer font-medium"
+                          >
+                            <option value="10">10%</option>
+                            <option value="15">15%</option>
+                            <option value="20">20%</option>
+                            <option value="25">25%</option>
+                            <option value="30">30%</option>
+                            <option value="40">40%</option>
+                            <option value="50">50%</option>
+                            <option value="70">70%</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleDiscount(p, true, 20)}
+                        className="px-3 py-1.5 bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-lg text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Percent className="w-3.5 h-3.5" />
+                        <span>Add Discount</span>
+                      </button>
+                    )}
+                  </td>
+                  <td className="py-4 px-4 font-mono text-sm sm:text-base">
+                    <span className={p.stock > 10 ? 'text-emerald-400 font-semibold' : p.stock > 0 ? 'text-amber-400 font-semibold' : 'text-red-400 font-semibold'}>
                       {p.stock} units
                     </span>
                   </td>
-                  <td className="p-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-950/80 border border-emerald-500/40 text-emerald-300">
+                  <td className="py-4 px-4">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 border border-emerald-500/40 text-emerald-300">
                       {p.status || 'ACTIVE'}
                     </span>
                   </td>
-                  <td className="p-4 text-right rtl:text-left space-x-2 rtl:space-x-reverse">
+                  <td className="py-4 px-4 text-right rtl:text-left space-x-2 rtl:space-x-reverse">
                     <Link
                       to={`/admin/products/${p.id}/edit`}
-                      className="p-1.5 inline-block bg-white/5 hover:bg-[#D4AF37] hover:text-black rounded text-[#D4AF37] transition-colors"
+                      className="p-2 inline-block bg-white/5 hover:bg-[#D4AF37] hover:text-black rounded-lg text-[#D4AF37] transition-colors shadow-sm"
                       title="Edit Product"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-4 h-4" />
                     </Link>
                     <button
                       onClick={() => handleDelete(p.id, p.name)}
-                      className="p-1.5 bg-white/5 hover:bg-red-600 hover:text-white rounded text-[#D8BE99] transition-colors cursor-pointer"
-                      title="Delete Product"
+                      className="p-2 bg-white/5 hover:bg-red-600 hover:text-white rounded-lg text-[#D8BE99] transition-colors cursor-pointer shadow-sm"
+                      title="Retire Product"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

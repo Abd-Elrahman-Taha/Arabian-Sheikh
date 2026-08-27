@@ -251,8 +251,7 @@ export default function ArabianIntro({ onComplete }) {
         <ArabianLogo
           variant="full"
           size="hero"
-          showSubtitle={true}
-          subtitle="أربيان شيخ"
+          showSubtitle={false}
         />
 
         {/* Subtle Ambient Radial Light behind logo */}

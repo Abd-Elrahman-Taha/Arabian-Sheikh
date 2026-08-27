@@ -88,9 +88,13 @@ export const productService = {
       );
     }
 
-    // Filter by category (perfumes, oils, bakhoor, cosmetics, bundles)
+    // Filter by category (perfumes, oils, bakhoor, cosmetics, bundles, offers)
     if (filters.category && filters.category !== 'all') {
-      result = result.filter(p => p.category?.toLowerCase() === filters.category.toLowerCase());
+      if (filters.category.toLowerCase() === 'offers' || filters.category.toLowerCase() === 'discounts') {
+        result = result.filter(p => p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
+      } else {
+        result = result.filter(p => p.category?.toLowerCase() === filters.category.toLowerCase());
+      }
     }
 
     // Filter by perfume tier (Luxury, Royal, Classic)
@@ -445,6 +449,60 @@ export const productService = {
     }
     saveProducts(products);
     return products[index];
+  },
+
+  async applyProductDiscount(id, discountPercent) {
+    const products = loadProducts();
+    const index = products.findIndex(p => p.id === id || p.slug === id);
+    if (index === -1) throw new Error('Product not found');
+
+    const item = products[index];
+    const basePrice = item.originalPrice && item.originalPrice > item.price ? item.originalPrice : item.price;
+    const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
+    const discountedPrice = Math.round(basePrice * (1 - pct / 100));
+
+    products[index] = {
+      ...item,
+      originalPrice: basePrice,
+      price: discountedPrice,
+      discountPercent: pct,
+      hasDiscount: true,
+      isOffer: true
+    };
+    saveProducts(products);
+    return products[index];
+  },
+
+  async removeProductDiscount(id) {
+    const products = loadProducts();
+    const index = products.findIndex(p => p.id === id || p.slug === id);
+    if (index === -1) throw new Error('Product not found');
+
+    const item = products[index];
+    const restoredPrice = item.originalPrice || item.price;
+
+    products[index] = {
+      ...item,
+      price: restoredPrice,
+      originalPrice: null,
+      discountPercent: 0,
+      hasDiscount: false,
+      isOffer: false
+    };
+    saveProducts(products);
+    return products[index];
+  },
+
+  getDiscountedProductsSync() {
+    const products = loadProducts();
+    return products.filter(p => 
+      p.status === 'ACTIVE' && (
+        p.hasDiscount || 
+        (p.discountPercent && p.discountPercent > 0) || 
+        (p.originalPrice && p.originalPrice > p.price) ||
+        p.isOffer
+      )
+    );
   }
 };
 

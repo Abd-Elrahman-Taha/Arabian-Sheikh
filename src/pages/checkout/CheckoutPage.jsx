@@ -15,18 +15,35 @@ import {
   ArrowLeft,
   Lock,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Tag
 } from 'lucide-react';
 
 export default function CheckoutPage() {
   const { navigate } = useRouter();
   const { t, isRtl } = useTranslation();
-  const { items, totals, cart, clearCart } = useCart();
+  const { items, totals, cart, clearCart, applyDiscount, removeDiscount } = useCart();
   const { user } = useAuth();
   const { success, error } = useToast();
 
   const [step, setStep] = useState(1);
   const [processing, setProcessing] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    try {
+      await applyDiscount(couponCode.trim());
+      setCouponCode('');
+    } catch {
+      // Toast notification handled by CartContext
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   // Form State
   const [formData, setFormData] = useState({
@@ -384,6 +401,49 @@ export default function CheckoutPage() {
                   <span className="font-mono font-bold text-[#D4AF37]">€{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Coupon / Privilege Code Box */}
+            <div className="pt-3 pb-1 border-t border-white/10 space-y-2">
+              <label className="text-[11px] font-cinzel font-bold uppercase tracking-wider text-[#D8BE99] flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Privilege / Promo Code</span>
+              </label>
+
+              {cart.discountCode ? (
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-[#F2D675] tracking-widest uppercase">
+                      {cart.discountCode}
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-semibold">(Applied)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeDiscount}
+                    className="text-[11px] text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Privilege Code (e.g. SHEIKH10)"
+                    className="flex-1 bg-black/80 border border-[#D4AF37]/30 focus:border-[#D4AF37] px-3 py-2 text-xs font-mono uppercase text-[#F3E6D0] rounded-lg focus:outline-none placeholder:text-neutral-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="px-4 py-2 bg-[#D4AF37] hover:bg-[#F2D675] disabled:opacity-50 text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer shrink-0 shadow-md"
+                  >
+                    {couponLoading ? '...' : 'Apply'}
+                  </button>
+                </form>
+              )}
             </div>
 
             {/* Totals */}

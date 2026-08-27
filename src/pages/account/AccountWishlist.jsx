@@ -30,31 +30,31 @@ export default function AccountWishlist() {
 
   return (
     <div className="space-y-6 text-[#F3E6D0]">
-      <div className="border-b border-[#3A2116]/40 pb-4">
-        <h2 className="font-cinzel text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
+      <div className="border-b border-[#3A2116]/40 pb-5">
+        <h2 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
           Vault Wishlist ({wishlist.length})
         </h2>
-        <p className="text-xs text-[#D8BE99]">
+        <p className="text-xs sm:text-sm text-[#D8BE99] mt-1">
           Curated creations saved for future acquisitions.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
         {wishlist.map((item) => (
-          <div key={item.id} className="p-4 bg-[#21130D] border border-[#3A2116]/60 flex flex-col justify-between space-y-3">
+          <div key={item.id} className="p-5 bg-[#21130D] border border-[#3A2116]/60 rounded-xl flex flex-col justify-between space-y-3.5 shadow-lg">
             <img
               src={item.cutoutImage || item.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
               alt={item.name}
-              className="h-32 mx-auto object-contain"
+              className="h-36 mx-auto object-contain"
             />
             <div>
-              <h4 className="font-cinzel font-bold text-xs text-[#F3E6D0] line-clamp-1">{item.name}</h4>
-              <p className="font-mono text-xs text-[#D4AF37] font-bold">€{item.price}</p>
+              <h4 className="font-cinzel font-bold text-sm sm:text-base text-[#F3E6D0] line-clamp-1">{item.name}</h4>
+              <p className="font-mono text-sm sm:text-base text-[#D4AF37] font-bold mt-0.5">€{item.price}</p>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-[#3A2116]/40">
+            <div className="flex gap-2 pt-3 border-t border-[#3A2116]/40">
               <button
                 onClick={() => addToCart(item, '60 ml', 1)}
-                className="flex-1 py-2 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider transition-colors"
+                className="flex-1 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors rounded-lg cursor-pointer"
               >
                 Add to Bag
               </button>

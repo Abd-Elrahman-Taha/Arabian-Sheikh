@@ -21,6 +21,8 @@ export default function AdminProductEdit() {
     description: '',
     price: 40,
     originalPrice: '',
+    hasDiscount: false,
+    discountPercent: 20,
     tier: 'Royal',
     category: 'perfumes',
     gender: 'Unisex',
@@ -46,9 +48,16 @@ export default function AdminProductEdit() {
       try {
         const item = await productService.getProductById(editId);
         if (item) {
+          const isDisc = Boolean(item.hasDiscount || (item.originalPrice && item.originalPrice > item.price));
+          const baseP = item.originalPrice && item.originalPrice > item.price ? item.originalPrice : item.price;
+          const discPct = item.discountPercent || (isDisc && item.originalPrice ? Math.round((1 - item.price / item.originalPrice) * 100) : 20);
+
           setFormData({
             ...item,
-            originalPrice: item.originalPrice || '',
+            hasDiscount: isDisc,
+            discountPercent: discPct,
+            price: isDisc ? item.price : baseP,
+            originalPrice: isDisc ? baseP : '',
             topNotes: item.topNotes?.join(', ') || item.notes?.top?.join(', ') || '',
             heartNotes: item.heartNotes?.join(', ') || item.notes?.heart?.join(', ') || '',
             baseNotes: item.baseNotes?.join(', ') || item.notes?.base?.join(', ') || '',
@@ -71,10 +80,32 @@ export default function AdminProductEdit() {
       const baseArr = formData.baseNotes.split(',').map(n => n.trim()).filter(Boolean);
       const imagesArr = formData.images.split(',').map(img => img.trim()).filter(Boolean);
 
+      let finalPrice = Number(formData.price);
+      let finalOriginalPrice = null;
+      let finalHasDiscount = false;
+      let finalDiscountPercent = 0;
+
+      if (formData.hasDiscount) {
+        const basePrice = formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price);
+        const pct = Number(formData.discountPercent) || 20;
+        finalOriginalPrice = basePrice;
+        finalPrice = Math.round(basePrice * (1 - pct / 100));
+        finalHasDiscount = true;
+        finalDiscountPercent = pct;
+      } else {
+        finalPrice = formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price);
+        finalOriginalPrice = null;
+        finalHasDiscount = false;
+        finalDiscountPercent = 0;
+      }
+
       const payload = {
         ...formData,
-        price: Number(formData.price),
-        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+        price: finalPrice,
+        originalPrice: finalOriginalPrice,
+        hasDiscount: finalHasDiscount,
+        discountPercent: finalDiscountPercent,
+        isOffer: finalHasDiscount,
         stock: Number(formData.stock),
         topNotes: topArr,
         heartNotes: heartArr,
@@ -213,6 +244,81 @@ export default function AdminProductEdit() {
               className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* Discount Offer Panel */}
+        <div className="bg-[#140D07]/90 border border-[#D4AF37]/30 p-4 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-cinzel font-bold text-xs uppercase text-[#F2D675] tracking-wider">
+                Discount Offer Configuration
+              </span>
+              <span className="text-[10px] text-[#D8BE99]">(Appears automatically in Offers & Discounts showcase)</span>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xs font-bold text-[#F3E6D0]">
+                {formData.hasDiscount ? 'Discount Active' : 'No Discount'}
+              </span>
+              <input
+                type="checkbox"
+                checked={formData.hasDiscount}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setFormData({
+                    ...formData,
+                    hasDiscount: isChecked,
+                    originalPrice: isChecked ? (formData.originalPrice || formData.price) : formData.originalPrice
+                  });
+                }}
+                className="accent-[#D4AF37] w-4 h-4 cursor-pointer"
+              />
+            </label>
+          </div>
+
+          {formData.hasDiscount && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-[#D4AF37]/20 text-xs">
+              <div className="space-y-1">
+                <label className="text-[#D8BE99] uppercase font-cinzel">Discount Rate (%)</label>
+                <select
+                  value={formData.discountPercent || 20}
+                  onChange={(e) => setFormData({ ...formData, discountPercent: Number(e.target.value) })}
+                  className="w-full bg-black/60 border border-[#D4AF37]/40 px-3 py-2 rounded text-[#F2D675] font-bold font-mono focus:border-[#D4AF37] focus:outline-none"
+                >
+                  <option value="10">10% OFF</option>
+                  <option value="15">15% OFF</option>
+                  <option value="20">20% OFF</option>
+                  <option value="25">25% OFF</option>
+                  <option value="30">30% OFF</option>
+                  <option value="40">40% OFF</option>
+                  <option value="50">50% OFF</option>
+                  <option value="70">70% OFF</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[#D8BE99] uppercase font-cinzel">Base Price (€ EUR)</label>
+                <input
+                  type="number"
+                  value={formData.originalPrice || formData.price}
+                  onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                  className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] font-mono focus:border-[#D4AF37] focus:outline-none"
+                  placeholder="Base Price before discount"
+                />
+              </div>
+
+              <div className="space-y-1 sm:col-span-1 flex flex-col justify-center">
+                <span className="text-[10px] text-[#D8BE99] uppercase font-cinzel">Discounted Sale Price</span>
+                <div className="text-base font-mono font-bold text-[#D4AF37] flex items-baseline gap-2">
+                  <span>
+                    €{Math.round((Number(formData.originalPrice || formData.price) || 0) * (1 - (Number(formData.discountPercent) || 20) / 100))}
+                  </span>
+                  <span className="text-xs text-neutral-500 line-through">
+                    €{Number(formData.originalPrice || formData.price) || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Olfactory Pyramid */}

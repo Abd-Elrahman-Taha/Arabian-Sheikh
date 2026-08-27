@@ -90,6 +90,7 @@ export default function Shop() {
 
   const categoriesList = [
     { id: 'all', label: 'All Catalog' },
+    { id: 'offers', label: 'Offers & Discounts' },
     { id: 'perfumes', label: 'Perfumes' },
     { id: 'oils', label: 'Oils (Attar)' },
     { id: 'bakhoor', label: 'Bakhoor & Incense' },

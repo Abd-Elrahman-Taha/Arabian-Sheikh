@@ -307,10 +307,20 @@ export default function ProductDetail() {
             </div>
 
             {/* Price Display */}
-            <div className="py-4 border-y border-[#D4AF37]/20 flex items-baseline gap-4">
+            <div className="py-4 border-y border-[#D4AF37]/20 flex flex-wrap items-baseline gap-4">
               <span className="font-cinzel text-3xl font-bold text-[#D4AF37]">
                 €{product.price}
               </span>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-lg line-through text-neutral-400 font-mono">
+                  €{product.originalPrice}
+                </span>
+              )}
+              {(product.hasDiscount || (product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) && (
+                <span className="px-3 py-1 rounded-full bg-red-800/90 text-white font-cinzel font-bold text-xs uppercase tracking-widest shadow-md">
+                  {product.discountPercent || Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                </span>
+              )}
               <span className={`text-xs uppercase tracking-wider font-medium ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
                 EUR (Tax Included • Complimentary DHL over €100)
               </span>
