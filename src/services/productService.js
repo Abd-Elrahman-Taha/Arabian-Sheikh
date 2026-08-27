@@ -214,25 +214,27 @@ export const productService = {
    * Zero hardcoded/local products are returned.
    */
   async getAllProducts(filters = {}) {
-    // 1. Sync latest changes from live cloud
-    await liveCloudSync.sync().catch(() => {});
-
     try {
       const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
-      const response = await productApi.getProducts(apiFilters);
+      
+      let response;
+      if (filters.includeDrafts) {
+        response = await productApi.adminGetProducts(apiFilters);
+      } else {
+        response = await productApi.getProducts(apiFilters);
+      }
+
       const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
       if (Array.isArray(items) && items.length > 0) {
         saveProducts(items);
-        const transformed = liveCloudSync.applyToProducts(items);
-        return this.applyFilters(transformed, filters);
+        return this.applyFilters(items, filters);
       }
     } catch (err) {
       console.warn('API getProducts error:', err.message);
     }
 
     const cached = loadProducts();
-    const transformed = liveCloudSync.applyToProducts(cached || []);
-    return this.applyFilters(transformed, filters);
+    return this.applyFilters(cached || [], filters);
   },
 
   getProductByIdSync(idOrSlug) {
@@ -411,54 +413,56 @@ export const productService = {
 
   async toggleProductActive(id, isActive) {
     const activeBool = Boolean(isActive);
-    
-    // 1. Immediately persist to live cloud sync
-    await liveCloudSync.setProductActive(id, activeBool);
     const prods = loadProducts();
     const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
-    if (product && product.slug) {
-      await liveCloudSync.setProductActive(product.slug, activeBool);
-    }
 
-    // 2. Also try backend API with complete DTO
-    try {
-      const numId = Number(id);
-      const targetId = !isNaN(numId) && numId > 0 ? numId : (product?.id || id);
-      const updatePayload = {
-        name: product?.name || 'Exclusive Creation',
-        description: product?.description || product?.tagline || 'Haute Parfumerie Fragrance',
-        brandId: Number(product?.brandId) || 1,
-        categoryId: Number(product?.categoryId) || 1,
-        subcategoryId: product?.subcategoryId ? Number(product.subcategoryId) : null,
-        perfumeCategoryId: product?.perfumeCategoryId ? Number(product.perfumeCategoryId) : null,
-        price: product?.price !== undefined ? Number(product.price) : 55,
-        gender: product?.gender || 'Unisex',
-        isActive: activeBool
-      };
-
-      try {
-        await productApi.adminUpdateProduct(targetId, updatePayload);
-      } catch (putErr) {
-        if (activeBool) {
-          await productApi.adminActivateProduct(targetId).catch(() => {});
-        } else {
-          await productApi.adminDeactivateProduct(targetId).catch(() => {});
-        }
+    // 1. Determine numeric server database ID
+    let targetId = Number(id);
+    if (isNaN(targetId) || targetId <= 0) {
+      if (product && product.numericId && Number(product.numericId) > 0) {
+        targetId = Number(product.numericId);
+      } else if (product && !isNaN(Number(product.id)) && Number(product.id) > 0) {
+        targetId = Number(product.id);
       }
-    } catch (err) {
-      console.warn('Backend API update:', err.message);
     }
 
-    // 3. Update local products list
+    if (isNaN(targetId) || targetId <= 0) {
+      throw new Error(`Product "${product?.name || id}" does not have an active database integer ID on the server. Please create/sync it via Admin Products first.`);
+    }
+
+    // 2. Build complete DTO matching ASP.NET UpdateProductDto
+    const updatePayload = {
+      name: product?.name || 'Exclusive Creation',
+      description: product?.description || product?.tagline || 'Haute Parfumerie Fragrance',
+      brandId: Number(product?.brandId) || 1,
+      categoryId: Number(product?.categoryId) || 1,
+      subcategoryId: product?.subcategoryId ? Number(product.subcategoryId) : null,
+      perfumeCategoryId: product?.perfumeCategoryId ? Number(product.perfumeCategoryId) : null,
+      price: product?.price !== undefined ? Number(product.price) : 55,
+      gender: product?.gender || 'Unisex',
+      isActive: activeBool
+    };
+
+    // 3. Send update to the backend server directly
+    let serverUpdated = null;
+    try {
+      serverUpdated = await productApi.adminUpdateProduct(targetId, updatePayload);
+    } catch (putErr) {
+      if (activeBool) {
+        serverUpdated = await productApi.adminActivateProduct(targetId);
+      } else {
+        serverUpdated = await productApi.adminDeactivateProduct(targetId);
+      }
+    }
+
+    // 4. Update in-memory state ONLY when the server confirms success
     if (product) {
       product.isActive = activeBool;
       product.status = activeBool ? 'ACTIVE' : 'INACTIVE';
       saveProducts(prods);
     }
 
-    // 4. Return updated product
-    const all = loadProducts();
-    return all.find(p => String(p.id) === String(id) || p.slug === id) || { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
+    return product || serverUpdated || { id: targetId, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
   },
 
   async updateStock(id, newStock) {

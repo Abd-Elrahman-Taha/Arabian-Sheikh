@@ -52,6 +52,7 @@ export function normalizeProduct(raw) {
 
   return {
     id: p.id || p.productId || `as-${p.slug || 'prod'}`,
+    numericId: typeof p.id === 'number' ? p.id : (!isNaN(Number(p.id)) && Number(p.id) > 0 ? Number(p.id) : (typeof p.productId === 'number' ? p.productId : null)),
     slug: p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : ''),
     name: p.name || 'Imperial Extrait',
     arabicName: p.arabicName || p.arabic_name || '',
