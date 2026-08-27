@@ -1,23 +1,9 @@
-import { PERFUME_TIERS, CATEGORIES } from './mockData';
+import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 import { productApi } from '../api/product.api';
 import { apiClient } from '../api/client';
 
 const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_api_products_v2';
 let inMemoryProducts = [];
-
-// Purge any legacy localStorage keys that previously cached local mock products
-if (typeof window !== 'undefined') {
-  try {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('arabian_sheikh_products') || (key.includes('products') && key !== PRODUCTS_STORAGE_KEY))) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-  } catch {}
-}
 
 function preloadProductAssets(products) {
   if (typeof window === 'undefined' || !Array.isArray(products)) return;
@@ -47,17 +33,18 @@ function loadProducts() {
 
   const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
   if (!data) {
-    inMemoryProducts = [];
+    inMemoryProducts = [...INITIAL_PRODUCTS];
+    preloadProductAssets(inMemoryProducts);
     return inMemoryProducts;
   }
   try {
     const parsed = JSON.parse(data);
-    inMemoryProducts = Array.isArray(parsed) ? parsed : [];
+    inMemoryProducts = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_PRODUCTS];
     preloadProductAssets(inMemoryProducts);
     return inMemoryProducts;
   } catch (e) {
     console.error('Error parsing products from storage:', e);
-    inMemoryProducts = [];
+    inMemoryProducts = [...INITIAL_PRODUCTS];
     return inMemoryProducts;
   }
 }
