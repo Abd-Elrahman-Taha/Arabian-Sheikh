@@ -43,11 +43,15 @@ export default function CartDrawer() {
     async function loadPairings() {
       if (!isDrawerOpen) return;
       try {
-        const firstItemId = items[0]?.productId || 'as-luxury-arabian-gold';
-        const related = await productService.getRelatedProducts(firstItemId, 4);
-        const cartIds = items.map(i => i.productId);
-        const filtered = related.filter(r => !cartIds.includes(r.id));
-        setRecommendations(filtered.slice(0, 2));
+        const firstItemId = items[0]?.productId;
+        if (firstItemId) {
+          const related = await productService.getRelatedProducts(firstItemId, 4);
+          const cartIds = items.map(i => i.productId);
+          const filtered = related.filter(r => !cartIds.includes(r.id));
+          setRecommendations(filtered.slice(0, 2));
+        } else {
+          setRecommendations([]);
+        }
       } catch (err) {
         console.error('Error loading drawer recommendations:', err);
       }

@@ -39,7 +39,7 @@ export default function Shop() {
   const [gender, setGender] = useState(initialGender);
   const [family, setFamily] = useState(initialFamily);
   const [search, setSearch] = useState(initialSearch);
-  const [maxPrice, setMaxPrice] = useState(150);
+  const [maxPrice, setMaxPrice] = useState(500);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState(initialSort);
@@ -77,7 +77,7 @@ export default function Shop() {
     setGender('all');
     setFamily('all');
     setSearch('');
-    setMaxPrice(150);
+    setMaxPrice(500);
     setInStockOnly(false);
     setMinRating(0);
     setSortBy('featured');
@@ -211,15 +211,15 @@ export default function Shop() {
         <input
           type="range"
           min="20"
-          max="150"
-          step="5"
+          max="500"
+          step="10"
           value={maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
           className="w-full accent-[#D4AF37] cursor-pointer"
         />
         <div className="flex justify-between text-[10px] text-neutral-500 font-mono">
           <span>€20</span>
-          <span>€150</span>
+          <span>€500</span>
         </div>
       </div>
 

@@ -1,9 +1,23 @@
-import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
+import { PERFUME_TIERS, CATEGORIES } from './mockData';
 import { productApi } from '../api/product.api';
 import { apiClient } from '../api/client';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_products_v16';
-let inMemoryProducts = null;
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_api_products_v2';
+let inMemoryProducts = [];
+
+// Purge any legacy localStorage keys that previously cached local mock products
+if (typeof window !== 'undefined') {
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('arabian_sheikh_products') || (key.includes('products') && key !== PRODUCTS_STORAGE_KEY))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch {}
+}
 
 function preloadProductAssets(products) {
   if (typeof window === 'undefined' || !Array.isArray(products)) return;
@@ -15,12 +29,15 @@ function preloadProductAssets(products) {
       p.images.forEach(img => urls.add(img));
     }
   });
-  // Non-blocking browser asset pre-caching
-  requestIdleCallback ? requestIdleCallback(() => {
-    urls.forEach(src => { const img = new Image(); img.src = src; });
-  }) : setTimeout(() => {
-    urls.forEach(src => { const img = new Image(); img.src = src; });
-  }, 100);
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => {
+      urls.forEach(src => { const img = new Image(); img.src = src; });
+    });
+  } else {
+    setTimeout(() => {
+      urls.forEach(src => { const img = new Image(); img.src = src; });
+    }, 100);
+  }
 }
 
 function loadProducts() {
@@ -30,47 +47,35 @@ function loadProducts() {
 
   const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
   if (!data) {
-    inMemoryProducts = [...INITIAL_PRODUCTS];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
-    }
-    preloadProductAssets(inMemoryProducts);
+    inMemoryProducts = [];
     return inMemoryProducts;
   }
   try {
     const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed) || !parsed.some(p => p.id === 'as-royal-queens-secret')) {
-      inMemoryProducts = [...INITIAL_PRODUCTS];
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
-      preloadProductAssets(inMemoryProducts);
-      return inMemoryProducts;
-    }
-    inMemoryProducts = parsed;
+    inMemoryProducts = Array.isArray(parsed) ? parsed : [];
     preloadProductAssets(inMemoryProducts);
     return inMemoryProducts;
   } catch (e) {
-    console.error('Error parsing products from localStorage:', e);
-    inMemoryProducts = [...INITIAL_PRODUCTS];
+    console.error('Error parsing products from storage:', e);
+    inMemoryProducts = [];
     return inMemoryProducts;
   }
 }
 
 function saveProducts(products) {
-  inMemoryProducts = products;
+  inMemoryProducts = Array.isArray(products) ? products : [];
   if (typeof window !== 'undefined') {
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(inMemoryProducts));
   }
-}
-
-// Warm up products cache immediately on module load
-if (typeof window !== 'undefined') {
-  setTimeout(() => loadProducts(), 0);
+  preloadProductAssets(inMemoryProducts);
 }
 
 export const productService = {
-  getAllProductsSync(filters = {}) {
-    const products = loadProducts();
-    let result = [...products];
+  /**
+   * Filter an array of products locally using supplied filter parameters.
+   */
+  applyFilters(items, filters = {}) {
+    let result = Array.isArray(items) ? [...items] : [];
 
     // Filter by search query
     if (filters.search) {
@@ -79,12 +84,13 @@ export const productService = {
         p.name?.toLowerCase().includes(q) ||
         p.arabicName?.includes(q) ||
         p.bulgarianName?.toLowerCase().includes(q) ||
+        p.spanishName?.toLowerCase().includes(q) ||
         p.description?.toLowerCase().includes(q) ||
         p.fragranceFamily?.toLowerCase().includes(q) ||
         p.scentFamily?.toLowerCase().includes(q) ||
-        (p.topNotes && p.topNotes.some(n => n.toLowerCase().includes(q))) ||
-        (p.heartNotes && p.heartNotes.some(n => n.toLowerCase().includes(q))) ||
-        (p.baseNotes && p.baseNotes.some(n => n.toLowerCase().includes(q)))
+        (p.topNotes && p.topNotes.some(n => String(n).toLowerCase().includes(q))) ||
+        (p.heartNotes && p.heartNotes.some(n => String(n).toLowerCase().includes(q))) ||
+        (p.baseNotes && p.baseNotes.some(n => String(n).toLowerCase().includes(q)))
       );
     }
 
@@ -104,54 +110,47 @@ export const productService = {
 
     // Filter by gender
     if (filters.gender && filters.gender !== 'all') {
-      result = result.filter(p => p.gender?.toLowerCase() === filters.gender.toLowerCase());
+      const targetGender = filters.gender.toLowerCase();
+      result = result.filter(p => {
+        const pg = (p.gender || '').toLowerCase();
+        if (pg === targetGender || pg === 'unisex') return true;
+        if ((targetGender === 'men' || targetGender === 'male') && (pg === 'men' || pg === 'male')) return true;
+        if ((targetGender === 'women' || targetGender === 'female') && (pg === 'women' || pg === 'female')) return true;
+        return false;
+      });
     }
 
-    // Filter by fragrance family / scent family
+    // Filter by fragrance family
     if (filters.family && filters.family !== 'all') {
       result = result.filter(p => 
-        (p.fragranceFamily && p.fragranceFamily.toLowerCase().includes(filters.family.toLowerCase())) ||
-        (p.scentFamily && p.scentFamily.toLowerCase().includes(filters.family.toLowerCase()))
+        p.fragranceFamily?.toLowerCase() === filters.family.toLowerCase() ||
+        p.scentFamily?.toLowerCase().includes(filters.family.toLowerCase())
       );
     }
 
-    // Filter by season
-    if (filters.season && filters.season !== 'all') {
+    // Filter by collection
+    if (filters.collection && filters.collection !== 'all') {
       result = result.filter(p => 
-        p.season && (p.season.includes('All Seasons') || p.season.some(s => s.toLowerCase().includes(filters.season.toLowerCase())))
+        p.collection?.toLowerCase() === filters.collection.toLowerCase() ||
+        p.collectionName?.toLowerCase() === filters.collection.toLowerCase()
       );
     }
 
-    // Filter by occasion
-    if (filters.occasion && filters.occasion !== 'all') {
-      result = result.filter(p => 
-        p.occasion && p.occasion.some(o => o.toLowerCase().includes(filters.occasion.toLowerCase()))
-      );
-    }
-
-    // Filter by price range
-    if (filters.minPrice !== undefined) {
-      result = result.filter(p => p.price >= filters.minPrice);
-    }
-    if (filters.maxPrice !== undefined) {
+    // Filter by max price
+    if (filters.maxPrice) {
       result = result.filter(p => p.price <= filters.maxPrice);
     }
 
-    // Filter by rating
-    if (filters.minRating !== undefined) {
+    // Filter by min rating
+    if (filters.minRating) {
       result = result.filter(p => (p.rating || 5) >= filters.minRating);
-    }
-
-    // Filter by in-stock only
-    if (filters.inStockOnly) {
-      result = result.filter(p => p.stock > 0 && p.status === 'ACTIVE');
     }
 
     // Status filter
     if (filters.status) {
       result = result.filter(p => p.status === filters.status);
     } else if (!filters.includeDrafts) {
-      result = result.filter(p => p.status === 'ACTIVE');
+      result = result.filter(p => !p.status || p.status === 'ACTIVE');
     }
 
     // Sorting
@@ -179,61 +178,74 @@ export const productService = {
     return result;
   },
 
-  async getAllProducts(filters = {}) {
-    const result = this.getAllProductsSync(filters);
+  getAllProductsSync(filters = {}) {
+    const products = loadProducts();
+    return this.applyFilters(products, filters);
+  },
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
-      productApi.getProducts(filters).then(res => {
-        const items = Array.isArray(res) ? res : (res?.items || []);
-        if (items.length > 0) {
-          saveProducts(items);
-        }
-      }).catch(() => {});
+  /**
+   * Fetch all products directly from the API.
+   * If remote API returns products, store in memory and return.
+   * Zero hardcoded/local products are returned.
+   */
+  async getAllProducts(filters = {}) {
+    try {
+      const response = await productApi.getProducts(filters);
+      const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
+      if (Array.isArray(items) && items.length > 0) {
+        saveProducts(items);
+        return this.applyFilters(items, filters);
+      }
+    } catch (err) {
+      console.warn('API getProducts error:', err.message);
     }
 
-    return result;
+    const cached = loadProducts();
+    return this.applyFilters(cached || [], filters);
   },
 
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
     const products = loadProducts();
-    return products.find(p => p.id === idOrSlug || p.slug === idOrSlug) || null;
+    return products.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug) || null;
   },
 
+  /**
+   * Fetch product details directly from the API.
+   */
   async getProductById(idOrSlug) {
-    const item = this.getProductByIdSync(idOrSlug);
-    if (item) return item;
-
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
-      try {
-        const remote = await productApi.getProductById(idOrSlug);
-        if (remote) {
-          const prods = loadProducts();
-          const idx = prods.findIndex(p => p.id === remote.id);
-          if (idx >= 0) prods[idx] = remote;
-          else prods.push(remote);
-          saveProducts(prods);
-          return remote;
-        }
-      } catch (e) {}
+    if (!idOrSlug) return null;
+    try {
+      const remote = await productApi.getProductById(idOrSlug);
+      if (remote) {
+        const prods = loadProducts();
+        const idx = prods.findIndex(p => String(p.id) === String(remote.id) || p.slug === remote.slug);
+        if (idx >= 0) prods[idx] = remote;
+        else prods.push(remote);
+        saveProducts(prods);
+        return remote;
+      }
+    } catch (err) {
+      console.warn('API getProductById error:', err.message);
     }
 
-    return null;
+    const cached = this.getProductByIdSync(idOrSlug);
+    return cached;
   },
 
   async getFeaturedProducts() {
-    const products = loadProducts();
-    return products.filter(p => p.featured && p.status === 'ACTIVE');
+    const products = await this.getAllProducts();
+    return products.filter(p => p.featured && (!p.status || p.status === 'ACTIVE'));
   },
 
   async getBestSellers() {
-    const products = loadProducts();
-    return products.filter(p => (p.isBestSeller || p.featured) && p.status === 'ACTIVE');
+    const products = await this.getAllProducts();
+    return products.filter(p => (p.isBestSeller || p.featured) && (!p.status || p.status === 'ACTIVE'));
   },
 
   async getPerfumes() {
     const products = await this.getAllProducts({ category: 'perfumes' });
-    return products.filter(p => p.status === 'ACTIVE');
+    return products.filter(p => !p.status || p.status === 'ACTIVE');
   },
 
   async getTiers() {
@@ -246,21 +258,21 @@ export const productService = {
 
   getRelatedProductsSync(currentId, limit = 4) {
     const products = loadProducts();
-    const current = products.find(p => p.id === currentId || p.slug === currentId);
+    const current = products.find(p => String(p.id) === String(currentId) || p.slug === currentId);
     
     // Filter active candidates excluding current product
     const candidates = products.filter(p => 
-      p.status === 'ACTIVE' && 
-      p.id !== currentId && 
+      (!p.status || p.status === 'ACTIVE') && 
+      String(p.id) !== String(currentId) && 
       p.slug !== currentId && 
-      (!current || (p.id !== current.id && p.slug !== current.slug))
+      (!current || (String(p.id) !== String(current.id) && p.slug !== current.slug))
     );
 
     if (!current) {
       return candidates.slice(0, limit);
     }
 
-    // Extract current notes for deep olfactory matching
+    // Extract current notes for olfactory matching
     const currentNotes = [
       ...(current.topNotes || []),
       ...(current.heartNotes || []),
@@ -272,30 +284,13 @@ export const productService = {
 
     const scored = candidates.map(p => {
       let score = 0;
-
-      // 1. Same tier matching (+5 points)
-      if (p.tier && current.tier && p.tier.toLowerCase() === current.tier.toLowerCase()) {
-        score += 5;
-      }
-
-      // 2. Scent & Fragrance family matching (+4 points)
+      if (p.tier && current.tier && p.tier.toLowerCase() === current.tier.toLowerCase()) score += 5;
       const pFamily = (p.fragranceFamily || p.scentFamily || '').toLowerCase();
       const cFamily = (current.fragranceFamily || current.scentFamily || '').toLowerCase();
-      if (pFamily && cFamily && (pFamily.includes(cFamily) || cFamily.includes(pFamily))) {
-        score += 4;
-      }
+      if (pFamily && cFamily && (pFamily.includes(cFamily) || cFamily.includes(pFamily))) score += 4;
+      if (p.category && current.category && p.category === current.category) score += 3;
+      if (p.gender === current.gender || p.gender === 'Unisex' || current.gender === 'Unisex') score += 2;
 
-      // 3. Category matching (+3 points)
-      if (p.category && current.category && p.category === current.category) {
-        score += 3;
-      }
-
-      // 4. Gender profile matching (+2 points)
-      if (p.gender === current.gender || p.gender === 'Unisex' || current.gender === 'Unisex') {
-        score += 2;
-      }
-
-      // 5. Shared olfactory notes (+3 points per shared note)
       const pNotes = [
         ...(p.topNotes || []),
         ...(p.heartNotes || []),
@@ -306,198 +301,108 @@ export const productService = {
       ].map(n => String(n).toLowerCase());
 
       pNotes.forEach(note => {
-        if (currentNotes.some(cn => cn.includes(note) || note.includes(cn))) {
-          score += 3;
-        }
+        if (currentNotes.some(cn => cn.includes(note) || note.includes(cn))) score += 3;
       });
 
       return { product: p, score };
     });
 
-    // Sort by highest match score
     scored.sort((a, b) => b.score - a.score);
-
     const result = scored.map(item => item.product).slice(0, limit);
 
-    // If result has fewer than requested limit, fill with remaining candidates
     if (result.length < limit) {
-      const remaining = candidates.filter(c => !result.some(r => r.id === c.id));
+      const remaining = candidates.filter(c => !result.some(r => String(r.id) === String(c.id)));
       result.push(...remaining.slice(0, limit - result.length));
     }
 
     return result;
   },
 
-  async addReview(productId, review) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.addReview(productId, review);
-      } catch (e) {
-        console.warn('Real API add review fallback:', e.message);
-      }
-    }
-
-    const products = loadProducts();
-    const index = products.findIndex(p => p.id === productId || p.slug === productId);
-    if (index === -1) throw new Error('Product not found');
-
-    const newReview = {
-      id: 'rev-' + Date.now(),
-      author: review.author || 'Anonymous Patron',
-      rating: review.rating || 5,
-      title: review.title || 'Exquisite Fragrance',
-      date: new Date().toISOString().split('T')[0],
-      comment: review.comment,
-      verifiedPurchase: true,
-      status: 'approved'
-    };
-
-    const currentReviews = products[index].reviews || [];
-    const updatedReviews = [newReview, ...currentReviews];
-    const totalRating = updatedReviews.reduce((sum, r) => sum + r.rating, 0);
-    const avgRating = Number((totalRating / updatedReviews.length).toFixed(2));
-
-    products[index] = {
-      ...products[index],
-      reviews: updatedReviews,
-      reviewsCount: updatedReviews.length,
-      rating: avgRating
-    };
-
-    saveProducts(products);
-    return products[index];
+  async getRelatedProducts(currentId, limit = 4) {
+    await this.getAllProducts();
+    return this.getRelatedProductsSync(currentId, limit);
   },
 
-  // Admin methods
-  async createProduct(productData) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.createProduct(productData);
-      } catch (e) {
-        console.warn('Real API create product fallback:', e.message);
-      }
-    }
+  async addReview(productId, review) {
+    return await productApi.addReview(productId, review);
+  },
 
-    const products = loadProducts();
-    const newProduct = {
-      ...productData,
-      id: 'as-' + (productData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '-' + Date.now().toString().slice(-4),
-      slug: (productData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
-      rating: 5.0,
-      reviewsCount: 0,
-      reviews: [],
-      status: productData.status || 'ACTIVE'
-    };
-    products.unshift(newProduct);
-    saveProducts(products);
-    return newProduct;
+  // ==========================================
+  // Admin & Back-Office API Integration
+  // ==========================================
+  async createProduct(productData) {
+    const remote = await productApi.adminCreateProduct(productData);
+    const prods = loadProducts();
+    prods.unshift(remote);
+    saveProducts(prods);
+    return remote;
   },
 
   async updateProduct(id, productData) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.updateProduct(id, productData);
-      } catch (e) {
-        console.warn('Real API update product fallback:', e.message);
-      }
+    const remote = await productApi.adminUpdateProduct(id, productData);
+    const prods = loadProducts();
+    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
+    if (idx >= 0) {
+      prods[idx] = { ...prods[idx], ...remote };
     }
-
-    const products = loadProducts();
-    const index = products.findIndex(p => p.id === id || p.slug === id);
-    if (index === -1) throw new Error('Product not found');
-
-    products[index] = {
-      ...products[index],
-      ...productData
-    };
-    saveProducts(products);
-    return products[index];
+    saveProducts(prods);
+    return remote;
   },
 
   async deleteProduct(id) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.deleteProduct(id);
-      } catch (e) {
-        console.warn('Real API delete product fallback:', e.message);
-      }
-    }
-
-    let products = loadProducts();
-    products = products.filter(p => p.id !== id && p.slug !== id);
-    saveProducts(products);
+    await productApi.adminDeleteProduct(id);
+    let prods = loadProducts();
+    prods = prods.filter(p => String(p.id) !== String(id) && p.slug !== id);
+    saveProducts(prods);
     return true;
   },
 
   async updateStock(id, newStock) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await productApi.updateStock(id, newStock);
-      } catch (e) {
-        console.warn('Real API stock update fallback:', e.message);
-      }
+    const remote = await productApi.adminUpdateProduct(id, { stock: Math.max(0, newStock) });
+    const prods = loadProducts();
+    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
+    if (idx >= 0) {
+      prods[idx] = { ...prods[idx], ...remote };
     }
-
-    const products = loadProducts();
-    const index = products.findIndex(p => p.id === id || p.slug === id);
-    if (index === -1) throw new Error('Product not found');
-
-    products[index].stock = Math.max(0, newStock);
-    if (products[index].stock === 0) {
-      products[index].status = 'OUT_OF_STOCK';
-    } else if (products[index].status === 'OUT_OF_STOCK') {
-      products[index].status = 'ACTIVE';
-    }
-    saveProducts(products);
-    return products[index];
+    saveProducts(prods);
+    return remote;
   },
 
   async applyProductDiscount(id, discountPercent) {
-    const products = loadProducts();
-    const index = products.findIndex(p => p.id === id || p.slug === id);
-    if (index === -1) throw new Error('Product not found');
-
-    const item = products[index];
-    const basePrice = item.originalPrice && item.originalPrice > item.price ? item.originalPrice : item.price;
     const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    const discountedPrice = Math.round(basePrice * (1 - pct / 100));
-
-    products[index] = {
-      ...item,
-      originalPrice: basePrice,
-      price: discountedPrice,
+    const remote = await productApi.adminUpdateProduct(id, {
       discountPercent: pct,
       hasDiscount: true,
       isOffer: true
-    };
-    saveProducts(products);
-    return products[index];
+    });
+    const prods = loadProducts();
+    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
+    if (idx >= 0) {
+      prods[idx] = { ...prods[idx], ...remote };
+    }
+    saveProducts(prods);
+    return remote;
   },
 
   async removeProductDiscount(id) {
-    const products = loadProducts();
-    const index = products.findIndex(p => p.id === id || p.slug === id);
-    if (index === -1) throw new Error('Product not found');
-
-    const item = products[index];
-    const restoredPrice = item.originalPrice || item.price;
-
-    products[index] = {
-      ...item,
-      price: restoredPrice,
-      originalPrice: null,
+    const remote = await productApi.adminUpdateProduct(id, {
       discountPercent: 0,
       hasDiscount: false,
       isOffer: false
-    };
-    saveProducts(products);
-    return products[index];
+    });
+    const prods = loadProducts();
+    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
+    if (idx >= 0) {
+      prods[idx] = { ...prods[idx], ...remote };
+    }
+    saveProducts(prods);
+    return remote;
   },
 
   getDiscountedProductsSync() {
     const products = loadProducts();
     return products.filter(p => 
-      p.status === 'ACTIVE' && (
+      (!p.status || p.status === 'ACTIVE') && (
         p.hasDiscount || 
         (p.discountPercent && p.discountPercent > 0) || 
         (p.originalPrice && p.originalPrice > p.price) ||

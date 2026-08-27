@@ -12,20 +12,76 @@ export const productApi = {
    * GET /api/products
    */
   async getProducts(filters = {}) {
-    // Note: Availability and Size filters are explicitly forbidden by contract
-    const cleanFilters = { ...filters };
-    delete cleanFilters.availability;
-    delete cleanFilters.inStock;
-    delete cleanFilters.size;
+    const params = {};
 
-    const response = await apiClient.get(ENDPOINTS.PRODUCTS.LIST, { params: cleanFilters, requiresAuth: false });
+    // Map pagination (only positive integers)
+    const page = Number(filters.page || filters.Page);
+    if (!isNaN(page) && page > 0) params.Page = page;
+
+    const pageSize = Number(filters.pageSize || filters.PageSize);
+    if (!isNaN(pageSize) && pageSize > 0) params.PageSize = pageSize;
+
+    // Search query (only non-empty strings)
+    const search = (filters.search || filters.Search || '').toString().trim();
+    if (search) params.Search = search;
+
+    // Entity IDs (must be valid positive numbers)
+    const brandId = Number(filters.brandId || filters.BrandId);
+    if (!isNaN(brandId) && brandId > 0) params.BrandId = brandId;
+
+    const categoryId = Number(filters.categoryId || filters.CategoryId);
+    if (!isNaN(categoryId) && categoryId > 0) {
+      params.CategoryId = categoryId;
+    } else if (filters.category && typeof filters.category === 'string') {
+      const cat = filters.category.toLowerCase();
+      if (cat === 'perfumes') params.CategoryId = 1;
+      else if (cat === 'bundles' || cat === 'gift sets') params.CategoryId = 2;
+      else if (cat === 'cosmetics' || cat === 'body care') params.CategoryId = 3;
+    }
+
+    const subcategoryId = Number(filters.subcategoryId || filters.SubcategoryId);
+    if (!isNaN(subcategoryId) && subcategoryId > 0) params.SubcategoryId = subcategoryId;
+
+    const perfumeCategoryId = Number(filters.perfumeCategoryId || filters.PerfumeCategoryId);
+    if (!isNaN(perfumeCategoryId) && perfumeCategoryId > 0) params.PerfumeCategoryId = perfumeCategoryId;
+
+    // Gender enum: STRICTLY 'Male' | 'Female' | 'Unisex'. Never send 'all'!
+    const rawGender = (filters.gender || filters.Gender || '').toString().toLowerCase().trim();
+    if (rawGender === 'men' || rawGender === 'male') params.Gender = 'Male';
+    else if (rawGender === 'women' || rawGender === 'female') params.Gender = 'Female';
+    else if (rawGender === 'unisex') params.Gender = 'Unisex';
+
+    // Price range (must be numbers > 0)
+    const minPrice = Number(filters.minPrice ?? filters.MinPrice);
+    if (!isNaN(minPrice) && minPrice > 0) params.MinPrice = minPrice;
+
+    const maxPrice = Number(filters.maxPrice ?? filters.MaxPrice);
+    if (!isNaN(maxPrice) && maxPrice > 0) params.MaxPrice = maxPrice;
+
+    // Sorting: Backend API ONLY supports 'price' and 'rating'! Do NOT send 'featured' or other invalid values!
+    const rawSort = (filters.sortBy || filters.SortBy || '').toString().toLowerCase();
+    if (rawSort.includes('price')) {
+      params.SortBy = 'price';
+      params.SortDirection = rawSort === 'price-high' || rawSort === 'desc' ? 'desc' : 'asc';
+    } else if (rawSort.includes('rating')) {
+      params.SortBy = 'rating';
+      params.SortDirection = 'desc';
+    }
+
+    // Language
+    const lang = (filters.language || filters.Language || '').toString().trim();
+    if (lang) params.Language = lang;
+
+    const response = await apiClient.get(ENDPOINTS.PRODUCTS.LIST, { params, requiresAuth: false });
     const rawList = Array.isArray(response) ? response : (response?.items || response?.products || response?.data || []);
     return {
       items: rawList.map(normalizeProduct),
       page: response?.page || 1,
       pageSize: response?.pageSize || 20,
       totalCount: response?.totalCount || rawList.length,
-      totalPages: response?.totalPages || 1
+      totalPages: response?.totalPages || 1,
+      hasPreviousPage: Boolean(response?.hasPreviousPage),
+      hasNextPage: Boolean(response?.hasNextPage)
     };
   },
 
@@ -99,14 +155,54 @@ export const productApi = {
    * GET /api/admin/products
    */
   async adminGetProducts(filters = {}) {
-    const response = await apiClient.get(ENDPOINTS.ADMIN.PRODUCTS.LIST, { params: filters });
+    const params = {};
+    const page = Number(filters.page || filters.Page);
+    if (!isNaN(page) && page > 0) params.Page = page;
+
+    const pageSize = Number(filters.pageSize || filters.PageSize);
+    if (!isNaN(pageSize) && pageSize > 0) params.PageSize = pageSize;
+
+    const search = (filters.search || filters.Search || '').toString().trim();
+    if (search) params.Search = search;
+
+    const brandId = Number(filters.brandId || filters.BrandId);
+    if (!isNaN(brandId) && brandId > 0) params.BrandId = brandId;
+
+    const categoryId = Number(filters.categoryId || filters.CategoryId);
+    if (!isNaN(categoryId) && categoryId > 0) params.CategoryId = categoryId;
+
+    const subcategoryId = Number(filters.subcategoryId || filters.SubcategoryId);
+    if (!isNaN(subcategoryId) && subcategoryId > 0) params.SubcategoryId = subcategoryId;
+
+    const perfumeCategoryId = Number(filters.perfumeCategoryId || filters.PerfumeCategoryId);
+    if (!isNaN(perfumeCategoryId) && perfumeCategoryId > 0) params.PerfumeCategoryId = perfumeCategoryId;
+
+    if (filters.isActive !== undefined && filters.isActive !== null && filters.isActive !== '') {
+      params.IsActive = Boolean(filters.isActive);
+    }
+
+    const rawSort = (filters.sortBy || filters.SortBy || '').toString().toLowerCase();
+    if (rawSort.includes('price')) {
+      params.SortBy = 'price';
+      params.SortDirection = rawSort === 'price-high' || rawSort === 'desc' ? 'desc' : 'asc';
+    } else if (rawSort.includes('rating')) {
+      params.SortBy = 'rating';
+      params.SortDirection = 'desc';
+    }
+
+    const lang = (filters.language || filters.Language || '').toString().trim();
+    if (lang) params.Language = lang;
+
+    const response = await apiClient.get(ENDPOINTS.ADMIN.PRODUCTS.LIST, { params });
     const rawList = response?.items || (Array.isArray(response) ? response : []);
     return {
       items: rawList.map(normalizeProduct),
       totalCount: response?.totalCount || rawList.length,
       page: response?.page || 1,
       pageSize: response?.pageSize || 20,
-      totalPages: response?.totalPages || 1
+      totalPages: response?.totalPages || 1,
+      hasPreviousPage: Boolean(response?.hasPreviousPage),
+      hasNextPage: Boolean(response?.hasNextPage)
     };
   },
 

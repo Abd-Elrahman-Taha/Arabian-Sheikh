@@ -65,8 +65,7 @@ export default function BakhoorSmoke({
         opacity={opacity}
         enableRotation={true}
         rotation={[0.012, 0.018, 0.038]}
-        enableTurbulence={true}
-        turbulenceStrength={[0.012, 0.016, 0.006]}
+        enableTurbulence={false}
         enableWind={true}
         windStrength={[0.010, 0.024, 0.006]}
         windDirection={[0.04, 1, 0.02]}

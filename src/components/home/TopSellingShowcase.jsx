@@ -145,7 +145,7 @@ export default function TopSellingShowcase({ products = [] }) {
         >
           {displayProducts.map((product, idx) => {
             const isSaved = isInWishlist(product.id);
-            const imageSrc = product.originalImage || product.images?.[0] || product.cutoutImage;
+            const imageSrc = product.image || product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';
 
             return (
               <div
