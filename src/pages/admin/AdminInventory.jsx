@@ -3,18 +3,17 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
 import { useToast } from '../../context/ToastContext';
 import {
-  Plus,
-  Minus,
-  AlertTriangle,
-  Save,
+  Check,
   RefreshCw,
   Search,
   Warehouse,
-  PackageCheck,
-  AlertCircle,
-  Coins,
+  CheckCircle2,
+  XCircle,
+  Eye,
+  EyeOff,
   Sparkles,
-  Check
+  Layers,
+  Loader2
 } from 'lucide-react';
 
 export default function AdminInventory() {
@@ -23,34 +22,20 @@ export default function AdminInventory() {
 
   const [products, setProducts] = useState([]);
   const [loadingInventory, setLoadingInventory] = useState(true);
-
-  const getInitialStockMap = (list) => {
-    const map = {};
-    list.forEach(p => {
-      map[p.id] = p.stock ?? 0;
-    });
-    return map;
-  };
-
-  const [stockMap, setStockMap] = useState({});
+  const [updatingId, setUpdatingId] = useState(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, LOW, OUT, OPTIMAL
+  const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, ACTIVE, INACTIVE
   const [familyFilter, setFamilyFilter] = useState('ALL');
-  const [savedSuccessId, setSavedSuccessId] = useState(null);
 
   const fetchInventory = async () => {
     setLoadingInventory(true);
     try {
-      // Fetch all products from API (no invalid params like includeDrafts)
       const list = await productService.getAllProducts({});
       const finalList = list.length > 0 ? list : productService.getAllProductsSync({ includeDrafts: true });
       setProducts(finalList);
-      setStockMap(getInitialStockMap(finalList));
     } catch (err) {
-      // Fallback to sync cache on error
       const list = productService.getAllProductsSync({ includeDrafts: true });
       setProducts(list);
-      setStockMap(getInitialStockMap(list));
     } finally {
       setLoadingInventory(false);
     }
@@ -60,50 +45,52 @@ export default function AdminInventory() {
     fetchInventory();
   }, []);
 
-  const handleStockChange = (productId, delta) => {
-    setStockMap(prev => ({
-      ...prev,
-      [productId]: Math.max(0, (prev[productId] || 0) + delta)
-    }));
-  };
+  // Toggle active/inactive status and connect directly with the API
+  const handleToggleActive = async (product) => {
+    const currentActive = product.isActive !== false && product.status !== 'INACTIVE';
+    const newActive = !currentActive;
+    setUpdatingId(product.id);
 
-  const handleQuickAdd = (productId, amount) => {
-    setStockMap(prev => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + amount
-    }));
-  };
-
-  const handleSaveStock = async (productId, name) => {
-    const newStock = stockMap[productId];
     try {
-      await productService.updateStock(productId, newStock);
-      setSavedSuccessId(productId);
-      setTimeout(() => setSavedSuccessId(null), 2000);
-      success(`Vault inventory for '${name}' updated to ${newStock} flacons.`);
-      fetchInventory();
+      await productService.toggleProductActive(product.id, newActive);
+      
+      // Update locally in state for instantaneous feedback
+      setProducts(prev => prev.map(p => {
+        if (p.id === product.id) {
+          return {
+            ...p,
+            isActive: newActive,
+            status: newActive ? 'ACTIVE' : 'INACTIVE'
+          };
+        }
+        return p;
+      }));
+
+      if (newActive) {
+        success(`'${product.name}' is now ACTIVE and available in store.`);
+      } else {
+        success(`'${product.name}' is now INACTIVE and hidden from store.`);
+      }
     } catch (err) {
-      error(err.message || 'Could not update stock.');
+      error(err.message || 'Failed to update product status.');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   // Extract unique families for filter dropdown
   const fragranceFamilies = Array.from(
-    new Set(products.map(p => p.fragranceFamily).filter(Boolean))
+    new Set(products.map(p => p.fragranceFamily || p.scentFamily).filter(Boolean))
   );
 
-  // Compute Warehouse KPIs
-  const totalFlacons = products.reduce((acc, p) => acc + (stockMap[p.id] ?? p.stock ?? 0), 0);
-  const totalValuation = products.reduce((acc, p) => acc + ((stockMap[p.id] ?? p.stock ?? 0) * (p.price || 0)), 0);
-  const lowStockItems = products.filter(p => {
-    const s = stockMap[p.id] ?? p.stock ?? 0;
-    return s > 0 && s <= 10;
-  });
-  const outOfStockItems = products.filter(p => (stockMap[p.id] ?? p.stock ?? 0) === 0);
+  // Compute Warehouse KPIs based purely on Active / Inactive
+  const totalProducts = products.length;
+  const activeProducts = products.filter(p => p.isActive !== false && p.status !== 'INACTIVE').length;
+  const inactiveProducts = totalProducts - activeProducts;
 
   // Filter products for display
   const filteredProducts = products.filter(p => {
-    const curStock = stockMap[p.id] ?? p.stock ?? 0;
+    const isActive = p.isActive !== false && p.status !== 'INACTIVE';
     
     // Search match
     if (search) {
@@ -111,17 +98,17 @@ export default function AdminInventory() {
       const matchName = p.name?.toLowerCase().includes(q);
       const matchArabic = p.arabicName?.includes(q);
       const matchSku = `ARB-${String(p.id).slice(-6)}`.toLowerCase().includes(q);
-      const matchFamily = p.fragranceFamily?.toLowerCase().includes(q);
-      if (!matchName && !matchArabic && !matchSku && !matchFamily) return false;
+      const matchFamily = (p.fragranceFamily || p.scentFamily || '').toLowerCase().includes(q);
+      const matchCategory = (p.category || '').toLowerCase().includes(q);
+      if (!matchName && !matchArabic && !matchSku && !matchFamily && !matchCategory) return false;
     }
 
     // Status filter
-    if (statusFilter === 'LOW' && (curStock === 0 || curStock > 10)) return false;
-    if (statusFilter === 'OUT' && curStock > 0) return false;
-    if (statusFilter === 'OPTIMAL' && curStock <= 10) return false;
+    if (statusFilter === 'ACTIVE' && !isActive) return false;
+    if (statusFilter === 'INACTIVE' && isActive) return false;
 
     // Family filter
-    if (familyFilter !== 'ALL' && p.fragranceFamily !== familyFilter) return false;
+    if (familyFilter !== 'ALL' && (p.fragranceFamily || p.scentFamily) !== familyFilter) return false;
 
     return true;
   });
@@ -133,101 +120,76 @@ export default function AdminInventory() {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-3 py-0.5 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F2D675] font-mono text-[10px] uppercase font-bold tracking-widest">
-              Palace Vault Reserves
+              Palace Vault Catalog
             </span>
           </div>
           <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0] mt-1">
-            {t('admin.inventory')}
+            {t('admin.inventory') || 'Warehouse & Product Availability'}
           </h1>
           <p className="text-xs text-[#D8BE99] font-medium mt-0.5">
-            Central Royal Warehouse • Flacon Batches, Reserve Audits & Instant Stock Allocations
+            Manage active store status for all creations • Instantly synchronize availability with the live API
           </p>
         </div>
 
         <button
           onClick={fetchInventory}
-          className="group/btn relative px-5 py-2.5 rounded-full bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 text-xs font-cinzel font-bold text-[#F3E6D0] hover:text-[#F2D675] flex items-center gap-2 transition-all duration-300 shadow-md cursor-pointer self-start sm:self-auto"
+          disabled={loadingInventory}
+          className="group/btn relative px-5 py-2.5 rounded-full bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 text-xs font-cinzel font-bold text-[#F3E6D0] hover:text-[#F2D675] flex items-center gap-2 transition-all duration-300 shadow-md cursor-pointer self-start sm:self-auto disabled:opacity-50"
         >
-          <RefreshCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500 text-[#D4AF37]" />
-          <span>Synchronize Vault</span>
+          <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loadingInventory ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+          <span>Synchronize Catalog</span>
         </button>
       </div>
 
-      {/* Warehouse Live KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Total Flacons */}
+      {/* Warehouse Status KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {/* Total Catalog Items */}
         <div className="p-5 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 shadow-2xl backdrop-blur-md space-y-2 hover:border-[#D4AF37] transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase tracking-wider font-cinzel text-[#F2D675] font-bold">
-              Total Flacons in Vault
+              Total Formulations
             </span>
             <div className="w-8 h-8 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 flex items-center justify-center text-[#F2D675]">
               <Warehouse className="w-4 h-4" />
             </div>
           </div>
-          <p className="font-cinzel text-3xl font-bold text-[#F3E6D0]">{totalFlacons.toLocaleString()}</p>
+          <p className="font-cinzel text-3xl font-bold text-[#F3E6D0]">{totalProducts}</p>
+          <p className="text-[10px] text-[#D8BE99] font-mono font-bold flex items-center gap-1">
+            <Layers className="w-3 h-3 text-[#D4AF37]" />
+            <span>Across all Palace categories</span>
+          </p>
+        </div>
+
+        {/* Active in Store */}
+        <div className="p-5 rounded-2xl bg-[#0B0A08]/90 border border-emerald-500/30 shadow-2xl backdrop-blur-md space-y-2 hover:border-emerald-500/60 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] uppercase tracking-wider font-cinzel text-emerald-400 font-bold">
+              Active in Store
+            </span>
+            <div className="w-8 h-8 rounded-full border border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="font-cinzel text-3xl font-bold text-emerald-400">{activeProducts}</p>
           <p className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-            <PackageCheck className="w-3 h-3" />
-            <span>Active across {products.length} formulations</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Visible to customers for purchase</span>
           </p>
         </div>
 
-        {/* Vault Valuation */}
-        <div className="p-5 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 shadow-2xl backdrop-blur-md space-y-2 hover:border-[#D4AF37] transition-all">
+        {/* Inactive / Hidden */}
+        <div className="p-5 rounded-2xl bg-[#0B0A08]/90 border border-amber-500/30 shadow-2xl backdrop-blur-md space-y-2 hover:border-amber-500/60 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel text-[#F2D675] font-bold">
-              Inventory Valuation
+            <span className="text-[11px] uppercase tracking-wider font-cinzel text-amber-400 font-bold">
+              Inactive / Hidden
             </span>
-            <div className="w-8 h-8 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 flex items-center justify-center text-[#F2D675]">
-              <Coins className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-full border border-amber-500/40 bg-amber-500/10 flex items-center justify-center text-amber-400">
+              <XCircle className="w-4 h-4" />
             </div>
           </div>
-          <p className="font-cinzel text-3xl font-bold text-[#F3E6D0]">
-            €{totalValuation.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-          <p className="text-[10px] text-[#F2D675] font-mono font-bold flex items-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            <span>Retail Vault Liquidity</span>
-          </p>
-        </div>
-
-        {/* Low Stock Reserves */}
-        <div className="p-5 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 shadow-2xl backdrop-blur-md space-y-2 hover:border-[#D4AF37] transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel text-[#F2D675] font-bold">
-              Low Reserve Alerts
-            </span>
-            <div className={`w-8 h-8 rounded-full border flex items-center justify-center ${
-              lowStockItems.length > 0
-                ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
-                : 'border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#F2D675]'
-            }`}>
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="font-cinzel text-3xl font-bold text-[#F3E6D0]">{lowStockItems.length}</p>
-          <p className={`text-[10px] font-mono font-bold ${lowStockItems.length > 0 ? 'text-amber-400' : 'text-[#D8BE99]'}`}>
-            {lowStockItems.length > 0 ? '≤ 10 flacons remaining' : 'No critical thresholds'}
-          </p>
-        </div>
-
-        {/* Depleted Items */}
-        <div className="p-5 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 shadow-2xl backdrop-blur-md space-y-2 hover:border-[#D4AF37] transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-wider font-cinzel text-[#F2D675] font-bold">
-              Depleted Batches
-            </span>
-            <div className={`w-8 h-8 rounded-full border flex items-center justify-center ${
-              outOfStockItems.length > 0
-                ? 'border-rose-500/50 bg-rose-500/10 text-rose-400'
-                : 'border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#F2D675]'
-            }`}>
-              <AlertCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="font-cinzel text-3xl font-bold text-[#F3E6D0]">{outOfStockItems.length}</p>
-          <p className={`text-[10px] font-mono font-bold ${outOfStockItems.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-            {outOfStockItems.length > 0 ? 'Urgent distillation required' : 'All formulations in stock'}
+          <p className="font-cinzel text-3xl font-bold text-amber-400">{inactiveProducts}</p>
+          <p className="text-[10px] text-amber-400 font-mono font-bold flex items-center gap-1">
+            <span>Hidden from storefront catalog</span>
           </p>
         </div>
       </div>
@@ -239,7 +201,7 @@ export default function AdminInventory() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search flacon, SKU, Arabic title..."
+            placeholder="Search flacon name, SKU, Arabic title..."
             className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2.5 text-xs text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
           />
           <Search className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -249,89 +211,85 @@ export default function AdminInventory() {
           {/* Status Filter */}
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-[#D8BE99] font-cinzel font-bold hidden sm:inline">
-              Reserve:
+              Status:
             </span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3 py-2 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
             >
-              <option value="ALL">All Reserves ({products.length})</option>
-              <option value="LOW">Low Stock Only (≤10)</option>
-              <option value="OUT">Depleted (0)</option>
-              <option value="OPTIMAL">Optimal Reserves (&gt;10)</option>
+              <option value="ALL">All Statuses ({totalProducts})</option>
+              <option value="ACTIVE">Active Only ({activeProducts})</option>
+              <option value="INACTIVE">Inactive Only ({inactiveProducts})</option>
             </select>
           </div>
 
           {/* Fragrance Family Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-[#D8BE99] font-cinzel font-bold hidden sm:inline">
-              Family:
-            </span>
-            <select
-              value={familyFilter}
-              onChange={(e) => setFamilyFilter(e.target.value)}
-              className="bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3 py-2 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
-            >
-              <option value="ALL">All Olfactory Families</option>
-              {fragranceFamilies.map(fam => (
-                <option key={fam} value={fam}>{fam}</option>
-              ))}
-            </select>
-          </div>
+          {fragranceFamilies.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-[#D8BE99] font-cinzel font-bold hidden sm:inline">
+                Family:
+              </span>
+              <select
+                value={familyFilter}
+                onChange={(e) => setFamilyFilter(e.target.value)}
+                className="bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3 py-2 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
+              >
+                <option value="ALL">All Families</option>
+                {fragranceFamilies.map(fam => (
+                  <option key={fam} value={fam}>{fam}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Inventory Table in Obsidian Glass */}
+      {/* Warehouse Products Table */}
       <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/30 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-sans">
             <thead>
               <tr className="border-b border-[#D4AF37]/25 text-[#F2D675] uppercase font-cinzel font-bold">
-                <th className="py-4 px-4 sm:px-6">Flacon Formulation</th>
-                <th className="py-4 px-4">Vault SKU</th>
-                <th className="py-4 px-4">Reserve Health</th>
-                <th className="py-4 px-4">Price / Valuation</th>
-                <th className="py-4 px-4 text-center">Adjust Stock Quantity</th>
-                <th className="py-4 px-4 sm:px-6 text-right">Commit</th>
+                <th className="py-4 px-4 sm:px-6">Flacon Creation</th>
+                <th className="py-4 px-4">Catalog SKU</th>
+                <th className="py-4 px-4">Category / Tier</th>
+                <th className="py-4 px-4">Price</th>
+                <th className="py-4 px-4 text-center">Store Availability</th>
+                <th className="py-4 px-4 sm:px-6 text-right">Toggle Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#D4AF37]/15 text-[#F3E6D0]">
               {loadingInventory ? (
-                Array.from({ length: 5 }).map((_, i) => (
+                Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="py-4 px-4 sm:px-6"><div className="h-4 bg-white/10 rounded w-40" /></td>
+                    <td className="py-4 px-4 sm:px-6"><div className="h-4 bg-white/10 rounded w-44" /></td>
                     <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-24" /></td>
-                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-28" /></td>
-                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-20" /></td>
-                    <td className="py-4 px-4"><div className="h-8 bg-white/10 rounded w-32 mx-auto" /></td>
-                    <td className="py-4 px-4"><div className="h-8 bg-white/10 rounded w-20 ml-auto" /></td>
+                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-24" /></td>
+                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-16" /></td>
+                    <td className="py-4 px-4"><div className="h-6 bg-white/10 rounded-full w-24 mx-auto" /></td>
+                    <td className="py-4 px-4 sm:px-6"><div className="h-8 bg-white/10 rounded-full w-24 ml-auto" /></td>
                   </tr>
                 ))
               ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-[#D8BE99] font-medium">
-                    No flacon formulations match the selected vault filters.
+                    No creations match the selected warehouse filters.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => {
-                  const currentVal = stockMap[p.id] ?? p.stock ?? 0;
-                  const isLow = currentVal > 0 && currentVal <= 10;
-                  const isOut = currentVal === 0;
-                  const isSaved = savedSuccessId === p.id;
-                  const itemValuation = currentVal * (p.price || 0);
-                  const maxCap = 100;
-                  const percentage = Math.min(100, Math.round((currentVal / maxCap) * 100));
+                  const isActive = p.isActive !== false && p.status !== 'INACTIVE';
+                  const isUpdating = updatingId === p.id;
 
                   return (
                     <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                      {/* Product Image and Details */}
+                      {/* Image and Name */}
                       <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center gap-3.5">
                           <div className="relative w-12 h-14 rounded-xl border border-[#D4AF37]/40 overflow-hidden bg-black/60 shrink-0 shadow-md">
                             <img
-                              src={p.images?.[0]}
+                              src={p.images?.[0] || p.cutoutImage}
                               alt={p.name}
                               className="w-full h-full object-cover"
                             />
@@ -349,7 +307,7 @@ export default function AdminInventory() {
                               {p.arabicName}
                             </span>
                             <span className="text-[10px] text-[#F2D675] font-mono font-medium">
-                              {p.fragranceFamily} • {p.volume || '60ml'}
+                              {p.fragranceFamily || p.scentFamily || 'Palace Reserve'}
                             </span>
                           </div>
                         </div>
@@ -361,130 +319,68 @@ export default function AdminInventory() {
                           ARB-VAULT-{String(p.id).slice(-5).toUpperCase()}
                         </span>
                         <span className="text-[10px] text-[#D8BE99] font-mono">
-                          Batch #{new Date().getFullYear()}-0{String(p.id).charCodeAt(0) % 9 + 1}
+                          Ref #{p.slug || String(p.id)}
                         </span>
                       </td>
 
-                      {/* Stock Status & Visual Health Bar */}
-                      <td className="py-4 px-4 min-w-[170px]">
-                        <div className="space-y-1.5">
-                          <div>
-                            {isOut ? (
-                              <span className="px-2.5 py-0.5 text-[10px] font-mono uppercase rounded-full bg-rose-950/80 text-rose-300 border border-rose-500/40 font-bold inline-flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
-                                <span>Depleted (0)</span>
-                              </span>
-                            ) : isLow ? (
-                              <span className="px-2.5 py-0.5 text-[10px] font-mono uppercase rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40 font-bold inline-flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                                <span>Low Reserve ({currentVal})</span>
-                              </span>
-                            ) : (
-                              <span className="px-2.5 py-0.5 text-[10px] font-mono uppercase rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-bold inline-flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span>Optimal ({currentVal})</span>
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Progress bar */}
-                          <div className="w-full bg-black/60 rounded-full h-1.5 overflow-hidden border border-white/5">
-                            <div
-                              className={`h-full rounded-full transition-all duration-300 ${
-                                isOut ? 'w-0' : isLow ? 'bg-amber-400' : 'bg-gradient-to-r from-[#8C6239] via-[#D4AF37] to-[#F2D675]'
-                              }`}
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Price & Valuation */}
+                      {/* Category & Tier */}
                       <td className="py-4 px-4">
-                        <span className="font-cinzel text-xs font-bold text-[#F3E6D0] block">
-                          €{p.price} / unit
+                        <span className="font-cinzel text-xs text-[#F3E6D0] font-bold uppercase tracking-wider block">
+                          {p.tier ? `${p.tier} Flacon` : (p.category || 'Perfumes')}
                         </span>
-                        <span className="text-[10px] text-[#D8BE99] font-mono font-medium block">
-                          Val: €{itemValuation.toLocaleString()}
+                        <span className="text-[10px] text-[#D8BE99] font-mono">
+                          {p.gender || 'Unisex'} • {p.volume || '60ml'}
                         </span>
                       </td>
 
-                      {/* Interactive Quantity Counter & Quick Add Chips */}
+                      {/* Price */}
                       <td className="py-4 px-4">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              onClick={() => handleStockChange(p.id, -1)}
-                              disabled={currentVal <= 0}
-                              className="w-8 h-8 rounded-lg bg-black/60 border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#21130D] text-[#D8BE99] hover:text-[#F2D675] flex items-center justify-center cursor-pointer transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Decrease 1 flacon"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </button>
-
-                            <input
-                              type="number"
-                              min="0"
-                              value={currentVal}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value, 10);
-                                setStockMap(prev => ({ ...prev, [p.id]: isNaN(val) ? 0 : Math.max(0, val) }));
-                              }}
-                              className="w-16 bg-black/80 border border-[#D4AF37]/40 rounded-lg text-center py-1.5 text-xs font-mono font-bold text-[#F2D675] focus:border-[#D4AF37] focus:outline-none shadow-inner"
-                            />
-
-                            <button
-                              onClick={() => handleStockChange(p.id, 1)}
-                              className="w-8 h-8 rounded-lg bg-black/60 border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#21130D] text-[#D8BE99] hover:text-[#F2D675] flex items-center justify-center cursor-pointer transition-all"
-                              title="Increase 1 flacon"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-
-                          {/* Quick Add Chips */}
-                          <div className="flex items-center gap-1 text-[9px] font-mono font-bold text-[#D8BE99]">
-                            <button
-                              onClick={() => handleQuickAdd(p.id, 10)}
-                              className="px-1.5 py-0.5 rounded bg-black/40 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/25 hover:text-[#F2D675] cursor-pointer transition-all"
-                            >
-                              +10
-                            </button>
-                            <button
-                              onClick={() => handleQuickAdd(p.id, 25)}
-                              className="px-1.5 py-0.5 rounded bg-black/40 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/25 hover:text-[#F2D675] cursor-pointer transition-all"
-                            >
-                              +25
-                            </button>
-                            <button
-                              onClick={() => handleQuickAdd(p.id, 50)}
-                              className="px-1.5 py-0.5 rounded bg-black/40 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/25 hover:text-[#F2D675] cursor-pointer transition-all"
-                            >
-                              +50
-                            </button>
-                          </div>
-                        </div>
+                        <span className="font-cinzel text-xs font-bold text-[#F3E6D0]">
+                          €{p.price}
+                        </span>
                       </td>
 
-                      {/* Commit Stock CTA */}
+                      {/* Status Badge */}
+                      <td className="py-4 px-4 text-center">
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-mono font-bold tracking-wide shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>ACTIVE</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold tracking-wide shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-amber-400" />
+                            <span>INACTIVE</span>
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action Toggle Button */}
                       <td className="py-4 px-4 sm:px-6 text-right">
                         <button
-                          onClick={() => handleSaveStock(p.id, p.name)}
-                          className={`group/btn relative px-4 py-2 rounded-full font-cinzel font-bold text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shadow-lg transition-all duration-300 overflow-hidden cursor-pointer ${
-                            isSaved
-                              ? 'bg-emerald-600 text-white border border-emerald-400'
-                              : 'bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50'
-                          }`}
+                          onClick={() => handleToggleActive(p)}
+                          disabled={isUpdating}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-cinzel uppercase font-bold tracking-wider transition-all duration-300 shadow-md cursor-pointer border ${
+                            isActive
+                              ? 'bg-emerald-900/30 hover:bg-rose-950/60 border-emerald-500/40 hover:border-rose-500/50 text-emerald-300 hover:text-rose-300'
+                              : 'bg-amber-900/30 hover:bg-emerald-950/60 border-amber-500/40 hover:border-emerald-500/50 text-amber-300 hover:text-emerald-300'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          title={isActive ? 'Click to make Inactive (hide from store)' : 'Click to make Active (display in store)'}
                         >
-                          {isSaved ? (
+                          {isUpdating ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-white" />
-                              <span>Committed</span>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D4AF37]" />
+                              <span>Updating...</span>
+                            </>
+                          ) : isActive ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Active</span>
                             </>
                           ) : (
                             <>
-                              <Save className="w-3.5 h-3.5 text-current" />
-                              <span>Commit</span>
+                              <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Inactive</span>
                             </>
                           )}
                         </button>

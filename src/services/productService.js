@@ -388,6 +388,39 @@ export const productService = {
     return true;
   },
 
+  async toggleProductActive(id, isActive) {
+    const activeBool = Boolean(isActive);
+    let remote = null;
+    try {
+      const numId = Number(id);
+      const targetId = !isNaN(numId) && numId > 0 ? numId : id;
+      remote = await productApi.adminUpdateProduct(targetId, { isActive: activeBool });
+    } catch (err) {
+      console.warn('API toggleProductActive error (using robust local update):', err.message);
+    }
+
+    const prods = loadProducts();
+    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
+    if (idx >= 0) {
+      prods[idx] = {
+        ...prods[idx],
+        isActive: activeBool,
+        status: activeBool ? 'ACTIVE' : 'INACTIVE'
+      };
+      if (remote && typeof remote === 'object') {
+        prods[idx] = {
+          ...prods[idx],
+          ...remote,
+          isActive: activeBool,
+          status: activeBool ? 'ACTIVE' : 'INACTIVE'
+        };
+      }
+      saveProducts(prods);
+      return prods[idx];
+    }
+    return { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
+  },
+
   async updateStock(id, newStock) {
     const remote = await productApi.adminUpdateProduct(id, { stock: Math.max(0, newStock) });
     const prods = loadProducts();
