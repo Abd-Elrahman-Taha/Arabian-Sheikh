@@ -11,9 +11,7 @@ export default function AccountWishlist() {
   const { wishlist, wishlistIds, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
 
-  // Use wishlistIds.length for the empty check so we don't flash "empty"
-  // while the product objects are still being resolved from the API
-  if (wishlistIds.length === 0) {
+  if (wishlist.length === 0) {
     return (
       <div className="text-center py-16 space-y-4 text-[#F3E6D0]">
         <div className="w-16 h-16 rounded-full border border-[#3A2116] flex items-center justify-center mx-auto text-[#D4AF37] bg-[#21130D]">
@@ -34,7 +32,7 @@ export default function AccountWishlist() {
     <div className="space-y-6 text-[#F3E6D0]">
       <div className="border-b border-[#3A2116]/40 pb-5">
         <h2 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
-          Vault Wishlist ({wishlistIds.length})
+          Vault Wishlist ({wishlist.length})
         </h2>
         <p className="text-xs sm:text-sm text-[#D8BE99] mt-1">
           Curated creations saved for future acquisitions.

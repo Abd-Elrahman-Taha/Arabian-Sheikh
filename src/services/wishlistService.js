@@ -1,14 +1,19 @@
 const WISHLIST_STORAGE_KEY = 'arabian_sheikh_wishlist';
 
 function loadWishlist() {
-  const data = localStorage.getItem(WISHLIST_STORAGE_KEY);
+  const data = typeof window !== 'undefined' ? localStorage.getItem(WISHLIST_STORAGE_KEY) : null;
   if (!data) {
-    const initial = ['as-oud-royal-01', 'as-amber-malaki-02'];
-    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(initial));
-    return initial;
+    return [];
   }
   try {
-    return JSON.parse(data);
+    const list = JSON.parse(data);
+    if (!Array.isArray(list)) return [];
+    // Remove legacy fake mock IDs if present
+    const cleaned = list.filter(id => id !== 'as-oud-royal-01' && id !== 'as-amber-malaki-02');
+    if (cleaned.length !== list.length && typeof window !== 'undefined') {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [];
   }

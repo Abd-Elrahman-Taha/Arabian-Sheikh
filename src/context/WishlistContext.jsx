@@ -85,7 +85,7 @@ export function WishlistProvider({ children }) {
       value={{
         wishlist: wishlistProducts,   // full product objects for the UI
         wishlistIds,                  // raw IDs for isInWishlist checks
-        wishlistCount: wishlistIds.length,
+        wishlistCount: wishlistProducts.length,
         toggleWishlist,
         removeFromWishlist,
         isInWishlist,
