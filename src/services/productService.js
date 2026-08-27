@@ -83,10 +83,44 @@ export const productService = {
 
     // Filter by category (perfumes, oils, bakhoor, cosmetics, bundles, offers)
     if (filters.category && filters.category !== 'all') {
-      if (filters.category.toLowerCase() === 'offers' || filters.category.toLowerCase() === 'discounts') {
+      const cat = filters.category.toLowerCase().trim();
+      if (cat === 'offers' || cat === 'discounts') {
         result = result.filter(p => p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
+      } else if (cat === 'perfumes' || cat === 'perfume' || cat === 'fragrance' || cat === 'fragrances') {
+        result = result.filter(p => {
+          const c = (p.category || p.categoryName || '').toLowerCase();
+          const tier = (p.tier || '').toLowerCase();
+          return c === 'perfumes' || c === 'perfume' || c.includes('perfume') ||
+                 tier === 'luxury' || tier === 'royal' || tier === 'classic' ||
+                 Boolean(p.perfumeCategoryName || p.perfumeCategoryId);
+        });
+      } else if (cat === 'oils' || cat === 'oil' || cat === 'attar') {
+        result = result.filter(p => {
+          const c = (p.category || p.categoryName || '').toLowerCase();
+          const n = (p.name || '').toLowerCase();
+          return c === 'oils' || c === 'oil' || c.includes('oil') || c.includes('attar') || n.includes('oil') || n.includes('attar') || n.includes('دهن');
+        });
+      } else if (cat === 'bakhoor' || cat === 'incense') {
+        result = result.filter(p => {
+          const c = (p.category || p.categoryName || '').toLowerCase();
+          const n = (p.name || '').toLowerCase();
+          return c === 'bakhoor' || c === 'incense' || c.includes('bakhoor') || c.includes('incense') || n.includes('bakhoor') || n.includes('incense') || n.includes('بخور');
+        });
+      } else if (cat === 'cosmetics' || cat === 'body care') {
+        result = result.filter(p => {
+          const c = (p.category || p.categoryName || '').toLowerCase();
+          return c === 'cosmetics' || c === 'cosmetic' || c.includes('cosmetic') || c.includes('body care');
+        });
+      } else if (cat === 'bundles' || cat === 'gift sets') {
+        result = result.filter(p => {
+          const c = (p.category || p.categoryName || '').toLowerCase();
+          return c === 'bundles' || c === 'bundle' || c.includes('bundle') || c.includes('gift');
+        });
       } else {
-        result = result.filter(p => p.category?.toLowerCase() === filters.category.toLowerCase());
+        result = result.filter(p => {
+          const c = (p.category || p.categoryName || '').toLowerCase();
+          return c === cat || c.includes(cat);
+        });
       }
     }
 
@@ -183,10 +217,10 @@ export const productService = {
    */
   async getAllProducts(filters = {}) {
     try {
-      // Strip gender from the API call so we always receive all genders
-      // (including unisex). Gender filtering is applied locally below,
-      // where our applyFilters already includes unisex in men/women results.
-      const { gender, Gender, ...apiFilters } = filters;
+      // Strip gender and category from the remote API query so we fetch all items
+      // without backend 500 errors on CategoryId/Gender, and let client-side applyFilters
+      // handle robust filtering (including unisex in men/women and all perfume tiers).
+      const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
       const response = await productApi.getProducts(apiFilters);
       const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
       if (Array.isArray(items) && items.length > 0) {

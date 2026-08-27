@@ -54,6 +54,17 @@ export default function Shop() {
   }, [queryParams]);
 
   useEffect(() => {
+    if (mobileFilterOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileFilterOpen]);
+
+  useEffect(() => {
     async function fetchProducts() {
       setLoading(true);
       try {
@@ -373,26 +384,65 @@ export default function Shop() {
 
       {/* Mobile Filter Drawer */}
       {mobileFilterOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden bg-black/80 backdrop-blur-md flex justify-end">
-          <div className={`w-full max-w-xs h-full p-6 overflow-y-auto border-l flex flex-col justify-between ${
-            isDark ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-[#D4AF37]/40 text-[#120B06]'
+        <div className="fixed inset-0 z-[100] lg:hidden bg-black/85 backdrop-blur-lg flex justify-end animate-fade-in">
+          {/* Backdrop click to close */}
+          <div 
+            className="absolute inset-0 cursor-pointer" 
+            onClick={() => setMobileFilterOpen(false)} 
+            aria-hidden="true"
+          />
+
+          <div className={`relative z-10 w-full sm:max-w-md h-full flex flex-col justify-between shadow-2xl ${
+            isDark ? 'bg-[#0B0A08] border-l border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-l border-[#D4AF37]/40 text-[#120B06]'
           }`}>
-            <div>
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/10 dark:border-white/10">
-                <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#D4AF37]">Filters</h3>
-                <button onClick={() => setMobileFilterOpen(false)} className={`p-1 ${isDark ? 'text-white' : 'text-black'}`}>
-                  <X className="w-5 h-5" />
-                </button>
+            {/* Drawer Top Header (Shifted down comfortably away from navbar collapse button) */}
+            <div className={`px-6 pt-20 sm:pt-14 pb-4 border-b flex items-center justify-between ${
+              isDark ? 'border-[#D4AF37]/20 bg-[#0B0A08]' : 'border-[#D4AF37]/30 bg-[#FAF7F2]'
+            }`}>
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#D4AF37]" />
+                <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#D4AF37]">
+                  {isRtl ? 'تصفية المنتجات' : 'Filter Masterpieces'}
+                </h3>
               </div>
+              <button 
+                onClick={() => setMobileFilterOpen(false)} 
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors cursor-pointer shadow-sm ${
+                  isDark 
+                    ? 'border-[#D4AF37]/50 text-[#D4AF37] bg-white/5 hover:bg-[#D4AF37]/20' 
+                    : 'border-[#8C6239]/50 text-[#8C6239] bg-black/5 hover:bg-[#8C6239]/10'
+                }`}
+                aria-label="Close filters"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Filters Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 overscroll-contain">
               {filterSidebar}
             </div>
 
-            <div className="pt-6 border-t border-black/10 dark:border-white/10">
+            {/* Sticky Action Footer */}
+            <div className={`p-5 border-t flex items-center gap-3 ${
+              isDark ? 'border-[#D4AF37]/20 bg-[#0B0A08]/95' : 'border-[#D4AF37]/30 bg-[#FAF7F2]/95'
+            }`}>
+              {hasActiveFilters && (
+                <button
+                  onClick={resetFilters}
+                  className={`px-4 py-3 border rounded-full text-xs font-cinzel uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-1.5 ${
+                    isDark ? 'border-white/20 text-[#F3E6D0] hover:border-[#D4AF37]' : 'border-black/20 text-[#120B06] hover:border-[#8C6239]'
+                  }`}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset</span>
+                </button>
+              )}
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="w-full py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675]"
+                className="flex-1 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-all shadow-md active:scale-95 text-center"
               >
-                Apply Filters ({products.length} Items)
+                Show Results ({products.length})
               </button>
             </div>
           </div>
