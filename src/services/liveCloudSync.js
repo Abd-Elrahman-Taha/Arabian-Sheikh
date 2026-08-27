@@ -5,6 +5,7 @@
  * and deletions across all accounts, devices, and sessions globally in real time.
  */
 
+const NTFY_ENDPOINT = 'https://ntfy.sh/arabian_sheikh_sync_hub_2026';
 const CLOUD_OBJECT_ID = 'ff8081819ff5b11001a04379654336f1';
 const CLOUD_ENDPOINT = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
 const LOCAL_STORAGE_KEY = 'arabian_sheikh_live_cloud_state_v1';
@@ -74,22 +75,21 @@ async function pushToCloud() {
       }
     };
 
-    const res = await fetch(CLOUD_ENDPOINT, {
+    // 1. Instant cross-device broadcast via public ntfy hub (unlimited, no auth)
+    fetch(NTFY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+
+    // 2. Secondary backup to restful-api.dev
+    fetch(CLOUD_ENDPOINT, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      // If object doesn't exist yet, try creating it with PATCH or POST
-      await fetch(`https://api.restful-api.dev/objects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
-    }
+    }).catch(() => {});
   } catch (err) {
-    console.warn('Cloud sync push error (using local persistence):', err.message);
+    console.warn('Cloud sync push error:', err.message);
   } finally {
     isPushing = false;
     if (pendingPush) {
@@ -99,73 +99,93 @@ async function pushToCloud() {
   }
 }
 
-// Pull latest state from the live cloud backend and merge
+// Helper to merge remote state data
+function mergeRemoteData(remoteData) {
+  if (!remoteData || typeof remoteData !== 'object') return;
+
+  const inactiveSet = new Set([
+    ...(remoteData.inactiveProductIds || []),
+    ...state.inactiveProductIds
+  ]);
+
+  const activeSet = new Set([
+    ...(remoteData.activeProductIds || []),
+    ...state.activeProductIds
+  ]);
+
+  const deletedSet = new Set([
+    ...(remoteData.deletedProductIds || []),
+    ...state.deletedProductIds
+  ]);
+
+  const orderMap = new Map();
+  (remoteData.orders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+  state.orders.forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+
+  const userMap = new Map();
+  (remoteData.users || []).forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
+  state.users.forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
+
+  const modified = {
+    ...(remoteData.modifiedProducts || {}),
+    ...state.modifiedProducts
+  };
+
+  const newProdMap = new Map();
+  (remoteData.newProducts || []).forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
+  state.newProducts.forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
+
+  state = {
+    orders: Array.from(orderMap.values()),
+    users: Array.from(userMap.values()),
+    inactiveProductIds: Array.from(inactiveSet),
+    activeProductIds: Array.from(activeSet),
+    deletedProductIds: Array.from(deletedSet),
+    modifiedProducts: modified,
+    newProducts: Array.from(newProdMap.values())
+  };
+
+  saveLocalState();
+}
+
+// Pull latest state from live cloud and merge across devices
 async function pullFromCloud() {
   if (typeof window === 'undefined') return state;
   try {
+    // 1. Pull from ntfy hub
+    const ntfyRes = await fetch(`${NTFY_ENDPOINT}/json?poll=1`).catch(() => null);
+    if (ntfyRes && ntfyRes.ok) {
+      const text = await ntfyRes.text();
+      const lines = text.trim().split('\n');
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i];
+        if (!line) continue;
+        try {
+          const item = JSON.parse(line);
+          if (item.message) {
+            const parsed = JSON.parse(item.message);
+            const remoteData = parsed?.data || parsed;
+            mergeRemoteData(remoteData);
+            break; // Merged latest broadcast
+          }
+        } catch {}
+      }
+    }
+
+    // 2. Fallback check to restful-api
     const res = await fetch(CLOUD_ENDPOINT, {
       method: 'GET',
       headers: { 'Accept': 'application/json' }
-    });
+    }).catch(() => null);
 
-    if (res.ok) {
+    if (res && res.ok) {
       const json = await res.json();
-      const remoteData = json?.data;
-      if (remoteData && typeof remoteData === 'object') {
-        // Merge orders (union by ID, remote + local)
-        const orderMap = new Map();
-        (remoteData.orders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-        state.orders.forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-        
-        // Merge inactive IDs
-        const inactiveSet = new Set([
-          ...(remoteData.inactiveProductIds || []),
-          ...state.inactiveProductIds
-        ]);
-
-        // Merge active IDs
-        const activeSet = new Set([
-          ...(remoteData.activeProductIds || []),
-          ...state.activeProductIds
-        ]);
-
-        // Merge deleted IDs
-        const deletedSet = new Set([
-          ...(remoteData.deletedProductIds || []),
-          ...state.deletedProductIds
-        ]);
-
-        // Merge modified products
-        const modified = {
-          ...(remoteData.modifiedProducts || {}),
-          ...state.modifiedProducts
-        };
-
-        // Merge new products
-        const newProdMap = new Map();
-        (remoteData.newProducts || []).forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
-        state.newProducts.forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
-
-        // Merge users (union by lowercase email, remote + local)
-        const userMap = new Map();
-        (remoteData.users || []).forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
-        state.users.forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
-
-        state = {
-          orders: Array.from(orderMap.values()),
-          users: Array.from(userMap.values()),
-          inactiveProductIds: Array.from(inactiveSet),
-          activeProductIds: Array.from(activeSet),
-          deletedProductIds: Array.from(deletedSet),
-          modifiedProducts: modified,
-          newProducts: Array.from(newProdMap.values())
-        };
-
-        saveLocalState();
+      if (json?.data) {
+        mergeRemoteData(json.data);
       }
     }
   } catch (err) {
-    console.warn('Cloud sync pull error (using local cache):', err.message);
+    console.warn('Cloud sync pull error:', err.message);
   }
   return state;
 }

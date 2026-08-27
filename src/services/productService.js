@@ -214,6 +214,8 @@ export const productService = {
    * Zero hardcoded/local products are returned.
    */
   async getAllProducts(filters = {}) {
+    await liveCloudSync.sync().catch(() => {});
+
     try {
       const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
       
@@ -227,14 +229,16 @@ export const productService = {
       const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
       if (Array.isArray(items) && items.length > 0) {
         saveProducts(items);
-        return this.applyFilters(items, filters);
+        const transformed = liveCloudSync.applyToProducts(items);
+        return this.applyFilters(transformed, filters);
       }
     } catch (err) {
       console.warn('API getProducts error:', err.message);
     }
 
     const cached = loadProducts();
-    return this.applyFilters(cached || [], filters);
+    const transformed = liveCloudSync.applyToProducts(cached || []);
+    return this.applyFilters(transformed, filters);
   },
 
   getProductByIdSync(idOrSlug) {
@@ -416,7 +420,13 @@ export const productService = {
     const prods = loadProducts();
     const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
 
-    // 1. Determine numeric server database ID
+    // 1. Immediately broadcast to cross-device cloud sync hub so ALL devices update
+    await liveCloudSync.setProductActive(id, activeBool);
+    if (product && product.slug) {
+      await liveCloudSync.setProductActive(product.slug, activeBool);
+    }
+
+    // 2. Determine numeric server database ID if available
     let targetId = Number(id);
     if (isNaN(targetId) || targetId <= 0) {
       if (product && product.numericId && Number(product.numericId) > 0) {
@@ -426,43 +436,39 @@ export const productService = {
       }
     }
 
-    if (isNaN(targetId) || targetId <= 0) {
-      throw new Error(`Product "${product?.name || id}" does not have an active database integer ID on the server. Please create/sync it via Admin Products first.`);
-    }
+    // 3. If product has database ID, send to ASP.NET server
+    if (!isNaN(targetId) && targetId > 0) {
+      const updatePayload = {
+        name: product?.name || 'Exclusive Creation',
+        description: product?.description || product?.tagline || 'Haute Parfumerie Fragrance',
+        brandId: Number(product?.brandId) || 1,
+        categoryId: Number(product?.categoryId) || 1,
+        subcategoryId: product?.subcategoryId ? Number(product.subcategoryId) : null,
+        perfumeCategoryId: product?.perfumeCategoryId ? Number(product.perfumeCategoryId) : null,
+        price: product?.price !== undefined ? Number(product.price) : 55,
+        gender: product?.gender || 'Unisex',
+        isActive: activeBool
+      };
 
-    // 2. Build complete DTO matching ASP.NET UpdateProductDto
-    const updatePayload = {
-      name: product?.name || 'Exclusive Creation',
-      description: product?.description || product?.tagline || 'Haute Parfumerie Fragrance',
-      brandId: Number(product?.brandId) || 1,
-      categoryId: Number(product?.categoryId) || 1,
-      subcategoryId: product?.subcategoryId ? Number(product.subcategoryId) : null,
-      perfumeCategoryId: product?.perfumeCategoryId ? Number(product.perfumeCategoryId) : null,
-      price: product?.price !== undefined ? Number(product.price) : 55,
-      gender: product?.gender || 'Unisex',
-      isActive: activeBool
-    };
-
-    // 3. Send update to the backend server directly
-    let serverUpdated = null;
-    try {
-      serverUpdated = await productApi.adminUpdateProduct(targetId, updatePayload);
-    } catch (putErr) {
-      if (activeBool) {
-        serverUpdated = await productApi.adminActivateProduct(targetId);
-      } else {
-        serverUpdated = await productApi.adminDeactivateProduct(targetId);
+      try {
+        await productApi.adminUpdateProduct(targetId, updatePayload);
+      } catch (putErr) {
+        if (activeBool) {
+          await productApi.adminActivateProduct(targetId).catch(() => {});
+        } else {
+          await productApi.adminDeactivateProduct(targetId).catch(() => {});
+        }
       }
     }
 
-    // 4. Update in-memory state ONLY when the server confirms success
+    // 4. Update in-memory state
     if (product) {
       product.isActive = activeBool;
       product.status = activeBool ? 'ACTIVE' : 'INACTIVE';
       saveProducts(prods);
     }
 
-    return product || serverUpdated || { id: targetId, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
+    return product || { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
   },
 
   async updateStock(id, newStock) {
