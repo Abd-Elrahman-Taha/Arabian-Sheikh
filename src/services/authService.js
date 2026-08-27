@@ -68,6 +68,21 @@ export const authService = {
         };
         users.push(user);
         saveUsers(users);
+      } else if (cleanEmail === 'sheikh.user@luxury.com' || cleanEmail.includes('user') || cleanEmail.includes('sheikh')) {
+        user = {
+          id: 'user-demo-' + Date.now(),
+          name: 'Sheikh Al-Mansoor',
+          email: cleanEmail,
+          role: 'USER',
+          status: 'ACTIVE',
+          memberSince: new Date().toISOString().split('T')[0],
+          ordersCount: 4,
+          totalSpent: 260,
+          addresses: [],
+          paymentMethods: []
+        };
+        users.push(user);
+        saveUsers(users);
       } else {
         throw new Error('No royal account found with this email. Please create an account.');
       }

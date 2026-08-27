@@ -3405,6 +3405,18 @@ export const INITIAL_USERS = [
     "ordersCount": 8,
     "totalSpent": 620,
     "status": "ACTIVE"
+  },
+  {
+    "id": "user-demo-1",
+    "name": "Sheikh Al-Mansoor",
+    "email": "sheikh.user@luxury.com",
+    "role": "USER",
+    "vipTier": "PATRON",
+    "avatar": null,
+    "joinedDate": "2025-05-10",
+    "ordersCount": 4,
+    "totalSpent": 260,
+    "status": "ACTIVE"
   }
 ];
 

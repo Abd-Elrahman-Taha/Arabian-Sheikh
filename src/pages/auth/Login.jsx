@@ -23,12 +23,10 @@ export default function Login({ returnPath }) {
     try {
       const user = await login(email, password);
       success(`Welcome back to the Palace, ${user.name}.`);
-      if (user.role === 'ADMIN') {
-        navigate('/admin');
-      } else if (returnPath) {
+      if (returnPath && returnPath !== '/login' && returnPath !== '/account') {
         navigate(returnPath);
       } else {
-        navigate('/account');
+        navigate('/');
       }
     } catch (err) {
       error(err.message || 'Login credentials unverified.');

@@ -34,7 +34,7 @@ export default function Signup() {
     try {
       const newUser = await signup({ name, email, password });
       success(`Welcome to Arabian Sheikh, ${newUser.name}.`);
-      navigate('/account');
+      navigate('/');
     } catch (err) {
       error(err.message || 'Account registration failed.');
     } finally {
