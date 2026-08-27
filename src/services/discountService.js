@@ -42,7 +42,7 @@ export const discountService = {
   async getAllDiscounts() {
     const result = this.getAllDiscountsSync();
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       discountApi.getDiscounts().then(remote => {
         if (Array.isArray(remote) && remote.length > 0) {
           saveDiscounts(remote);

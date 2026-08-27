@@ -36,8 +36,8 @@ export default function Login({ returnPath }) {
   };
 
   const handleDemoAdmin = () => {
-    setEmail('admin@arabiansheikh.com');
-    setPassword('admin123');
+    setEmail('superadmin@perfumestore.com');
+    setPassword('SuperAdmin123*');
   };
 
   const handleDemoCustomer = () => {

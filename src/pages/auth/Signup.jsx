@@ -26,14 +26,24 @@ export default function Signup() {
     }
 
     if (password.length < 6) {
-      error('Password should contain at least 6 characters.');
+      error('Password must contain at least 6 characters.');
+      return;
+    }
+
+    // ASP.NET Identity rules: 1 uppercase, 1 digit, 1 special character
+    const hasUpper = /[A-Z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+    if (!hasUpper || !hasDigit || !hasSpecial) {
+      error('Password must include at least 1 uppercase letter, 1 number, and 1 symbol (e.g. Sheikh123*).');
       return;
     }
 
     setLoading(true);
     try {
       const newUser = await signup({ name, email, password });
-      success(`Welcome to Arabian Sheikh, ${newUser.name}.`);
+      success(`Welcome to Arabian Sheikh, ${newUser.name || 'Patron'}.`);
       navigate('/');
     } catch (err) {
       error(err.message || 'Account registration failed.');
@@ -108,6 +118,9 @@ export default function Signup() {
               />
               <Lock className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
+            <p className="text-[10px] text-[#D4AF37]/80 mt-1">
+              At least 6 characters with uppercase, number & symbol (e.g. Sheikh123*)
+            </p>
           </div>
 
           <div>

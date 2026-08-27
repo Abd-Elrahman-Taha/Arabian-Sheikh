@@ -105,7 +105,7 @@ export const orderService = {
    * Returns orders placed in this browser session, or matching email/userId, or all if Admin
    */
   async getCustomerOrders(user) {
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       try {
         const response = await orderApi.getMyOrders();
         const remoteItems = response?.items || (Array.isArray(response) ? response : []);
@@ -156,7 +156,7 @@ export const orderService = {
     await liveCloudSync.sync().catch(() => {});
     const cloudOrders = liveCloudSync.getOrders();
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       try {
         const response = await orderApi.adminGetOrders(filters);
         const remoteItems = response?.items || (Array.isArray(response) ? response : []);
@@ -205,7 +205,7 @@ export const orderService = {
     const local = this.getOrderByIdSync(id);
     if (local) return local;
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       try {
         const remote = await orderApi.getOrderById(id);
         if (remote) {

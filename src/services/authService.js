@@ -157,16 +157,22 @@ export const authService = {
   async signup({ name, email, password }) {
     const cleanEmail = email.toLowerCase().trim();
 
-    // 1. Try real API signup
+    // 1. Send registration directly to live ASP.NET backend database
     if (!apiClient.isMockEnabled()) {
       try {
         const user = await authApi.signup({ name, email: cleanEmail, password });
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-        // Immediately sync across all devices globally
-        await liveCloudSync.addUser({ ...user, name, password });
-        return user;
+        if (user && (user.id || user.email)) {
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+          const users = loadUsers();
+          if (!users.some(u => (u.email || '').toLowerCase().trim() === cleanEmail)) {
+            users.push({ ...user, name, email: cleanEmail });
+            saveUsers(users);
+          }
+          return user;
+        }
       } catch (e) {
-        console.warn('Real Auth API signup error, persisting to live cloud database:', e.message);
+        console.error('ASP.NET Registration error:', e.message);
+        throw new Error(e.message || 'Registration failed on the server. Please check your details.');
       }
     }
 

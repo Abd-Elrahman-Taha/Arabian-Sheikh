@@ -51,15 +51,15 @@ export const tokenManager = {
 // Configuration
 const DEFAULT_TIMEOUT = 15000;
 
-// Clean base URL: handles swagger URLs, trailing slashes, and missing /api paths
-const rawBase = (import.meta.env?.VITE_API_BASE_URL || '/api')
+// Clean base URL: points directly to live ASP.NET backend with proxy fallback
+const rawBase = (import.meta.env?.VITE_API_BASE_URL || 'https://arabian-sheikh.runasp.net/api')
   .trim()
   .replace(/\/swagger(\/index\.html)?\/?$/i, '')
   .replace(/\/+$/, '');
 
 const BASE_URL = rawBase.startsWith('http') && !rawBase.endsWith('/api')
   ? `${rawBase}/api`
-  : (rawBase || '/api');
+  : (rawBase || 'https://arabian-sheikh.runasp.net/api');
 
 export const IS_MOCK_ENABLED = import.meta.env?.VITE_USE_MOCK_API === 'true';
 

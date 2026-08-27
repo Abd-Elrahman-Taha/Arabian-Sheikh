@@ -64,7 +64,7 @@ export const userService = {
     }
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(updated));
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       wishlistApi.toggleWishlist(productId).catch(() => {});
     }
 
@@ -112,7 +112,7 @@ export const userService = {
     users[userIndex].addresses = [newAddr, ...(users[userIndex].addresses || [])];
     saveUsers(users);
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       userApi.addAddress(addressData).catch(() => {});
     }
 
@@ -201,7 +201,7 @@ export const userService = {
   async getAllUsers(filters = {}) {
     const result = this.getAllUsersSync(filters);
 
-    if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
+    if (!apiClient.isMockEnabled()) {
       userApi.getUsers(filters).then(remote => {
         if (Array.isArray(remote) && remote.length > 0) {
           saveUsers(remote);

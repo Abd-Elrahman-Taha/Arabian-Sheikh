@@ -52,16 +52,17 @@ export const authApi = {
    * Customer Registration
    * POST /api/auth/register
    */
-  async register({ firstName, lastName, email, password, phone, preferredLanguage = 'en' }) {
+  async register({ firstName, lastName, email, password, phone, preferredLanguage = 'En' }) {
+    const langCode = preferredLanguage ? (preferredLanguage.charAt(0).toUpperCase() + preferredLanguage.slice(1).toLowerCase()) : 'En';
     const response = await apiClient.post(
       ENDPOINTS.AUTH.REGISTER,
       {
-        firstName,
-        lastName,
+        firstName: firstName?.trim() || 'Royal',
+        lastName: lastName?.trim() || 'Patron',
         email: email.trim().toLowerCase(),
         password,
         phone: phone || null,
-        preferredLanguage
+        preferredLanguage: langCode
       },
       { requiresAuth: false }
     );
@@ -79,8 +80,8 @@ export const authApi = {
 
   // Alias for backward compatibility
   async signup(payload) {
-    const parts = (payload.name || '').split(' ');
-    const firstName = payload.firstName || parts[0] || 'Distinguished';
+    const parts = (payload.name || '').trim().split(/\s+/);
+    const firstName = payload.firstName || parts[0] || 'Royal';
     const lastName = payload.lastName || parts.slice(1).join(' ') || 'Patron';
     return this.register({
       firstName,
@@ -88,7 +89,7 @@ export const authApi = {
       email: payload.email,
       password: payload.password,
       phone: payload.phone,
-      preferredLanguage: payload.preferredLanguage || 'en'
+      preferredLanguage: payload.preferredLanguage || 'En'
     });
   },
 
