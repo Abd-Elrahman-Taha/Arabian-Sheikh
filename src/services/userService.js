@@ -199,17 +199,50 @@ export const userService = {
   },
 
   async getAllUsers(filters = {}) {
-    const result = this.getAllUsersSync(filters);
+    // 1. Pull latest patrons from live cloud sync
+    await liveCloudSync.sync().catch(() => {});
+    const cloudUsers = liveCloudSync.getUsers() || [];
 
+    // 2. Fetch from backend API if available
+    let remoteCustomers = [];
     if (!apiClient.isMockEnabled()) {
-      userApi.getUsers(filters).then(remote => {
-        if (Array.isArray(remote) && remote.length > 0) {
-          saveUsers(remote);
-        }
-      }).catch(() => {});
+      try {
+        const remote = await userApi.adminGetCustomers(filters);
+        remoteCustomers = remote?.items || (Array.isArray(remote) ? remote : []);
+      } catch (e) {
+        console.warn('Backend adminGetCustomers fallback:', e.message);
+      }
     }
 
-    return result;
+    // 3. Merge local + cloud + backend patrons
+    const current = loadUsers();
+    const userMap = new Map();
+    
+    // Seed with current local
+    (current || []).forEach(u => {
+      if (u?.email) userMap.set(u.email.toLowerCase().trim(), u);
+    });
+    
+    // Merge cloud sync
+    (cloudUsers || []).forEach(u => {
+      if (u?.email) {
+        const existing = userMap.get(u.email.toLowerCase().trim());
+        userMap.set(u.email.toLowerCase().trim(), { ...(existing || {}), ...u });
+      }
+    });
+
+    // Merge backend API
+    (remoteCustomers || []).forEach(u => {
+      if (u?.email) {
+        const existing = userMap.get(u.email.toLowerCase().trim());
+        userMap.set(u.email.toLowerCase().trim(), { ...(existing || {}), ...u });
+      }
+    });
+
+    const merged = Array.from(userMap.values());
+    saveUsers(merged);
+
+    return this.getAllUsersSync(filters);
   },
 
   async updateUserRole(userId, newRole) {

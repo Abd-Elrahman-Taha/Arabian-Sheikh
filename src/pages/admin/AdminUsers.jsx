@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { userService } from '../../services/userService';
 import { useToast } from '../../context/ToastContext';
-import { Search, Ban, Trash2, Check } from 'lucide-react';
+import { Search, Ban, Trash2, Check, RefreshCw } from 'lucide-react';
 
 export default function AdminUsers() {
   const { t } = useTranslation();
@@ -15,9 +15,16 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
 
-  const fetchUsers = () => {
-    const list = userService.getAllUsersSync({ search, role: roleFilter });
-    setUsers(list);
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const list = await userService.getAllUsers({ search, role: roleFilter });
+      setUsers(list);
+    } catch (err) {
+      setUsers(userService.getAllUsersSync({ search, role: roleFilter }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -66,6 +73,15 @@ export default function AdminUsers() {
             Manage palace patrons, VIP privilege tiers, and administrative credentials.
           </p>
         </div>
+
+        <button
+          onClick={fetchUsers}
+          disabled={loading}
+          className="px-4 py-2.5 rounded-full border border-[#D4AF37]/40 bg-black/60 hover:bg-[#21130D] text-xs font-cinzel font-bold text-[#F3E6D0] hover:text-[#F2D675] flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#D4AF37]' : ''}`} />
+          <span>{loading ? 'Syncing...' : 'Sync Patrons'}</span>
+        </button>
       </div>
 
       {/* Search & Filter */}

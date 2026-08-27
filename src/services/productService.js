@@ -420,16 +420,43 @@ export const productService = {
       await liveCloudSync.setProductActive(product.slug, activeBool);
     }
 
-    // 2. Also try backend API
+    // 2. Also try backend API with complete DTO
     try {
       const numId = Number(id);
-      const targetId = !isNaN(numId) && numId > 0 ? numId : id;
-      await productApi.adminUpdateProduct(targetId, { isActive: activeBool });
+      const targetId = !isNaN(numId) && numId > 0 ? numId : (product?.id || id);
+      const updatePayload = {
+        name: product?.name || 'Exclusive Creation',
+        description: product?.description || product?.tagline || 'Haute Parfumerie Fragrance',
+        brandId: Number(product?.brandId) || 1,
+        categoryId: Number(product?.categoryId) || 1,
+        subcategoryId: product?.subcategoryId ? Number(product.subcategoryId) : null,
+        perfumeCategoryId: product?.perfumeCategoryId ? Number(product.perfumeCategoryId) : null,
+        price: product?.price !== undefined ? Number(product.price) : 55,
+        gender: product?.gender || 'Unisex',
+        isActive: activeBool
+      };
+
+      try {
+        await productApi.adminUpdateProduct(targetId, updatePayload);
+      } catch (putErr) {
+        if (activeBool) {
+          await productApi.adminActivateProduct(targetId).catch(() => {});
+        } else {
+          await productApi.adminDeactivateProduct(targetId).catch(() => {});
+        }
+      }
     } catch (err) {
-      console.warn('Backend API update (persisted via cloud sync):', err.message);
+      console.warn('Backend API update:', err.message);
     }
 
-    // 3. Return updated product
+    // 3. Update local products list
+    if (product) {
+      product.isActive = activeBool;
+      product.status = activeBool ? 'ACTIVE' : 'INACTIVE';
+      saveProducts(prods);
+    }
+
+    // 4. Return updated product
     const all = loadProducts();
     return all.find(p => String(p.id) === String(id) || p.slug === id) || { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
   },
