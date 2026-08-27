@@ -6,9 +6,13 @@ import { CheckCircle2, Truck, ArrowRight, Sparkles } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function OrderConfirmation() {
-  const { queryParams } = useRouter();
+  const { queryParams, currentPath } = useRouter();
   const { t } = useTranslation();
-  const orderId = queryParams.get('orderId') || 'ORD-98421';
+  // Support both /order-confirmation/ORD-123 (path) and ?orderId=ORD-123 (query)
+  const orderId =
+    currentPath.split('/order-confirmation/')[1]?.split('?')[0] ||
+    queryParams.get('orderId') ||
+    'ORD-98421';
 
   const [order, setOrder] = useState(() => orderService.getOrderByIdSync(orderId));
   const [loading, setLoading] = useState(!order);

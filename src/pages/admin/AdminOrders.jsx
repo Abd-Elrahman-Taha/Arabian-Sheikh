@@ -15,8 +15,8 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
 
-  const fetchOrders = () => {
-    const list = orderService.getAllOrdersSync({
+  const fetchOrders = async () => {
+    const list = await orderService.getAdminOrders({
       search,
       status: statusFilter
     });
@@ -106,30 +106,34 @@ export default function AdminOrders() {
                         {order.id}
                       </span>
                       <span className="text-xs text-[#D8BE99] font-mono font-medium">
-                        {new Date(order.date).toLocaleDateString()}
+                        {order.date || order.createdAt ? new Date(order.date || order.createdAt).toLocaleDateString() : '—'}
                       </span>
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className="font-bold text-[#F3E6D0] block text-sm sm:text-base">{order.customerName}</span>
-                      <span className="text-xs sm:text-sm text-[#D8BE99] block font-medium">{order.shippingAddress?.city}, {order.shippingAddress?.country}</span>
-                      <span className="text-xs text-[#F2D675] font-mono font-semibold">{order.customerEmail}</span>
+                      <span className="font-bold text-[#F3E6D0] block text-sm sm:text-base">{order.customerName || 'Valued Patron'}</span>
+                      <span className="text-xs sm:text-sm text-[#D8BE99] block font-medium">
+                        {order.shippingAddress?.city || 'Dubai'}, {order.shippingAddress?.country || 'UAE'}
+                      </span>
+                      <span className="text-xs text-[#F2D675] font-mono font-semibold">{order.customerEmail || '—'}</span>
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className="font-mono text-sm text-[#F3E6D0] font-bold">{order.items?.length} item(s)</span>
+                      <span className="font-mono text-sm text-[#F3E6D0] font-bold">
+                        {Array.isArray(order.items) ? order.items.length : 0} item(s)
+                      </span>
                       <p className="text-xs text-[#D8BE99] line-clamp-1 max-w-xs font-medium">
-                        {order.items?.map(i => i.name).join(', ')}
+                        {Array.isArray(order.items) ? order.items.map(i => i.name || i.productName).join(', ') : 'Custom Flacons'}
                       </p>
                     </td>
 
                     <td className="py-4 px-4 font-mono font-bold text-[#F2D675] text-base">
-                      €{order.total}
+                      €{Number(order.total || 0).toFixed(2)}
                     </td>
 
                     <td className="py-4 px-4">
                       <span className="px-3 py-1 text-xs font-mono uppercase rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F2D675] font-bold">
-                        {order.status}
+                        {order.status || order.orderStatus || 'CONFIRMED'}
                       </span>
                     </td>
 

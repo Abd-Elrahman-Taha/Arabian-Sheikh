@@ -21,10 +21,9 @@ export default function AdminInventory() {
   const { t } = useTranslation();
   const { success, error } = useToast();
 
-  // Instant 0ms synchronous initialization
-  const initialProducts = productService.getAllProductsSync({ includeDrafts: true });
-  const [products, setProducts] = useState(initialProducts);
-  
+  const [products, setProducts] = useState([]);
+  const [loadingInventory, setLoadingInventory] = useState(true);
+
   const getInitialStockMap = (list) => {
     const map = {};
     list.forEach(p => {
@@ -33,16 +32,28 @@ export default function AdminInventory() {
     return map;
   };
 
-  const [stockMap, setStockMap] = useState(() => getInitialStockMap(initialProducts));
+  const [stockMap, setStockMap] = useState({});
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, LOW, OUT, OPTIMAL
   const [familyFilter, setFamilyFilter] = useState('ALL');
   const [savedSuccessId, setSavedSuccessId] = useState(null);
 
-  const fetchInventory = () => {
-    const list = productService.getAllProductsSync({ includeDrafts: true });
-    setProducts(list);
-    setStockMap(getInitialStockMap(list));
+  const fetchInventory = async () => {
+    setLoadingInventory(true);
+    try {
+      // Fetch all products from API (no invalid params like includeDrafts)
+      const list = await productService.getAllProducts({});
+      const finalList = list.length > 0 ? list : productService.getAllProductsSync({ includeDrafts: true });
+      setProducts(finalList);
+      setStockMap(getInitialStockMap(finalList));
+    } catch (err) {
+      // Fallback to sync cache on error
+      const list = productService.getAllProductsSync({ includeDrafts: true });
+      setProducts(list);
+      setStockMap(getInitialStockMap(list));
+    } finally {
+      setLoadingInventory(false);
+    }
   };
 
   useEffect(() => {
@@ -99,7 +110,7 @@ export default function AdminInventory() {
       const q = search.toLowerCase().trim();
       const matchName = p.name?.toLowerCase().includes(q);
       const matchArabic = p.arabicName?.includes(q);
-      const matchSku = `ARB-${p.id.slice(-6)}`.toLowerCase().includes(q);
+      const matchSku = `ARB-${String(p.id).slice(-6)}`.toLowerCase().includes(q);
       const matchFamily = p.fragranceFamily?.toLowerCase().includes(q);
       if (!matchName && !matchArabic && !matchSku && !matchFamily) return false;
     }
@@ -286,7 +297,18 @@ export default function AdminInventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#D4AF37]/15 text-[#F3E6D0]">
-              {filteredProducts.length === 0 ? (
+              {loadingInventory ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-4 px-4 sm:px-6"><div className="h-4 bg-white/10 rounded w-40" /></td>
+                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-24" /></td>
+                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-28" /></td>
+                    <td className="py-4 px-4"><div className="h-4 bg-white/10 rounded w-20" /></td>
+                    <td className="py-4 px-4"><div className="h-8 bg-white/10 rounded w-32 mx-auto" /></td>
+                    <td className="py-4 px-4"><div className="h-8 bg-white/10 rounded w-20 ml-auto" /></td>
+                  </tr>
+                ))
+              ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-[#D8BE99] font-medium">
                     No flacon formulations match the selected vault filters.
@@ -336,10 +358,10 @@ export default function AdminInventory() {
                       {/* SKU / Code */}
                       <td className="py-4 px-4">
                         <span className="font-mono text-xs text-[#F2D675] font-bold block">
-                          ARB-VAULT-{p.id.slice(-5).toUpperCase()}
+                          ARB-VAULT-{String(p.id).slice(-5).toUpperCase()}
                         </span>
                         <span className="text-[10px] text-[#D8BE99] font-mono">
-                          Batch #{new Date().getFullYear()}-0{p.id.charCodeAt(0) % 9 + 1}
+                          Batch #{new Date().getFullYear()}-0{String(p.id).charCodeAt(0) % 9 + 1}
                         </span>
                       </td>
 

@@ -8,10 +8,12 @@ import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 export default function AccountWishlist() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
-  const { wishlist, removeFromWishlist } = useWishlist();
+  const { wishlist, wishlistIds, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
 
-  if (wishlist.length === 0) {
+  // Use wishlistIds.length for the empty check so we don't flash "empty"
+  // while the product objects are still being resolved from the API
+  if (wishlistIds.length === 0) {
     return (
       <div className="text-center py-16 space-y-4 text-[#F3E6D0]">
         <div className="w-16 h-16 rounded-full border border-[#3A2116] flex items-center justify-center mx-auto text-[#D4AF37] bg-[#21130D]">
@@ -32,7 +34,7 @@ export default function AccountWishlist() {
     <div className="space-y-6 text-[#F3E6D0]">
       <div className="border-b border-[#3A2116]/40 pb-5">
         <h2 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
-          Vault Wishlist ({wishlist.length})
+          Vault Wishlist ({wishlistIds.length})
         </h2>
         <p className="text-xs sm:text-sm text-[#D8BE99] mt-1">
           Curated creations saved for future acquisitions.
@@ -49,7 +51,9 @@ export default function AccountWishlist() {
             />
             <div>
               <h4 className="font-cinzel font-bold text-sm sm:text-base text-[#F3E6D0] line-clamp-1">{item.name}</h4>
-              <p className="font-mono text-sm sm:text-base text-[#D4AF37] font-bold mt-0.5">€{item.price}</p>
+              <p className="font-mono text-sm sm:text-base text-[#D4AF37] font-bold mt-0.5">
+                {item.price != null ? `€${Number(item.price).toFixed(2)}` : '—'}
+              </p>
             </div>
             <div className="flex gap-2 pt-3 border-t border-[#3A2116]/40">
               <button

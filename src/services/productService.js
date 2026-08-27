@@ -196,7 +196,11 @@ export const productService = {
    */
   async getAllProducts(filters = {}) {
     try {
-      const response = await productApi.getProducts(filters);
+      // Strip gender from the API call so we always receive all genders
+      // (including unisex). Gender filtering is applied locally below,
+      // where our applyFilters already includes unisex in men/women results.
+      const { gender, Gender, ...apiFilters } = filters;
+      const response = await productApi.getProducts(apiFilters);
       const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
       if (Array.isArray(items) && items.length > 0) {
         saveProducts(items);

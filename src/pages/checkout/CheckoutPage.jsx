@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { paymentService } from '../../services/paymentService';
+import { productService } from '../../services/productService';
 import { useToast } from '../../context/ToastContext';
 import {
   ShieldCheck,
@@ -62,6 +63,18 @@ export default function CheckoutPage() {
     cvv: '888'
   });
 
+  // Sync with authenticated user whenever auth state changes/finishes loading
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: prev.fullName === 'Tariq Al-Hashemi' && user.name ? user.name : prev.fullName,
+        email: prev.email === 'tariq.alhashemi@example.com' && user.email ? user.email : prev.email,
+        cardholderName: prev.cardholderName === 'Tariq Al-Hashemi' && user.name ? user.name : prev.cardholderName
+      }));
+    }
+  }, [user]);
+
   if (items.length === 0) {
     return (
       <div className="pt-36 pb-24 text-center max-w-md mx-auto px-4 space-y-4 text-[#F3E6D0]">
@@ -96,11 +109,15 @@ export default function CheckoutPage() {
         cvv: formData.cvv
       });
 
-      // 2. Create official order record
+      // 2. Resolve final customer identification
+      const finalEmail = (user?.email || formData.email || '').trim();
+      const finalName = (formData.fullName || user?.name || 'Valued Patron').trim();
+
+      // 3. Create official order record
       const newOrder = await orderService.createOrder({
-        userId: user?.id || 'guest-' + Date.now(),
-        customerName: formData.fullName,
-        customerEmail: formData.email,
+        userId: user?.id || null,
+        customerEmail: finalEmail,
+        customerName: finalName,
         customerPhone: formData.phone,
         items,
         subtotal: totals.subtotal,
@@ -109,7 +126,7 @@ export default function CheckoutPage() {
         shipping: shippingCost,
         total: grandTotal,
         shippingAddress: {
-          fullName: formData.fullName,
+          fullName: finalName,
           address: formData.address,
           city: formData.city,
           country: formData.country,
@@ -120,6 +137,20 @@ export default function CheckoutPage() {
       });
 
       clearCart();
+
+      // Decrement stock for each ordered item (quantity × 1 per unit)
+      if (Array.isArray(items) && items.length > 0) {
+        items.forEach(item => {
+          const product = productService.getProductByIdSync(item.id || item.productId);
+          if (product) {
+            const currentStock = product.stock ?? 0;
+            const qty = item.quantity ?? 1;
+            const newStock = Math.max(0, currentStock - qty);
+            productService.updateStock(product.id, newStock).catch(() => {});
+          }
+        });
+      }
+
       success('Order placed successfully via Stripe test mode.');
       navigate(`/order-confirmation/${newOrder.id}`);
     } catch (err) {

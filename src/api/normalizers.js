@@ -182,10 +182,13 @@ export function normalizeCart(raw) {
 export function normalizeOrder(raw) {
   if (!raw) return null;
   const o = normalizeObjectKeys(raw);
+  const orderId = o.id || `ORD-${o.orderNumber || Date.now()}`;
+  const trackingNumber = o.trackingNumber || o.trackingCode || o.shipping?.trackingNumber || o.dhlTrackingNumber || '';
   return {
-    id: o.id || `ORD-${o.orderNumber || Date.now()}`,
-    orderNumber: o.orderNumber || (typeof o.id === 'string' && o.id.startsWith('ORD-') ? o.id : `ORD-${o.id || Date.now()}`),
+    id: orderId,
+    orderNumber: o.orderNumber || (typeof orderId === 'string' && orderId.startsWith('ORD-') ? orderId : `ORD-${orderId}`),
     createdAt: o.createdAt || o.date || new Date().toISOString(),
+    date: o.date || o.createdAt || new Date().toISOString(),
     deliveredAt: o.deliveredAt || null,
     subtotal: Number(o.subtotal || 0),
     discountTotal: Number(o.discountTotal || o.discount || 0),
@@ -193,13 +196,28 @@ export function normalizeOrder(raw) {
     total: Number(o.total || 0),
     currency: o.currency || 'EUR',
     orderStatus: o.orderStatus || o.status || 'Pending',
+    status: o.status || o.orderStatus || 'CONFIRMED',
     paymentStatus: o.paymentStatus || 'Paid',
-    items: Array.isArray(o.items) ? o.items.map(item => normalizeObjectKeys(item)) : [],
+    customerName: o.customerName || o.patronName || o.userName || o.shippingAddress?.fullName || 'Valued Patron',
+    customerEmail: o.customerEmail || o.email || o.userEmail || '',
+    customerPhone: o.customerPhone || o.phone || '',
+    userId: o.userId || o.customerId || null,
+    items: Array.isArray(o.items) ? o.items.map(item => {
+      const norm = normalizeObjectKeys(item);
+      return {
+        ...norm,
+        name: norm.name || norm.productName || 'Imperial Flacon',
+        quantity: Number(norm.quantity ?? norm.qty ?? 1),
+        price: Number(norm.price ?? norm.unitPriceSnapshot ?? 0)
+      };
+    }) : [],
     shipping: o.shipping || {
       shippingCompanyName: o.carrier || 'DHL Express',
-      trackingNumber: o.trackingNumber || o.trackingCode || '',
+      trackingNumber,
       trackingUrl: o.trackingUrl || ''
     },
+    trackingCode: trackingNumber,
+    dhlTrackingNumber: trackingNumber,
     returns: Array.isArray(o.returns) ? o.returns.map(r => normalizeObjectKeys(r)) : [],
     refunds: Array.isArray(o.refunds) ? o.refunds.map(r => normalizeObjectKeys(r)) : []
   };

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { wishlistService } from '../services/wishlistService';
+import { productService } from '../services/productService';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import { useCart } from './CartContext';
@@ -10,8 +11,40 @@ export function WishlistProvider({ children }) {
   const { isAuthenticated } = useAuth();
   const { success, info } = useToast();
   const { addToCart, openAuthModal } = useCart();
-  const [wishlist, setWishlist] = useState(() => wishlistService.getWishlist());
+
+  // wishlistIds — array of product IDs saved by the user
+  const [wishlistIds, setWishlistIds] = useState(() => wishlistService.getWishlist());
+  // wishlistProducts — full product objects resolved from IDs
+  const [wishlistProducts, setWishlistProducts] = useState([]);
   const [heartAnimatedId, setHeartAnimatedId] = useState(null);
+
+  // Whenever the saved IDs change, resolve them to full product objects
+  useEffect(() => {
+    if (wishlistIds.length === 0) {
+      setWishlistProducts([]);
+      return;
+    }
+
+    // Try to resolve from the local product cache first (sync, instant)
+    const allCached = productService.getAllProductsSync({});
+    const resolved = wishlistIds
+      .map(id => allCached.find(p => String(p.id) === String(id)))
+      .filter(Boolean);
+
+    if (resolved.length === wishlistIds.length) {
+      setWishlistProducts(resolved);
+    } else {
+      // Some products aren't in cache yet — fetch from API then resolve
+      productService.getAllProducts({}).then(all => {
+        const fromApi = wishlistIds
+          .map(id => all.find(p => String(p.id) === String(id)))
+          .filter(Boolean);
+        setWishlistProducts(fromApi);
+      }).catch(() => {
+        setWishlistProducts(resolved); // fall back to whatever we found in cache
+      });
+    }
+  }, [wishlistIds]);
 
   const toggleWishlist = (product) => {
     if (!isAuthenticated) {
@@ -19,11 +52,10 @@ export function WishlistProvider({ children }) {
       return;
     }
 
-    const isSaved = wishlist.includes(product.id);
+    const isSaved = wishlistIds.includes(product.id);
     const updated = wishlistService.toggleWishlist(product.id);
-    setWishlist(updated);
+    setWishlistIds(updated);
 
-    // Trigger animation for this specific product heart
     setHeartAnimatedId(product.id);
     setTimeout(() => setHeartAnimatedId(null), 500);
 
@@ -36,10 +68,10 @@ export function WishlistProvider({ children }) {
 
   const removeFromWishlist = (productId) => {
     const updated = wishlistService.removeFromWishlist(productId);
-    setWishlist(updated);
+    setWishlistIds(updated);
   };
 
-  const isInWishlist = (productId) => wishlist.includes(productId);
+  const isInWishlist = (productId) => wishlistIds.includes(productId);
 
   const moveToCart = (product, size = '100ml') => {
     const added = addToCart(product, size, 1);
@@ -51,8 +83,9 @@ export function WishlistProvider({ children }) {
   return (
     <WishlistContext.Provider
       value={{
-        wishlist,
-        wishlistCount: wishlist.length,
+        wishlist: wishlistProducts,   // full product objects for the UI
+        wishlistIds,                  // raw IDs for isInWishlist checks
+        wishlistCount: wishlistIds.length,
         toggleWishlist,
         removeFromWishlist,
         isInWishlist,
