@@ -48,9 +48,9 @@ export const adminService = {
     ];
 
     return {
-      totalRevenue: Math.round(totalRevenue + 157300), // baseline + dynamic orders
-      totalOrders: orders.length + 399,
-      totalCustomers: (users?.length || 0) + 184,
+      totalRevenue: Math.round(totalRevenue),
+      totalOrders: orders.length,
+      totalCustomers: (users?.length || 0),
       totalProducts: products.length,
       activeProductsCount: activeProducts.length,
       inactiveProductsCount: inactiveProducts.length,
@@ -93,9 +93,9 @@ export const adminService = {
       ];
 
       return {
-        totalRevenue: Math.round(totalRevenue + 157300),
-        totalOrders: orders.length + 399,
-        totalCustomers: (users?.length || 0) + 184,
+        totalRevenue: Math.round(totalRevenue),
+        totalOrders: orders.length,
+        totalCustomers: (users?.length || 0),
         totalProducts: products.length,
         lowStockCount: lowStockProducts.length,
         outOfStockCount: outOfStockProducts.length,

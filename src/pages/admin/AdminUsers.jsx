@@ -8,20 +8,19 @@ export default function AdminUsers() {
   const { t } = useTranslation();
   const { success, error } = useToast();
 
-  // Instant 0ms synchronous initialization
-  const initialUsers = userService.getAllUsersSync({ search: '', role: 'ALL' });
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const list = await userService.getAllUsers({ search, role: roleFilter });
-      setUsers(list);
+      setUsers(Array.isArray(list) ? list : []);
     } catch (err) {
-      setUsers(userService.getAllUsersSync({ search, role: roleFilter }));
+      console.warn('Could not fetch patrons from server:', err.message);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -126,10 +125,24 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#D4AF37]/15 text-[#F3E6D0]">
-              {users.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#D8BE99] font-medium">
-                    No patrons found.
+                  <td colSpan={7} className="py-12 text-center text-[#D8BE99] font-medium">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="w-5 h-5 animate-spin text-[#D4AF37]" />
+                      <span className="font-mono text-xs text-[#D8BE99]">Querying real patrons directly from backend server...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-[#D8BE99] font-medium">
+                    <div className="space-y-1">
+                      <p className="font-cinzel text-sm text-[#F3E6D0]">No registered patrons returned by the server.</p>
+                      <p className="font-mono text-xs text-[#D8BE99]/60">
+                        When customers register via POST /api/auth/register, they will appear here once the backend deploys GET /api/admin/customers.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (

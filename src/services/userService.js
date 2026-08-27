@@ -1,44 +1,16 @@
-import { INITIAL_USERS } from './mockData';
 import { userApi } from '../api/user.api';
 import { wishlistApi } from '../api/wishlist.api';
 import { apiClient } from '../api/client';
-import { liveCloudSync } from './liveCloudSync';
 
-const USERS_STORAGE_KEY = 'arabian_sheikh_users';
 const WISHLIST_STORAGE_KEY = 'arabian_sheikh_wishlist';
-let inMemoryUsers = null;
+let inMemoryUsers = [];
 
 function loadUsers() {
-  const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
-  let list = [];
-  if (data) {
-    try {
-      list = JSON.parse(data);
-    } catch {
-      list = [...INITIAL_USERS];
-    }
-  } else {
-    list = [...INITIAL_USERS];
-  }
-
-  // Merge cloud users
-  const cloudUsers = liveCloudSync.getUsers();
-  if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
-    const map = new Map();
-    list.forEach(u => { if (u?.email) map.set(u.email.toLowerCase().trim(), u); });
-    cloudUsers.forEach(u => { if (u?.email) map.set(u.email.toLowerCase().trim(), u); });
-    list = Array.from(map.values());
-  }
-
-  inMemoryUsers = list;
   return inMemoryUsers;
 }
 
 function saveUsers(users) {
-  inMemoryUsers = users;
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }
+  inMemoryUsers = Array.isArray(users) ? users : [];
 }
 
 export const userService = {
@@ -199,50 +171,29 @@ export const userService = {
   },
 
   async getAllUsers(filters = {}) {
-    // 1. Pull latest patrons from live cloud sync
-    await liveCloudSync.sync().catch(() => {});
-    const cloudUsers = liveCloudSync.getUsers() || [];
-
-    // 2. Fetch from backend API if available
+    // 1. Fetch from backend API directly
     let remoteCustomers = [];
     if (!apiClient.isMockEnabled()) {
       try {
         const remote = await userApi.adminGetCustomers(filters);
         remoteCustomers = remote?.items || (Array.isArray(remote) ? remote : []);
       } catch (e) {
-        console.warn('Backend adminGetCustomers fallback:', e.message);
+        console.warn('Backend adminGetCustomers API error:', e.message);
       }
     }
 
-    // 3. Merge local + cloud + backend patrons
-    const current = loadUsers();
-    const userMap = new Map();
-    
-    // Seed with current local
-    (current || []).forEach(u => {
-      if (u?.email) userMap.set(u.email.toLowerCase().trim(), u);
-    });
-    
-    // Merge cloud sync
-    (cloudUsers || []).forEach(u => {
-      if (u?.email) {
-        const existing = userMap.get(u.email.toLowerCase().trim());
-        userMap.set(u.email.toLowerCase().trim(), { ...(existing || {}), ...u });
-      }
-    });
+    // 2. Apply filters to real remote users
+    let result = Array.isArray(remoteCustomers) ? remoteCustomers : [];
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      result = result.filter(u => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
+    }
+    if (filters.role && filters.role !== 'ALL') {
+      result = result.filter(u => u.role === filters.role);
+    }
 
-    // Merge backend API
-    (remoteCustomers || []).forEach(u => {
-      if (u?.email) {
-        const existing = userMap.get(u.email.toLowerCase().trim());
-        userMap.set(u.email.toLowerCase().trim(), { ...(existing || {}), ...u });
-      }
-    });
-
-    const merged = Array.from(userMap.values());
-    saveUsers(merged);
-
-    return this.getAllUsersSync(filters);
+    saveUsers(result);
+    return result;
   },
 
   async updateUserRole(userId, newRole) {
