@@ -75,17 +75,9 @@ export default function Signup() {
       return;
     }
 
-    const fullPhone = phone.trim() ? `${countryCode} ${phone.trim()}` : '';
-
     setLoading(true);
     try {
-      const newUser = await signup({
-        name,
-        email,
-        password,
-        phone: fullPhone,
-        countryCode
-      });
+      const newUser = await signup({ name, email, password });
       success(`Welcome to Arabian Sheikh, ${newUser.name || 'Patron'}.`);
       navigate('/');
     } catch (err) {
@@ -144,45 +136,6 @@ export default function Signup() {
               />
               <Mail className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
-          </div>
-
-          {/* Phone Number & Country Code (Required for Shipping & Logistics) */}
-          <div>
-            <label className="block uppercase tracking-wider text-[#D8BE99] font-semibold mb-1">
-              Contact & Delivery Phone (Required for Shipping)
-            </label>
-            <div className="flex gap-2">
-              {/* Country Code Select */}
-              <div className="relative w-36 shrink-0">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 px-2 text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer text-xs font-medium"
-                >
-                  {COUNTRY_CODES.map((c) => (
-                    <option key={`${c.code}-${c.label}`} value={c.code} className="bg-[#120B06] text-[#F3E6D0]">
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Phone Input */}
-              <div className="relative flex-1">
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9\s-]/g, ''))}
-                  placeholder="50 123 4567"
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none text-xs"
-                />
-                <Phone className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              </div>
-            </div>
-            <p className="text-[10px] text-[#D4AF37]/80 mt-1 font-mono">
-              Used by shipping & DHL Express concierge to coordinate delivery dispatch.
-            </p>
           </div>
 
           <div>
