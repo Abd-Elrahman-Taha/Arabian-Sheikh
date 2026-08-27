@@ -134,20 +134,15 @@ export const orderService = {
 
     let mine = all.filter(o => {
       const orderEmail = (o.customerEmail || '').toLowerCase().trim();
-      const orderUserId = o.userId;
-      const isPlacedOnDevice = placedIds.includes(o.id);
+      const orderUserId = o.userId ? String(o.userId) : null;
+      const currentUserIdStr = userId ? String(userId) : null;
+      const isPlacedOnDevice = !user && placedIds.includes(o.id);
 
-      return (
-        isPlacedOnDevice ||
-        (userEmail && orderEmail === userEmail) ||
-        (userId && orderUserId && orderUserId === userId)
-      );
+      if (userEmail && orderEmail && orderEmail === userEmail) return true;
+      if (currentUserIdStr && orderUserId && orderUserId === currentUserIdStr) return true;
+      if (isPlacedOnDevice) return true;
+      return false;
     });
-
-    // If no orders match and the current user is an Admin, show all orders
-    if (mine.length === 0 && user?.role === 'ADMIN') {
-      mine = [...all];
-    }
 
     mine.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
     return mine;

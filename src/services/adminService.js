@@ -22,7 +22,9 @@ export const adminService = {
     const orders = orderService.getAllOrdersSync();
     const users = userService.getAllUsersSync();
 
-    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const activeProducts = products.filter(p => p.isActive !== false && p.status !== 'INACTIVE');
+    const inactiveProducts = products.filter(p => p.isActive === false || p.status === 'INACTIVE');
     const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= 10);
     const outOfStockProducts = products.filter(p => p.stock === 0 || p.status === 'OUT_OF_STOCK');
 
@@ -33,34 +35,79 @@ export const adminService = {
       { month: 'May', revenue: 22400, orders: 58 },
       { month: 'Jun', revenue: 28100, orders: 71 },
       { month: 'Jul', revenue: 34500, orders: 88 },
-      { month: 'Aug', revenue: totalRevenue + 39200, orders: orders.length + 95 }
+      { month: 'Aug', revenue: Math.round(totalRevenue + 39200), orders: orders.length + 95 }
     ];
 
     // Family distribution
     const familyDistribution = [
-      { name: 'Woody (Oud)', count: products.filter(p => p.fragranceFamily === 'Woody').length, percentage: 35 },
-      { name: 'Oriental / Amber', count: products.filter(p => (p.fragranceFamily || '').includes('Oriental')).length, percentage: 30 },
-      { name: 'Floral', count: products.filter(p => p.fragranceFamily === 'Floral').length, percentage: 15 },
-      { name: 'Fresh', count: products.filter(p => p.fragranceFamily === 'Fresh').length, percentage: 10 },
-      { name: 'Fruity', count: products.filter(p => p.fragranceFamily === 'Fruity').length, percentage: 10 }
+      { name: 'Woody (Oud)', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Woody').length, percentage: 35 },
+      { name: 'Oriental / Amber', count: products.filter(p => (p.fragranceFamily || p.scentFamily || '').includes('Oriental')).length, percentage: 30 },
+      { name: 'Floral', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Floral').length, percentage: 15 },
+      { name: 'Fresh', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Fresh').length, percentage: 10 },
+      { name: 'Fruity', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Fruity').length, percentage: 10 }
     ];
 
     return {
-      totalRevenue: totalRevenue + 157300, // baseline + dynamic orders
+      totalRevenue: Math.round(totalRevenue + 157300), // baseline + dynamic orders
       totalOrders: orders.length + 399,
-      totalCustomers: users.length + 184,
+      totalCustomers: (users?.length || 0) + 184,
       totalProducts: products.length,
-      lowStockCount: lowStockProducts.length,
+      activeProductsCount: activeProducts.length,
+      inactiveProductsCount: inactiveProducts.length,
+      lowStockCount: inactiveProducts.length,
       outOfStockCount: outOfStockProducts.length,
       lowStockProducts,
-      recentOrders: orders.slice(0, 5),
+      recentOrders: orders.slice(0, 10),
       monthlyRevenue,
       familyDistribution
     };
   },
 
   async getDashboardMetrics() {
-    return this.getDashboardMetricsSync();
+    try {
+      const [orders, products, users] = await Promise.all([
+        orderService.getAdminOrders(),
+        productService.getAllProducts({ includeDrafts: true }),
+        userService.getAllUsers().catch(() => userService.getAllUsersSync())
+      ]);
+
+      const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+      const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= 10);
+      const outOfStockProducts = products.filter(p => p.stock === 0 || p.status === 'OUT_OF_STOCK');
+
+      const monthlyRevenue = [
+        { month: 'Mar', revenue: 14200, orders: 38 },
+        { month: 'Apr', revenue: 18900, orders: 49 },
+        { month: 'May', revenue: 22400, orders: 58 },
+        { month: 'Jun', revenue: 28100, orders: 71 },
+        { month: 'Jul', revenue: 34500, orders: 88 },
+        { month: 'Aug', revenue: Math.round(totalRevenue + 39200), orders: orders.length + 95 }
+      ];
+
+      const familyDistribution = [
+        { name: 'Woody (Oud)', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Woody').length, percentage: 35 },
+        { name: 'Oriental / Amber', count: products.filter(p => (p.fragranceFamily || p.scentFamily || '').includes('Oriental')).length, percentage: 30 },
+        { name: 'Floral', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Floral').length, percentage: 15 },
+        { name: 'Fresh', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Fresh').length, percentage: 10 },
+        { name: 'Fruity', count: products.filter(p => (p.fragranceFamily || p.scentFamily) === 'Fruity').length, percentage: 10 }
+      ];
+
+      return {
+        totalRevenue: Math.round(totalRevenue + 157300),
+        totalOrders: orders.length + 399,
+        totalCustomers: (users?.length || 0) + 184,
+        totalProducts: products.length,
+        lowStockCount: lowStockProducts.length,
+        outOfStockCount: outOfStockProducts.length,
+        lowStockProducts,
+        recentOrders: orders.slice(0, 10),
+        monthlyRevenue,
+        familyDistribution
+      };
+    } catch (e) {
+      console.warn('getDashboardMetrics error, fallback to sync:', e.message);
+      return this.getDashboardMetricsSync();
+    }
   },
 
   getSettings() {

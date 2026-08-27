@@ -13,7 +13,8 @@ import {
   Package,
   AlertTriangle,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  RefreshCw
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -26,19 +27,28 @@ export default function AdminDashboard() {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [loading, setLoading] = useState(!initialMetrics);
 
-  useEffect(() => {
-    const data = adminService.getDashboardMetricsSync();
-    if (data) {
-      setMetrics(data);
+  const fetchMetrics = async () => {
+    setLoading(true);
+    try {
+      const data = await adminService.getDashboardMetrics();
+      if (data) {
+        setMetrics(data);
+      }
+    } catch (err) {
+      console.warn('Dashboard metrics fetch error:', err.message);
+    } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchMetrics();
   }, []);
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       await orderService.updateOrderStatus(orderId, newStatus);
-      const updated = adminService.getDashboardMetricsSync();
-      setMetrics(updated);
+      await fetchMetrics();
       success(`Order #${orderId} updated to ${newStatus}.`);
     } catch (e) {
       console.error(e);
@@ -63,6 +73,14 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex items-center gap-2.5 sm:gap-3.5 flex-wrap">
+          <button
+            onClick={fetchMetrics}
+            disabled={loading}
+            className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-full border border-[#D4AF37]/40 bg-black/60 hover:bg-[#21130D] text-xs sm:text-sm font-cinzel font-bold text-[#F3E6D0] hover:text-[#F2D675] flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync</span>
+          </button>
           <Link
             to="/admin/products/new"
             className="group/btn relative flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 font-cinzel font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all duration-300 overflow-hidden"
@@ -93,7 +111,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <p className="font-cinzel text-xl sm:text-3xl font-bold text-[#F3E6D0]">
-            €<AnimatedCounter end={metrics.totalRevenue} />
+            €<AnimatedCounter target={metrics.totalRevenue} />
           </p>
           <span className="text-xs sm:text-sm text-emerald-400 font-mono flex items-center gap-1 font-bold">
             <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -112,10 +130,10 @@ export default function AdminDashboard() {
             </div>
           </div>
           <p className="font-cinzel text-xl sm:text-3xl font-bold text-[#F3E6D0]">
-            <AnimatedCounter end={metrics.totalOrders} />
+            <AnimatedCounter target={metrics.totalOrders} />
           </p>
           <span className="text-xs sm:text-sm text-[#D8BE99] font-mono font-medium truncate block">
-            {metrics.recentOrders.length} processed
+            {metrics.recentOrders?.length || 0} active orders
           </span>
         </div>
 
@@ -130,14 +148,14 @@ export default function AdminDashboard() {
             </div>
           </div>
           <p className="font-cinzel text-xl sm:text-3xl font-bold text-[#F3E6D0]">
-            <AnimatedCounter end={metrics.totalCustomers} />
+            <AnimatedCounter target={metrics.totalCustomers} />
           </p>
           <span className="text-xs sm:text-sm text-[#F2D675] font-mono font-bold truncate block">
             VIP Patrons
           </span>
         </div>
 
-        {/* Active Products */}
+        {/* Active Products / Formulations */}
         <div className="p-4 sm:p-6 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 space-y-1.5 sm:space-y-2.5 shadow-xl backdrop-blur-md hover:border-[#D4AF37] transition-all">
           <div className="flex justify-between items-center text-[#F2D675]">
             <span className="text-xs sm:text-sm uppercase tracking-wider font-cinzel font-bold truncate">
@@ -148,31 +166,34 @@ export default function AdminDashboard() {
             </div>
           </div>
           <p className="font-cinzel text-xl sm:text-3xl font-bold text-[#F3E6D0]">
-            <AnimatedCounter end={metrics.totalProducts} />
+            <AnimatedCounter target={metrics.totalProducts} />
           </p>
-          <span className="text-xs sm:text-sm text-[#D8BE99] font-mono font-medium truncate block">
-            5 Families
+          <span className="text-xs sm:text-sm text-emerald-400 font-mono font-medium truncate block">
+            {metrics.activeProductsCount ?? metrics.totalProducts} Active in Store
           </span>
         </div>
 
-        {/* Low Stock Alerts (Full width on 2-column mobile grid) */}
-        <div className="col-span-2 md:col-span-1 p-4 sm:p-6 rounded-2xl bg-[#0B0A08]/90 border border-rose-500/40 space-y-1.5 sm:space-y-2.5 shadow-xl backdrop-blur-md">
-          <div className="flex justify-between items-center text-rose-400 font-bold">
+        {/* Inactive Formulations / Vault Reserve */}
+        <div className="col-span-2 md:col-span-1 p-4 sm:p-6 rounded-2xl bg-[#0B0A08]/90 border border-amber-500/40 space-y-1.5 sm:space-y-2.5 shadow-xl backdrop-blur-md">
+          <div className="flex justify-between items-center text-amber-400 font-bold">
             <span className="text-xs sm:text-sm uppercase tracking-wider font-cinzel font-bold">
-              {t('admin.lowStockAlerts')}
+              Vault Reserve
             </span>
-            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border border-rose-500/40 bg-rose-500/10 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border border-amber-500/40 bg-amber-500/10 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
-            <p className="font-cinzel text-xl sm:text-3xl font-bold text-rose-400">
-              <AnimatedCounter end={metrics.lowStockCount} />
+            <p className="font-cinzel text-xl sm:text-3xl font-bold text-amber-400">
+              <AnimatedCounter target={metrics.inactiveProductsCount ?? 0} />
             </p>
             <Link to="/admin/inventory" className="text-xs sm:text-sm text-[#F2D675] font-bold hover:underline font-mono">
               Inspect →
             </Link>
           </div>
+          <span className="text-xs text-[#D8BE99] font-mono block">
+            {metrics.inactiveProductsCount ?? 0} Inactive / Hidden
+          </span>
         </div>
       </div>
       </ScrollReveal>
