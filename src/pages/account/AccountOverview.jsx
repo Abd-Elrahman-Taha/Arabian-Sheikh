@@ -19,7 +19,7 @@ import {
 export default function AccountOverview() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { wishlistCount } = useWishlist();
 
   const [recentOrders, setRecentOrders] = useState([]);
@@ -98,7 +98,7 @@ export default function AccountOverview() {
             </div>
           </div>
           <p className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-bold text-[#F2D675]">
-            {user?.vipTier || (user?.role === 'ADMIN' ? 'Imperial Sovereign' : 'Sovereign Patron')}
+            {user?.vipTier || (isAdmin ? 'Imperial Sovereign' : 'Sovereign Patron')}
           </p>
           <span className="text-xs text-emerald-400 font-medium block">Complimentary DHL Air on all orders</span>
         </div>

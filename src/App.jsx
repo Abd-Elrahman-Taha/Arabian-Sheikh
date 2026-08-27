@@ -82,7 +82,7 @@ function MainRouter() {
   const renderContent = () => {
     // 1. Admin Routes
     if (isAdminRoute) {
-      if (!user || user.role !== 'ADMIN') {
+      if (!isAdmin) {
         return <Unauthorized />;
       }
 
