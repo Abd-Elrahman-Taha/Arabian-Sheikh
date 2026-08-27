@@ -50,7 +50,17 @@ export const tokenManager = {
 
 // Configuration
 const DEFAULT_TIMEOUT = 15000;
-const BASE_URL = import.meta.env?.VITE_API_BASE_URL || '/api';
+
+// Clean base URL: handles swagger URLs, trailing slashes, and missing /api paths
+const rawBase = (import.meta.env?.VITE_API_BASE_URL || '/api')
+  .trim()
+  .replace(/\/swagger(\/index\.html)?\/?$/i, '')
+  .replace(/\/+$/, '');
+
+const BASE_URL = rawBase.startsWith('http') && !rawBase.endsWith('/api')
+  ? `${rawBase}/api`
+  : (rawBase || '/api');
+
 export const IS_MOCK_ENABLED = import.meta.env?.VITE_USE_MOCK_API === 'true';
 
 /**
