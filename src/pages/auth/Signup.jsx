@@ -3,7 +3,7 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { UserPlus, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function Signup() {
@@ -16,7 +16,16 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // ASP.NET Identity Live Criteria
+  const hasLength = password.length >= 6;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  const allCriteriaMet = hasLength && hasUpper && hasDigit && hasSpecial;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -109,18 +118,86 @@ export default function Signup() {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
+                className={`w-full bg-black/60 border rounded-xl py-3 pl-10 pr-10 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:outline-none transition-colors ${
+                  password
+                    ? allCriteriaMet
+                      ? 'border-emerald-500/70 focus:border-emerald-400'
+                      : 'border-[#D4AF37]/50 focus:border-[#D4AF37]'
+                    : 'border-[#D4AF37]/30 focus:border-[#D4AF37]'
+                }`}
               />
               <Lock className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
-            <p className="text-[10px] text-[#D4AF37]/80 mt-1">
-              At least 6 characters with uppercase, number & symbol (e.g. Sheikh123*)
-            </p>
+
+            {/* Live Password Requirements Checklist */}
+            <div className="mt-2.5 p-3 rounded-xl bg-black/40 border border-[#D4AF37]/20 space-y-1.5 font-mono text-[11px]">
+              <div className="flex items-center justify-between text-[11px] font-sans font-semibold text-[#D8BE99] uppercase tracking-wider mb-1">
+                <span>Password Requirements</span>
+                {allCriteriaMet && (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1 normal-case text-[10px]">
+                    <ShieldCheck className="w-3.5 h-3.5" /> All Satisfied
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className={`flex items-center gap-1.5 transition-colors ${
+                  hasLength ? 'text-emerald-400 font-bold' : 'text-[#D8BE99]/60'
+                }`}>
+                  <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] border ${
+                    hasLength ? 'border-emerald-400 bg-emerald-400/20' : 'border-[#D4AF37]/30 bg-black/40'
+                  }`}>
+                    {hasLength ? <Check className="w-2.5 h-2.5" /> : '•'}
+                  </div>
+                  <span>6+ Characters</span>
+                </div>
+
+                <div className={`flex items-center gap-1.5 transition-colors ${
+                  hasUpper ? 'text-emerald-400 font-bold' : 'text-[#D8BE99]/60'
+                }`}>
+                  <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] border ${
+                    hasUpper ? 'border-emerald-400 bg-emerald-400/20' : 'border-[#D4AF37]/30 bg-black/40'
+                  }`}>
+                    {hasUpper ? <Check className="w-2.5 h-2.5" /> : '•'}
+                  </div>
+                  <span>1 Uppercase (A-Z)</span>
+                </div>
+
+                <div className={`flex items-center gap-1.5 transition-colors ${
+                  hasDigit ? 'text-emerald-400 font-bold' : 'text-[#D8BE99]/60'
+                }`}>
+                  <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] border ${
+                    hasDigit ? 'border-emerald-400 bg-emerald-400/20' : 'border-[#D4AF37]/30 bg-black/40'
+                  }`}>
+                    {hasDigit ? <Check className="w-2.5 h-2.5" /> : '•'}
+                  </div>
+                  <span>1 Number (0-9)</span>
+                </div>
+
+                <div className={`flex items-center gap-1.5 transition-colors ${
+                  hasSpecial ? 'text-emerald-400 font-bold' : 'text-[#D8BE99]/60'
+                }`}>
+                  <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] border ${
+                    hasSpecial ? 'border-emerald-400 bg-emerald-400/20' : 'border-[#D4AF37]/30 bg-black/40'
+                  }`}>
+                    {hasSpecial ? <Check className="w-2.5 h-2.5" /> : '•'}
+                  </div>
+                  <span>1 Symbol (*!@#$)</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -129,14 +206,26 @@ export default function Signup() {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
+                className={`w-full bg-black/60 border rounded-xl py-3 pl-10 pr-10 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:outline-none transition-colors ${
+                  confirmPassword && confirmPassword === password
+                    ? 'border-emerald-500/70 focus:border-emerald-400'
+                    : 'border-[#D4AF37]/30 focus:border-[#D4AF37]'
+                }`}
               />
               <Lock className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1"
+                aria-label="Toggle confirm password visibility"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
