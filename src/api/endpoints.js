@@ -18,7 +18,7 @@ export const ENDPOINTS = {
     REGISTER: '/auth/register',
     LOGIN: '/auth/login',
     GOOGLE: '/auth/google',
-    REFRESH: '/auth/refresh',
+    REFRESH: '/auth/refresh-token',
     LOGOUT: '/auth/logout',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
