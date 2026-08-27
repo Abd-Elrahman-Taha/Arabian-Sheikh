@@ -50,7 +50,7 @@ export const tokenManager = {
 
 // Configuration
 const DEFAULT_TIMEOUT = 15000;
-const BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+const BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
 export const IS_MOCK_ENABLED = import.meta.env?.VITE_USE_MOCK_API === 'true';
 
 /**

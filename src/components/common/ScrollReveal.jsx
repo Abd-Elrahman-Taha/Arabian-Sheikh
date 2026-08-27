@@ -1,6 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
+// Stable cache for motion components to prevent unmounting/remounting children (fixes input focus loss on typing)
+const motionComponentCache = new Map();
+
+function getMotionComponent(as) {
+  if (typeof as === 'string' && motion[as]) {
+    return motion[as];
+  }
+  if (!motionComponentCache.has(as)) {
+    motionComponentCache.set(as, motion.create ? motion.create(as) : motion(as));
+  }
+  return motionComponentCache.get(as);
+}
+
 /**
  * ScrollReveal — wraps children in a smooth entrance element that
  * animates ONCE into view when scrolled into the viewport and stays
@@ -59,7 +72,8 @@ export default function ScrollReveal({
     );
   }
 
-  const MotionTag = motion.create(as);
+  // Use stable cached component to preserve DOM identity and input focus
+  const MotionTag = getMotionComponent(as);
 
   return (
     <MotionTag

@@ -183,9 +183,10 @@ export const productService = {
     const result = this.getAllProductsSync(filters);
 
     if (!apiClient.isMockEnabled() && import.meta.env?.VITE_API_BASE_URL) {
-      productApi.getProducts(filters).then(realProds => {
-        if (Array.isArray(realProds) && realProds.length > 0) {
-          saveProducts(realProds);
+      productApi.getProducts(filters).then(res => {
+        const items = Array.isArray(res) ? res : (res?.items || []);
+        if (items.length > 0) {
+          saveProducts(items);
         }
       }).catch(() => {});
     }

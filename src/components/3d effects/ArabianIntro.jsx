@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { gsap } from 'gsap';
-import ContinuousBakhoorSmoke from '../motion/ContinuousBakhoorSmoke';
+import BakhoorSmoke from './BakhoorSmoke';
 import ArabianLogo from '../common/ArabianLogo';
 import performanceManager from '../../utils/performanceManager';
 import mobileVideo from '../../assets/video.mp4';
@@ -233,13 +234,38 @@ export default function ArabianIntro({ onComplete }) {
         className="absolute inset-0 z-20 bg-radial from-[#21130D]/60 via-[#21130D]/90 to-[#0B0A08] pointer-events-none"
         style={{ opacity: 0 }}
       >
-        <ContinuousBakhoorSmoke
-          originX={0.5}
-          originY={0.82}
-          smokeIntensity={1.2}
-          tint="#D4AF37"
-          className="w-full h-full"
-        />
+        <Canvas
+          camera={{
+            position: [0, 0, 500],
+            fov: 55,
+            near: 1,
+            far: 3000,
+          }}
+          dpr={[1, dpr]}
+          gl={{
+            antialias: performanceManager.tier !== 'low',
+            alpha: true,
+            powerPreference: 'high-performance',
+          }}
+        >
+          {/* Warm Amber Incense Lighting */}
+          <ambientLight intensity={1.8} color="#F3E6D0" />
+          <directionalLight
+            position={[100, 300, 150]}
+            intensity={2.4}
+            color="#D4AF37"
+          />
+          <pointLight
+            position={[0, -60, -80]}
+            intensity={4.2}
+            distance={850}
+            color="#D4AF37"
+          />
+
+          <Suspense fallback={null}>
+            <BakhoorSmoke visible={true} opacity={0.45} />
+          </Suspense>
+        </Canvas>
       </div>
 
       {/* 3. Central Official Brand Logo with Arabic Subtitle */}

@@ -1,91 +1,363 @@
 /**
- * Arabian Sheikh - REST API Endpoints Registry
+ * Arabian Sheikh - Comprehensive REST API Endpoints Registry
  * 
- * Centralized mapping of all backend endpoints for easy versioning and maintenance.
+ * Compliant with:
+ * - Customer API & DTO Documentation (Storefront)
+ * - Admin API & DTO Documentation (Back-office)
+ * 
+ * Base URL: /api
  */
 
 export const ENDPOINTS = {
-  // Authentication & Profile
+  // ==========================================
+  // 1. CUSTOMER / STOREFRONT API (/api/...)
+  // ==========================================
+
+  // Authentication
   AUTH: {
+    REGISTER: '/auth/register',
     LOGIN: '/auth/login',
-    SIGNUP: '/auth/signup',
+    GOOGLE: '/auth/google',
+    REFRESH: '/auth/refresh',
     LOGOUT: '/auth/logout',
-    ME: '/auth/me',
-    REFRESH_TOKEN: '/auth/refresh',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
-    UPDATE_PROFILE: '/auth/profile',
-    CHANGE_PASSWORD: '/auth/change-password'
+    VERIFY_EMAIL: '/auth/verify-email',
+    RESEND_VERIFICATION: '/auth/resend-verification'
   },
 
-  // Products & Collections
+  // Localization
+  LOCALIZATION: {
+    DETECT_COUNTRY: '/localization/country',
+    COUNTRIES: '/localization/countries',
+    UPDATE_COUNTRY: '/account/country',
+    UPDATE_LANGUAGE: '/account/language'
+  },
+
+  // Home Page
+  HOME: '/home',
+
+  // Catalog Browsing
+  CATEGORIES: {
+    LIST: '/categories',
+    DETAILS: (id) => `/categories/${id}`,
+    SUBCATEGORIES: (categoryId) => `/categories/${categoryId}/subcategories`
+  },
+  BRANDS: {
+    LIST: '/brands',
+    DETAILS: (id) => `/brands/${id}`
+  },
   PRODUCTS: {
     LIST: '/products',
-    DETAILS: (idOrSlug) => `/products/${idOrSlug}`,
-    FEATURED: '/products/featured',
-    BEST_SELLERS: '/products/best-sellers',
-    CATEGORIES: '/products/categories',
-    TIERS: '/products/tiers',
-    RELATED: (id) => `/products/${id}/related`,
-    REVIEWS: (id) => `/products/${id}/reviews`,
-    CREATE: '/products',
-    UPDATE: (id) => `/products/${id}`,
-    DELETE: (id) => `/products/${id}`,
-    UPDATE_STOCK: (id) => `/products/${id}/stock`
+    DETAILS: (id) => `/products/${id}`,
+    REVIEWS: (productId) => `/products/${productId}/reviews`,
+    CREATE_REVIEW: (productId) => `/products/${productId}/reviews`
   },
 
-  // Orders & Checkout
-  ORDERS: {
-    LIST: '/orders',
-    DETAILS: (id) => `/orders/${id}`,
-    USER_ORDERS: (userId) => `/orders/user/${userId}`,
-    CREATE: '/orders',
-    UPDATE_STATUS: (id) => `/orders/${id}/status`,
-    TRACK: (trackingCode) => `/orders/track/${trackingCode}`
-  },
-
-  // Cart & Persistence
-  CART: {
-    GET: '/cart',
-    SYNC: '/cart/sync',
-    ADD_ITEM: '/cart/items',
-    UPDATE_ITEM: '/cart/items',
-    REMOVE_ITEM: (productId, size) => `/cart/items?productId=${productId}&size=${size}`,
-    CLEAR: '/cart/clear',
-    APPLY_DISCOUNT: '/cart/discount'
-  },
-
-  // Wishlist
+  // Wishlist (Authentication Required)
   WISHLIST: {
     GET: '/wishlist',
-    SYNC: '/wishlist/sync',
-    TOGGLE: '/wishlist/toggle',
-    CLEAR: '/wishlist/clear'
+    ADD: '/wishlist/items',
+    REMOVE: (productId) => `/wishlist/items/${productId}`
   },
 
-  // Discounts & Promotions
-  DISCOUNTS: {
-    VALIDATE: '/discounts/validate',
-    LIST: '/discounts',
-    CREATE: '/discounts',
-    DELETE: (id) => `/discounts/${id}`
+  // Shopping Cart (Authentication Required, No Size property)
+  CART: {
+    GET: '/cart',
+    ADD_ITEM: '/cart/items',
+    UPDATE_ITEM: (productId) => `/cart/items/${productId}`,
+    REMOVE_ITEM: (productId) => `/cart/items/${productId}`,
+    REMOVE_COUPON: '/cart/coupon'
   },
 
-  // Users & Customers Management
-  USERS: {
-    LIST: '/users',
-    DETAILS: (id) => `/users/${id}`,
-    UPDATE_STATUS: (id) => `/users/${id}/status`,
-    UPDATE_ROLE: (id) => `/users/${id}/role`,
-    ADDRESSES: '/users/addresses',
-    PAYMENT_METHODS: '/users/payment-methods'
+  // Coupons
+  COUPONS: {
+    VALIDATE: '/coupons/validate'
   },
 
-  // Analytics & Admin Dashboard
-  ANALYTICS: {
-    OVERVIEW: '/analytics/overview',
-    SALES_TRENDS: '/analytics/sales-trends',
-    INVENTORY_STATUS: '/analytics/inventory-status'
+  // Account & Customer Profile
+  ACCOUNT: {
+    ME: '/account/me',
+    UPDATE_PROFILE: '/account/profile',
+    CHANGE_PASSWORD: '/account/change-password',
+    STORE_CREDIT: '/account/store-credit',
+    STORE_CREDIT_TRANSACTIONS: '/account/store-credit/transactions',
+    NOTIFICATION_PREFERENCES: '/account/notification-preferences'
+  },
+
+  // Customer Addresses
+  ADDRESSES: {
+    LIST: '/addresses',
+    CREATE: '/addresses',
+    UPDATE: (id) => `/addresses/${id}`,
+    DELETE: (id) => `/addresses/${id}`,
+    SET_DEFAULT: (id) => `/addresses/${id}/default`
+  },
+
+  // Checkout & Shipping
+  CHECKOUT: {
+    GET: '/checkout',
+    SET_ADDRESS: '/checkout/address',
+    SET_SHIPPING: '/checkout/shipping',
+    SHIPPING_OPTIONS: '/shipping/options'
+  },
+
+  // Payments (Stripe)
+  PAYMENTS: {
+    STRIPE_PAYMENT_INTENT: '/payments/stripe/payment-intent',
+    DETAILS: (paymentId) => `/payments/${paymentId}`
+  },
+
+  // Orders
+  ORDERS: {
+    CREATE: '/orders',
+    LIST: '/orders',
+    DETAILS: (id) => `/orders/${id}`,
+    TRACKING: (id) => `/orders/${id}/tracking`,
+    DELIVERY_STATUS: (id) => `/orders/${id}/delivery-status`,
+    CANCEL: (id) => `/orders/${id}/cancel`,
+    RETURN_ELIGIBILITY: (orderId) => `/orders/${orderId}/return-eligibility`,
+    CREATE_RETURN: (orderId) => `/orders/${orderId}/returns`,
+    RETURNS: (orderId) => `/orders/${orderId}/returns`,
+    REFUNDS: (orderId) => `/orders/${orderId}/refunds`
+  },
+
+  // Returns
+  RETURNS: {
+    DETAILS: (id) => `/returns/${id}`,
+    UPLOAD_PHOTOS: (id) => `/returns/${id}/photos`
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    MARK_READ: (id) => `/notifications/${id}/read`,
+    MARK_ALL_READ: '/notifications/read-all'
+  },
+
+  // Content (Public)
+  CONTENT: {
+    FAQS: '/content/faqs',
+    PAGE: (slug) => `/content/pages/${slug}`,
+    CONTACT: '/content/contact'
+  },
+
+  // ==========================================
+  // 2. ADMIN / BACK-OFFICE API (/api/admin/...)
+  // ==========================================
+  ADMIN: {
+    // Admin Auth
+    AUTH: {
+      LOGIN: '/admin/auth/login',
+      REFRESH: '/admin/auth/refresh',
+      LOGOUT: '/admin/auth/logout',
+      ME: '/admin/auth/me'
+    },
+
+    // Dashboard KPIs & Analytics
+    DASHBOARD: {
+      OVERVIEW: '/admin/dashboard/overview',
+      COMPARE: '/admin/dashboard/compare'
+    },
+
+    // Sales Reports
+    REPORTS: {
+      SALES: '/admin/reports/sales',
+      SALES_BY_PRODUCT: '/admin/reports/sales/products',
+      SALES_BY_CATEGORY: '/admin/reports/sales/categories',
+      SALES_BY_BRAND: '/admin/reports/sales/brands',
+      SALES_BY_COUNTRY: '/admin/reports/sales/countries',
+      EXPORT: '/admin/reports/sales/export'
+    },
+
+    // Catalog & Products Management
+    PRODUCTS: {
+      LIST: '/admin/products',
+      DETAILS: (id) => `/admin/products/${id}`,
+      CREATE: '/admin/products',
+      UPDATE: (id) => `/admin/products/${id}`,
+      ACTIVATE: (id) => `/admin/products/${id}/activate`,
+      DEACTIVATE: (id) => `/admin/products/${id}/deactivate`,
+      DELETE: (id) => `/admin/products/${id}`,
+      UPLOAD_IMAGE: (id) => `/admin/products/${id}/image`,
+      DELETE_IMAGE: (id) => `/admin/products/${id}/image`,
+      UPSERT_TRANSLATION: (productId, lang) => `/admin/products/${productId}/translations/${lang}`,
+      PUBLISH_TRANSLATION: (productId, lang) => `/admin/products/${productId}/translations/${lang}/publish`
+    },
+
+    // Categories
+    CATEGORIES: {
+      LIST: '/admin/categories',
+      CREATE: '/admin/categories',
+      UPDATE: (id) => `/admin/categories/${id}`,
+      DELETE: (id) => `/admin/categories/${id}`
+    },
+
+    // Subcategories
+    SUBCATEGORIES: {
+      LIST: '/admin/subcategories',
+      CREATE: '/admin/subcategories',
+      UPDATE: (id) => `/admin/subcategories/${id}`,
+      DELETE: (id) => `/admin/subcategories/${id}`
+    },
+
+    // Brands
+    BRANDS: {
+      LIST: '/admin/brands',
+      CREATE: '/admin/brands',
+      UPDATE: (id) => `/admin/brands/${id}`,
+      ACTIVATE: (id) => `/admin/brands/${id}/activate`,
+      DEACTIVATE: (id) => `/admin/brands/${id}/deactivate`,
+      DELETE: (id) => `/admin/brands/${id}`
+    },
+
+    // Perfume Categories (Governs pricing for Perfumes)
+    PERFUME_CATEGORIES: {
+      LIST: '/admin/perfume-categories',
+      CREATE: '/admin/perfume-categories',
+      UPDATE: (id) => `/admin/perfume-categories/${id}`,
+      DELETE: (id) => `/admin/perfume-categories/${id}`
+    },
+
+    // Customers Management
+    CUSTOMERS: {
+      LIST: '/admin/customers',
+      DETAILS: (id) => `/admin/customers/${id}`,
+      BLOCK: (id) => `/admin/customers/${id}/block`,
+      UNBLOCK: (id) => `/admin/customers/${id}/unblock`
+    },
+
+    // Coupons
+    COUPONS: {
+      LIST: '/admin/coupons',
+      CREATE: '/admin/coupons',
+      UPDATE: (id) => `/admin/coupons/${id}`,
+      ACTIVATE: (id) => `/admin/coupons/${id}/activate`,
+      DEACTIVATE: (id) => `/admin/coupons/${id}/deactivate`,
+      ANALYTICS: (id) => `/admin/coupons/${id}/analytics`
+    },
+
+    // Promotions
+    PROMOTIONS: {
+      LIST: '/admin/promotions',
+      CREATE: '/admin/promotions',
+      UPDATE: (id) => `/admin/promotions/${id}`,
+      ACTIVATE: (id) => `/admin/promotions/${id}/activate`,
+      DEACTIVATE: (id) => `/admin/promotions/${id}/deactivate`,
+      ANALYTICS: (id) => `/admin/promotions/${id}/analytics`,
+      CREATE_BUNDLE: (promotionId) => `/admin/promotions/${promotionId}/bundles`
+    },
+
+    // Orders
+    ORDERS: {
+      LIST: '/admin/orders',
+      DETAILS: (id) => `/admin/orders/${id}`,
+      UPDATE_STATUS: (id) => `/admin/orders/${id}/status`,
+      CANCEL: (id) => `/admin/orders/${id}/cancel`,
+      STATUS_HISTORY: (id) => `/admin/orders/${id}/status-history`
+    },
+
+    // Payments
+    PAYMENTS: {
+      LIST: '/admin/payments',
+      DETAILS: (id) => `/admin/payments/${id}`,
+      ATTEMPTS: (paymentId) => `/admin/payments/${paymentId}/attempts`,
+      WEBHOOKS: '/admin/payment-webhooks',
+      AUDIT: (paymentId) => `/admin/payments/${paymentId}/audit`
+    },
+
+    // Refunds
+    REFUNDS: {
+      LIST: '/admin/refunds',
+      REQUEST: (paymentId) => `/admin/payments/${paymentId}/refunds`,
+      PROCESS: (refundId) => `/admin/refunds/${refundId}/process`,
+      COMPLETE: (refundId) => `/admin/refunds/${refundId}/complete`
+    },
+
+    // Returns
+    RETURNS: {
+      LIST: '/admin/returns',
+      DETAILS: (id) => `/admin/returns/${id}`,
+      APPROVE: (id) => `/admin/returns/${id}/approve`,
+      REJECT: (id) => `/admin/returns/${id}/reject`,
+      INSPECT: (id) => `/admin/returns/${id}/inspect`,
+      REFUND_PROCESSING: (id) => `/admin/returns/${id}/refund-processing`,
+      MARK_REFUNDED: (id) => `/admin/returns/${id}/mark-refunded`
+    },
+
+    // Shipping Administration
+    SHIPPING: {
+      COMPANIES: '/admin/shipping/companies',
+      CREATE_COMPANY: '/admin/shipping/companies',
+      UPDATE_COMPANY: (id) => `/admin/shipping/companies/${id}`,
+      ACTIVATE_COMPANY: (id) => `/admin/shipping/companies/${id}/activate`,
+      DEACTIVATE_COMPANY: (id) => `/admin/shipping/companies/${id}/deactivate`,
+      ZONES: '/admin/shipping/zones',
+      CREATE_ZONE: '/admin/shipping/zones',
+      UPDATE_ZONE: (id) => `/admin/shipping/zones/${id}`,
+      DELETE_ZONE: (id) => `/admin/shipping/zones/${id}`,
+      METHODS: '/admin/shipping/methods',
+      CREATE_METHOD: '/admin/shipping/methods',
+      UPDATE_METHOD: (id) => `/admin/shipping/methods/${id}`
+    },
+
+    // Shipments
+    SHIPMENTS: {
+      LIST: '/admin/shipments',
+      DETAILS: (id) => `/admin/shipments/${id}`,
+      CREATE: (orderId) => `/admin/orders/${orderId}/shipments`,
+      UPDATE_TRACKING: (id) => `/admin/shipments/${id}/tracking`,
+      UPDATE_STATUS: (id) => `/admin/shipments/${id}/status`
+    },
+
+    // Admin Users (Super Admin only for create)
+    ADMINS: {
+      LIST: '/admin/admins',
+      CREATE: '/admin/admins',
+      UPDATE: (id) => `/admin/admins/${id}`,
+      ACTIVATE: (id) => `/admin/admins/${id}/activate`,
+      DEACTIVATE: (id) => `/admin/admins/${id}/deactivate`
+    },
+
+    // Settings
+    SETTINGS: {
+      GET_LANGUAGE: '/admin/settings/language',
+      UPDATE_LANGUAGE: '/admin/settings/language'
+    },
+
+    // Notifications
+    NOTIFICATIONS: {
+      LIST: '/admin/notifications',
+      MARK_READ: (id) => `/admin/notifications/${id}/read`
+    },
+
+    // Reviews Moderation
+    REVIEWS: {
+      LIST: '/admin/reviews',
+      APPROVE: (id) => `/admin/reviews/${id}/approve`,
+      REJECT: (id) => `/admin/reviews/${id}/reject`,
+      HIDE: (id) => `/admin/reviews/${id}/hide`
+    },
+
+    // Content
+    CONTENT: {
+      FAQS: '/admin/content/faqs',
+      CREATE_FAQ: '/admin/content/faqs',
+      UPDATE_FAQ: (id) => `/admin/content/faqs/${id}`,
+      DELETE_FAQ: (id) => `/admin/content/faqs/${id}`,
+      PAGES: '/admin/content/pages',
+      PAGE: (slug) => `/admin/content/pages/${slug}`,
+      UPDATE_PAGE: (slug) => `/admin/content/pages/${slug}`,
+      CONTACT: '/admin/content/contact',
+      CREATE_CONTACT: '/admin/content/contact',
+      UPDATE_CONTACT: (id) => `/admin/content/contact/${id}`
+    },
+
+    // Audit Logs
+    AUDIT_LOGS: {
+      LIST: '/admin/audit-logs',
+      DETAILS: (id) => `/admin/audit-logs/${id}`
+    }
   }
 };
 

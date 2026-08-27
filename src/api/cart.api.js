@@ -1,44 +1,56 @@
 import apiClient from './client';
 import ENDPOINTS from './endpoints';
-import { normalizeObjectKeys } from './normalizers';
+import { normalizeCart } from './normalizers';
 
 export const cartApi = {
+  /**
+   * Get Shopping Cart
+   * GET /api/cart
+   */
   async getCart() {
     const response = await apiClient.get(ENDPOINTS.CART.GET);
-    return normalizeObjectKeys(response?.cart || response?.data || response);
+    return normalizeCart(response);
   },
 
-  async syncCart(cartState) {
-    const response = await apiClient.post(ENDPOINTS.CART.SYNC, { cart: cartState });
-    return normalizeObjectKeys(response?.cart || response?.data || response);
-  },
-
-  async addItem(product, size, quantity) {
+  /**
+   * Add Item to Cart (No size property in contract)
+   * POST /api/cart/items
+   */
+  async addItem(productId, quantity = 1) {
     const response = await apiClient.post(ENDPOINTS.CART.ADD_ITEM, {
-      productId: product.id,
-      size,
-      quantity
+      productId: Number(productId),
+      quantity: Number(quantity)
     });
-    return normalizeObjectKeys(response?.cart || response?.data || response);
+    return normalizeCart(response);
   },
 
-  async updateItem(productId, size, quantity) {
-    const response = await apiClient.put(ENDPOINTS.CART.UPDATE_ITEM, {
-      productId,
-      size,
-      quantity
+  /**
+   * Update Cart Item Quantity
+   * PUT /api/cart/items/{productId}
+   */
+  async updateItem(productId, quantity) {
+    const response = await apiClient.put(ENDPOINTS.CART.UPDATE_ITEM(productId), {
+      quantity: Number(quantity)
     });
-    return normalizeObjectKeys(response?.cart || response?.data || response);
+    return normalizeCart(response);
   },
 
-  async removeItem(productId, size) {
-    const response = await apiClient.delete(ENDPOINTS.CART.REMOVE_ITEM(productId, size));
-    return normalizeObjectKeys(response?.cart || response?.data || response);
+  /**
+   * Remove Item from Cart
+   * DELETE /api/cart/items/{productId}
+   */
+  async removeItem(productId) {
+    await apiClient.delete(ENDPOINTS.CART.REMOVE_ITEM(productId));
+    return true;
   },
 
-  async clearCart() {
-    const response = await apiClient.post(ENDPOINTS.CART.CLEAR);
-    return normalizeObjectKeys(response?.cart || response?.data || response);
+  /**
+   * Remove Applied Coupon from Cart
+   * DELETE /api/cart/coupon
+   */
+  async removeCoupon() {
+    await apiClient.delete(ENDPOINTS.CART.REMOVE_COUPON);
+    return true;
   }
 };
 

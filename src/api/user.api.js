@@ -3,50 +3,124 @@ import ENDPOINTS from './endpoints';
 import { normalizeUser, normalizeObjectKeys } from './normalizers';
 
 export const userApi = {
-  async getUsers(filters = {}) {
-    const response = await apiClient.get(ENDPOINTS.USERS.LIST, { params: filters });
-    const rawList = Array.isArray(response) ? response : (response?.users || response?.data || []);
+  // ==========================================
+  // CUSTOMER ADDRESSES
+  // ==========================================
+
+  /**
+   * Get Customer Addresses
+   * GET /api/addresses
+   */
+  async getAddresses() {
+    const response = await apiClient.get(ENDPOINTS.ADDRESSES.LIST);
+    const rawList = response?.items || (Array.isArray(response) ? response : []);
+    return rawList.map(normalizeObjectKeys);
+  },
+
+  /**
+   * Add Customer Address
+   * POST /api/addresses
+   */
+  async addAddress(address) {
+    const response = await apiClient.post(ENDPOINTS.ADDRESSES.CREATE, address);
+    return normalizeObjectKeys(response);
+  },
+
+  /**
+   * Update Customer Address
+   * PUT /api/addresses/{id}
+   */
+  async updateAddress(id, address) {
+    const response = await apiClient.put(ENDPOINTS.ADDRESSES.UPDATE(id), address);
+    return normalizeObjectKeys(response);
+  },
+
+  /**
+   * Delete Customer Address
+   * DELETE /api/addresses/{id}
+   */
+  async deleteAddress(id) {
+    await apiClient.delete(ENDPOINTS.ADDRESSES.DELETE(id));
+    return true;
+  },
+
+  /**
+   * Set Default Address
+   * PATCH /api/addresses/{id}/default
+   */
+  async setDefaultAddress(id) {
+    await apiClient.patch(ENDPOINTS.ADDRESSES.SET_DEFAULT(id));
+    return true;
+  },
+
+  // ==========================================
+  // ADMIN CUSTOMER MANAGEMENT
+  // ==========================================
+
+  /**
+   * Admin: List customers
+   * GET /api/admin/customers
+   */
+  async adminGetCustomers(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.CUSTOMERS.LIST, { params });
+    const rawList = response?.items || (Array.isArray(response) ? response : []);
+    return {
+      items: rawList.map(normalizeUser),
+      totalCount: response?.totalCount || rawList.length,
+      page: response?.page || 1,
+      pageSize: response?.pageSize || 20,
+      totalPages: response?.totalPages || 1
+    };
+  },
+
+  /**
+   * Admin: Customer details
+   * GET /api/admin/customers/{id}
+   */
+  async adminGetCustomerById(id) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.CUSTOMERS.DETAILS(id));
+    return normalizeUser(response);
+  },
+
+  /**
+   * Admin: Block customer
+   * POST /api/admin/customers/{id}/block
+   */
+  async adminBlockCustomer(id, reason = '') {
+    const response = await apiClient.post(ENDPOINTS.ADMIN.CUSTOMERS.BLOCK(id), { reason });
+    return normalizeObjectKeys(response);
+  },
+
+  /**
+   * Admin: Unblock customer
+   * POST /api/admin/customers/{id}/unblock
+   */
+  async adminUnblockCustomer(id, reason = '') {
+    const response = await apiClient.post(ENDPOINTS.ADMIN.CUSTOMERS.UNBLOCK(id), { reason });
+    return normalizeObjectKeys(response);
+  },
+
+  // ==========================================
+  // ADMIN USER / STAFF MANAGEMENT
+  // ==========================================
+
+  /**
+   * Admin: List admin users
+   * GET /api/admin/admins
+   */
+  async adminGetAdmins() {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.ADMINS.LIST);
+    const rawList = response?.items || (Array.isArray(response) ? response : []);
     return rawList.map(normalizeUser);
   },
 
-  async getUserById(id) {
-    const response = await apiClient.get(ENDPOINTS.USERS.DETAILS(id));
-    const rawUser = response?.user || response?.data || response;
-    return normalizeUser(rawUser);
-  },
-
-  async updateUserStatus(id, status) {
-    const response = await apiClient.patch(ENDPOINTS.USERS.UPDATE_STATUS(id), { status });
-    const rawUser = response?.user || response?.data || response;
-    return normalizeUser(rawUser);
-  },
-
-  async updateUserRole(id, role) {
-    const response = await apiClient.patch(ENDPOINTS.USERS.UPDATE_ROLE(id), { role });
-    const rawUser = response?.user || response?.data || response;
-    return normalizeUser(rawUser);
-  },
-
-  async getAddresses() {
-    const response = await apiClient.get(ENDPOINTS.USERS.ADDRESSES);
-    const rawList = Array.isArray(response) ? response : (response?.addresses || response?.data || []);
-    return rawList.map(normalizeObjectKeys);
-  },
-
-  async addAddress(address) {
-    const response = await apiClient.post(ENDPOINTS.USERS.ADDRESSES, address);
-    return normalizeObjectKeys(response?.address || response?.data || response);
-  },
-
-  async getPaymentMethods() {
-    const response = await apiClient.get(ENDPOINTS.USERS.PAYMENT_METHODS);
-    const rawList = Array.isArray(response) ? response : (response?.paymentMethods || response?.data || []);
-    return rawList.map(normalizeObjectKeys);
-  },
-
-  async addPaymentMethod(paymentMethod) {
-    const response = await apiClient.post(ENDPOINTS.USERS.PAYMENT_METHODS, paymentMethod);
-    return normalizeObjectKeys(response?.paymentMethod || response?.data || response);
+  /**
+   * Admin: Create new admin (Super Admin only)
+   * POST /api/admin/admins
+   */
+  async adminCreateAdmin(payload) {
+    const response = await apiClient.post(ENDPOINTS.ADMIN.ADMINS.CREATE, payload);
+    return normalizeUser(response);
   }
 };
 

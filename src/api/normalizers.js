@@ -1,8 +1,12 @@
 /**
  * Arabian Sheikh - Data Transfer Object (DTO) Normalizers
  * 
+ * Strict alignment with:
+ * - Customer API & DTO Documentation
+ * - Admin API & DTO Documentation
+ * 
  * Ensures robust bi-directional translation between backend API payloads
- * (supporting snake_case, camelCase, or custom schemas) and frontend entities.
+ * and frontend entity representations.
  */
 
 // Helper to convert snake_case to camelCase
@@ -30,11 +34,21 @@ export function normalizeObjectKeys(obj) {
 }
 
 /**
- * Product Normalizer
+ * Product Normalizer (supports both ProductListItemResponse and ProductDetailsResponse)
  */
 export function normalizeProduct(raw) {
   if (!raw) return null;
   const p = normalizeObjectKeys(raw);
+
+  // Extract brand and category names whether returned as string or object
+  const brandName = typeof p.brand === 'object' ? p.brand?.name : (p.brandName || p.brand || 'Arabian Sheikh');
+  const categoryName = typeof p.category === 'object' ? p.category?.name : (p.categoryName || p.category || 'Perfumes');
+  const subcategoryName = typeof p.subcategory === 'object' ? p.subcategory?.name : (p.subcategoryName || p.subcategory || null);
+  const perfumeCategoryName = typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : (p.perfumeCategoryName || null);
+
+  const price = Number(p.price || 0);
+  const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || price) : null);
+  const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > price));
 
   return {
     id: p.id || p.productId || `as-${p.slug || 'prod'}`,
@@ -43,108 +57,183 @@ export function normalizeProduct(raw) {
     arabicName: p.arabicName || p.arabic_name || '',
     bulgarianName: p.bulgarianName || p.bulgarian_name || '',
     spanishName: p.spanishName || p.spanish_name || '',
-    tier: p.tier || 'Luxury',
-    category: p.category || 'perfumes',
+    tier: p.tier || (categoryName === 'Perfumes' ? 'Luxury' : null),
+    category: categoryName.toLowerCase(),
+    categoryName,
+    subcategoryName,
+    perfumeCategoryName,
+    brandName,
     gender: p.gender || 'Unisex',
-    price: Number(p.price || 0),
-    originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
+    price,
+    originalPrice,
+    isDiscounted,
+    discountPercent: p.discount?.value || (originalPrice && originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0),
+    hasDiscount: isDiscounted,
+    currency: p.currency || 'EUR',
     stock: Number(p.stock !== undefined ? p.stock : 50),
-    size: p.size || '60 ml / 2.0 fl oz',
-    status: p.status || (p.stock > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'),
+    status: p.isActive === false ? 'INACTIVE' : (p.status || 'ACTIVE'),
+    isActive: p.isActive !== undefined ? Boolean(p.isActive) : true,
     featured: Boolean(p.featured || p.isFeatured),
     isBestSeller: Boolean(p.isBestSeller || p.bestSeller),
     rating: Number(p.rating || 5.0),
-    reviewsCount: Number(p.reviewsCount || (p.reviews ? p.reviews.length : 0)),
+    reviewsCount: Number(p.reviewCount || p.reviewsCount || (p.reviews ? p.reviews.length : 0)),
     description: p.description || '',
+    ingredients: p.ingredients || 'Rare Oud wood, amber crystals, Taif rose, sandalwood, musk.',
     spanishDescription: p.spanishDescription || p.description || '',
     bulgarianDescription: p.bulgarianDescription || p.description || '',
     fragranceFamily: p.fragranceFamily || p.scentFamily || 'Haute Parfumerie',
     scentFamily: p.scentFamily || p.fragranceFamily || 'Haute Parfumerie',
     tagline: p.tagline || '',
-    spanishTagline: p.spanishTagline || '',
-    topNotes: Array.isArray(p.topNotes) ? p.topNotes : (p.top_notes || []),
-    heartNotes: Array.isArray(p.heartNotes) ? p.heartNotes : (p.heart_notes || []),
-    baseNotes: Array.isArray(p.baseNotes) ? p.baseNotes : (p.base_notes || []),
-    season: Array.isArray(p.season) ? p.season : ['All Seasons'],
-    occasion: Array.isArray(p.occasion) ? p.occasion : ['Evening', 'Daily Luxury'],
-    longevity: p.longevity || '14+ Hours',
-    sillage: p.sillage || 'Regal & Intimate',
-    concentration: p.concentration || '35% Pure Extrait Oil',
-    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : ['/products/luxury_designs/07_arabian_gold.webp']),
-    cutoutImage: p.cutoutImage || p.cutout_image || (p.images ? p.images[0] : '/products/luxury_designs/07_arabian_gold.webp'),
-    badge: p.badge || null,
+    images: Array.isArray(p.images) && p.images.length > 0 
+      ? p.images 
+      : (p.imageUrl ? [p.imageUrl] : ['/products/luxury_designs/07_arabian_gold.webp']),
+    imageUrl: p.imageUrl || (Array.isArray(p.images) && p.images[0]) || '/products/luxury_designs/07_arabian_gold.webp',
+    cutoutImage: p.cutoutImage || p.imageUrl || '/products/luxury_designs/07_arabian_gold.webp',
     reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview) : []
   };
 }
 
 /**
- * Review Normalizer
+ * Review Normalizer (Compliant with ReviewResponse)
  */
 export function normalizeReview(raw) {
   if (!raw) return null;
   const r = normalizeObjectKeys(raw);
   return {
     id: r.id || `rev-${Date.now()}`,
-    author: r.author || r.userName || r.user_name || 'Anonymous Patron',
+    productId: r.productId || null,
+    author: r.userName || r.author || 'Anonymous Patron',
+    userName: r.userName || r.author || 'Anonymous Patron',
     rating: Number(r.rating || 5),
-    title: r.title || 'Exquisite Fragrance',
     comment: r.comment || r.body || '',
-    date: r.date || r.createdAt || new Date().toISOString().split('T')[0],
-    verifiedPurchase: Boolean(r.verifiedPurchase !== undefined ? r.verifiedPurchase : true),
-    status: r.status || 'approved'
+    createdAt: r.createdAt || r.date || new Date().toISOString(),
+    status: r.status || 'Approved'
   };
 }
 
 /**
- * User Normalizer
+ * User / Customer Normalizer (Compliant with UserResponse & AdminProfileResponse)
  */
 export function normalizeUser(raw) {
   if (!raw) return null;
   const u = normalizeObjectKeys(raw);
+  const fullName = u.fullName || (u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : (u.name || 'Patron'));
+
   return {
     id: u.id || u.userId || `user-${Date.now()}`,
-    name: u.name || '',
+    name: fullName,
+    firstName: u.firstName || fullName.split(' ')[0] || '',
+    lastName: u.lastName || fullName.split(' ').slice(1).join(' ') || '',
     email: u.email || '',
-    role: u.role || 'USER',
-    status: u.status || 'ACTIVE',
     phone: u.phone || '',
-    memberSince: u.memberSince || u.createdAt || new Date().toISOString().split('T')[0],
-    ordersCount: Number(u.ordersCount || 0),
-    totalSpent: Number(u.totalSpent || 0),
-    addresses: Array.isArray(u.addresses) ? u.addresses : [],
-    paymentMethods: Array.isArray(u.paymentMethods) ? u.paymentMethods : []
+    preferredLanguage: u.preferredLanguage || u.preferredDashboardLanguage || 'en',
+    emailVerifiedAt: u.emailVerifiedAt || null,
+    role: u.isSuperAdmin ? 'SUPER_ADMIN' : (u.role || (u.email?.includes('admin') ? 'ADMIN' : 'USER')),
+    isSuperAdmin: Boolean(u.isSuperAdmin),
+    isActive: u.isActive !== undefined ? Boolean(u.isActive) : true,
+    isBlocked: Boolean(u.isBlocked),
+    memberSince: u.createdAt || u.memberSince || new Date().toISOString().split('T')[0]
   };
 }
 
 /**
- * Order Normalizer
+ * Cart Item Normalizer (Compliant with CartItemResponse)
+ */
+export function normalizeCartItem(raw) {
+  if (!raw) return null;
+  const item = normalizeObjectKeys(raw);
+  return {
+    id: item.id || `ci-${Date.now()}`,
+    productId: item.productId || item.product?.id,
+    productName: item.productName || item.product?.name || item.name || 'Imperial Extrait',
+    imageUrl: item.imageUrl || item.product?.imageUrl || '/products/luxury_designs/07_arabian_gold.webp',
+    quantity: Number(item.quantity || 1),
+    unitPriceSnapshot: Number(item.unitPriceSnapshot || item.price || 0),
+    priceChangeDetectedAt: item.priceChangeDetectedAt || null,
+    priceLockExpiresAt: item.priceLockExpiresAt || null,
+    lineTotal: Number(item.lineTotal || (item.unitPriceSnapshot || item.price || 0) * (item.quantity || 1))
+  };
+}
+
+/**
+ * Cart Normalizer (Compliant with CartResponse)
+ */
+export function normalizeCart(raw) {
+  if (!raw) return null;
+  const c = normalizeObjectKeys(raw);
+  return {
+    id: c.id || `cart-${Date.now()}`,
+    items: Array.isArray(c.items) ? c.items.map(normalizeCartItem) : [],
+    subtotal: Number(c.subtotal || 0),
+    discountTotal: Number(c.discountTotal || c.discount || 0),
+    discount: Number(c.discountTotal || c.discount || 0),
+    shippingEstimate: Number(c.shippingEstimate || c.shipping || 0),
+    total: Number(c.total || 0),
+    currency: c.currency || 'EUR',
+    expiresAt: c.expiresAt || null
+  };
+}
+
+/**
+ * Order Normalizer (Compliant with OrderResponse)
  */
 export function normalizeOrder(raw) {
   if (!raw) return null;
   const o = normalizeObjectKeys(raw);
   return {
-    id: o.id || (o.orderNumber ? `ORD-${o.orderNumber}` : `ORD-${Date.now().toString().slice(-5)}`),
-    userId: o.userId || o.user_id || '',
-    customerName: o.customerName || o.customer_name || '',
-    customerEmail: o.customerEmail || o.customer_email || '',
-    customerPhone: o.customerPhone || o.customer_phone || '',
-    date: o.date || o.createdAt || new Date().toISOString(),
-    status: o.status || 'CONFIRMED',
-    items: Array.isArray(o.items) ? o.items.map(item => normalizeObjectKeys(item)) : [],
+    id: o.id || `ORD-${o.orderNumber || Date.now()}`,
+    orderNumber: o.orderNumber || (typeof o.id === 'string' && o.id.startsWith('ORD-') ? o.id : `ORD-${o.id || Date.now()}`),
+    createdAt: o.createdAt || o.date || new Date().toISOString(),
+    deliveredAt: o.deliveredAt || null,
     subtotal: Number(o.subtotal || 0),
-    tax: Number(o.tax || 0),
-    shipping: Number(o.shipping || 0),
-    discount: Number(o.discount || 0),
-    discountCode: o.discountCode || o.discount_code || null,
+    discountTotal: Number(o.discountTotal || o.discount || 0),
+    shippingCost: Number(o.shippingCost || o.shipping || 0),
     total: Number(o.total || 0),
-    shippingAddress: o.shippingAddress || o.shipping_address || {},
-    paymentMethod: o.paymentMethod || o.payment_method || 'stripe',
-    paymentStatus: o.paymentStatus || o.payment_status || 'PAID',
-    trackingCode: o.trackingCode || o.tracking_code || '',
-    carrier: o.carrier || 'DHL Express',
-    giftWrap: Boolean(o.giftWrap || o.gift_wrap),
-    timeline: Array.isArray(o.timeline) ? o.timeline : [
-      { status: 'PLACED', title: 'Order Placed', timestamp: o.date || new Date().toISOString() }
-    ]
+    currency: o.currency || 'EUR',
+    orderStatus: o.orderStatus || o.status || 'Pending',
+    paymentStatus: o.paymentStatus || 'Paid',
+    items: Array.isArray(o.items) ? o.items.map(item => normalizeObjectKeys(item)) : [],
+    shipping: o.shipping || {
+      shippingCompanyName: o.carrier || 'DHL Express',
+      trackingNumber: o.trackingNumber || o.trackingCode || '',
+      trackingUrl: o.trackingUrl || ''
+    },
+    returns: Array.isArray(o.returns) ? o.returns.map(r => normalizeObjectKeys(r)) : [],
+    refunds: Array.isArray(o.refunds) ? o.refunds.map(r => normalizeObjectKeys(r)) : []
+  };
+}
+
+/**
+ * Return Request Normalizer (Compliant with ReturnResponse)
+ */
+export function normalizeReturn(raw) {
+  if (!raw) return null;
+  const ret = normalizeObjectKeys(raw);
+  return {
+    id: ret.id,
+    orderId: ret.orderId,
+    orderItemId: ret.orderItemId,
+    reason: ret.reason,
+    status: ret.status || 'PendingReturn',
+    rejectionReason: ret.rejectionReason || null,
+    requiresPhoto: Boolean(ret.requiresPhoto),
+    returnLabelUrl: ret.returnLabelUrl || null,
+    requestedAt: ret.requestedAt || new Date().toISOString()
+  };
+}
+
+/**
+ * Coupon Validation Normalizer
+ */
+export function normalizeCouponValidation(raw) {
+  if (!raw) return { valid: false, message: 'Invalid coupon response.' };
+  const c = normalizeObjectKeys(raw);
+  return {
+    valid: Boolean(c.valid),
+    code: c.code || '',
+    type: c.type || 'Percentage',
+    value: Number(c.value || 0),
+    discountAmount: Number(c.discountAmount || 0),
+    message: c.message || (c.valid ? 'Coupon applied successfully.' : 'Invalid coupon.')
   };
 }
