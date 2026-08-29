@@ -1,4 +1,5 @@
 import { productApi } from '../api/product.api';
+import { liveCloudSync } from './liveCloudSync';
 
 const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_cached_catalog_v2';
 
@@ -121,8 +122,7 @@ export const productService = {
   },
 
   /**
-   * Fetch all products directly from the API database only.
-   * Zero local mock products returned.
+   * Fetch all products directly from the API database only with real-time cloud overrides.
    */
   async getAllProducts(filters = {}) {
     try {
@@ -140,13 +140,17 @@ export const productService = {
         response = await productApi.getProducts(apiFilters);
       }
 
-      const items = response?.items || (Array.isArray(response) ? response : []);
+      let items = response?.items || (Array.isArray(response) ? response : []);
       if (items.length > 0) {
+        items = liveCloudSync.applyToProducts(items);
         persistCatalog(items);
+      } else if (cachedProducts.length > 0) {
+        cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
       }
       return this.applyFilters(cachedProducts, filters);
     } catch (err) {
       console.warn('API getProducts error:', err.message);
+      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
       return this.applyFilters(cachedProducts, filters);
     }
   },
@@ -265,7 +269,10 @@ export const productService = {
 
   async createProduct(productData) {
     const created = await productApi.adminCreateProduct(productData);
-    cachedProducts = [];
+    if (created?.id) {
+      await liveCloudSync.addProduct(created).catch(() => {});
+    }
+    const all = await this.getAllProducts({ includeDrafts: true });
     return created;
   },
 
@@ -273,6 +280,7 @@ export const productService = {
     const targetId = this.resolveTargetId(id);
     const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
+    let updatedRemote = null;
     if (targetId) {
       const isPerfume = Boolean(
         productData.perfumeCategoryId ||
@@ -296,19 +304,46 @@ export const productService = {
         ingredients: productData.ingredients || existing?.ingredients
       };
 
-      const updated = await productApi.adminUpdateProduct(targetId, mergedPayload);
-      cachedProducts = [];
-      return updated;
+      try {
+        updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
+      } catch (err) {
+        console.warn('adminUpdateProduct remote error:', err.message);
+      }
     }
 
-    // Update in local cache if not yet assigned numeric DB ID
-    cachedProducts = cachedProducts.map(p => {
-      if (String(p.id) === String(id) || p.slug === id) {
-        return { ...p, ...productData };
+    // Broadcast across all devices via live cloud sync
+    await liveCloudSync.updateProduct(id, productData).catch(() => {});
+    if (targetId) {
+      await liveCloudSync.updateProduct(targetId, productData).catch(() => {});
+    }
+
+    // Update local cache & persistent storage
+    const updatedList = cachedProducts.map(p => {
+      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
+        const merged = { ...p, ...productData };
+        if (productData.discountPercent !== undefined) {
+          const pct = Number(productData.discountPercent);
+          if (pct > 0) {
+            const baseP = p.originalPrice || p.price;
+            merged.originalPrice = baseP;
+            merged.price = Math.round(baseP * (1 - pct / 100));
+            merged.discountPercent = pct;
+            merged.hasDiscount = true;
+            merged.isOffer = true;
+          } else {
+            if (p.originalPrice) merged.price = p.originalPrice;
+            merged.discountPercent = 0;
+            merged.hasDiscount = false;
+            merged.isOffer = false;
+          }
+        }
+        return merged;
       }
       return p;
     });
-    return productData;
+
+    persistCatalog(updatedList);
+    return updatedRemote || productData;
   },
 
   async deleteProduct(id) {
@@ -320,7 +355,12 @@ export const productService = {
         console.warn('adminDeleteProduct API error:', err.message);
       }
     }
-    cachedProducts = cachedProducts.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
+    await liveCloudSync.deleteProduct(id).catch(() => {});
+    if (targetId) {
+      await liveCloudSync.deleteProduct(targetId).catch(() => {});
+    }
+    const updatedList = cachedProducts.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
+    persistCatalog(updatedList);
     return true;
   },
 
@@ -329,19 +369,27 @@ export const productService = {
     const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     if (targetId) {
-      await productApi.adminActivateProduct(targetId, {
-        ...existing,
-        isActive: Boolean(isActive)
-      });
+      if (Boolean(isActive)) {
+        await productApi.adminActivateProduct(targetId, { ...existing, isActive: true }).catch(() => {});
+      } else {
+        await productApi.adminDeactivateProduct(targetId, { ...existing, isActive: false }).catch(() => {});
+      }
     }
 
-    cachedProducts = cachedProducts.map(p => {
-      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId))) {
+    // Set in cloud sync so status reflects everywhere instantly
+    await liveCloudSync.setProductActive(id, isActive).catch(() => {});
+    if (targetId) {
+      await liveCloudSync.setProductActive(targetId, isActive).catch(() => {});
+    }
+
+    const updatedList = cachedProducts.map(p => {
+      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
         return { ...p, isActive: Boolean(isActive), status: isActive ? 'ACTIVE' : 'INACTIVE' };
       }
       return p;
     });
 
+    persistCatalog(updatedList);
     return { id: targetId || id, isActive: Boolean(isActive) };
   },
 

@@ -70,13 +70,8 @@ export default function AdminInventory() {
       } else {
         success(`'${product.name}' is now INACTIVE and hidden from store.`);
       }
-
-      // Re-fetch from database to confirm persistence
-      fetchInventory();
     } catch (err) {
       error(err.message || 'Failed to update product status.');
-      // Re-fetch to restore correct state on error
-      fetchInventory();
     } finally {
       setUpdatingId(null);
     }

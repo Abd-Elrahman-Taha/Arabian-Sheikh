@@ -53,37 +53,68 @@ export default function AdminProducts() {
       return;
     }
     try {
+      setProducts(prev => prev.filter(p => p.id !== id && p.numericId !== id));
       await productService.deleteProduct(id);
       success(`'${name}' has been removed.`);
-      // Re-fetch from database to confirm deletion persisted
-      fetchProducts();
     } catch (err) {
       error(err.message || 'Could not delete item.');
+      fetchProducts();
     }
   };
 
   const handleToggleDiscount = async (product, isEnabling, percent = 20) => {
     try {
+      const pct = Number(percent) || 20;
+      setProducts(prev => prev.map(p => {
+        if (p.id === product.id) {
+          const basePrice = p.originalPrice || p.price;
+          return {
+            ...p,
+            hasDiscount: isEnabling,
+            isOffer: isEnabling,
+            discountPercent: isEnabling ? pct : 0,
+            originalPrice: isEnabling ? basePrice : null,
+            price: isEnabling ? Math.round(basePrice * (1 - pct / 100)) : (p.originalPrice || p.price)
+          };
+        }
+        return p;
+      }));
+
       if (isEnabling) {
-        await productService.applyProductDiscount(product.id, percent);
-        success(`Discount of ${percent}% applied to '${product.name}'.`);
+        await productService.applyProductDiscount(product.id, pct);
+        success(`Discount of ${pct}% applied to '${product.name}'.`);
       } else {
         await productService.removeProductDiscount(product.id);
         success(`Discount removed from '${product.name}'.`);
       }
-      fetchProducts();
     } catch (err) {
       error(err.message || 'Failed to update discount');
+      fetchProducts();
     }
   };
 
   const handleUpdateDiscountPercent = async (product, newPercent) => {
     try {
-      await productService.applyProductDiscount(product.id, newPercent);
-      success(`Discount updated to ${newPercent}% for '${product.name}'.`);
-      fetchProducts();
+      const pct = Number(newPercent) || 10;
+      setProducts(prev => prev.map(p => {
+        if (p.id === product.id) {
+          const basePrice = p.originalPrice || p.price;
+          return {
+            ...p,
+            hasDiscount: true,
+            isOffer: true,
+            discountPercent: pct,
+            originalPrice: basePrice,
+            price: Math.round(basePrice * (1 - pct / 100))
+          };
+        }
+        return p;
+      }));
+      await productService.applyProductDiscount(product.id, pct);
+      success(`Discount updated to ${pct}% for '${product.name}'.`);
     } catch (err) {
       error(err.message || 'Failed to update discount');
+      fetchProducts();
     }
   };
 
