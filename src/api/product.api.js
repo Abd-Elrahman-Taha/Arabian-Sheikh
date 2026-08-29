@@ -213,7 +213,19 @@ export const productApi = {
    * If non-perfume, price is required and perfumeCategoryId is omitted.
    */
   async adminCreateProduct(payload) {
-    const response = await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.CREATE, payload);
+    const isPerfume = Boolean(payload.perfumeCategoryId || payload.category === 'perfumes' || Number(payload.categoryId) === 1);
+    const body = {
+      name: payload.name || 'Imperial Extrait',
+      description: payload.description || payload.tagline || 'Exclusive Creation',
+      brandId: Number(payload.brandId) || 1,
+      categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
+      subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
+      perfumeCategoryId: isPerfume ? (Number(payload.perfumeCategoryId) || 1) : null,
+      price: !isPerfume ? Number(payload.price || 55) : undefined,
+      gender: payload.gender || 'Unisex',
+      isActive: payload.isActive !== false
+    };
+    const response = await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.CREATE, body);
     return normalizeProduct(response);
   },
 
@@ -222,7 +234,19 @@ export const productApi = {
    * PUT /api/admin/products/{id}
    */
   async adminUpdateProduct(id, payload) {
-    const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), payload);
+    const isPerfume = Boolean(payload.perfumeCategoryId || payload.category === 'perfumes' || Number(payload.categoryId) === 1);
+    const body = {
+      name: payload.name || 'Imperial Extrait',
+      description: payload.description || payload.tagline || 'Exclusive Creation',
+      brandId: Number(payload.brandId) || 1,
+      categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
+      subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
+      perfumeCategoryId: isPerfume ? (Number(payload.perfumeCategoryId) || 1) : null,
+      price: !isPerfume ? Number(payload.price || 55) : undefined,
+      gender: payload.gender || 'Unisex',
+      isActive: payload.isActive !== false
+    };
+    const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
     return normalizeProduct(response);
   },
 
