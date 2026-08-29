@@ -8,7 +8,7 @@
 const NTFY_ENDPOINT = 'https://ntfy.sh/arabian_sheikh_sync_hub_2026';
 const CLOUD_OBJECT_ID = 'ff8081819ff5b11001a04379654336f1';
 const CLOUD_ENDPOINT = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
-const LOCAL_STORAGE_KEY = 'arabian_sheikh_live_cloud_state_v1';
+const LOCAL_STORAGE_KEY = 'arabian_sheikh_live_cloud_state_v3';
 
 // In-memory state structure
 let state = {
@@ -438,14 +438,20 @@ export const liveCloudSync = {
         item.isOffer = false;
       }
 
-      // Apply active / inactive status
+      // Apply active / inactive status (database status + explicit overrides)
       const isExplicitlyInactive = inactiveSet.has(idStr) || (slugStr && inactiveSet.has(slugStr)) || (numStr && inactiveSet.has(numStr));
       const isExplicitlyActive = activeSet.has(idStr) || (slugStr && activeSet.has(slugStr)) || (numStr && activeSet.has(numStr));
 
-      if (isExplicitlyInactive) {
+      if (isExplicitlyActive) {
+        item.isActive = true;
+        item.status = 'ACTIVE';
+      } else if (isExplicitlyInactive) {
         item.isActive = false;
         item.status = 'INACTIVE';
-      } else if (isExplicitlyActive) {
+      } else if (p.isActive !== undefined) {
+        item.isActive = Boolean(p.isActive);
+        item.status = item.isActive ? 'ACTIVE' : 'INACTIVE';
+      } else {
         item.isActive = true;
         item.status = 'ACTIVE';
       }
