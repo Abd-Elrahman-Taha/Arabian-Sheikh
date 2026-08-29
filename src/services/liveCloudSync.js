@@ -335,6 +335,8 @@ export const liveCloudSync = {
       }
     }
 
+    state.lastUpdated = new Date().toISOString();
+    saveLocalState();
     await pushToCloud();
   },
 
