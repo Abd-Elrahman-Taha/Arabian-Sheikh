@@ -24,7 +24,18 @@ export const REFRESH_TOKEN_KEY = 'arabian_sheikh_refresh_token';
 export const tokenManager = {
   getToken: () => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(TOKEN_KEY) || null;
+    let t = localStorage.getItem(TOKEN_KEY);
+    if (!t) {
+      try {
+        const rawUser = localStorage.getItem('arabian_sheikh_current_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          t = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
+          if (t) localStorage.setItem(TOKEN_KEY, t);
+        }
+      } catch {}
+    }
+    return t || null;
   },
   setToken: (token) => {
     if (typeof window !== 'undefined' && token) {
@@ -179,10 +190,7 @@ async function request(endpoint, options = {}) {
 
       // Global Interceptor: 401 Unauthorized
       if (response.status === 401) {
-        tokenManager.clearTokens();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { endpoint } }));
-        }
+        console.warn(`[HTTP 401] Unauthorized on ${endpoint}. Verify admin session token.`);
       }
 
       throw new ApiError(errorMessage, response.status, data, errorCode);

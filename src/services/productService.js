@@ -1,6 +1,32 @@
 import { productApi } from '../api/product.api';
 
-let cachedProducts = [];
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_cached_catalog_v2';
+
+function loadInitialCatalog() {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+  }
+  return [];
+}
+
+let cachedProducts = loadInitialCatalog();
+
+function persistCatalog(items) {
+  if (Array.isArray(items) && items.length > 0) {
+    cachedProducts = items;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(items));
+      } catch {}
+    }
+  }
+}
 
 export const productService = {
   /**
@@ -102,15 +128,22 @@ export const productService = {
     try {
       const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
       
-      let response;
+      let response = null;
       if (filters.includeDrafts) {
-        response = await productApi.adminGetProducts(apiFilters);
+        try {
+          response = await productApi.adminGetProducts(apiFilters);
+        } catch (adminErr) {
+          console.warn('adminGetProducts failed, fetching public products:', adminErr.message);
+          response = await productApi.getProducts(apiFilters).catch(() => null);
+        }
       } else {
         response = await productApi.getProducts(apiFilters);
       }
 
       const items = response?.items || (Array.isArray(response) ? response : []);
-      cachedProducts = Array.isArray(items) ? items : [];
+      if (items.length > 0) {
+        persistCatalog(items);
+      }
       return this.applyFilters(cachedProducts, filters);
     } catch (err) {
       console.warn('API getProducts error:', err.message);
