@@ -260,13 +260,19 @@ export const productApi = {
 
     const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
     
-    // Also update translation if name or description is provided
-    if (payload.name || payload.description) {
-      await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'En'), {
+    // Update translations across all supported languages (En, Bg, Ar, Es) so edits persist permanently across all locales on refresh
+    if (payload.name || payload.description || payload.ingredients) {
+      const transBody = {
         name: payload.name || 'Imperial Extrait',
         description: payload.description || 'Haute Parfumerie Creation',
         ingredients: payload.ingredients || 'Rare Oud, Amber Crystals, Taif Rose'
-      }).catch(() => {});
+      };
+      await Promise.allSettled([
+        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'En'), transBody),
+        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'Bg'), transBody),
+        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'Ar'), transBody),
+        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'Es'), transBody)
+      ]);
     }
 
     return normalizeProduct(response);
