@@ -1,42 +1,6 @@
 import { productApi } from '../api/product.api';
-import { liveCloudSync } from './liveCloudSync';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_cached_catalog_v2';
-
-function loadInitialCatalog() {
-  if (typeof window !== 'undefined') {
-    try {
-      const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-  }
-  return [];
-}
-
-let cachedProducts = loadInitialCatalog();
-
-function persistCatalog(items) {
-  if (Array.isArray(items) && items.length > 0) {
-    cachedProducts = items;
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(items));
-      } catch {}
-    }
-  }
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('arabian_sheikh_cloud_updated', () => {
-    if (cachedProducts && cachedProducts.length > 0) {
-      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
-      persistCatalog(cachedProducts);
-    }
-  });
-}
+let memoryCatalog = [];
 
 export const productService = {
   /**
@@ -62,36 +26,37 @@ export const productService = {
       );
     }
 
-    // Filter by category only if strictly requested
+    // Filter by category
     if (filters.category && filters.category !== 'all') {
       const cat = filters.category.toLowerCase().trim();
       if (cat === 'offers' || cat === 'discounts') {
         result = result.filter(p => p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
       } else {
         result = result.filter(p => {
-          const c = (p.category || p.categoryName || '').toLowerCase();
-          return !c || c === 'all' || c === cat || c.includes(cat) || cat.includes(c);
+          const c = (p.category || p.categoryName || '').toLowerCase().trim();
+          if (!c || c === 'all') return true;
+          return c === cat || c.includes(cat) || cat.includes(c) || (cat === 'perfumes' && (c === 'perfume' || !c));
         });
       }
     }
 
     // Filter by perfume tier
     if (filters.tier && filters.tier !== 'all') {
-      const targetTier = filters.tier.toLowerCase();
+      const targetTier = filters.tier.toLowerCase().trim();
       result = result.filter(p => {
-        const t = (p.tier || p.perfumeCategoryName || '').toLowerCase();
+        const t = (p.tier || p.perfumeCategoryName || '').toLowerCase().trim();
         return !t || t === targetTier;
       });
     }
 
     // Filter by gender
     if (filters.gender && filters.gender !== 'all') {
-      const target = filters.gender.toLowerCase();
+      const target = filters.gender.toLowerCase().trim();
       result = result.filter(p => {
-        const pg = (p.gender || '').toLowerCase();
+        const pg = (p.gender || '').toLowerCase().trim();
         return !pg || pg === 'unisex' || pg === target ||
-          (target === 'men' && pg === 'male') ||
-          (target === 'women' && pg === 'female');
+          (target === 'men' && (pg === 'male' || pg === 'masculine')) ||
+          (target === 'women' && (pg === 'female' || pg === 'feminine'));
       });
     }
 
@@ -127,11 +92,12 @@ export const productService = {
   },
 
   getAllProductsSync(filters = {}) {
-    return this.applyFilters(cachedProducts, filters);
+    return this.applyFilters(memoryCatalog, filters);
   },
 
   /**
-   * Fetch all products directly from the API database only with real-time cloud overrides.
+   * Pure Live ASP.NET API database fetch.
+   * Zero localStorage caching.
    */
   async getAllProducts(filters = {}) {
     try {
@@ -142,32 +108,27 @@ export const productService = {
         try {
           response = await productApi.adminGetProducts(apiFilters);
         } catch (adminErr) {
-          console.warn('adminGetProducts failed, fetching public products:', adminErr.message);
+          console.warn('adminGetProducts fallback to public getProducts:', adminErr.message);
           response = await productApi.getProducts(apiFilters).catch(() => null);
         }
       } else {
         response = await productApi.getProducts(apiFilters);
       }
 
-      let items = response?.items || (Array.isArray(response) ? response : []);
+      const items = response?.items || (Array.isArray(response) ? response : []);
       if (items.length > 0) {
-        items = liveCloudSync.applyToProducts(items);
-        cachedProducts = items;
-        persistCatalog(items);
-      } else if (cachedProducts.length > 0) {
-        cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
+        memoryCatalog = items;
       }
-      return this.applyFilters(cachedProducts, filters);
+      return this.applyFilters(items.length > 0 ? items : memoryCatalog, filters);
     } catch (err) {
-      console.warn('API getProducts error:', err.message);
-      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
-      return this.applyFilters(cachedProducts, filters);
+      console.warn('API getAllProducts error:', err.message);
+      return this.applyFilters(memoryCatalog, filters);
     }
   },
 
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
-    return cachedProducts.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
+    return memoryCatalog.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
   },
 
   async getProductById(idOrSlug) {
@@ -188,7 +149,7 @@ export const productService = {
   },
 
   getFeaturedProductsSync(limit = 4) {
-    return cachedProducts.filter(p => p.featured).slice(0, limit);
+    return memoryCatalog.filter(p => p.featured).slice(0, limit);
   },
 
   async getFeaturedProducts(limit = 4) {
@@ -197,7 +158,7 @@ export const productService = {
   },
 
   getProductsByCategorySync(category, limit) {
-    const filtered = this.applyFilters(cachedProducts, { category });
+    const filtered = this.applyFilters(memoryCatalog, { category });
     return limit ? filtered.slice(0, limit) : filtered;
   },
 
@@ -207,7 +168,7 @@ export const productService = {
   },
 
   getProductsByTierSync(tier, limit) {
-    const filtered = this.applyFilters(cachedProducts, { tier });
+    const filtered = this.applyFilters(memoryCatalog, { tier });
     return limit ? filtered.slice(0, limit) : filtered;
   },
 
@@ -249,9 +210,9 @@ export const productService = {
   },
 
   getRelatedProductsSync(currentId, limit = 4) {
-    const current = cachedProducts.find(p => String(p.id) === String(currentId) || p.slug === currentId);
-    if (!current) return cachedProducts.slice(0, limit);
-    return cachedProducts.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
+    const current = memoryCatalog.find(p => String(p.id) === String(currentId) || p.slug === currentId);
+    if (!current) return memoryCatalog.slice(0, limit);
+    return memoryCatalog.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
   },
 
   async searchProducts(query, limit = 10) {
@@ -265,36 +226,25 @@ export const productService = {
   },
 
   // ==========================================
-  // Admin & Back-Office API Integration
+  // Admin & Back-Office Live Database Mutations
   // ==========================================
   resolveTargetId(id) {
     if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
     const num = Number(id);
     if (!isNaN(num) && num > 0) return num;
-    const found = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id);
+    const found = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id);
     if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
     if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
     return null;
   },
 
   async createProduct(productData) {
-    let created = null;
-    try {
-      created = await productApi.adminCreateProduct(productData);
-    } catch (err) {
-      console.warn('adminCreateProduct API fallback:', err.message);
-      created = { ...productData, id: 'as-prod-' + Date.now() };
-    }
-    if (created?.id) {
-      await liveCloudSync.addProduct(created).catch(() => {});
-    }
-    const all = await this.getAllProducts({ includeDrafts: true });
-    return created;
+    return await productApi.adminCreateProduct(productData);
   },
 
   async updateProduct(id, productData) {
     const targetId = this.resolveTargetId(id);
-    const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
+    const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     const isPerfume = Boolean(
       productData.perfumeCategoryId ||
@@ -314,7 +264,6 @@ export const productService = {
       else if (isPerfume) perfumeCatId = 1;
     }
 
-    let updatedRemote = null;
     if (targetId) {
       const mergedPayload = {
         brandId: Number(productData.brandId || existing?.brandId) || 1,
@@ -330,110 +279,30 @@ export const productService = {
         ingredients: productData.ingredients || existing?.ingredients
       };
 
-      try {
-        updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
-      } catch (err) {
-        console.warn('adminUpdateProduct API fallback (401/offline):', err.message);
-      }
+      return await productApi.adminUpdateProduct(targetId, mergedPayload);
     }
-
-    // Compute final prices and discount fields
-    let finalHasDiscount = productData.hasDiscount !== undefined ? Boolean(productData.hasDiscount) : Boolean(existing?.hasDiscount);
-    let finalDiscountPct = productData.discountPercent !== undefined ? Number(productData.discountPercent) : (Number(existing?.discountPercent) || 0);
-    let finalOriginalPrice = productData.originalPrice !== undefined ? productData.originalPrice : existing?.originalPrice;
-    let finalPrice = productData.price !== undefined ? Number(productData.price) : Number(existing?.price || 0);
-
-    if (finalDiscountPct > 0 && finalHasDiscount) {
-      const basePrice = finalOriginalPrice ? Number(finalOriginalPrice) : finalPrice;
-      finalOriginalPrice = basePrice;
-      finalPrice = Math.round(basePrice * (1 - finalDiscountPct / 100));
-      finalHasDiscount = true;
-    } else if (finalDiscountPct === 0 || !finalHasDiscount) {
-      if (finalOriginalPrice) finalPrice = Number(finalOriginalPrice);
-      finalHasDiscount = false;
-      finalDiscountPct = 0;
-    }
-
-    const tierValue = productData.tier || existing?.tier || (isPerfume ? 'Luxury' : null);
-
-    const enrichedProductData = {
-      ...productData,
-      tier: tierValue,
-      perfumeCategoryName: tierValue,
-      perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,
-      hasDiscount: finalHasDiscount,
-      discountPercent: finalDiscountPct,
-      isOffer: finalHasDiscount,
-      price: finalPrice,
-      originalPrice: finalHasDiscount ? finalOriginalPrice : null
-    };
-
-    // Broadcast across all devices via live cloud sync
-    await liveCloudSync.updateProduct(id, enrichedProductData).catch(() => {});
-    if (targetId) {
-      await liveCloudSync.updateProduct(targetId, enrichedProductData).catch(() => {});
-    }
-
-    // Update local cache & persistent storage
-    const updatedList = cachedProducts.map(p => {
-      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
-        return { ...p, ...enrichedProductData };
-      }
-      return p;
-    });
-
-    persistCatalog(updatedList);
-    return updatedRemote || enrichedProductData;
+    return productData;
   },
 
   async deleteProduct(id) {
     const targetId = this.resolveTargetId(id);
     if (targetId) {
-      try {
-        await productApi.adminDeleteProduct(targetId);
-      } catch (err) {
-        console.warn('adminDeleteProduct API fallback:', err.message);
-      }
+      return await productApi.adminDeleteProduct(targetId);
     }
-    await liveCloudSync.deleteProduct(id).catch(() => {});
-    if (targetId) {
-      await liveCloudSync.deleteProduct(targetId).catch(() => {});
-    }
-    const updatedList = cachedProducts.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
-    persistCatalog(updatedList);
     return true;
   },
 
   async toggleProductActive(id, isActive) {
     const targetId = this.resolveTargetId(id);
-    const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
+    const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     if (targetId) {
       if (Boolean(isActive)) {
-        await productApi.adminActivateProduct(targetId, existing).catch((err) => {
-          console.warn('adminActivateProduct API fallback (401/offline):', err.message);
-        });
+        return await productApi.adminActivateProduct(targetId, existing);
       } else {
-        await productApi.adminDeactivateProduct(targetId, existing).catch((err) => {
-          console.warn('adminDeactivateProduct API fallback (401/offline):', err.message);
-        });
+        return await productApi.adminDeactivateProduct(targetId, existing);
       }
     }
-
-    // Clear and set in cloud sync for all aliases so status reflects everywhere instantly
-    const aliases = Array.from(new Set([id, targetId, existing.id, existing.slug, existing.numericId].filter(Boolean)));
-    for (const a of aliases) {
-      await liveCloudSync.setProductActive(a, isActive).catch(() => {});
-    }
-
-    const updatedList = cachedProducts.map(p => {
-      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
-        return { ...p, isActive: Boolean(isActive), status: isActive ? 'ACTIVE' : 'INACTIVE' };
-      }
-      return p;
-    });
-
-    persistCatalog(updatedList);
     return { id: targetId || id, isActive: Boolean(isActive) };
   },
 
@@ -460,7 +329,7 @@ export const productService = {
   },
 
   getDiscountedProductsSync() {
-    return cachedProducts.filter(p => 
+    return memoryCatalog.filter(p => 
       (!p.status || p.status === 'ACTIVE') && (
         p.hasDiscount || 
         (p.discountPercent && p.discountPercent > 0) || 
