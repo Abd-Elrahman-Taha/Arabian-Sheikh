@@ -280,21 +280,31 @@ export const productService = {
     const targetId = this.resolveTargetId(id);
     const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
+    const isPerfume = Boolean(
+      productData.perfumeCategoryId ||
+      (existing?.perfumeCategoryId) ||
+      productData.category === 'perfumes' ||
+      existing?.category === 'perfumes' ||
+      productData.tier ||
+      existing?.tier ||
+      Number(productData.categoryId || existing?.categoryId) === 1
+    );
+
+    let perfumeCatId = productData.perfumeCategoryId;
+    if (!perfumeCatId) {
+      const tierName = productData.tier || existing?.tier;
+      if (tierName === 'Royal') perfumeCatId = 2;
+      else if (tierName === 'Classic') perfumeCatId = 3;
+      else if (isPerfume) perfumeCatId = 1;
+    }
+
     let updatedRemote = null;
     if (targetId) {
-      const isPerfume = Boolean(
-        productData.perfumeCategoryId ||
-        (existing?.perfumeCategoryId) ||
-        productData.category === 'perfumes' ||
-        existing?.category === 'perfumes' ||
-        Number(productData.categoryId || existing?.categoryId) === 1
-      );
-
       const mergedPayload = {
         brandId: Number(productData.brandId || existing?.brandId) || 1,
         categoryId: Number(productData.categoryId || existing?.categoryId) || (isPerfume ? 1 : 2),
         subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (existing?.subcategoryId || null),
-        perfumeCategoryId: isPerfume ? (Number(productData.perfumeCategoryId || existing?.perfumeCategoryId) || 1) : null,
+        perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,
         gender: productData.gender || existing?.gender || 'Unisex',
         price: Number(productData.price !== undefined ? productData.price : (existing?.price || 0)),
         isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (existing?.isActive !== false),
@@ -311,39 +321,53 @@ export const productService = {
       }
     }
 
+    // Compute final prices and discount fields
+    let finalHasDiscount = productData.hasDiscount !== undefined ? Boolean(productData.hasDiscount) : Boolean(existing?.hasDiscount);
+    let finalDiscountPct = productData.discountPercent !== undefined ? Number(productData.discountPercent) : (Number(existing?.discountPercent) || 0);
+    let finalOriginalPrice = productData.originalPrice !== undefined ? productData.originalPrice : existing?.originalPrice;
+    let finalPrice = productData.price !== undefined ? Number(productData.price) : Number(existing?.price || 0);
+
+    if (finalDiscountPct > 0 && finalHasDiscount) {
+      const basePrice = finalOriginalPrice ? Number(finalOriginalPrice) : finalPrice;
+      finalOriginalPrice = basePrice;
+      finalPrice = Math.round(basePrice * (1 - finalDiscountPct / 100));
+      finalHasDiscount = true;
+    } else if (finalDiscountPct === 0 || !finalHasDiscount) {
+      if (finalOriginalPrice) finalPrice = Number(finalOriginalPrice);
+      finalHasDiscount = false;
+      finalDiscountPct = 0;
+    }
+
+    const tierValue = productData.tier || existing?.tier || (isPerfume ? 'Luxury' : null);
+
+    const enrichedProductData = {
+      ...productData,
+      tier: tierValue,
+      perfumeCategoryName: tierValue,
+      perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,
+      hasDiscount: finalHasDiscount,
+      discountPercent: finalDiscountPct,
+      isOffer: finalHasDiscount,
+      price: finalPrice,
+      originalPrice: finalHasDiscount ? finalOriginalPrice : null
+    };
+
     // Broadcast across all devices via live cloud sync
-    await liveCloudSync.updateProduct(id, productData).catch(() => {});
+    await liveCloudSync.updateProduct(id, enrichedProductData).catch(() => {});
     if (targetId) {
-      await liveCloudSync.updateProduct(targetId, productData).catch(() => {});
+      await liveCloudSync.updateProduct(targetId, enrichedProductData).catch(() => {});
     }
 
     // Update local cache & persistent storage
     const updatedList = cachedProducts.map(p => {
       if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
-        const merged = { ...p, ...productData };
-        if (productData.discountPercent !== undefined) {
-          const pct = Number(productData.discountPercent);
-          if (pct > 0) {
-            const baseP = p.originalPrice || p.price;
-            merged.originalPrice = baseP;
-            merged.price = Math.round(baseP * (1 - pct / 100));
-            merged.discountPercent = pct;
-            merged.hasDiscount = true;
-            merged.isOffer = true;
-          } else {
-            if (p.originalPrice) merged.price = p.originalPrice;
-            merged.discountPercent = 0;
-            merged.hasDiscount = false;
-            merged.isOffer = false;
-          }
-        }
-        return merged;
+        return { ...p, ...enrichedProductData };
       }
       return p;
     });
 
     persistCatalog(updatedList);
-    return updatedRemote || productData;
+    return updatedRemote || enrichedProductData;
   },
 
   async deleteProduct(id) {

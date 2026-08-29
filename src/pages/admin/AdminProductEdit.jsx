@@ -80,6 +80,12 @@ export default function AdminProductEdit() {
       const baseArr = formData.baseNotes.split(',').map(n => n.trim()).filter(Boolean);
       const imagesArr = formData.images.split(',').map(img => img.trim()).filter(Boolean);
 
+      const isPerfume = formData.category === 'perfumes' || !!formData.tier;
+      let perfumeCatId = null;
+      if (formData.tier === 'Royal') perfumeCatId = 2;
+      else if (formData.tier === 'Classic') perfumeCatId = 3;
+      else if (formData.tier === 'Luxury' || isPerfume) perfumeCatId = 1;
+
       let finalPrice = Number(formData.price);
       let finalOriginalPrice = null;
       let finalHasDiscount = false;
@@ -101,6 +107,9 @@ export default function AdminProductEdit() {
 
       const payload = {
         ...formData,
+        perfumeCategoryId: isPerfume ? perfumeCatId : null,
+        tier: formData.tier || (isPerfume ? 'Luxury' : 'Luxury'),
+        perfumeCategoryName: formData.tier || (isPerfume ? 'Luxury' : 'Luxury'),
         price: finalPrice,
         originalPrice: finalOriginalPrice,
         hasDiscount: finalHasDiscount,
