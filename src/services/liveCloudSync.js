@@ -18,8 +18,40 @@ let state = {
   newProducts: []         // Array of newly created products
 };
 
-function loadLocalState() {}
-function saveLocalState() {}
+const LOCAL_STORAGE_KEY = 'arabian_sheikh_live_cloud_state_v4';
+
+function loadLocalState() {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = {
+        orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+        users: Array.isArray(parsed.users) ? parsed.users : [],
+        inactiveProductIds: Array.isArray(parsed.inactiveProductIds) ? parsed.inactiveProductIds : [],
+        activeProductIds: Array.isArray(parsed.activeProductIds) ? parsed.activeProductIds : [],
+        deletedProductIds: Array.isArray(parsed.deletedProductIds) ? parsed.deletedProductIds : [],
+        modifiedProducts: parsed.modifiedProducts && typeof parsed.modifiedProducts === 'object' ? parsed.modifiedProducts : {},
+        newProducts: Array.isArray(parsed.newProducts) ? parsed.newProducts : []
+      };
+    }
+  } catch (e) {
+    console.warn('Could not read local cloud state:', e);
+  }
+}
+
+function saveLocalState() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Could not save local cloud state:', e);
+  }
+}
+
+// Load state immediately on script initialization
+loadLocalState();
 
 const FIREBASE_ENDPOINT = 'https://arabian-sheikh-2026-default-rtdb.firebaseio.com/sync.json';
 
