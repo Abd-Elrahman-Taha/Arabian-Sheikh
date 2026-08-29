@@ -43,8 +43,14 @@ export const productService = {
       } else {
         result = result.filter(p => {
           const c = (p.category || p.categoryName || '').toLowerCase().trim();
-          if (!c || c === 'all') return true;
-          return c === cat || c.includes(cat) || cat.includes(c) || (cat === 'perfumes' && (c === 'perfume' || !c));
+          const catId = p.categoryId ? String(p.categoryId) : (p.category?.id ? String(p.category.id) : '');
+          if (!c && !catId) return true;
+          return c === cat || c.includes(cat) || cat.includes(c) || catId === cat ||
+            (cat === 'perfumes' && (c === 'perfume' || catId === '1' || !c)) ||
+            (cat === 'oils' && (c.includes('oil') || catId === '2')) ||
+            (cat === 'bakhoor' && (c.includes('bakhoor') || c.includes('incense') || catId === '3')) ||
+            (cat === 'cosmetics' && (c.includes('cosmetic') || catId === '4')) ||
+            (cat === 'bundles' && (c.includes('bundle') || catId === '5'));
         });
       }
     }

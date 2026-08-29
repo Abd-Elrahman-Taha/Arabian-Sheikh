@@ -3,6 +3,7 @@ import { useRouter } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { productService } from '../services/productService';
+import { productApi } from '../api/product.api';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import {
@@ -26,6 +27,13 @@ export default function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [apiCategories, setApiCategories] = useState([
+    { id: 1, name: 'Perfumes', slug: 'perfumes' },
+    { id: 2, name: 'Oils', slug: 'oils' },
+    { id: 3, name: 'Bakhoor', slug: 'bakhoor' },
+    { id: 4, name: 'Cosmetics', slug: 'cosmetics' },
+    { id: 5, name: 'Bundles', slug: 'bundles' }
+  ]);
 
   const initialCategory = queryParams.get('category') || 'all';
   const initialTier = queryParams.get('tier') || 'all';
@@ -43,6 +51,18 @@ export default function Shop() {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState(initialSort);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const list = await productApi.getCategories().catch(() => null) || await productApi.adminGetCategories().catch(() => null);
+        if (Array.isArray(list) && list.length > 0) {
+          setApiCategories(list);
+        }
+      } catch {}
+    }
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (queryParams.get('category')) setCategory(queryParams.get('category'));
@@ -114,13 +134,25 @@ export default function Shop() {
     family !== 'all' || search !== '' || maxPrice < 150 || inStockOnly || minRating > 0;
 
   const categoriesList = [
-    { id: 'all', label: 'All Catalog' },
-    { id: 'offers', label: 'Offers & Discounts' },
-    { id: 'perfumes', label: 'Perfumes' },
-    { id: 'oils', label: 'Oils (Attar)' },
-    { id: 'bakhoor', label: 'Bakhoor & Incense' },
-    { id: 'cosmetics', label: 'Cosmetics' },
-    { id: 'bundles', label: 'Bundles' }
+    { id: 'all', label: isRtl ? 'جميع المعروضات' : 'All Catalog' },
+    { id: 'offers', label: isRtl ? 'العروض والتخفيضات' : 'Offers & Discounts' },
+    ...apiCategories.map(c => {
+      const catKey = (c.slug || c.name || `category-${c.id}`).toLowerCase().trim();
+      let displayName = c.name || `Category #${c.id}`;
+      if (isRtl) {
+        if (c.arabicName) displayName = c.arabicName;
+        else if (catKey.includes('perfume')) displayName = 'عطور فاخرة';
+        else if (catKey.includes('oil')) displayName = 'زيوت دهن عود';
+        else if (catKey.includes('bakhoor') || catKey.includes('incense')) displayName = 'بخور ومعطرات';
+        else if (catKey.includes('cosmetic')) displayName = 'مستحضرات تجميل';
+        else if (catKey.includes('bundle')) displayName = 'باقات وهدايا';
+      }
+      return {
+        id: catKey,
+        rawId: c.id,
+        label: displayName
+      };
+    })
   ];
 
   const tiersList = [

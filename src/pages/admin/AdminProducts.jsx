@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
+import { productApi } from '../../api/product.api';
 import { useToast } from '../../context/ToastContext';
 import {
   Package,
@@ -13,7 +14,8 @@ import {
   Crown,
   Percent,
   Tag,
-  RefreshCw
+  RefreshCw,
+  Layers
 } from 'lucide-react';
 
 export default function AdminProducts() {
@@ -22,10 +24,29 @@ export default function AdminProducts() {
   const { success, error } = useToast();
 
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([
+    { id: 1, name: 'Perfumes' },
+    { id: 2, name: 'Oils' },
+    { id: 3, name: 'Bakhoor' },
+    { id: 4, name: 'Cosmetics' },
+    { id: 5, name: 'Bundles' }
+  ]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const list = await productApi.adminGetCategories().catch(() => null) || await productApi.getCategories().catch(() => null);
+        if (Array.isArray(list) && list.length > 0) {
+          setCategories(list);
+        }
+      } catch {}
+    }
+    loadCategories();
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -176,11 +197,14 @@ export default function AdminProducts() {
           className="bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 text-sm text-[#F3E6D0] rounded-lg focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
         >
           <option value="all">All Categories</option>
-          <option value="perfumes">Perfumes</option>
-          <option value="oils">Oils (Attar)</option>
-          <option value="bakhoor">Bakhoor & Incense</option>
-          <option value="cosmetics">Cosmetics</option>
-          <option value="bundles">Bundles</option>
+          {categories.map(c => {
+            const catKey = (c.slug || c.name || `category-${c.id}`).toLowerCase().trim();
+            return (
+              <option key={c.id} value={catKey}>
+                {c.name || `Category #${c.id}`}
+              </option>
+            );
+          })}
         </select>
 
         <select
