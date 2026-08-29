@@ -89,15 +89,6 @@ async function pushToCloud() {
 function mergeRemoteData(remoteData) {
   if (!remoteData || typeof remoteData !== 'object') return;
 
-  // Protect newer local state from stale remote messages
-  if (remoteData.lastUpdated && state.lastUpdated) {
-    try {
-      if (new Date(remoteData.lastUpdated).getTime() < new Date(state.lastUpdated).getTime()) {
-        return;
-      }
-    } catch {}
-  }
-
   // Direct adoption from latest broadcast
   if (Array.isArray(remoteData.activeProductIds)) {
     const activeList = remoteData.activeProductIds.map(String);
