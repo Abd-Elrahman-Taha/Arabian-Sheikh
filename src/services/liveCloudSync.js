@@ -67,26 +67,36 @@ async function pushToCloud() {
 
   isPushing = true;
   try {
-    const payload = {
-      name: 'arabian_sheikh_live_state',
-      data: {
-        ...state,
-        lastUpdated: new Date().toISOString()
-      }
+    const dataPayload = {
+      ...state,
+      lastUpdated: new Date().toISOString()
     };
 
     // 1. Instant cross-device broadcast via public ntfy hub (unlimited, no auth)
     fetch(NTFY_ENDPOINT, {
       method: 'POST',
+      headers: {
+        'Title': 'Sync',
+        'Priority': 'high'
+      },
+      body: JSON.stringify(dataPayload)
+    }).catch(() => {});
+
+    // Also send structured message payload for guaranteed SSE string parsing
+    fetch(NTFY_ENDPOINT, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        topic: 'arabian_sheikh_sync_hub_2026',
+        message: JSON.stringify(dataPayload)
+      })
     }).catch(() => {});
 
     // 2. Secondary backup to restful-api.dev
     fetch(CLOUD_ENDPOINT, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ name: 'arabian_sheikh_live_state', data: dataPayload })
     }).catch(() => {});
   } catch (err) {
     console.warn('Cloud sync push error:', err.message);
