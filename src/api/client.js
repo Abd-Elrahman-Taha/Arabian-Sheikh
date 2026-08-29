@@ -165,7 +165,16 @@ async function request(endpoint, options = {}) {
 
     // Handle HTTP Error Codes
     if (!response.ok) {
-      const errorMessage = data?.message || data?.error || (typeof data === 'string' ? data : `Request failed with status ${response.status}`);
+      let errorMessage = data?.message || data?.error || data?.title;
+      if (data?.errors && typeof data.errors === 'object') {
+        const errorList = Object.entries(data.errors)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .join(' | ');
+        if (errorList) errorMessage = `${errorMessage ? errorMessage + ' - ' : ''}${errorList}`;
+      }
+      if (!errorMessage) {
+        errorMessage = typeof data === 'string' && data ? data : `Request failed with status ${response.status}`;
+      }
       const errorCode = data?.code || `HTTP_${response.status}`;
 
       // Global Interceptor: 401 Unauthorized

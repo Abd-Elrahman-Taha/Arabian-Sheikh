@@ -284,18 +284,18 @@ export const productApi = {
 
   /**
    * Admin: Activate product
-   * POST /api/admin/products/{id}/activate
+   * PUT /api/admin/products/{id} with isActive: true
    */
-  async adminActivateProduct(id) {
-    return await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.ACTIVATE(id));
+  async adminActivateProduct(id, currentProduct = {}) {
+    return await this.adminUpdateProduct(id, { ...currentProduct, isActive: true });
   },
 
   /**
    * Admin: Deactivate product
-   * POST /api/admin/products/{id}/deactivate
+   * PUT /api/admin/products/{id} with isActive: false
    */
-  async adminDeactivateProduct(id) {
-    return await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.DEACTIVATE(id));
+  async adminDeactivateProduct(id, currentProduct = {}) {
+    return await this.adminUpdateProduct(id, { ...currentProduct, isActive: false });
   },
 
   /**

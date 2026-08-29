@@ -360,27 +360,21 @@ export const productService = {
 
   async toggleProductActive(id, isActive) {
     let targetId = Number(id);
-    if (isNaN(targetId) || targetId <= 0) {
-      if (cachedProducts) {
-        const found = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id);
-        if (found && found.numericId) targetId = Number(found.numericId);
-      }
+    let currentProd = null;
+    if (cachedProducts) {
+      currentProd = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id || String(p.numericId) === String(id));
+      if (currentProd && currentProd.numericId) targetId = Number(currentProd.numericId);
     }
 
     if (!isNaN(targetId) && targetId > 0) {
-      if (isActive) {
-        await productApi.adminActivateProduct(targetId).catch(async () => {
-          await productApi.adminUpdateProduct(targetId, { isActive: true });
-        });
-      } else {
-        await productApi.adminDeactivateProduct(targetId).catch(async () => {
-          await productApi.adminUpdateProduct(targetId, { isActive: false });
-        });
-      }
+      await productApi.adminUpdateProduct(targetId, {
+        ...(currentProd || {}),
+        isActive: Boolean(isActive)
+      });
       cachedProducts = null;
       return { id: targetId, isActive: Boolean(isActive) };
     }
-    throw new Error(`Product must have a database ID on the server before toggling active status.`);
+    throw new Error(`Product must be synced to the database first. Please click 'Sync Database' at the top of the page.`);
   },
 
   async updateStock(id, newStock) {
