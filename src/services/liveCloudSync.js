@@ -114,13 +114,13 @@ function mergeRemoteData(remoteData) {
 
   // Direct adoption from latest broadcast
   if (Array.isArray(remoteData.inactiveProductIds)) {
-    state.inactiveProductIds = Array.from(new Set([...state.inactiveProductIds, ...remoteData.inactiveProductIds.map(String)]));
+    state.inactiveProductIds = remoteData.inactiveProductIds.map(String);
   }
   if (Array.isArray(remoteData.activeProductIds)) {
-    state.activeProductIds = Array.from(new Set([...state.activeProductIds, ...remoteData.activeProductIds.map(String)]));
+    state.activeProductIds = remoteData.activeProductIds.map(String);
   }
   if (Array.isArray(remoteData.deletedProductIds)) {
-    state.deletedProductIds = Array.from(new Set([...state.deletedProductIds, ...remoteData.deletedProductIds.map(String)]));
+    state.deletedProductIds = remoteData.deletedProductIds.map(String);
   }
 
   const orderMap = new Map();

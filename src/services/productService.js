@@ -409,10 +409,10 @@ export const productService = {
       }
     }
 
-    // Set in cloud sync so status reflects everywhere instantly
-    await liveCloudSync.setProductActive(id, isActive).catch(() => {});
-    if (targetId) {
-      await liveCloudSync.setProductActive(targetId, isActive).catch(() => {});
+    // Clear and set in cloud sync for all aliases so status reflects everywhere instantly
+    const aliases = Array.from(new Set([id, targetId, existing.id, existing.slug, existing.numericId].filter(Boolean)));
+    for (const a of aliases) {
+      await liveCloudSync.setProductActive(a, isActive).catch(() => {});
     }
 
     const updatedList = cachedProducts.map(p => {
