@@ -53,7 +53,7 @@ function saveLocalState() {
 // Load state immediately on script initialization
 loadLocalState();
 
-const FIREBASE_ENDPOINT = 'https://arabian-sheikh-2026-default-rtdb.firebaseio.com/sync.json';
+const VERCEL_SYNC_ENDPOINT = '/api/live-sync';
 
 // Push current state to the live cloud backend
 let isPushing = false;
@@ -74,38 +74,15 @@ async function pushToCloud() {
       lastUpdated: new Date().toISOString()
     };
 
-    // 1. Google Cloud Firebase Realtime DB (100% reachable globally without ISP block)
-    fetch(FIREBASE_ENDPOINT, {
-      method: 'PUT',
+    // 1. Native Vercel Serverless Sync Hub (100% reachable globally, zero CORS / ISP blocks)
+    fetch(VERCEL_SYNC_ENDPOINT, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dataPayload)
     }).catch(() => {});
 
-    // 2. Instant cross-device broadcast via public ntfy hub
-    fetch(NTFY_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Title': 'Sync',
-        'Priority': 'high'
-      },
-      body: JSON.stringify(dataPayload)
-    }).catch(() => {});
-
-    fetch(NTFY_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        topic: 'arabian_sheikh_sync_hub_2026',
-        message: JSON.stringify(dataPayload)
-      })
-    }).catch(() => {});
-
-    // 3. Secondary backup to restful-api.dev
-    fetch(CLOUD_ENDPOINT, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'arabian_sheikh_live_state', data: dataPayload })
-    }).catch(() => {});
+    // 2. Broadcast to all open tabs and windows locally
+    window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: dataPayload }));
   } catch (err) {
     console.warn('Cloud sync push error:', err.message);
   } finally {
@@ -125,13 +102,11 @@ function mergeRemoteData(remoteData) {
   if (Array.isArray(remoteData.activeProductIds)) {
     const activeList = remoteData.activeProductIds.map(String);
     state.activeProductIds = activeList;
-    // Ensure any active product is completely purged from inactive
     state.inactiveProductIds = (state.inactiveProductIds || []).filter(id => !activeList.includes(String(id)));
   }
   if (Array.isArray(remoteData.inactiveProductIds)) {
     const inactiveList = remoteData.inactiveProductIds.map(String);
     state.inactiveProductIds = inactiveList;
-    // Ensure any inactive product is completely purged from active
     state.activeProductIds = (state.activeProductIds || []).filter(id => !inactiveList.includes(String(id)));
   }
   if (Array.isArray(remoteData.deletedProductIds)) {
@@ -174,55 +149,21 @@ function mergeRemoteData(remoteData) {
 async function pullFromCloud() {
   if (typeof window === 'undefined') return state;
   
-  // 1. Try Google Cloud Firebase endpoint first (highest reliability, unblocked globally)
   try {
-    const fbRes = await fetch(FIREBASE_ENDPOINT).catch(() => null);
-    if (fbRes && fbRes.ok) {
-      const fbData = await fbRes.json();
-      if (fbData && typeof fbData === 'object') {
-        mergeRemoteData(fbData);
+    const res = await fetch(VERCEL_SYNC_ENDPOINT, {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store'
+    }).catch(() => null);
+
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        const remoteData = data?.data || data;
+        mergeRemoteData(remoteData);
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: fbData }));
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
         }
         return state;
-      }
-    }
-  } catch {}
-
-  // 2. Try ntfy hub poll
-  try {
-    const ntfyRes = await fetch(`${NTFY_ENDPOINT}/json?poll=1`).catch(() => null);
-    if (ntfyRes && ntfyRes.ok) {
-      const text = await ntfyRes.text();
-      const lines = text.trim().split('\n');
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i];
-        if (!line) continue;
-        try {
-          const item = JSON.parse(line);
-          let remoteData = null;
-
-          if (item.attachment?.url) {
-            const fileRes = await fetch(item.attachment.url).catch(() => null);
-            if (fileRes && fileRes.ok) {
-              const json = await fileRes.json();
-              remoteData = json?.data || json;
-            }
-          } else if (item.message) {
-            try {
-              const parsed = JSON.parse(item.message);
-              remoteData = parsed?.data || parsed;
-            } catch {}
-          }
-
-          if (remoteData) {
-            mergeRemoteData(remoteData);
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
-            }
-            break;
-          }
-        } catch {}
       }
     }
   } catch (err) {
@@ -231,60 +172,25 @@ async function pullFromCloud() {
   return state;
 }
 
-// Live Real-Time SSE Listener (Server-Sent Events) across all devices
+// Live Real-Time Listener across all tabs & devices
 function setupLiveSyncListener() {
   if (typeof window === 'undefined') return;
 
-  let eventSource = null;
+  // Listen for storage events across browser tabs
+  window.addEventListener('storage', (e) => {
+    if (e.key === LOCAL_STORAGE_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        mergeRemoteData(parsed);
+        window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: parsed }));
+      } catch {}
+    }
+  });
 
-  function connect() {
-    try {
-      eventSource = new EventSource(`${NTFY_ENDPOINT}/sse`);
-
-      eventSource.onmessage = async (event) => {
-        try {
-          const item = JSON.parse(event.data);
-          let remoteData = null;
-
-          if (item.attachment?.url) {
-            const fileRes = await fetch(item.attachment.url).catch(() => null);
-            if (fileRes && fileRes.ok) {
-              const json = await fileRes.json();
-              remoteData = json?.data || json;
-            }
-          } else if (item.message) {
-            try {
-              const json = JSON.parse(item.message);
-              remoteData = json?.data || json;
-            } catch {}
-          }
-
-          if (remoteData) {
-            mergeRemoteData(remoteData);
-            window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
-          }
-        } catch (e) {
-          console.warn('SSE message error:', e);
-        }
-      };
-
-      eventSource.onerror = () => {
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-        // Reconnect after 3 seconds
-        setTimeout(connect, 3000);
-      };
-    } catch {}
-  }
-
-  connect();
-
-  // Background fallback poll every 5 seconds
+  // Fast background polling every 2.5 seconds across devices
   setInterval(() => {
     pullFromCloud();
-  }, 5000);
+  }, 2500);
 }
 
 // Initialize on file import

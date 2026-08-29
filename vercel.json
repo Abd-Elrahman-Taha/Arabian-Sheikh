@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/live-sync",
+      "destination": "/api/live-sync.js"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://arabian-sheikh.runasp.net/api/:path*"
     },
