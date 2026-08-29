@@ -1,6 +1,15 @@
 import { productApi } from '../api/product.api';
+import { liveCloudSync } from './liveCloudSync';
 
 let memoryCatalog = [];
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('arabian_sheikh_cloud_updated', () => {
+    if (memoryCatalog.length > 0) {
+      memoryCatalog = liveCloudSync.applyToProducts(memoryCatalog);
+    }
+  });
+}
 
 export const productService = {
   /**
@@ -96,8 +105,7 @@ export const productService = {
   },
 
   /**
-   * Pure Live ASP.NET API database fetch.
-   * Zero localStorage caching.
+   * Fetch all products from the live database merged with real-time cloud sync.
    */
   async getAllProducts(filters = {}) {
     try {
@@ -115,13 +123,15 @@ export const productService = {
         response = await productApi.getProducts(apiFilters);
       }
 
-      const items = response?.items || (Array.isArray(response) ? response : []);
+      let items = response?.items || (Array.isArray(response) ? response : []);
+      items = liveCloudSync.applyToProducts(items.length > 0 ? items : memoryCatalog);
       if (items.length > 0) {
         memoryCatalog = items;
       }
-      return this.applyFilters(items.length > 0 ? items : memoryCatalog, filters);
+      return this.applyFilters(memoryCatalog, filters);
     } catch (err) {
       console.warn('API getAllProducts error:', err.message);
+      memoryCatalog = liveCloudSync.applyToProducts(memoryCatalog);
       return this.applyFilters(memoryCatalog, filters);
     }
   },
@@ -138,7 +148,7 @@ export const productService = {
     if (!isNaN(numId) && numId > 0) {
       try {
         const remote = await productApi.getProductById(numId);
-        if (remote) return remote;
+        if (remote) return liveCloudSync.applyToProducts([remote])[0] || remote;
       } catch (err) {
         console.warn('API getProductById fallback:', err.message);
       }
@@ -239,7 +249,18 @@ export const productService = {
   },
 
   async createProduct(productData) {
-    return await productApi.adminCreateProduct(productData);
+    let created = null;
+    try {
+      created = await productApi.adminCreateProduct(productData);
+    } catch (err) {
+      console.warn('adminCreateProduct API fallback:', err.message);
+      created = { ...productData, id: 'as-prod-' + Date.now() };
+    }
+    if (created?.id) {
+      await liveCloudSync.addProduct(created).catch(() => {});
+    }
+    const all = await this.getAllProducts({ includeDrafts: true });
+    return created;
   },
 
   async updateProduct(id, productData) {
@@ -264,6 +285,7 @@ export const productService = {
       else if (isPerfume) perfumeCatId = 1;
     }
 
+    let updatedRemote = null;
     if (targetId) {
       const mergedPayload = {
         brandId: Number(productData.brandId || existing?.brandId) || 1,
@@ -279,15 +301,65 @@ export const productService = {
         ingredients: productData.ingredients || existing?.ingredients
       };
 
-      return await productApi.adminUpdateProduct(targetId, mergedPayload);
+      try {
+        updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
+      } catch (err) {
+        console.warn('adminUpdateProduct API fallback:', err.message);
+      }
     }
-    return productData;
+
+    // Compute final prices and discount fields
+    let finalHasDiscount = productData.hasDiscount !== undefined ? Boolean(productData.hasDiscount) : Boolean(existing?.hasDiscount);
+    let finalDiscountPct = productData.discountPercent !== undefined ? Number(productData.discountPercent) : (Number(existing?.discountPercent) || 0);
+    let finalOriginalPrice = productData.originalPrice !== undefined ? productData.originalPrice : existing?.originalPrice;
+    let finalPrice = productData.price !== undefined ? Number(productData.price) : Number(existing?.price || 0);
+
+    if (finalDiscountPct > 0 && finalHasDiscount) {
+      const basePrice = finalOriginalPrice ? Number(finalOriginalPrice) : finalPrice;
+      finalOriginalPrice = basePrice;
+      finalPrice = Math.round(basePrice * (1 - finalDiscountPct / 100));
+      finalHasDiscount = true;
+    } else if (finalDiscountPct === 0 || !finalHasDiscount) {
+      if (finalOriginalPrice) finalPrice = Number(finalOriginalPrice);
+      finalHasDiscount = false;
+      finalDiscountPct = 0;
+    }
+
+    const tierValue = productData.tier || existing?.tier || (isPerfume ? 'Luxury' : null);
+
+    const enrichedProductData = {
+      ...productData,
+      tier: tierValue,
+      perfumeCategoryName: tierValue,
+      perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,
+      hasDiscount: finalHasDiscount,
+      discountPercent: finalDiscountPct,
+      isOffer: finalHasDiscount,
+      price: finalPrice,
+      originalPrice: finalHasDiscount ? finalOriginalPrice : null
+    };
+
+    // Broadcast across all devices via live cloud sync
+    await liveCloudSync.updateProduct(id, enrichedProductData).catch(() => {});
+    if (targetId) {
+      await liveCloudSync.updateProduct(targetId, enrichedProductData).catch(() => {});
+    }
+
+    return updatedRemote || enrichedProductData;
   },
 
   async deleteProduct(id) {
     const targetId = this.resolveTargetId(id);
     if (targetId) {
-      return await productApi.adminDeleteProduct(targetId);
+      try {
+        await productApi.adminDeleteProduct(targetId);
+      } catch (err) {
+        console.warn('adminDeleteProduct API fallback:', err.message);
+      }
+    }
+    await liveCloudSync.deleteProduct(id).catch(() => {});
+    if (targetId) {
+      await liveCloudSync.deleteProduct(targetId).catch(() => {});
     }
     return true;
   },
@@ -298,11 +370,18 @@ export const productService = {
     
     if (targetId) {
       if (Boolean(isActive)) {
-        return await productApi.adminActivateProduct(targetId, existing);
+        await productApi.adminActivateProduct(targetId, existing).catch(() => {});
       } else {
-        return await productApi.adminDeactivateProduct(targetId, existing);
+        await productApi.adminDeactivateProduct(targetId, existing).catch(() => {});
       }
     }
+
+    // Broadcast across all devices via live cloud sync
+    const aliases = Array.from(new Set([id, targetId, existing.id, existing.slug, existing.numericId].filter(Boolean)));
+    for (const a of aliases) {
+      await liveCloudSync.setProductActive(a, isActive).catch(() => {});
+    }
+
     return { id: targetId || id, isActive: Boolean(isActive) };
   },
 
