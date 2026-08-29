@@ -103,15 +103,24 @@ async function pushToCloud() {
 function mergeRemoteData(remoteData) {
   if (!remoteData || typeof remoteData !== 'object') return;
 
+  // Protect newer local state from stale remote messages
+  if (remoteData.lastUpdated && state.lastUpdated) {
+    try {
+      if (new Date(remoteData.lastUpdated).getTime() < new Date(state.lastUpdated).getTime()) {
+        return;
+      }
+    } catch {}
+  }
+
   // Direct adoption from latest broadcast
   if (Array.isArray(remoteData.inactiveProductIds)) {
-    state.inactiveProductIds = remoteData.inactiveProductIds.map(String);
+    state.inactiveProductIds = Array.from(new Set([...state.inactiveProductIds, ...remoteData.inactiveProductIds.map(String)]));
   }
   if (Array.isArray(remoteData.activeProductIds)) {
-    state.activeProductIds = remoteData.activeProductIds.map(String);
+    state.activeProductIds = Array.from(new Set([...state.activeProductIds, ...remoteData.activeProductIds.map(String)]));
   }
   if (Array.isArray(remoteData.deletedProductIds)) {
-    state.deletedProductIds = remoteData.deletedProductIds.map(String);
+    state.deletedProductIds = Array.from(new Set([...state.deletedProductIds, ...remoteData.deletedProductIds.map(String)]));
   }
 
   const orderMap = new Map();
@@ -139,7 +148,8 @@ function mergeRemoteData(remoteData) {
     activeProductIds: state.activeProductIds,
     deletedProductIds: state.deletedProductIds,
     modifiedProducts: modified,
-    newProducts: Array.from(newProdMap.values())
+    newProducts: Array.from(newProdMap.values()),
+    lastUpdated: remoteData.lastUpdated || state.lastUpdated || new Date().toISOString()
   };
 
   saveLocalState();
@@ -338,6 +348,7 @@ export const liveCloudSync = {
     return prods.map(p => {
       const idStr = String(p.id);
       const slugStr = p.slug ? String(p.slug) : null;
+      const numStr = p.numericId ? String(p.numericId) : null;
       let item = { ...p };
 
       // Apply modifications
@@ -346,6 +357,9 @@ export const liveCloudSync = {
       }
       if (slugStr && state.modifiedProducts[slugStr]) {
         item = { ...item, ...state.modifiedProducts[slugStr] };
+      }
+      if (numStr && state.modifiedProducts[numStr]) {
+        item = { ...item, ...state.modifiedProducts[numStr] };
       }
 
       // Automatically handle discount price calculations
@@ -363,13 +377,16 @@ export const liveCloudSync = {
         item.isOffer = false;
       }
 
-      // Apply active / inactive status (active takes precedence)
-      if (activeSet.has(idStr) || (slugStr && activeSet.has(slugStr))) {
-        item.isActive = true;
-        item.status = 'ACTIVE';
-      } else if (inactiveSet.has(idStr) || (slugStr && inactiveSet.has(slugStr))) {
+      // Apply active / inactive status
+      const isExplicitlyInactive = inactiveSet.has(idStr) || (slugStr && inactiveSet.has(slugStr)) || (numStr && inactiveSet.has(numStr));
+      const isExplicitlyActive = activeSet.has(idStr) || (slugStr && activeSet.has(slugStr)) || (numStr && activeSet.has(numStr));
+
+      if (isExplicitlyInactive) {
         item.isActive = false;
         item.status = 'INACTIVE';
+      } else if (isExplicitlyActive) {
+        item.isActive = true;
+        item.status = 'ACTIVE';
       }
 
       return item;
