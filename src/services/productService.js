@@ -1,9 +1,6 @@
-import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 import { productApi } from '../api/product.api';
 
-let cachedProducts = null;
-let isSeedingDatabase = false;
-
+let cachedProducts = [];
 
 export const productService = {
   /**
@@ -13,7 +10,7 @@ export const productService = {
     let result = Array.isArray(items) ? [...items] : [];
 
     // Filter by search query
-    if (filters.search) {
+    if (filters.search && filters.search.trim()) {
       const q = filters.search.toLowerCase().trim();
       result = result.filter(p => 
         p.name?.toLowerCase().includes(q) ||
@@ -29,52 +26,26 @@ export const productService = {
       );
     }
 
-    // Filter by category (perfumes, oils, bakhoor, cosmetics, bundles, offers)
+    // Filter by category only if strictly requested
     if (filters.category && filters.category !== 'all') {
       const cat = filters.category.toLowerCase().trim();
       if (cat === 'offers' || cat === 'discounts') {
         result = result.filter(p => p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
-      } else if (cat === 'perfumes' || cat === 'perfume' || cat === 'fragrance' || cat === 'fragrances') {
-        result = result.filter(p => {
-          const c = (p.category || p.categoryName || '').toLowerCase();
-          const tier = (p.tier || '').toLowerCase();
-          return c === 'perfumes' || c === 'perfume' || c.includes('perfume') ||
-                 tier === 'luxury' || tier === 'royal' || tier === 'classic' ||
-                 Boolean(p.perfumeCategoryName || p.perfumeCategoryId);
-        });
-      } else if (cat === 'oils' || cat === 'oil' || cat === 'attar') {
-        result = result.filter(p => {
-          const c = (p.category || p.categoryName || '').toLowerCase();
-          const n = (p.name || '').toLowerCase();
-          return c === 'oils' || c === 'oil' || c.includes('oil') || c.includes('attar') || n.includes('oil') || n.includes('attar') || n.includes('دهن');
-        });
-      } else if (cat === 'bakhoor' || cat === 'incense') {
-        result = result.filter(p => {
-          const c = (p.category || p.categoryName || '').toLowerCase();
-          const n = (p.name || '').toLowerCase();
-          return c === 'bakhoor' || c === 'incense' || c.includes('bakhoor') || c.includes('incense') || n.includes('bakhoor') || n.includes('incense') || n.includes('بخور');
-        });
-      } else if (cat === 'cosmetics' || cat === 'body care') {
-        result = result.filter(p => {
-          const c = (p.category || p.categoryName || '').toLowerCase();
-          return c === 'cosmetics' || c === 'cosmetic' || c.includes('cosmetic') || c.includes('body care');
-        });
-      } else if (cat === 'bundles' || cat === 'gift sets') {
-        result = result.filter(p => {
-          const c = (p.category || p.categoryName || '').toLowerCase();
-          return c === 'bundles' || c === 'bundle' || c.includes('bundle') || c.includes('gift');
-        });
       } else {
         result = result.filter(p => {
           const c = (p.category || p.categoryName || '').toLowerCase();
-          return c === cat || c.includes(cat);
+          return !c || c === 'all' || c === cat || c.includes(cat) || cat.includes(c);
         });
       }
     }
 
-    // Filter by perfume tier (Luxury, Royal, Classic)
+    // Filter by perfume tier
     if (filters.tier && filters.tier !== 'all') {
-      result = result.filter(p => p.tier?.toLowerCase() === filters.tier.toLowerCase());
+      const targetTier = filters.tier.toLowerCase();
+      result = result.filter(p => {
+        const t = (p.tier || p.perfumeCategoryName || '').toLowerCase();
+        return !t || t === targetTier;
+      });
     }
 
     // Filter by gender
@@ -82,43 +53,10 @@ export const productService = {
       const target = filters.gender.toLowerCase();
       result = result.filter(p => {
         const pg = (p.gender || '').toLowerCase();
-        if (target === 'men' || target === 'male' || target === 'masculine') {
-          return pg === 'male' || pg === 'men' || pg === 'masculine' || pg === 'unisex';
-        }
-        if (target === 'women' || target === 'female' || target === 'feminine') {
-          return pg === 'female' || pg === 'women' || pg === 'feminine' || pg === 'unisex';
-        }
-        if (target === 'unisex') {
-          return pg === 'unisex';
-        }
-        return pg === target;
+        return !pg || pg === 'unisex' || pg === target ||
+          (target === 'men' && pg === 'male') ||
+          (target === 'women' && pg === 'female');
       });
-    }
-
-    // Filter by fragrance family
-    if (filters.family && filters.family !== 'all') {
-      result = result.filter(p => 
-        p.fragranceFamily?.toLowerCase() === filters.family.toLowerCase() ||
-        p.scentFamily?.toLowerCase().includes(filters.family.toLowerCase())
-      );
-    }
-
-    // Filter by collection
-    if (filters.collection && filters.collection !== 'all') {
-      result = result.filter(p => 
-        p.collection?.toLowerCase() === filters.collection.toLowerCase() ||
-        p.collectionName?.toLowerCase() === filters.collection.toLowerCase()
-      );
-    }
-
-    // Filter by max price
-    if (filters.maxPrice) {
-      result = result.filter(p => p.price <= filters.maxPrice);
-    }
-
-    // Filter by min rating
-    if (filters.minRating) {
-      result = result.filter(p => (p.rating || 5) >= filters.minRating);
     }
 
     // Status filter
@@ -132,10 +70,10 @@ export const productService = {
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case 'price-low':
-          result.sort((a, b) => a.price - b.price);
+          result.sort((a, b) => (a.price || 0) - (b.price || 0));
           break;
         case 'price-high':
-          result.sort((a, b) => b.price - a.price);
+          result.sort((a, b) => (b.price || 0) - (a.price || 0));
           break;
         case 'rating':
           result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -145,7 +83,6 @@ export const productService = {
           break;
         case 'featured':
         default:
-          result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
           break;
       }
     }
@@ -154,13 +91,12 @@ export const productService = {
   },
 
   getAllProductsSync(filters = {}) {
-    const products = cachedProducts || INITIAL_PRODUCTS;
-    return this.applyFilters(products, filters);
+    return this.applyFilters(cachedProducts, filters);
   },
 
   /**
-   * Fetch all products directly from the API.
-   * Zero localStorage used.
+   * Fetch all products directly from the API database only.
+   * Zero local mock products returned.
    */
   async getAllProducts(filters = {}) {
     try {
@@ -173,48 +109,18 @@ export const productService = {
         response = await productApi.getProducts(apiFilters);
       }
 
-      let items = response?.items || (Array.isArray(response) ? response : []);
-
-      if (Array.isArray(items) && items.length > 0) {
-        cachedProducts = items;
-        return this.applyFilters(items, filters);
-      }
-
-      // If backend is empty (0 products) and admin is loading, auto-seed products to backend PostgreSQL
-      if (filters.includeDrafts && (!items || items.length === 0) && !isSeedingDatabase) {
-        isSeedingDatabase = true;
-        try {
-          console.log('Seeding catalog products to PostgreSQL on runasp.net...');
-          for (const p of INITIAL_PRODUCTS) {
-            await productApi.adminCreateProduct(p).catch(() => {});
-          }
-          const refetched = await productApi.adminGetProducts(apiFilters);
-          items = refetched?.items || [];
-          if (items.length > 0) {
-            cachedProducts = items;
-            return this.applyFilters(items, filters);
-          }
-        } catch (seedErr) {
-          console.warn('Auto-seed error:', seedErr);
-        } finally {
-          isSeedingDatabase = false;
-        }
-      }
+      const items = response?.items || (Array.isArray(response) ? response : []);
+      cachedProducts = Array.isArray(items) ? items : [];
+      return this.applyFilters(cachedProducts, filters);
     } catch (err) {
       console.warn('API getProducts error:', err.message);
-    }
-
-    if (cachedProducts && cachedProducts.length > 0) {
       return this.applyFilters(cachedProducts, filters);
     }
-
-    return this.applyFilters(INITIAL_PRODUCTS, filters);
   },
 
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
-    const products = cachedProducts || INITIAL_PRODUCTS;
-    return products.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
+    return cachedProducts.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
   },
 
   async getProductById(idOrSlug) {
@@ -235,8 +141,7 @@ export const productService = {
   },
 
   getFeaturedProductsSync(limit = 4) {
-    const products = cachedProducts || INITIAL_PRODUCTS;
-    return products.filter(p => p.featured).slice(0, limit);
+    return cachedProducts.filter(p => p.featured).slice(0, limit);
   },
 
   async getFeaturedProducts(limit = 4) {
@@ -245,8 +150,7 @@ export const productService = {
   },
 
   getProductsByCategorySync(category, limit) {
-    const products = cachedProducts || INITIAL_PRODUCTS;
-    const filtered = this.applyFilters(products, { category });
+    const filtered = this.applyFilters(cachedProducts, { category });
     return limit ? filtered.slice(0, limit) : filtered;
   },
 
@@ -256,8 +160,7 @@ export const productService = {
   },
 
   getProductsByTierSync(tier, limit) {
-    const products = cachedProducts || INITIAL_PRODUCTS;
-    const filtered = this.applyFilters(products, { tier });
+    const filtered = this.applyFilters(cachedProducts, { tier });
     return limit ? filtered.slice(0, limit) : filtered;
   },
 
@@ -299,10 +202,9 @@ export const productService = {
   },
 
   getRelatedProductsSync(currentId, limit = 4) {
-    const all = cachedProducts || INITIAL_PRODUCTS;
-    const current = all.find(p => String(p.id) === String(currentId) || p.slug === currentId);
-    if (!current) return all.slice(0, limit);
-    return all.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
+    const current = cachedProducts.find(p => String(p.id) === String(currentId) || p.slug === currentId);
+    if (!current) return cachedProducts.slice(0, limit);
+    return cachedProducts.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
   },
 
   async searchProducts(query, limit = 10) {
@@ -320,61 +222,59 @@ export const productService = {
   // ==========================================
   async createProduct(productData) {
     const created = await productApi.adminCreateProduct(productData);
-    cachedProducts = null;
+    cachedProducts = [];
     return created;
   },
 
   async updateProduct(id, productData) {
-    let targetId = Number(id);
-    if (isNaN(targetId) || targetId <= 0) {
-      if (cachedProducts) {
-        const found = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id);
-        if (found && found.numericId) targetId = Number(found.numericId);
-      }
-    }
-
+    const targetId = Number(id);
     if (!isNaN(targetId) && targetId > 0) {
-      const updated = await productApi.adminUpdateProduct(targetId, productData);
-      cachedProducts = null;
+      const current = await productApi.adminGetProductById(targetId).catch(() => null);
+      const mergedPayload = {
+        brandId: productData.brandId || current?.brandId,
+        categoryId: productData.categoryId || current?.categoryId,
+        subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (current?.subcategoryId || null),
+        perfumeCategoryId: productData.perfumeCategoryId !== undefined ? productData.perfumeCategoryId : (current?.perfumeCategoryId || null),
+        gender: productData.gender || current?.gender || 'Unisex',
+        price: productData.price !== undefined ? productData.price : current?.price,
+        isActive: productData.isActive !== undefined ? productData.isActive : (current?.isActive !== false),
+        imageUrl: productData.imageUrl || productData.image || current?.imageUrl || current?.image || (current?.images?.[0]),
+        name: productData.name || current?.name,
+        description: productData.description || current?.description,
+        ingredients: productData.ingredients || current?.ingredients,
+        discountPercent: productData.discountPercent !== undefined ? productData.discountPercent : current?.discountPercent,
+        hasDiscount: productData.hasDiscount !== undefined ? productData.hasDiscount : current?.hasDiscount,
+        isOffer: productData.isOffer !== undefined ? productData.isOffer : current?.isOffer
+      };
+      const updated = await productApi.adminUpdateProduct(targetId, mergedPayload);
+      cachedProducts = [];
       return updated;
     }
-    return productData;
+    throw new Error('Invalid product database ID.');
   },
 
   async deleteProduct(id) {
-    let targetId = Number(id);
-    if (isNaN(targetId) || targetId <= 0) {
-      if (cachedProducts) {
-        const found = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id);
-        if (found && found.numericId) targetId = Number(found.numericId);
-      }
-    }
-
+    const targetId = Number(id);
     if (!isNaN(targetId) && targetId > 0) {
       await productApi.adminDeleteProduct(targetId);
-      cachedProducts = null;
+      cachedProducts = [];
       return true;
     }
-    return false;
+    throw new Error('Invalid product database ID.');
   },
 
   async toggleProductActive(id, isActive) {
-    let targetId = Number(id);
-    let currentProd = null;
-    if (cachedProducts) {
-      currentProd = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id || String(p.numericId) === String(id));
-      if (currentProd && currentProd.numericId) targetId = Number(currentProd.numericId);
-    }
-
+    const targetId = Number(id);
     if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminUpdateProduct(targetId, {
-        ...(currentProd || {}),
-        isActive: Boolean(isActive)
-      });
-      cachedProducts = null;
+      if (Boolean(isActive)) {
+        await productApi.adminActivateProduct(targetId);
+      } else {
+        await productApi.adminDeactivateProduct(targetId);
+      }
+      cachedProducts = [];
       return { id: targetId, isActive: Boolean(isActive) };
     }
-    throw new Error(`Product must be synced to the database first. Please click 'Sync Database' at the top of the page.`);
+    throw new Error('Invalid product database ID.');
   },
 
   async updateStock(id, newStock) {
@@ -384,24 +284,55 @@ export const productService = {
 
   async applyProductDiscount(id, discountPercent) {
     const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    return await this.updateProduct(id, {
-      discountPercent: pct,
-      hasDiscount: true,
-      isOffer: true
-    });
+    const targetId = Number(id);
+    if (!isNaN(targetId) && targetId > 0) {
+      const current = await productApi.adminGetProductById(targetId).catch(() => null);
+      const updatePayload = {
+        brandId: current?.brandId,
+        categoryId: current?.categoryId,
+        subcategoryId: current?.subcategoryId || null,
+        perfumeCategoryId: current?.perfumeCategoryId || null,
+        gender: current?.gender || 'Unisex',
+        price: current?.price,
+        isActive: current?.isActive !== false,
+        imageUrl: current?.imageUrl || current?.image || (current?.images?.[0]),
+        discountPercent: pct,
+        hasDiscount: true,
+        isOffer: true
+      };
+      const updated = await productApi.adminUpdateProduct(targetId, updatePayload);
+      cachedProducts = [];
+      return updated;
+    }
+    throw new Error('Invalid product database ID.');
   },
 
   async removeProductDiscount(id) {
-    return await this.updateProduct(id, {
-      discountPercent: 0,
-      hasDiscount: false,
-      isOffer: false
-    });
+    const targetId = Number(id);
+    if (!isNaN(targetId) && targetId > 0) {
+      const current = await productApi.adminGetProductById(targetId).catch(() => null);
+      const updatePayload = {
+        brandId: current?.brandId,
+        categoryId: current?.categoryId,
+        subcategoryId: current?.subcategoryId || null,
+        perfumeCategoryId: current?.perfumeCategoryId || null,
+        gender: current?.gender || 'Unisex',
+        price: current?.price,
+        isActive: current?.isActive !== false,
+        imageUrl: current?.imageUrl || current?.image || (current?.images?.[0]),
+        discountPercent: 0,
+        hasDiscount: false,
+        isOffer: false
+      };
+      const updated = await productApi.adminUpdateProduct(targetId, updatePayload);
+      cachedProducts = [];
+      return updated;
+    }
+    throw new Error('Invalid product database ID.');
   },
 
   getDiscountedProductsSync() {
-    const products = cachedProducts || INITIAL_PRODUCTS;
-    return products.filter(p => 
+    return cachedProducts.filter(p => 
       (!p.status || p.status === 'ACTIVE') && (
         p.hasDiscount || 
         (p.discountPercent && p.discountPercent > 0) || 

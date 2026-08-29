@@ -65,16 +65,16 @@ export function normalizeProduct(raw) {
   const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > price));
 
   return {
-    id: p.id || p.productId || `as-${p.slug || 'prod'}`,
+    id: p.id !== undefined && p.id !== null ? p.id : (p.productId || `as-${p.slug || 'prod'}`),
     numericId: typeof p.id === 'number' ? p.id : (!isNaN(Number(p.id)) && Number(p.id) > 0 ? Number(p.id) : (typeof p.productId === 'number' ? p.productId : null)),
-    slug: p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : ''),
+    slug: p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : `prod-${p.id || 'item'}`),
     name: p.name || 'Imperial Extrait',
     arabicName: p.arabicName || p.arabic_name || '',
     bulgarianName: p.bulgarianName || p.bulgarian_name || '',
     spanishName: p.spanishName || p.spanish_name || '',
-    tier: p.tier || (categoryName === 'Perfumes' ? 'Luxury' : null),
-    category: categoryName.toLowerCase(),
-    categoryName,
+    tier: p.tier || perfumeCategoryName || (categoryName === 'Perfumes' ? 'Luxury' : 'Luxury'),
+    category: (categoryName || 'perfumes').toLowerCase(),
+    categoryName: categoryName || 'Perfumes',
     subcategoryName,
     perfumeCategoryName,
     brandName,
@@ -88,7 +88,7 @@ export function normalizeProduct(raw) {
     stock: Number(p.stock !== undefined ? p.stock : 50),
     status: p.isActive === false ? 'INACTIVE' : (p.status || 'ACTIVE'),
     isActive: p.isActive !== undefined ? Boolean(p.isActive) : true,
-    featured: Boolean(p.featured || p.isFeatured),
+    featured: Boolean(p.featured !== undefined ? p.featured : (p.isFeatured !== undefined ? p.isFeatured : true)),
     isBestSeller: Boolean(p.isBestSeller || p.bestSeller),
     rating: Number(p.rating || 5.0),
     reviewsCount: Number(p.reviewCount || p.reviewsCount || (p.reviews ? p.reviews.length : 0)),
@@ -96,8 +96,8 @@ export function normalizeProduct(raw) {
     ingredients: p.ingredients || 'Rare Oud wood, amber crystals, Taif rose, sandalwood, musk.',
     spanishDescription: p.spanishDescription || p.description || '',
     bulgarianDescription: p.bulgarianDescription || p.description || '',
-    fragranceFamily: p.fragranceFamily || p.scentFamily || 'Haute Parfumerie',
-    scentFamily: p.scentFamily || p.fragranceFamily || 'Haute Parfumerie',
+    fragranceFamily: p.fragranceFamily || p.scentFamily || 'Oriental Woody',
+    scentFamily: p.scentFamily || p.fragranceFamily || 'Oriental Woody',
     tagline: p.tagline || '',
     images: Array.isArray(p.images) && p.images.length > 0 
       ? p.images 

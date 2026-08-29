@@ -30,14 +30,7 @@ export const productApi = {
     if (!isNaN(brandId) && brandId > 0) params.BrandId = brandId;
 
     const categoryId = Number(filters.categoryId || filters.CategoryId);
-    if (!isNaN(categoryId) && categoryId > 0) {
-      params.CategoryId = categoryId;
-    } else if (filters.category && typeof filters.category === 'string') {
-      const cat = filters.category.toLowerCase();
-      if (cat === 'perfumes') params.CategoryId = 1;
-      else if (cat === 'bundles' || cat === 'gift sets') params.CategoryId = 2;
-      else if (cat === 'cosmetics' || cat === 'body care') params.CategoryId = 3;
-    }
+    if (!isNaN(categoryId) && categoryId > 0) params.CategoryId = categoryId;
 
     const subcategoryId = Number(filters.subcategoryId || filters.SubcategoryId);
     if (!isNaN(subcategoryId) && subcategoryId > 0) params.SubcategoryId = subcategoryId;
@@ -45,37 +38,23 @@ export const productApi = {
     const perfumeCategoryId = Number(filters.perfumeCategoryId || filters.PerfumeCategoryId);
     if (!isNaN(perfumeCategoryId) && perfumeCategoryId > 0) params.PerfumeCategoryId = perfumeCategoryId;
 
-    // Gender enum: STRICTLY 'Male' | 'Female' | 'Unisex'. Never send 'all'!
+    // Gender enum: STRICTLY 'Male' | 'Female' | 'Unisex'.
     const rawGender = (filters.gender || filters.Gender || '').toString().toLowerCase().trim();
-    if (rawGender === 'men' || rawGender === 'male' || rawGender === 'masculine') params.Gender = 'Male';
-    else if (rawGender === 'women' || rawGender === 'female' || rawGender === 'feminine') params.Gender = 'Female';
+    if (rawGender === 'men' || rawGender === 'male') params.Gender = 'Male';
+    else if (rawGender === 'women' || rawGender === 'female') params.Gender = 'Female';
     else if (rawGender === 'unisex') params.Gender = 'Unisex';
-
-    // Price range (must be numbers > 0)
-    const minPrice = Number(filters.minPrice ?? filters.MinPrice);
-    if (!isNaN(minPrice) && minPrice > 0) params.MinPrice = minPrice;
-
-    const maxPrice = Number(filters.maxPrice ?? filters.MaxPrice);
-    if (!isNaN(maxPrice) && maxPrice > 0) params.MaxPrice = maxPrice;
-
-    // Sorting: Backend API ONLY supports 'price' and 'rating'! Do NOT send 'featured' or other invalid values!
-    const rawSort = (filters.sortBy || filters.SortBy || '').toString().toLowerCase();
-    if (rawSort.includes('price')) {
-      params.SortBy = 'price';
-      params.SortDirection = rawSort === 'price-high' || rawSort === 'desc' ? 'desc' : 'asc';
-    } else if (rawSort.includes('rating')) {
-      params.SortBy = 'rating';
-      params.SortDirection = 'desc';
-    }
 
     // Language
     const lang = (filters.language || filters.Language || '').toString().trim();
     if (lang) params.Language = lang;
 
     const response = await apiClient.get(ENDPOINTS.PRODUCTS.LIST, { params, requiresAuth: false });
-    const rawList = Array.isArray(response) ? response : (response?.items || response?.products || response?.data || []);
+    const rawList = Array.isArray(response) 
+      ? response 
+      : (response?.items || response?.products || response?.data || (response && typeof response === 'object' && !response.items ? [response] : []));
+    
     return {
-      items: rawList.map(normalizeProduct),
+      items: rawList.map(normalizeProduct).filter(Boolean),
       page: response?.page || 1,
       pageSize: response?.pageSize || 20,
       totalCount: response?.totalCount || rawList.length,
@@ -194,9 +173,12 @@ export const productApi = {
     if (lang) params.Language = lang;
 
     const response = await apiClient.get(ENDPOINTS.ADMIN.PRODUCTS.LIST, { params });
-    const rawList = response?.items || (Array.isArray(response) ? response : []);
+    const rawList = Array.isArray(response)
+      ? response
+      : (response?.items || response?.products || response?.data || (response && typeof response === 'object' && !response.items ? [response] : []));
+
     return {
-      items: rawList.map(normalizeProduct),
+      items: rawList.map(normalizeProduct).filter(Boolean),
       totalCount: response?.totalCount || rawList.length,
       page: response?.page || 1,
       pageSize: response?.pageSize || 20,
@@ -237,14 +219,18 @@ export const productApi = {
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
-      perfumeCategoryId: isPerfume ? (Number(payload.perfumeCategoryId) || 1) : null,
       gender: payload.gender === 'Female' ? 'Female' : (payload.gender === 'Male' ? 'Male' : 'Unisex'),
-      price: Number(payload.price) || 0,
       nameIsTranslatable: true,
       isActive: payload.isActive !== false,
       imageUrl: toAbsoluteUrl(payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp')),
       translations
     };
+
+    if (isPerfume) {
+      body.perfumeCategoryId = Number(payload.perfumeCategoryId) || 1;
+    } else {
+      body.price = Number(payload.price) || 0;
+    }
 
     const response = await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.CREATE, body);
     return normalizeProduct(response);
@@ -260,13 +246,17 @@ export const productApi = {
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
-      perfumeCategoryId: isPerfume ? (Number(payload.perfumeCategoryId) || 1) : null,
       gender: payload.gender === 'Female' ? 'Female' : (payload.gender === 'Male' ? 'Male' : 'Unisex'),
-      price: Number(payload.price) || 0,
       nameIsTranslatable: true,
       isActive: payload.isActive !== false,
       imageUrl: toAbsoluteUrl(payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp'))
     };
+
+    if (isPerfume) {
+      body.perfumeCategoryId = Number(payload.perfumeCategoryId) || 1;
+    } else {
+      body.price = Number(payload.price) || 0;
+    }
 
     const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
     
@@ -286,16 +276,16 @@ export const productApi = {
    * Admin: Activate product
    * PUT /api/admin/products/{id} with isActive: true
    */
-  async adminActivateProduct(id, currentProduct = {}) {
-    return await this.adminUpdateProduct(id, { ...currentProduct, isActive: true });
+  async adminActivateProduct(id) {
+    return await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.ACTIVATE(id));
   },
 
   /**
    * Admin: Deactivate product
    * PUT /api/admin/products/{id} with isActive: false
    */
-  async adminDeactivateProduct(id, currentProduct = {}) {
-    return await this.adminUpdateProduct(id, { ...currentProduct, isActive: false });
+  async adminDeactivateProduct(id) {
+    return await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.DEACTIVATE(id));
   },
 
   /**

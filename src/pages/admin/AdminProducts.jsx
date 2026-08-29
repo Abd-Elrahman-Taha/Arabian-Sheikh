@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
-import { dbInitService } from '../../services/dbInitService';
 import { useToast } from '../../context/ToastContext';
 import {
   Package,
@@ -27,7 +26,6 @@ export default function AdminProducts() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [syncingDb, setSyncingDb] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -46,19 +44,6 @@ export default function AdminProducts() {
     }
   };
 
-  const handleSyncDatabase = async () => {
-    setSyncingDb(true);
-    try {
-      await dbInitService.seedDatabase();
-      success('Database populated & synced with server PostgreSQL successfully!');
-      await fetchProducts();
-    } catch (err) {
-      error(err.message || 'Database sync failed');
-    } finally {
-      setSyncingDb(false);
-    }
-  };
-
   useEffect(() => {
     fetchProducts();
   }, [search, categoryFilter, tierFilter]);
@@ -69,8 +54,9 @@ export default function AdminProducts() {
     }
     try {
       await productService.deleteProduct(id);
-      setProducts(products.filter(p => p.id !== id));
       success(`'${name}' has been removed.`);
+      // Re-fetch from database to confirm deletion persisted
+      fetchProducts();
     } catch (err) {
       error(err.message || 'Could not delete item.');
     }
@@ -116,12 +102,12 @@ export default function AdminProducts() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={handleSyncDatabase}
-            disabled={syncingDb}
+            onClick={fetchProducts}
+            disabled={loading}
             className="px-4 py-3 bg-[#1A1813] hover:bg-[#2A241A] text-[#F2D675] border border-[#D4AF37]/50 font-cinzel font-bold text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shadow-md shrink-0 cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${syncingDb ? 'animate-spin' : ''}`} />
-            <span>{syncingDb ? 'Syncing...' : 'Sync Database'}</span>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </button>
 
           <Link

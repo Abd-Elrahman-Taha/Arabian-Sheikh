@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
-import { dbInitService } from '../../services/dbInitService';
 import { useToast } from '../../context/ToastContext';
 import {
   Check,
@@ -23,7 +22,6 @@ export default function AdminInventory() {
 
   const [products, setProducts] = useState([]);
   const [loadingInventory, setLoadingInventory] = useState(true);
-  const [syncingDb, setSyncingDb] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, ACTIVE, INACTIVE
@@ -42,19 +40,6 @@ export default function AdminInventory() {
     }
   };
 
-  const handleSyncDatabase = async () => {
-    setSyncingDb(true);
-    try {
-      await dbInitService.seedDatabase();
-      success('Database populated & synced with server PostgreSQL successfully!');
-      await fetchInventory();
-    } catch (err) {
-      error(err.message || 'Database sync failed');
-    } finally {
-      setSyncingDb(false);
-    }
-  };
-
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -68,7 +53,7 @@ export default function AdminInventory() {
     try {
       await productService.toggleProductActive(product.id, newActive);
       
-      // Update locally in state for instantaneous feedback
+      // Optimistic local update for instant feedback
       setProducts(prev => prev.map(p => {
         if (p.id === product.id) {
           return {
@@ -85,8 +70,13 @@ export default function AdminInventory() {
       } else {
         success(`'${product.name}' is now INACTIVE and hidden from store.`);
       }
+
+      // Re-fetch from database to confirm persistence
+      fetchInventory();
     } catch (err) {
       error(err.message || 'Failed to update product status.');
+      // Re-fetch to restore correct state on error
+      fetchInventory();
     } finally {
       setUpdatingId(null);
     }
@@ -146,12 +136,12 @@ export default function AdminInventory() {
         </div>
 
         <button
-          onClick={handleSyncDatabase}
-          disabled={syncingDb || loadingInventory}
+          onClick={fetchInventory}
+          disabled={loadingInventory}
           className="group/btn relative px-5 py-2.5 rounded-full bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 text-xs font-cinzel font-bold text-[#F3E6D0] hover:text-[#F2D675] flex items-center gap-2 transition-all duration-300 shadow-md cursor-pointer self-start sm:self-auto disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${syncingDb || loadingInventory ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-          <span>{syncingDb ? 'Syncing...' : 'Sync Database'}</span>
+          <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loadingInventory ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+          <span>Refresh</span>
         </button>
       </div>
 

@@ -8,10 +8,8 @@ export default function AdminDiscounts() {
   const { t } = useTranslation();
   const { success, error } = useToast();
 
-  // Instant 0ms synchronous initialization
-  const initialDiscounts = discountService.getAllDiscountsSync();
-  const [discounts, setDiscounts] = useState(initialDiscounts);
-  const [loading, setLoading] = useState(false);
+  const [discounts, setDiscounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -23,9 +21,16 @@ export default function AdminDiscounts() {
     validUntil: '2027-12-31'
   });
 
-  const fetchDiscounts = () => {
-    const list = discountService.getAllDiscountsSync();
-    setDiscounts(list);
+  const fetchDiscounts = async () => {
+    setLoading(true);
+    try {
+      const list = await discountService.getAllDiscounts();
+      setDiscounts(list);
+    } catch (err) {
+      console.warn('Failed to load discounts:', err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
