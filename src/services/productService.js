@@ -1,58 +1,8 @@
 import { INITIAL_PRODUCTS, PERFUME_TIERS, CATEGORIES } from './mockData';
 import { productApi } from '../api/product.api';
-import { apiClient } from '../api/client';
-import { liveCloudSync } from './liveCloudSync';
 
-const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_api_products_v4';
-let inMemoryProducts = [];
-
-function preloadProductAssets(products) {
-  if (typeof window === 'undefined' || !Array.isArray(products)) return;
-  const urls = new Set();
-  products.forEach(p => {
-    if (p.cutoutImage) urls.add(p.cutoutImage);
-    if (p.originalImage) urls.add(p.originalImage);
-    if (p.images && Array.isArray(p.images)) {
-      p.images.forEach(img => urls.add(img));
-    }
-  });
-  if (typeof requestIdleCallback !== 'undefined') {
-    requestIdleCallback(() => {
-      urls.forEach(src => { const img = new Image(); img.src = src; });
-    });
-  } else {
-    setTimeout(() => {
-      urls.forEach(src => { const img = new Image(); img.src = src; });
-    }, 100);
-  }
-}
-
-function loadProducts() {
-  let base = inMemoryProducts;
-  if (!base || base.length === 0) {
-    const data = typeof window !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        base = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_PRODUCTS];
-      } catch {
-        base = [...INITIAL_PRODUCTS];
-      }
-    } else {
-      base = [...INITIAL_PRODUCTS];
-    }
-    inMemoryProducts = base;
-  }
-  return liveCloudSync.applyToProducts(base);
-}
-
-function saveProducts(products) {
-  inMemoryProducts = Array.isArray(products) ? products : [];
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(inMemoryProducts));
-  }
-  preloadProductAssets(inMemoryProducts);
-}
+let cachedProducts = null;
+let isSeedingDatabase = false;
 
 
 export const productService = {
@@ -204,18 +154,15 @@ export const productService = {
   },
 
   getAllProductsSync(filters = {}) {
-    const products = loadProducts();
+    const products = cachedProducts || INITIAL_PRODUCTS;
     return this.applyFilters(products, filters);
   },
 
   /**
    * Fetch all products directly from the API.
-   * If remote API returns products, store in memory and return.
-   * Zero hardcoded/local products are returned.
+   * Zero localStorage used.
    */
   async getAllProducts(filters = {}) {
-    await liveCloudSync.sync().catch(() => {});
-
     try {
       const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
       
@@ -226,51 +173,69 @@ export const productService = {
         response = await productApi.getProducts(apiFilters);
       }
 
-      const items = Array.isArray(response) ? response : (response?.items || response?.data || []);
+      let items = response?.items || (Array.isArray(response) ? response : []);
+
       if (Array.isArray(items) && items.length > 0) {
-        saveProducts(items);
-        const transformed = liveCloudSync.applyToProducts(items);
-        return this.applyFilters(transformed, filters);
+        cachedProducts = items;
+        return this.applyFilters(items, filters);
+      }
+
+      // If backend is empty (0 products) and admin is loading, auto-seed products to backend PostgreSQL
+      if (filters.includeDrafts && (!items || items.length === 0) && !isSeedingDatabase) {
+        isSeedingDatabase = true;
+        try {
+          console.log('Seeding catalog products to PostgreSQL on runasp.net...');
+          for (const p of INITIAL_PRODUCTS) {
+            await productApi.adminCreateProduct(p).catch(() => {});
+          }
+          const refetched = await productApi.adminGetProducts(apiFilters);
+          items = refetched?.items || [];
+          if (items.length > 0) {
+            cachedProducts = items;
+            return this.applyFilters(items, filters);
+          }
+        } catch (seedErr) {
+          console.warn('Auto-seed error:', seedErr);
+        } finally {
+          isSeedingDatabase = false;
+        }
       }
     } catch (err) {
       console.warn('API getProducts error:', err.message);
     }
 
-    const cached = loadProducts();
-    const transformed = liveCloudSync.applyToProducts(cached || []);
-    return this.applyFilters(transformed, filters);
+    if (cachedProducts && cachedProducts.length > 0) {
+      return this.applyFilters(cachedProducts, filters);
+    }
+
+    return this.applyFilters(INITIAL_PRODUCTS, filters);
   },
 
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
-    const products = loadProducts();
-    return products.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug) || null;
+    const products = cachedProducts || INITIAL_PRODUCTS;
+    return products.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
   },
 
-  /**
-   * Fetch product details directly from the API.
-   */
   async getProductById(idOrSlug) {
     if (!idOrSlug) return null;
-    await liveCloudSync.sync().catch(() => {});
 
-    // Try backend API first for direct detail fetch
-    try {
-      const remote = await productApi.getProductById(idOrSlug);
-      if (remote) {
-        const transformed = liveCloudSync.applyToProducts([remote])[0];
-        return transformed;
+    const numId = Number(idOrSlug);
+    if (!isNaN(numId) && numId > 0) {
+      try {
+        const remote = await productApi.getProductById(numId);
+        if (remote) return remote;
+      } catch (err) {
+        console.warn('API getProductById fallback:', err.message);
       }
-    } catch (err) {
-      console.warn('API getProductById fallback:', err.message);
     }
 
-    const products = loadProducts();
-    return products.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug) || null;
+    const all = await this.getAllProducts({ includeDrafts: true });
+    return all.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
   },
 
   getFeaturedProductsSync(limit = 4) {
-    const products = loadProducts();
+    const products = cachedProducts || INITIAL_PRODUCTS;
     return products.filter(p => p.featured).slice(0, limit);
   },
 
@@ -280,7 +245,7 @@ export const productService = {
   },
 
   getProductsByCategorySync(category, limit) {
-    const products = loadProducts();
+    const products = cachedProducts || INITIAL_PRODUCTS;
     const filtered = this.applyFilters(products, { category });
     return limit ? filtered.slice(0, limit) : filtered;
   },
@@ -291,7 +256,7 @@ export const productService = {
   },
 
   getProductsByTierSync(tier, limit) {
-    const products = loadProducts();
+    const products = cachedProducts || INITIAL_PRODUCTS;
     const filtered = this.applyFilters(products, { tier });
     return limit ? filtered.slice(0, limit) : filtered;
   },
@@ -301,53 +266,49 @@ export const productService = {
     return limit ? products.slice(0, limit) : products;
   },
 
-  async getBestSellers() {
-    const products = await this.getAllProducts();
-    return products.filter(p => (p.isBestSeller || p.featured) && (!p.status || p.status === 'ACTIVE'));
-  },
-
   async getPerfumes() {
     const products = await this.getAllProducts({ category: 'perfumes' });
     return products.filter(p => !p.status || p.status === 'ACTIVE');
   },
 
-  async getTiers() {
-    return PERFUME_TIERS;
+  async getOils() {
+    const products = await this.getAllProducts({ category: 'oils' });
+    return products.filter(p => !p.status || p.status === 'ACTIVE');
   },
 
-  async getCategories() {
-    return CATEGORIES;
+  async getBakhoor() {
+    const products = await this.getAllProducts({ category: 'bakhoor' });
+    return products.filter(p => !p.status || p.status === 'ACTIVE');
   },
 
-  getRelatedProductsSync(currentId, limit = 4) {
-    const all = loadProducts();
-    const current = all.find(p => String(p.id) === String(currentId) || p.slug === currentId);
-    if (!current) return all.slice(0, limit);
+  async getCosmetics() {
+    const products = await this.getAllProducts({ category: 'cosmetics' });
+    return products.filter(p => !p.status || p.status === 'ACTIVE');
+  },
 
-    const candidates = all.filter(p => String(p.id) !== String(currentId) && p.slug !== currentId);
-    const scored = candidates.map(product => {
-      let score = 0;
-      if (product.tier && current.tier && product.tier === current.tier) score += 3;
-      if (product.fragranceFamily && current.fragranceFamily && product.fragranceFamily === current.fragranceFamily) score += 4;
-      if (product.category && current.category && product.category === current.category) score += 2;
-      if (product.gender && current.gender && product.gender === current.gender) score += 1;
-      return { product, score };
-    });
-
-    scored.sort((a, b) => b.score - a.score);
-    const result = scored.map(item => item.product).slice(0, limit);
-
-    if (result.length < limit) {
-      const remaining = candidates.filter(c => !result.some(r => String(r.id) === String(c.id)));
-      result.push(...remaining.slice(0, limit - result.length));
-    }
-
-    return result;
+  async getBundles() {
+    const products = await this.getAllProducts({ category: 'bundles' });
+    return products.filter(p => !p.status || p.status === 'ACTIVE');
   },
 
   async getRelatedProducts(currentId, limit = 4) {
-    await this.getAllProducts();
-    return this.getRelatedProductsSync(currentId, limit);
+    const all = await this.getAllProducts();
+    const current = all.find(p => String(p.id) === String(currentId) || p.slug === currentId);
+    if (!current) return all.slice(0, limit);
+    return all.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
+  },
+
+  getRelatedProductsSync(currentId, limit = 4) {
+    const all = cachedProducts || INITIAL_PRODUCTS;
+    const current = all.find(p => String(p.id) === String(currentId) || p.slug === currentId);
+    if (!current) return all.slice(0, limit);
+    return all.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
+  },
+
+  async searchProducts(query, limit = 10) {
+    if (!query) return [];
+    const all = await this.getAllProducts();
+    return this.applyFilters(all, { search: query }).slice(0, limit);
   },
 
   async addReview(productId, review) {
@@ -355,258 +316,97 @@ export const productService = {
   },
 
   // ==========================================
-  // Admin & Back-Office API Integration with Live Cloud Sync
+  // Admin & Back-Office API Integration
   // ==========================================
   async createProduct(productData) {
-    let remote = null;
-    try {
-      remote = await productApi.adminCreateProduct(productData);
-    } catch (e) {
-      console.warn('Remote backend create product fallback to cloud sync:', e.message);
-    }
-
-    const newProd = {
-      id: remote?.id || `AS-PROD-${Date.now()}`,
-      slug: remote?.slug || (productData.name ? productData.name.toLowerCase().replace(/\s+/g, '-') : `prod-${Date.now()}`),
-      ...productData,
-      ...(remote || {}),
-      isActive: productData.isActive !== false,
-      status: productData.isActive !== false ? 'ACTIVE' : 'INACTIVE',
-      createdAt: new Date().toISOString()
-    };
-
-    await liveCloudSync.addProduct(newProd);
-    inMemoryProducts = [newProd, ...loadProducts()];
-    saveProducts(inMemoryProducts);
-    return newProd;
+    const created = await productApi.adminCreateProduct(productData);
+    cachedProducts = null;
+    return created;
   },
 
   async updateProduct(id, productData) {
-    const prods = loadProducts();
-    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
-
-    // 1. Immediately broadcast update to cross-device cloud sync
-    await liveCloudSync.updateProduct(id, productData);
-    if (product && product.slug && product.slug !== id) {
-      await liveCloudSync.updateProduct(product.slug, productData);
-    }
-    if (product && product.id && product.id !== id) {
-      await liveCloudSync.updateProduct(product.id, productData);
-    }
-
-    // 2. Also update ASP.NET backend if numeric ID
     let targetId = Number(id);
     if (isNaN(targetId) || targetId <= 0) {
-      if (product && product.numericId && Number(product.numericId) > 0) {
-        targetId = Number(product.numericId);
+      if (cachedProducts) {
+        const found = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id);
+        if (found && found.numericId) targetId = Number(found.numericId);
       }
     }
-    if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminUpdateProduct(targetId, productData).catch(() => {});
-    }
 
-    if (product) {
-      Object.assign(product, productData);
-      saveProducts(prods);
-      return product;
+    if (!isNaN(targetId) && targetId > 0) {
+      const updated = await productApi.adminUpdateProduct(targetId, productData);
+      cachedProducts = null;
+      return updated;
     }
     return productData;
   },
 
   async deleteProduct(id) {
-    const prods = loadProducts();
-    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
-
-    // 1. Immediately broadcast deletion to cross-device cloud sync
-    await liveCloudSync.deleteProduct(id);
-    if (product && product.slug && product.slug !== id) {
-      await liveCloudSync.deleteProduct(product.slug);
-    }
-    if (product && product.id && product.id !== id) {
-      await liveCloudSync.deleteProduct(product.id);
-    }
-
-    // 2. Delete from ASP.NET backend if numeric ID
     let targetId = Number(id);
     if (isNaN(targetId) || targetId <= 0) {
-      if (product && product.numericId && Number(product.numericId) > 0) {
-        targetId = Number(product.numericId);
+      if (cachedProducts) {
+        const found = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id);
+        if (found && found.numericId) targetId = Number(found.numericId);
       }
     }
-    if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminDeleteProduct(targetId).catch(() => {});
-    }
 
-    inMemoryProducts = inMemoryProducts.filter(p => String(p.id) !== String(id) && p.slug !== id);
-    saveProducts(inMemoryProducts);
-    return true;
+    if (!isNaN(targetId) && targetId > 0) {
+      await productApi.adminDeleteProduct(targetId);
+      cachedProducts = null;
+      return true;
+    }
+    return false;
   },
 
   async toggleProductActive(id, isActive) {
-    const activeBool = Boolean(isActive);
-    const prods = loadProducts();
-    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
-
-    // 1. Immediately broadcast to cross-device cloud sync hub so ALL devices update
-    await liveCloudSync.setProductActive(id, activeBool);
-    if (product && product.slug && product.slug !== id) {
-      await liveCloudSync.setProductActive(product.slug, activeBool);
-    }
-    if (product && product.id && product.id !== id) {
-      await liveCloudSync.setProductActive(product.id, activeBool);
-    }
-
-    // 2. Determine numeric server database ID if available
     let targetId = Number(id);
     if (isNaN(targetId) || targetId <= 0) {
-      if (product && product.numericId && Number(product.numericId) > 0) {
-        targetId = Number(product.numericId);
-      } else if (product && !isNaN(Number(product.id)) && Number(product.id) > 0) {
-        targetId = Number(product.id);
+      if (cachedProducts) {
+        const found = cachedProducts.find(p => String(p.id) === String(id) || p.slug === id);
+        if (found && found.numericId) targetId = Number(found.numericId);
       }
     }
 
-    // 3. If product has database ID, send to ASP.NET server
     if (!isNaN(targetId) && targetId > 0) {
-      const updatePayload = {
-        name: product?.name || 'Exclusive Creation',
-        description: product?.description || product?.tagline || 'Haute Parfumerie Fragrance',
-        brandId: Number(product?.brandId) || 1,
-        categoryId: Number(product?.categoryId) || 1,
-        subcategoryId: product?.subcategoryId ? Number(product.subcategoryId) : null,
-        perfumeCategoryId: product?.perfumeCategoryId ? Number(product.perfumeCategoryId) : null,
-        price: product?.price !== undefined ? Number(product.price) : 55,
-        gender: product?.gender || 'Unisex',
-        isActive: activeBool
-      };
-
-      try {
-        await productApi.adminUpdateProduct(targetId, updatePayload);
-      } catch (putErr) {
-        if (activeBool) {
-          await productApi.adminActivateProduct(targetId).catch(() => {});
-        } else {
-          await productApi.adminDeactivateProduct(targetId).catch(() => {});
-        }
+      if (isActive) {
+        await productApi.adminActivateProduct(targetId).catch(async () => {
+          await productApi.adminUpdateProduct(targetId, { isActive: true });
+        });
+      } else {
+        await productApi.adminDeactivateProduct(targetId).catch(async () => {
+          await productApi.adminUpdateProduct(targetId, { isActive: false });
+        });
       }
+      cachedProducts = null;
+      return { id: targetId, isActive: Boolean(isActive) };
     }
-
-    // 4. Update in-memory state
-    if (product) {
-      product.isActive = activeBool;
-      product.status = activeBool ? 'ACTIVE' : 'INACTIVE';
-      saveProducts(prods);
-    }
-
-    return product || { id, isActive: activeBool, status: activeBool ? 'ACTIVE' : 'INACTIVE' };
+    throw new Error(`Product must have a database ID on the server before toggling active status.`);
   },
 
   async updateStock(id, newStock) {
-    const prods = loadProducts();
-    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
     const stockVal = Math.max(0, Number(newStock));
-
-    await liveCloudSync.updateProduct(id, { stock: stockVal });
-    if (product && product.slug) {
-      await liveCloudSync.updateProduct(product.slug, { stock: stockVal });
-    }
-
-    let targetId = Number(id);
-    if (isNaN(targetId) || targetId <= 0) {
-      if (product && product.numericId && Number(product.numericId) > 0) {
-        targetId = Number(product.numericId);
-      }
-    }
-    if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminUpdateProduct(targetId, { stock: stockVal }).catch(() => {});
-    }
-
-    if (product) {
-      product.stock = stockVal;
-      saveProducts(prods);
-    }
-    return { stock: stockVal };
+    return await this.updateProduct(id, { stock: stockVal });
   },
 
   async applyProductDiscount(id, discountPercent) {
     const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    const prods = loadProducts();
-    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
-
-    const patch = {
+    return await this.updateProduct(id, {
       discountPercent: pct,
       hasDiscount: true,
       isOffer: true
-    };
-
-    // 1. Immediately broadcast discount across all devices
-    await liveCloudSync.updateProduct(id, patch);
-    if (product && product.slug && product.slug !== id) {
-      await liveCloudSync.updateProduct(product.slug, patch);
-    }
-    if (product && product.id && product.id !== id) {
-      await liveCloudSync.updateProduct(product.id, patch);
-    }
-
-    // 2. Also update ASP.NET backend if numeric ID
-    let targetId = Number(id);
-    if (isNaN(targetId) || targetId <= 0) {
-      if (product && product.numericId && Number(product.numericId) > 0) {
-        targetId = Number(product.numericId);
-      }
-    }
-    if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminUpdateProduct(targetId, patch).catch(() => {});
-    }
-
-    if (product) {
-      Object.assign(product, patch);
-      saveProducts(prods);
-      return product;
-    }
-    return patch;
+    });
   },
 
   async removeProductDiscount(id) {
-    const prods = loadProducts();
-    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
-
-    const patch = {
+    return await this.updateProduct(id, {
       discountPercent: 0,
       hasDiscount: false,
       isOffer: false
-    };
-
-    // 1. Immediately broadcast discount removal across all devices
-    await liveCloudSync.updateProduct(id, patch);
-    if (product && product.slug && product.slug !== id) {
-      await liveCloudSync.updateProduct(product.slug, patch);
-    }
-    if (product && product.id && product.id !== id) {
-      await liveCloudSync.updateProduct(product.id, patch);
-    }
-
-    // 2. Also update ASP.NET backend if numeric ID
-    let targetId = Number(id);
-    if (isNaN(targetId) || targetId <= 0) {
-      if (product && product.numericId && Number(product.numericId) > 0) {
-        targetId = Number(product.numericId);
-      }
-    }
-    if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminUpdateProduct(targetId, patch).catch(() => {});
-    }
-
-    if (product) {
-      Object.assign(product, patch);
-      saveProducts(prods);
-      return product;
-    }
-    return patch;
+    });
   },
 
   getDiscountedProductsSync() {
-    const products = loadProducts();
+    const products = cachedProducts || INITIAL_PRODUCTS;
     return products.filter(p => 
       (!p.status || p.status === 'ACTIVE') && (
         p.hasDiscount || 
