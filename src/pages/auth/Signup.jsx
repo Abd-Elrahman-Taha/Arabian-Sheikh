@@ -6,28 +6,28 @@ import { useToast } from '../../context/ToastContext';
 import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck, Phone } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
-const COUNTRY_CODES = [
-  { code: '+971', label: '🇦🇪 UAE (+971)' },
-  { code: '+966', label: '🇸🇦 Saudi Arabia (+966)' },
-  { code: '+20', label: '🇪🇬 Egypt (+20)' },
-  { code: '+965', label: '🇰🇼 Kuwait (+965)' },
-  { code: '+974', label: '🇶🇦 Qatar (+974)' },
-  { code: '+968', label: '🇴🇲 Oman (+968)' },
-  { code: '+973', label: '🇧🇭 Bahrain (+973)' },
-  { code: '+359', label: '🇧🇬 Bulgaria (+359)' },
-  { code: '+33', label: '🇫🇷 France (+33)' },
-  { code: '+44', label: '🇬🇧 UK (+44)' },
-  { code: '+49', label: '🇩🇪 Germany (+49)' },
-  { code: '+34', label: '🇪🇸 Spain (+34)' },
-  { code: '+39', label: '🇮🇹 Italy (+39)' },
-  { code: '+1', label: '🇺🇸 USA / Canada (+1)' },
-  { code: '+90', label: '🇹🇷 Turkey (+90)' },
-  { code: '+962', label: '🇯🇴 Jordan (+962)' },
-  { code: '+961', label: '🇱🇧 Lebanon (+961)' },
-  { code: '+212', label: '🇲🇦 Morocco (+212)' },
-  { code: '+213', label: '🇩🇿 Algeria (+213)' },
-  { code: '+216', label: '🇹🇳 Tunisia (+216)' },
-  { code: '+964', label: '🇮🇶 Iraq (+964)' }
+const COUNTRIES = [
+  { code: 'EG', dialCode: '+20', label: '🇪🇬 Egypt (EG)' },
+  { code: 'SA', dialCode: '+966', label: '🇸🇦 Saudi Arabia (SA)' },
+  { code: 'AE', dialCode: '+971', label: '🇦🇪 UAE (AE)' },
+  { code: 'KW', dialCode: '+965', label: '🇰🇼 Kuwait (KW)' },
+  { code: 'QA', dialCode: '+974', label: '🇶🇦 Qatar (QA)' },
+  { code: 'OM', dialCode: '+968', label: '🇴🇲 Oman (OM)' },
+  { code: 'BH', dialCode: '+973', label: '🇧🇭 Bahrain (BH)' },
+  { code: 'BG', dialCode: '+359', label: '🇧🇬 Bulgaria (BG)' },
+  { code: 'ES', dialCode: '+34', label: '🇪🇸 Spain (ES)' },
+  { code: 'FR', dialCode: '+33', label: '🇫🇷 France (FR)' },
+  { code: 'GB', dialCode: '+44', label: '🇬🇧 UK (GB)' },
+  { code: 'DE', dialCode: '+49', label: '🇩🇪 Germany (DE)' },
+  { code: 'IT', dialCode: '+39', label: '🇮🇹 Italy (IT)' },
+  { code: 'US', dialCode: '+1', label: '🇺🇸 USA (US)' },
+  { code: 'TR', dialCode: '+90', label: '🇹🇷 Turkey (TR)' },
+  { code: 'JO', dialCode: '+962', label: '🇯🇴 Jordan (JO)' },
+  { code: 'LB', dialCode: '+961', label: '🇱🇧 Lebanon (LB)' },
+  { code: 'MA', dialCode: '+212', label: '🇲🇦 Morocco (MA)' },
+  { code: 'DZ', dialCode: '+213', label: '🇩🇿 Algeria (DZ)' },
+  { code: 'TN', dialCode: '+216', label: '🇹🇳 Tunisia (TN)' },
+  { code: 'IQ', dialCode: '+964', label: '🇮🇶 Iraq (IQ)' }
 ];
 
 export default function Signup() {
@@ -38,8 +38,8 @@ export default function Signup() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [countryCode, setCountryCode] = useState('+971');
-  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('EG');
+  const [phone, setPhone] = useState('+20');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,6 +52,31 @@ export default function Signup() {
   const hasDigit = /[0-9]/.test(password);
   const hasSpecial = /[^A-Za-z0-9]/.test(password);
   const allCriteriaMet = hasLength && hasUpper && hasDigit && hasSpecial;
+
+  const handleCountryChange = (newCode) => {
+    setCountryCode(newCode);
+    const matched = COUNTRIES.find(c => c.code === newCode);
+    if (matched) {
+      const dial = matched.dialCode;
+      // If phone starts with an old dial code or is just a code, update the prefix
+      if (!phone || phone.startsWith('+')) {
+        const rawDigits = phone.replace(/^\+\d+/, '');
+        setPhone(`${dial}${rawDigits}`);
+      } else {
+        setPhone(`${dial}${phone}`);
+      }
+    }
+  };
+
+  const handlePhoneChange = (val) => {
+    let clean = val.trim();
+    if (clean && !clean.startsWith('+')) {
+      const matched = COUNTRIES.find(c => c.code === countryCode);
+      const prefix = matched ? matched.dialCode : '+20';
+      clean = `${prefix}${clean}`;
+    }
+    setPhone(clean);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,9 +100,23 @@ export default function Signup() {
       return;
     }
 
+    // Format phone with international code if provided
+    let finalPhone = phone.trim();
+    if (finalPhone && !finalPhone.startsWith('+')) {
+      const matched = COUNTRIES.find(c => c.code === countryCode);
+      const prefix = matched ? matched.dialCode : '+20';
+      finalPhone = `${prefix}${finalPhone}`;
+    }
+
     setLoading(true);
     try {
-      const newUser = await signup({ name, email, password });
+      const newUser = await signup({
+        name,
+        email,
+        password,
+        phone: finalPhone || null,
+        countryCode: countryCode || 'EG'
+      });
       success(`Welcome to Arabian Sheikh, ${newUser.name || 'Patron'}.`);
       navigate('/');
     } catch (err) {
@@ -136,6 +175,41 @@ export default function Signup() {
               />
               <Mail className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
+          </div>
+
+          {/* Phone Number & Country Code */}
+          <div>
+            <label className="block uppercase tracking-wider text-[#D8BE99] font-semibold mb-1">
+              Phone Number (رقم الهاتف)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <select
+                value={countryCode}
+                onChange={(e) => handleCountryChange(e.target.value)}
+                className="bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 px-2 text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer text-xs font-medium"
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+
+              <div className="relative sm:col-span-2">
+                <input
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  placeholder="+201000000000"
+                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none font-mono"
+                />
+                <Phone className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+            <p className="text-[10px] text-[#D8BE99]/70 mt-1">
+              Format: e.g. +201000000000 (Country Code: {countryCode})
+            </p>
           </div>
 
           <div>
