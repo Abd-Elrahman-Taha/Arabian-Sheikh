@@ -93,16 +93,7 @@ export default function Shop() {
     };
 
     window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-
-    // Live continuous database sync every 3 seconds across all devices
-    const pollInterval = setInterval(() => {
-      handleCloudUpdate();
-    }, 3000);
-
-    return () => {
-      window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-      clearInterval(pollInterval);
-    };
+    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
   }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy]);
 
   const resetFilters = () => {
