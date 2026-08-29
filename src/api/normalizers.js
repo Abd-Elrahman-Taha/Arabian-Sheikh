@@ -58,11 +58,30 @@ export function normalizeProduct(raw) {
   const brandName = typeof p.brand === 'object' ? p.brand?.name : (p.brandName || p.brand || 'Arabian Sheikh');
   const categoryName = typeof p.category === 'object' ? p.category?.name : (p.categoryName || p.category || 'Perfumes');
   const subcategoryName = typeof p.subcategory === 'object' ? p.subcategory?.name : (p.subcategoryName || p.subcategory || null);
-  const perfumeCategoryName = typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : (p.perfumeCategoryName || null);
+  const perfumeCategoryName = typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : (p.perfumeCategoryName || p.perfumeCategory || null);
+
+  // Accurately derive tier from perfumeCategoryName or perfumeCategoryId
+  let derivedTier = 'Luxury';
+  if (perfumeCategoryName) {
+    const rawTier = String(perfumeCategoryName).trim();
+    if (rawTier.toLowerCase().includes('royal') || Number(p.perfumeCategoryId) === 2) derivedTier = 'Royal';
+    else if (rawTier.toLowerCase().includes('classic') || Number(p.perfumeCategoryId) === 3) derivedTier = 'Classic';
+    else if (rawTier.toLowerCase().includes('luxury') || Number(p.perfumeCategoryId) === 1) derivedTier = 'Luxury';
+    else derivedTier = rawTier;
+  } else if (Number(p.perfumeCategoryId) === 2) {
+    derivedTier = 'Royal';
+  } else if (Number(p.perfumeCategoryId) === 3) {
+    derivedTier = 'Classic';
+  } else if (categoryName.toLowerCase() === 'perfumes' || categoryName.toLowerCase() === 'perfume') {
+    derivedTier = p.tier || 'Luxury';
+  } else {
+    derivedTier = p.tier || null;
+  }
 
   const price = Number(p.price || 0);
   const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || price) : null);
   const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > price));
+  const isActive = p.isActive !== undefined ? Boolean(p.isActive) : (p.status ? p.status !== 'INACTIVE' : true);
 
   return {
     id: p.id !== undefined && p.id !== null ? p.id : (p.productId || `as-${p.slug || 'prod'}`),
@@ -72,22 +91,23 @@ export function normalizeProduct(raw) {
     arabicName: p.arabicName || p.arabic_name || '',
     bulgarianName: p.bulgarianName || p.bulgarian_name || '',
     spanishName: p.spanishName || p.spanish_name || '',
-    tier: p.tier || perfumeCategoryName || (categoryName === 'Perfumes' ? 'Luxury' : 'Luxury'),
+    tier: derivedTier,
+    perfumeCategoryName: derivedTier,
     category: (categoryName || 'perfumes').toLowerCase(),
     categoryName: categoryName || 'Perfumes',
     subcategoryName,
-    perfumeCategoryName,
     brandName,
     gender: p.gender || 'Unisex',
     price,
     originalPrice,
     isDiscounted,
-    discountPercent: p.discount?.value || (originalPrice && originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0),
-    hasDiscount: isDiscounted,
+    discountPercent: p.discount?.value || (originalPrice && originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : (p.discountPercent || 0)),
+    hasDiscount: isDiscounted || Boolean(p.hasDiscount || (p.discountPercent > 0)),
+    isOffer: isDiscounted || Boolean(p.isOffer || p.hasDiscount || (p.discountPercent > 0)),
     currency: p.currency || 'EUR',
     stock: Number(p.stock !== undefined ? p.stock : 50),
-    status: p.isActive === false ? 'INACTIVE' : (p.status || 'ACTIVE'),
-    isActive: p.isActive !== undefined ? Boolean(p.isActive) : true,
+    status: isActive ? 'ACTIVE' : 'INACTIVE',
+    isActive: isActive,
     featured: Boolean(p.featured !== undefined ? p.featured : (p.isFeatured !== undefined ? p.isFeatured : true)),
     isBestSeller: Boolean(p.isBestSeller || p.bestSeller),
     rating: Number(p.rating || 5.0),
