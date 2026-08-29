@@ -369,13 +369,22 @@ export const productService = {
     };
 
     // Broadcast across all devices via live cloud sync
-    await liveCloudSync.updateProduct(id, enrichedProductData).catch(() => {});
-    if (targetId) {
-      await liveCloudSync.updateProduct(targetId, enrichedProductData).catch(() => {});
+    const aliases = Array.from(new Set([
+      String(id),
+      targetId ? String(targetId) : null,
+      existing.id ? String(existing.id) : null,
+      existing.slug ? String(existing.slug) : null,
+      existing.numericId ? String(existing.numericId) : null
+    ].filter(Boolean)));
+
+    for (const a of aliases) {
+      await liveCloudSync.updateProduct(a, enrichedProductData).catch(() => {});
     }
 
     const updatedList = cachedProducts.map(p => {
-      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
+      const pAliases = [String(p.id), p.slug ? String(p.slug) : null, p.numericId ? String(p.numericId) : null].filter(Boolean);
+      const isMatch = aliases.some(a => pAliases.includes(a));
+      if (isMatch) {
         return { ...p, ...enrichedProductData };
       }
       return p;

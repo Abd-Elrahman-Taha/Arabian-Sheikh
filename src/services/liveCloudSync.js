@@ -131,11 +131,17 @@ function mergeRemoteData(remoteData) {
   }
 
   // Direct adoption from latest broadcast
-  if (Array.isArray(remoteData.inactiveProductIds)) {
-    state.inactiveProductIds = remoteData.inactiveProductIds.map(String);
-  }
   if (Array.isArray(remoteData.activeProductIds)) {
-    state.activeProductIds = remoteData.activeProductIds.map(String);
+    const activeList = remoteData.activeProductIds.map(String);
+    state.activeProductIds = activeList;
+    // Ensure any active product is completely purged from inactive
+    state.inactiveProductIds = (state.inactiveProductIds || []).filter(id => !activeList.includes(String(id)));
+  }
+  if (Array.isArray(remoteData.inactiveProductIds)) {
+    const inactiveList = remoteData.inactiveProductIds.map(String);
+    state.inactiveProductIds = inactiveList;
+    // Ensure any inactive product is completely purged from active
+    state.activeProductIds = (state.activeProductIds || []).filter(id => !inactiveList.includes(String(id)));
   }
   if (Array.isArray(remoteData.deletedProductIds)) {
     state.deletedProductIds = remoteData.deletedProductIds.map(String);
@@ -356,16 +362,32 @@ export const liveCloudSync = {
     const activeBool = Boolean(isActive);
 
     if (activeBool) {
-      // Remove from inactive, add to active
-      state.inactiveProductIds = state.inactiveProductIds.filter(id => id !== idStr);
+      // Remove from inactive
+      state.inactiveProductIds = (state.inactiveProductIds || []).filter(id => String(id) !== idStr);
       if (!state.activeProductIds.includes(idStr)) {
         state.activeProductIds.push(idStr);
       }
+      // Clean modifiedProducts override
+      if (state.modifiedProducts[idStr]) {
+        state.modifiedProducts[idStr] = {
+          ...state.modifiedProducts[idStr],
+          isActive: true,
+          status: 'ACTIVE'
+        };
+      }
     } else {
-      // Remove from active, add to inactive
-      state.activeProductIds = state.activeProductIds.filter(id => id !== idStr);
+      // Remove from active
+      state.activeProductIds = (state.activeProductIds || []).filter(id => String(id) !== idStr);
       if (!state.inactiveProductIds.includes(idStr)) {
         state.inactiveProductIds.push(idStr);
+      }
+      // Set modifiedProducts override
+      if (state.modifiedProducts[idStr]) {
+        state.modifiedProducts[idStr] = {
+          ...state.modifiedProducts[idStr],
+          isActive: false,
+          status: 'INACTIVE'
+        };
       }
     }
 
@@ -457,19 +479,26 @@ export const liveCloudSync = {
         item = { ...item, ...state.modifiedProducts[numStr] };
       }
 
-      // Automatically handle discount price calculations
-      if (item.discountPercent && Number(item.discountPercent) > 0) {
-        const basePrice = item.originalPrice ? Number(item.originalPrice) : Number(item.price);
-        item.originalPrice = basePrice;
-        item.price = Math.round(basePrice * (1 - Number(item.discountPercent) / 100));
-        item.hasDiscount = true;
-        item.isOffer = true;
-      } else if (item.discountPercent === 0) {
-        if (item.originalPrice) {
-          item.price = item.originalPrice;
+      // Enforce live perfume tier and tier pricing dynamically
+      const isPerfume = item.category === 'perfumes' || item.category === 'perfume' || !!item.tier || Number(item.categoryId) === 1;
+      if (isPerfume && item.tier) {
+        const tLower = item.tier.toLowerCase();
+        if (tLower.includes('royal') || Number(item.perfumeCategoryId) === 2) {
+          item.tier = 'Royal';
+          item.perfumeCategoryName = 'Royal';
+          item.perfumeCategoryId = 2;
+          item.price = 40;
+        } else if (tLower.includes('classic') || Number(item.perfumeCategoryId) === 3) {
+          item.tier = 'Classic';
+          item.perfumeCategoryName = 'Classic';
+          item.perfumeCategoryId = 3;
+          item.price = 30;
+        } else {
+          item.tier = 'Luxury';
+          item.perfumeCategoryName = 'Luxury';
+          item.perfumeCategoryId = 1;
+          item.price = 50;
         }
-        item.hasDiscount = false;
-        item.isOffer = false;
       }
 
       // Apply active / inactive status (database status + explicit overrides)
