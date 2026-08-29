@@ -214,17 +214,38 @@ export const productApi = {
    */
   async adminCreateProduct(payload) {
     const isPerfume = Boolean(payload.perfumeCategoryId || payload.category === 'perfumes' || Number(payload.categoryId) === 1);
+    
+    // Build translations array required by ASP.NET
+    const translations = Array.isArray(payload.translations) && payload.translations.length > 0
+      ? payload.translations
+      : [
+          {
+            languageCode: 'En',
+            name: payload.name || 'Imperial Extrait',
+            description: payload.description || payload.tagline || 'Haute Parfumerie Creation',
+            ingredients: payload.ingredients || 'Rare Oud, Amber Crystals, Taif Rose, White Musk'
+          },
+          {
+            languageCode: 'Ar',
+            name: payload.arabicName || payload.name || 'عطر ملكي فاخر',
+            description: payload.arabicDescription || payload.description || 'عطر شرقي ملكي فاخر',
+            ingredients: payload.ingredients || 'دهن عود كمبودي، ورد طائفي، عنبر فاخر، مسك أبيض'
+          }
+        ];
+
     const body = {
-      name: payload.name || 'Imperial Extrait',
-      description: payload.description || payload.tagline || 'Exclusive Creation',
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
       perfumeCategoryId: isPerfume ? (Number(payload.perfumeCategoryId) || 1) : null,
-      price: !isPerfume ? Number(payload.price || 55) : undefined,
-      gender: payload.gender || 'Unisex',
-      isActive: payload.isActive !== false
+      gender: payload.gender === 'Female' ? 'Female' : (payload.gender === 'Male' ? 'Male' : 'Unisex'),
+      price: Number(payload.price) || 0,
+      nameIsTranslatable: true,
+      isActive: payload.isActive !== false,
+      imageUrl: payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp'),
+      translations
     };
+
     const response = await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.CREATE, body);
     return normalizeProduct(response);
   },
@@ -236,17 +257,28 @@ export const productApi = {
   async adminUpdateProduct(id, payload) {
     const isPerfume = Boolean(payload.perfumeCategoryId || payload.category === 'perfumes' || Number(payload.categoryId) === 1);
     const body = {
-      name: payload.name || 'Imperial Extrait',
-      description: payload.description || payload.tagline || 'Exclusive Creation',
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
       perfumeCategoryId: isPerfume ? (Number(payload.perfumeCategoryId) || 1) : null,
-      price: !isPerfume ? Number(payload.price || 55) : undefined,
-      gender: payload.gender || 'Unisex',
-      isActive: payload.isActive !== false
+      gender: payload.gender === 'Female' ? 'Female' : (payload.gender === 'Male' ? 'Male' : 'Unisex'),
+      price: Number(payload.price) || 0,
+      nameIsTranslatable: true,
+      isActive: payload.isActive !== false,
+      imageUrl: payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp')
     };
+
     const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
+    
+    // Also update translation if name or description is provided
+    if (payload.name || payload.description) {
+      await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'En'), {
+        name: payload.name || 'Imperial Extrait',
+        description: payload.description || 'Haute Parfumerie Creation',
+        ingredients: payload.ingredients || 'Rare Oud, Amber Crystals, Taif Rose'
+      }).catch(() => {});
+    }
+
     return normalizeProduct(response);
   },
 
