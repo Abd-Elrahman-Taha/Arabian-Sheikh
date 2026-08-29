@@ -53,6 +53,8 @@ function saveLocalState() {
   }
 }
 
+const FIREBASE_ENDPOINT = 'https://arabian-sheikh-2026-default-rtdb.firebaseio.com/sync.json';
+
 // Push current state to the live cloud backend
 let isPushing = false;
 let pendingPush = false;
@@ -72,7 +74,14 @@ async function pushToCloud() {
       lastUpdated: new Date().toISOString()
     };
 
-    // 1. Instant cross-device broadcast via public ntfy hub (unlimited, no auth)
+    // 1. Google Cloud Firebase Realtime DB (100% reachable globally without ISP block)
+    fetch(FIREBASE_ENDPOINT, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dataPayload)
+    }).catch(() => {});
+
+    // 2. Instant cross-device broadcast via public ntfy hub
     fetch(NTFY_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -82,7 +91,6 @@ async function pushToCloud() {
       body: JSON.stringify(dataPayload)
     }).catch(() => {});
 
-    // Also send structured message payload for guaranteed SSE string parsing
     fetch(NTFY_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -92,7 +100,7 @@ async function pushToCloud() {
       })
     }).catch(() => {});
 
-    // 2. Secondary backup to restful-api.dev
+    // 3. Secondary backup to restful-api.dev
     fetch(CLOUD_ENDPOINT, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -168,8 +176,24 @@ function mergeRemoteData(remoteData) {
 // Pull latest state from live cloud and merge across devices
 async function pullFromCloud() {
   if (typeof window === 'undefined') return state;
+  
+  // 1. Try Google Cloud Firebase endpoint first (highest reliability, unblocked globally)
   try {
-    // 1. Pull from ntfy hub
+    const fbRes = await fetch(FIREBASE_ENDPOINT).catch(() => null);
+    if (fbRes && fbRes.ok) {
+      const fbData = await fbRes.json();
+      if (fbData && typeof fbData === 'object') {
+        mergeRemoteData(fbData);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: fbData }));
+        }
+        return state;
+      }
+    }
+  } catch {}
+
+  // 2. Try ntfy hub poll
+  try {
     const ntfyRes = await fetch(`${NTFY_ENDPOINT}/json?poll=1`).catch(() => null);
     if (ntfyRes && ntfyRes.ok) {
       const text = await ntfyRes.text();
@@ -199,7 +223,7 @@ async function pullFromCloud() {
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
             }
-            break; // Merged latest valid broadcast
+            break;
           }
         } catch {}
       }
