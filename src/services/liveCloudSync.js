@@ -186,14 +186,9 @@ function setupLiveSyncListener() {
       } catch {}
     }
   });
-
-  // Fast background polling every 2.5 seconds across devices
-  setInterval(() => {
-    pullFromCloud();
-  }, 2500);
 }
 
-// Initialize on file import
+// Initialize on file load / page refresh
 loadLocalState();
 if (typeof window !== 'undefined') {
   pullFromCloud();
