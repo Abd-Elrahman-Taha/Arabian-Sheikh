@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
+import { brandApi } from '../../api/brand.api';
 import { useToast } from '../../context/ToastContext';
-import { ArrowLeft, Save, Sparkles, Crown } from 'lucide-react';
+import { ArrowLeft, Save, Sparkles, Crown, Building2 } from 'lucide-react';
 
 export default function AdminProductEdit() {
   const { currentPath, navigate } = useRouter();
@@ -13,12 +14,21 @@ export default function AdminProductEdit() {
   const isNew = currentPath.endsWith('/new');
   const editId = isNew ? null : currentPath.split('/admin/products/')[1]?.split('/edit')[0];
 
+  const [brands, setBrands] = useState([
+    { id: 1, name: 'Dior' },
+    { id: 2, name: 'Chanel' },
+    { id: 3, name: 'Tom Ford' },
+    { id: 4, name: 'Arabian Sheikh' }
+  ]);
+
   const [formData, setFormData] = useState({
     name: '',
     arabicName: '',
     bulgarianName: '',
     tagline: '',
     description: '',
+    brandId: 1,
+    brandName: 'Dior',
     price: 40,
     originalPrice: '',
     hasDiscount: false,
@@ -43,6 +53,18 @@ export default function AdminProductEdit() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    async function loadBrandsList() {
+      try {
+        const list = await brandApi.adminGetBrands().catch(() => null) || await brandApi.getBrands().catch(() => null);
+        if (Array.isArray(list) && list.length > 0) {
+          setBrands(list);
+        }
+      } catch {}
+    }
+    loadBrandsList();
+  }, []);
+
+  useEffect(() => {
     async function loadItem() {
       if (isNew || !editId) return;
       try {
@@ -54,6 +76,7 @@ export default function AdminProductEdit() {
 
           setFormData({
             ...item,
+            brandId: Number(item.brandId || item.brand?.id) || 1,
             hasDiscount: isDisc,
             discountPercent: discPct,
             price: isDisc ? item.price : baseP,
@@ -201,8 +224,29 @@ export default function AdminProductEdit() {
           </div>
         </div>
 
-        {/* Pricing, Tier, Category */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs pt-4 border-t border-white/5">
+        {/* Pricing, Tier, Category, Brand */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 text-xs pt-4 border-t border-white/5">
+          {/* Brand Selector */}
+          <div className="space-y-1">
+            <label className="text-[#D8BE99] uppercase font-cinzel flex items-center gap-1">
+              <Building2 className="w-3 h-3 text-[#D4AF37]" />
+              <span>Brand</span>
+            </label>
+            <select
+              value={formData.brandId || 1}
+              onChange={(e) => {
+                const bId = Number(e.target.value);
+                const bName = brands.find(b => b.id === bId)?.name || 'Dior';
+                setFormData({ ...formData, brandId: bId, brandName: bName });
+              }}
+              className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+            >
+              {brands.map(b => (
+                <option key={b.id} value={b.id}>{b.name || `Brand #${b.id}`}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Category Selector */}
           <div className="space-y-1">
             <label className="text-[#D8BE99] uppercase font-cinzel">Category</label>
