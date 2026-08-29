@@ -382,32 +382,59 @@ export const productService = {
   },
 
   async updateProduct(id, productData) {
-    let remote = null;
-    try {
-      remote = await productApi.adminUpdateProduct(id, productData);
-    } catch (e) {
-      console.warn('Remote backend update product fallback to cloud sync:', e.message);
-    }
-
-    const patch = { ...productData, ...(remote || {}) };
-    await liveCloudSync.updateProduct(id, patch);
-
     const prods = loadProducts();
-    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
-    if (idx >= 0) {
-      prods[idx] = { ...prods[idx], ...patch };
-      saveProducts(prods);
-      return prods[idx];
+    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
+
+    // 1. Immediately broadcast update to cross-device cloud sync
+    await liveCloudSync.updateProduct(id, productData);
+    if (product && product.slug && product.slug !== id) {
+      await liveCloudSync.updateProduct(product.slug, productData);
     }
-    return patch;
+    if (product && product.id && product.id !== id) {
+      await liveCloudSync.updateProduct(product.id, productData);
+    }
+
+    // 2. Also update ASP.NET backend if numeric ID
+    let targetId = Number(id);
+    if (isNaN(targetId) || targetId <= 0) {
+      if (product && product.numericId && Number(product.numericId) > 0) {
+        targetId = Number(product.numericId);
+      }
+    }
+    if (!isNaN(targetId) && targetId > 0) {
+      await productApi.adminUpdateProduct(targetId, productData).catch(() => {});
+    }
+
+    if (product) {
+      Object.assign(product, productData);
+      saveProducts(prods);
+      return product;
+    }
+    return productData;
   },
 
   async deleteProduct(id) {
+    const prods = loadProducts();
+    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
+
+    // 1. Immediately broadcast deletion to cross-device cloud sync
     await liveCloudSync.deleteProduct(id);
-    try {
-      await productApi.adminDeleteProduct(id);
-    } catch (e) {
-      console.warn('Remote backend delete product fallback to cloud sync:', e.message);
+    if (product && product.slug && product.slug !== id) {
+      await liveCloudSync.deleteProduct(product.slug);
+    }
+    if (product && product.id && product.id !== id) {
+      await liveCloudSync.deleteProduct(product.id);
+    }
+
+    // 2. Delete from ASP.NET backend if numeric ID
+    let targetId = Number(id);
+    if (isNaN(targetId) || targetId <= 0) {
+      if (product && product.numericId && Number(product.numericId) > 0) {
+        targetId = Number(product.numericId);
+      }
+    }
+    if (!isNaN(targetId) && targetId > 0) {
+      await productApi.adminDeleteProduct(targetId).catch(() => {});
     }
 
     inMemoryProducts = inMemoryProducts.filter(p => String(p.id) !== String(id) && p.slug !== id);
@@ -422,8 +449,11 @@ export const productService = {
 
     // 1. Immediately broadcast to cross-device cloud sync hub so ALL devices update
     await liveCloudSync.setProductActive(id, activeBool);
-    if (product && product.slug) {
+    if (product && product.slug && product.slug !== id) {
       await liveCloudSync.setProductActive(product.slug, activeBool);
+    }
+    if (product && product.id && product.id !== id) {
+      await liveCloudSync.setProductActive(product.id, activeBool);
     }
 
     // 2. Determine numeric server database ID if available
@@ -472,45 +502,107 @@ export const productService = {
   },
 
   async updateStock(id, newStock) {
-    const remote = await productApi.adminUpdateProduct(id, { stock: Math.max(0, newStock) });
     const prods = loadProducts();
-    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
-    if (idx >= 0) {
-      prods[idx] = { ...prods[idx], ...remote };
+    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
+    const stockVal = Math.max(0, Number(newStock));
+
+    await liveCloudSync.updateProduct(id, { stock: stockVal });
+    if (product && product.slug) {
+      await liveCloudSync.updateProduct(product.slug, { stock: stockVal });
     }
-    saveProducts(prods);
-    return remote;
+
+    let targetId = Number(id);
+    if (isNaN(targetId) || targetId <= 0) {
+      if (product && product.numericId && Number(product.numericId) > 0) {
+        targetId = Number(product.numericId);
+      }
+    }
+    if (!isNaN(targetId) && targetId > 0) {
+      await productApi.adminUpdateProduct(targetId, { stock: stockVal }).catch(() => {});
+    }
+
+    if (product) {
+      product.stock = stockVal;
+      saveProducts(prods);
+    }
+    return { stock: stockVal };
   },
 
   async applyProductDiscount(id, discountPercent) {
     const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    const remote = await productApi.adminUpdateProduct(id, {
+    const prods = loadProducts();
+    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
+
+    const patch = {
       discountPercent: pct,
       hasDiscount: true,
       isOffer: true
-    });
-    const prods = loadProducts();
-    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
-    if (idx >= 0) {
-      prods[idx] = { ...prods[idx], ...remote };
+    };
+
+    // 1. Immediately broadcast discount across all devices
+    await liveCloudSync.updateProduct(id, patch);
+    if (product && product.slug && product.slug !== id) {
+      await liveCloudSync.updateProduct(product.slug, patch);
     }
-    saveProducts(prods);
-    return remote;
+    if (product && product.id && product.id !== id) {
+      await liveCloudSync.updateProduct(product.id, patch);
+    }
+
+    // 2. Also update ASP.NET backend if numeric ID
+    let targetId = Number(id);
+    if (isNaN(targetId) || targetId <= 0) {
+      if (product && product.numericId && Number(product.numericId) > 0) {
+        targetId = Number(product.numericId);
+      }
+    }
+    if (!isNaN(targetId) && targetId > 0) {
+      await productApi.adminUpdateProduct(targetId, patch).catch(() => {});
+    }
+
+    if (product) {
+      Object.assign(product, patch);
+      saveProducts(prods);
+      return product;
+    }
+    return patch;
   },
 
   async removeProductDiscount(id) {
-    const remote = await productApi.adminUpdateProduct(id, {
+    const prods = loadProducts();
+    const product = prods.find(p => String(p.id) === String(id) || p.slug === id);
+
+    const patch = {
       discountPercent: 0,
       hasDiscount: false,
       isOffer: false
-    });
-    const prods = loadProducts();
-    const idx = prods.findIndex(p => String(p.id) === String(id) || p.slug === id);
-    if (idx >= 0) {
-      prods[idx] = { ...prods[idx], ...remote };
+    };
+
+    // 1. Immediately broadcast discount removal across all devices
+    await liveCloudSync.updateProduct(id, patch);
+    if (product && product.slug && product.slug !== id) {
+      await liveCloudSync.updateProduct(product.slug, patch);
     }
-    saveProducts(prods);
-    return remote;
+    if (product && product.id && product.id !== id) {
+      await liveCloudSync.updateProduct(product.id, patch);
+    }
+
+    // 2. Also update ASP.NET backend if numeric ID
+    let targetId = Number(id);
+    if (isNaN(targetId) || targetId <= 0) {
+      if (product && product.numericId && Number(product.numericId) > 0) {
+        targetId = Number(product.numericId);
+      }
+    }
+    if (!isNaN(targetId) && targetId > 0) {
+      await productApi.adminUpdateProduct(targetId, patch).catch(() => {});
+    }
+
+    if (product) {
+      Object.assign(product, patch);
+      saveProducts(prods);
+      return product;
+    }
+    return patch;
   },
 
   getDiscountedProductsSync() {

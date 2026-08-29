@@ -122,9 +122,10 @@ function mergeRemoteData(remoteData) {
   (remoteData.users || []).forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
   state.users.forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
 
+  // Remote modified products override local state
   const modified = {
-    ...(remoteData.modifiedProducts || {}),
-    ...state.modifiedProducts
+    ...state.modifiedProducts,
+    ...(remoteData.modifiedProducts || {})
   };
 
   const newProdMap = new Map();
@@ -342,8 +343,24 @@ export const liveCloudSync = {
       // Apply modifications
       if (state.modifiedProducts[idStr]) {
         item = { ...item, ...state.modifiedProducts[idStr] };
-      } else if (slugStr && state.modifiedProducts[slugStr]) {
+      }
+      if (slugStr && state.modifiedProducts[slugStr]) {
         item = { ...item, ...state.modifiedProducts[slugStr] };
+      }
+
+      // Automatically handle discount price calculations
+      if (item.discountPercent && Number(item.discountPercent) > 0) {
+        const basePrice = item.originalPrice ? Number(item.originalPrice) : Number(item.price);
+        item.originalPrice = basePrice;
+        item.price = Math.round(basePrice * (1 - Number(item.discountPercent) / 100));
+        item.hasDiscount = true;
+        item.isOffer = true;
+      } else if (item.discountPercent === 0) {
+        if (item.originalPrice) {
+          item.price = item.originalPrice;
+        }
+        item.hasDiscount = false;
+        item.isOffer = false;
       }
 
       // Apply active / inactive status (active takes precedence)
