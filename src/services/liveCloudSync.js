@@ -169,26 +169,29 @@ async function pullFromCloud() {
         if (!line) continue;
         try {
           const item = JSON.parse(line);
-          if (item.message) {
-            const parsed = JSON.parse(item.message);
-            const remoteData = parsed?.data || parsed;
+          let remoteData = null;
+
+          if (item.attachment?.url) {
+            const fileRes = await fetch(item.attachment.url).catch(() => null);
+            if (fileRes && fileRes.ok) {
+              const json = await fileRes.json();
+              remoteData = json?.data || json;
+            }
+          } else if (item.message) {
+            try {
+              const parsed = JSON.parse(item.message);
+              remoteData = parsed?.data || parsed;
+            } catch {}
+          }
+
+          if (remoteData) {
             mergeRemoteData(remoteData);
-            break; // Merged latest broadcast
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
+            }
+            break; // Merged latest valid broadcast
           }
         } catch {}
-      }
-    }
-
-    // 2. Fallback check to restful-api
-    const res = await fetch(CLOUD_ENDPOINT, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    }).catch(() => null);
-
-    if (res && res.ok) {
-      const json = await res.json();
-      if (json?.data) {
-        mergeRemoteData(json.data);
       }
     }
   } catch (err) {
@@ -197,11 +200,67 @@ async function pullFromCloud() {
   return state;
 }
 
+// Live Real-Time SSE Listener (Server-Sent Events) across all devices
+function setupLiveSyncListener() {
+  if (typeof window === 'undefined') return;
+
+  let eventSource = null;
+
+  function connect() {
+    try {
+      eventSource = new EventSource(`${NTFY_ENDPOINT}/sse`);
+
+      eventSource.onmessage = async (event) => {
+        try {
+          const item = JSON.parse(event.data);
+          let remoteData = null;
+
+          if (item.attachment?.url) {
+            const fileRes = await fetch(item.attachment.url).catch(() => null);
+            if (fileRes && fileRes.ok) {
+              const json = await fileRes.json();
+              remoteData = json?.data || json;
+            }
+          } else if (item.message) {
+            try {
+              const json = JSON.parse(item.message);
+              remoteData = json?.data || json;
+            } catch {}
+          }
+
+          if (remoteData) {
+            mergeRemoteData(remoteData);
+            window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
+          }
+        } catch (e) {
+          console.warn('SSE message error:', e);
+        }
+      };
+
+      eventSource.onerror = () => {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        // Reconnect after 3 seconds
+        setTimeout(connect, 3000);
+      };
+    } catch {}
+  }
+
+  connect();
+
+  // Background fallback poll every 5 seconds
+  setInterval(() => {
+    pullFromCloud();
+  }, 5000);
+}
+
 // Initialize on file import
 loadLocalState();
 if (typeof window !== 'undefined') {
-  // Sync in background immediately
   pullFromCloud();
+  setupLiveSyncListener();
 }
 
 export const liveCloudSync = {

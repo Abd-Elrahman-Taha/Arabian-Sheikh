@@ -42,6 +42,12 @@ export default function AdminInventory() {
 
   useEffect(() => {
     fetchInventory();
+
+    const handleCloudUpdate = () => {
+      fetchInventory();
+    };
+    window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
   }, []);
 
   // Toggle active/inactive status and connect directly with the API

@@ -82,6 +82,20 @@ export default function Shop() {
     fetchProducts();
   }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy]);
 
+  useEffect(() => {
+    const handleCloudUpdate = () => {
+      productService.getAllProducts({
+        category, tier, gender, family, search,
+        maxPrice, inStockOnly, minRating, sortBy
+      }).then(data => {
+        setProducts(data);
+      }).catch(() => {});
+    };
+
+    window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy]);
+
   const resetFilters = () => {
     setCategory('all');
     setTier('all');

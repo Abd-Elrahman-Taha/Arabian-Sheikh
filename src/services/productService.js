@@ -29,6 +29,15 @@ function persistCatalog(items) {
   }
 }
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('arabian_sheikh_cloud_updated', () => {
+    if (cachedProducts && cachedProducts.length > 0) {
+      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
+      persistCatalog(cachedProducts);
+    }
+  });
+}
+
 export const productService = {
   /**
    * Filter an array of products locally using supplied filter parameters.
