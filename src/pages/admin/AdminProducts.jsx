@@ -51,7 +51,15 @@ export default function AdminProducts() {
       fetchProducts();
     };
     window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+
+    const pollInterval = setInterval(() => {
+      fetchProducts();
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+      clearInterval(pollInterval);
+    };
   }, [search, categoryFilter, tierFilter]);
 
   const handleDelete = async (id, name) => {

@@ -47,7 +47,15 @@ export default function AdminInventory() {
       fetchInventory();
     };
     window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+
+    const pollInterval = setInterval(() => {
+      fetchInventory();
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   // Toggle active/inactive status and connect directly with the API
