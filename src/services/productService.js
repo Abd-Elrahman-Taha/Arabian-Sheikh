@@ -149,14 +149,18 @@ export const productService = {
         response = await productApi.getProducts(apiFilters);
       }
 
-      const items = response?.items || (Array.isArray(response) ? response : []);
+      let items = response?.items || (Array.isArray(response) ? response : []);
       if (items.length > 0) {
+        items = liveCloudSync.applyToProducts(items);
         cachedProducts = items;
         persistCatalog(items);
+      } else if (cachedProducts.length > 0) {
+        cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
       }
       return this.applyFilters(cachedProducts, filters);
     } catch (err) {
       console.warn('API getProducts error:', err.message);
+      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
       return this.applyFilters(cachedProducts, filters);
     }
   },
