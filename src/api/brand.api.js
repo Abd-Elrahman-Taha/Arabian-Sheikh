@@ -1,6 +1,6 @@
-﻿import apiClient from './client';
+import apiClient from './client';
 import ENDPOINTS from './endpoints';
-import { normalizeObjectKeys } from './normalizers';
+import { normalizeObjectKeys, toAbsoluteUrl } from './normalizers';
 
 export const brandApi = {
   /**
@@ -41,7 +41,12 @@ export const brandApi = {
    * POST /api/admin/brands
    */
   async adminCreateBrand(payload) {
-    const response = await apiClient.post(ENDPOINTS.ADMIN.BRANDS.CREATE, payload);
+    const body = {
+      name: payload.name || 'Arabian Sheikh',
+      logoUrl: toAbsoluteUrl(payload.logoUrl || '/assets/arabian-sheikh-logo.svg'),
+      isActive: payload.isActive !== false
+    };
+    const response = await apiClient.post(ENDPOINTS.ADMIN.BRANDS.CREATE, body);
     return normalizeObjectKeys(response);
   },
 
@@ -59,7 +64,12 @@ export const brandApi = {
    * PUT /api/admin/brands/{id}
    */
   async adminUpdateBrand(id, payload) {
-    const response = await apiClient.put(ENDPOINTS.ADMIN.BRANDS.UPDATE(id), payload);
+    const body = {
+      name: payload.name || 'Arabian Sheikh',
+      logoUrl: toAbsoluteUrl(payload.logoUrl || '/assets/arabian-sheikh-logo.svg'),
+      isActive: payload.isActive !== false
+    };
+    const response = await apiClient.put(ENDPOINTS.ADMIN.BRANDS.UPDATE(id), body);
     return normalizeObjectKeys(response);
   },
 

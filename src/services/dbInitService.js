@@ -1,5 +1,6 @@
 import { brandApi } from '../api/brand.api';
 import { productApi } from '../api/product.api';
+import { toAbsoluteUrl } from '../api/normalizers';
 import { INITIAL_PRODUCTS } from './mockData';
 
 export const dbInitService = {
@@ -24,7 +25,7 @@ export const dbInitService = {
       try {
         const createdBrand = await brandApi.adminCreateBrand({
           name: 'Arabian Sheikh',
-          logoUrl: '/assets/arabian-sheikh-logo.svg',
+          logoUrl: toAbsoluteUrl('/assets/arabian-sheikh-logo.svg'),
           isActive: true
         });
         brandId = createdBrand?.id || 1;

@@ -34,6 +34,20 @@ export function normalizeObjectKeys(obj) {
 }
 
 /**
+ * Ensures any image or asset URL is a fully qualified absolute URL compliant with ASP.NET backend validation
+ */
+export function toAbsoluteUrl(url) {
+  if (!url || typeof url !== 'string') return 'https://arabian-sheikh.runasp.net/products/luxury_designs/07_arabian_gold.webp';
+  const clean = url.trim();
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return clean;
+  }
+  const domain = 'https://arabian-sheikh.runasp.net';
+  const path = clean.startsWith('/') ? clean : `/${clean}`;
+  return `${domain}${path}`;
+}
+
+/**
  * Product Normalizer (supports both ProductListItemResponse and ProductDetailsResponse)
  */
 export function normalizeProduct(raw) {

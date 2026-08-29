@@ -1,6 +1,6 @@
 import apiClient from './client';
 import ENDPOINTS from './endpoints';
-import { normalizeProduct, normalizeReview } from './normalizers';
+import { normalizeProduct, normalizeReview, toAbsoluteUrl } from './normalizers';
 
 export const productApi = {
   // ==========================================
@@ -242,7 +242,7 @@ export const productApi = {
       price: Number(payload.price) || 0,
       nameIsTranslatable: true,
       isActive: payload.isActive !== false,
-      imageUrl: payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp'),
+      imageUrl: toAbsoluteUrl(payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp')),
       translations
     };
 
@@ -265,7 +265,7 @@ export const productApi = {
       price: Number(payload.price) || 0,
       nameIsTranslatable: true,
       isActive: payload.isActive !== false,
-      imageUrl: payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp')
+      imageUrl: toAbsoluteUrl(payload.imageUrl || payload.image || (Array.isArray(payload.images) ? payload.images[0] : '/products/luxury_designs/07_arabian_gold.webp'))
     };
 
     const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
