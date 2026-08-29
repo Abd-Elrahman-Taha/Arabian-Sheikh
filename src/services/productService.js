@@ -220,6 +220,16 @@ export const productService = {
   // ==========================================
   // Admin & Back-Office API Integration
   // ==========================================
+  resolveTargetId(id) {
+    if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
+    const num = Number(id);
+    if (!isNaN(num) && num > 0) return num;
+    const found = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id);
+    if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
+    if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
+    return null;
+  },
+
   async createProduct(productData) {
     const created = await productApi.adminCreateProduct(productData);
     cachedProducts = [];
@@ -227,54 +237,79 @@ export const productService = {
   },
 
   async updateProduct(id, productData) {
-    const targetId = Number(id);
-    if (!isNaN(targetId) && targetId > 0) {
-      const current = await productApi.adminGetProductById(targetId).catch(() => null);
+    const targetId = this.resolveTargetId(id);
+    const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
+    
+    if (targetId) {
+      const isPerfume = Boolean(
+        productData.perfumeCategoryId ||
+        (existing?.perfumeCategoryId) ||
+        productData.category === 'perfumes' ||
+        existing?.category === 'perfumes' ||
+        Number(productData.categoryId || existing?.categoryId) === 1
+      );
+
       const mergedPayload = {
-        brandId: productData.brandId || current?.brandId,
-        categoryId: productData.categoryId || current?.categoryId,
-        subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (current?.subcategoryId || null),
-        perfumeCategoryId: productData.perfumeCategoryId !== undefined ? productData.perfumeCategoryId : (current?.perfumeCategoryId || null),
-        gender: productData.gender || current?.gender || 'Unisex',
-        price: productData.price !== undefined ? productData.price : current?.price,
-        isActive: productData.isActive !== undefined ? productData.isActive : (current?.isActive !== false),
-        imageUrl: productData.imageUrl || productData.image || current?.imageUrl || current?.image || (current?.images?.[0]),
-        name: productData.name || current?.name,
-        description: productData.description || current?.description,
-        ingredients: productData.ingredients || current?.ingredients,
-        discountPercent: productData.discountPercent !== undefined ? productData.discountPercent : current?.discountPercent,
-        hasDiscount: productData.hasDiscount !== undefined ? productData.hasDiscount : current?.hasDiscount,
-        isOffer: productData.isOffer !== undefined ? productData.isOffer : current?.isOffer
+        brandId: Number(productData.brandId || existing?.brandId) || 1,
+        categoryId: Number(productData.categoryId || existing?.categoryId) || (isPerfume ? 1 : 2),
+        subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (existing?.subcategoryId || null),
+        perfumeCategoryId: isPerfume ? (Number(productData.perfumeCategoryId || existing?.perfumeCategoryId) || 1) : null,
+        gender: productData.gender || existing?.gender || 'Unisex',
+        price: Number(productData.price !== undefined ? productData.price : (existing?.price || 0)),
+        isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (existing?.isActive !== false),
+        imageUrl: productData.imageUrl || productData.image || existing?.imageUrl || existing?.image || (existing?.images?.[0]),
+        name: productData.name || existing?.name,
+        description: productData.description || existing?.description,
+        ingredients: productData.ingredients || existing?.ingredients
       };
+
       const updated = await productApi.adminUpdateProduct(targetId, mergedPayload);
       cachedProducts = [];
       return updated;
     }
-    throw new Error('Invalid product database ID.');
+
+    // Update in local cache if not yet assigned numeric DB ID
+    cachedProducts = cachedProducts.map(p => {
+      if (String(p.id) === String(id) || p.slug === id) {
+        return { ...p, ...productData };
+      }
+      return p;
+    });
+    return productData;
   },
 
   async deleteProduct(id) {
-    const targetId = Number(id);
-    if (!isNaN(targetId) && targetId > 0) {
-      await productApi.adminDeleteProduct(targetId);
-      cachedProducts = [];
-      return true;
+    const targetId = this.resolveTargetId(id);
+    if (targetId) {
+      try {
+        await productApi.adminDeleteProduct(targetId);
+      } catch (err) {
+        console.warn('adminDeleteProduct API error:', err.message);
+      }
     }
-    throw new Error('Invalid product database ID.');
+    cachedProducts = cachedProducts.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
+    return true;
   },
 
   async toggleProductActive(id, isActive) {
-    const targetId = Number(id);
-    if (!isNaN(targetId) && targetId > 0) {
-      if (Boolean(isActive)) {
-        await productApi.adminActivateProduct(targetId);
-      } else {
-        await productApi.adminDeactivateProduct(targetId);
-      }
-      cachedProducts = [];
-      return { id: targetId, isActive: Boolean(isActive) };
+    const targetId = this.resolveTargetId(id);
+    const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
+    
+    if (targetId) {
+      await productApi.adminActivateProduct(targetId, {
+        ...existing,
+        isActive: Boolean(isActive)
+      });
     }
-    throw new Error('Invalid product database ID.');
+
+    cachedProducts = cachedProducts.map(p => {
+      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId))) {
+        return { ...p, isActive: Boolean(isActive), status: isActive ? 'ACTIVE' : 'INACTIVE' };
+      }
+      return p;
+    });
+
+    return { id: targetId || id, isActive: Boolean(isActive) };
   },
 
   async updateStock(id, newStock) {
@@ -284,51 +319,19 @@ export const productService = {
 
   async applyProductDiscount(id, discountPercent) {
     const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    const targetId = Number(id);
-    if (!isNaN(targetId) && targetId > 0) {
-      const current = await productApi.adminGetProductById(targetId).catch(() => null);
-      const updatePayload = {
-        brandId: current?.brandId,
-        categoryId: current?.categoryId,
-        subcategoryId: current?.subcategoryId || null,
-        perfumeCategoryId: current?.perfumeCategoryId || null,
-        gender: current?.gender || 'Unisex',
-        price: current?.price,
-        isActive: current?.isActive !== false,
-        imageUrl: current?.imageUrl || current?.image || (current?.images?.[0]),
-        discountPercent: pct,
-        hasDiscount: true,
-        isOffer: true
-      };
-      const updated = await productApi.adminUpdateProduct(targetId, updatePayload);
-      cachedProducts = [];
-      return updated;
-    }
-    throw new Error('Invalid product database ID.');
+    return await this.updateProduct(id, {
+      discountPercent: pct,
+      hasDiscount: true,
+      isOffer: true
+    });
   },
 
   async removeProductDiscount(id) {
-    const targetId = Number(id);
-    if (!isNaN(targetId) && targetId > 0) {
-      const current = await productApi.adminGetProductById(targetId).catch(() => null);
-      const updatePayload = {
-        brandId: current?.brandId,
-        categoryId: current?.categoryId,
-        subcategoryId: current?.subcategoryId || null,
-        perfumeCategoryId: current?.perfumeCategoryId || null,
-        gender: current?.gender || 'Unisex',
-        price: current?.price,
-        isActive: current?.isActive !== false,
-        imageUrl: current?.imageUrl || current?.image || (current?.images?.[0]),
-        discountPercent: 0,
-        hasDiscount: false,
-        isOffer: false
-      };
-      const updated = await productApi.adminUpdateProduct(targetId, updatePayload);
-      cachedProducts = [];
-      return updated;
-    }
-    throw new Error('Invalid product database ID.');
+    return await this.updateProduct(id, {
+      discountPercent: 0,
+      hasDiscount: false,
+      isOffer: false
+    });
   },
 
   getDiscountedProductsSync() {

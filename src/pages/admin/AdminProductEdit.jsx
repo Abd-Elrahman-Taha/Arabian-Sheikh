@@ -128,7 +128,8 @@ export default function AdminProductEdit() {
       }
       navigate('/admin/products');
     } catch (err) {
-      error('Failed to save product changes.');
+      console.error('Save product error:', err);
+      error(err.message || 'Failed to save product changes.');
     } finally {
       setLoading(false);
     }

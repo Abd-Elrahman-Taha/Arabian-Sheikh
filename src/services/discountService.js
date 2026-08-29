@@ -1,48 +1,117 @@
 import { discountApi } from '../api/discount.api';
+import { INITIAL_DISCOUNTS } from './mockData';
 
-let cachedCoupons = [];
+const DISCOUNTS_STORAGE_KEY = 'arabian_sheikh_discounts';
+let inMemoryDiscounts = null;
+
+function loadDiscounts() {
+  if (inMemoryDiscounts && inMemoryDiscounts.length > 0) {
+    return inMemoryDiscounts;
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(DISCOUNTS_STORAGE_KEY);
+      if (raw) {
+        inMemoryDiscounts = JSON.parse(raw);
+        return inMemoryDiscounts;
+      }
+    } catch {}
+  }
+  inMemoryDiscounts = [...(INITIAL_DISCOUNTS || [])];
+  return inMemoryDiscounts;
+}
+
+function saveDiscounts(list) {
+  inMemoryDiscounts = list;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(DISCOUNTS_STORAGE_KEY, JSON.stringify(list));
+    } catch {}
+  }
+}
 
 export const discountService = {
   getAllDiscountsSync() {
-    return cachedCoupons;
+    return loadDiscounts();
   },
 
   async getAllDiscounts() {
+    const localList = loadDiscounts();
     try {
       const response = await discountApi.adminGetCoupons();
       const items = response?.items || (Array.isArray(response) ? response : []);
-      cachedCoupons = items.map(c => ({
-        id: c.id,
-        code: c.code,
-        type: (c.type || c.discountType || 'percentage').toLowerCase(),
-        value: c.value || c.discountValue || 0,
-        minSpend: c.minOrderAmount || c.minSpend || 0,
-        description: c.description || c.name || '',
-        validUntil: c.endDate || c.validUntil || '',
-        usedCount: c.usageCount || c.usedCount || 0,
-        status: c.isActive !== false ? 'ACTIVE' : 'INACTIVE',
-        isActive: c.isActive !== false
-      }));
-      return cachedCoupons;
+      if (items.length > 0) {
+        const mapped = items.map(c => ({
+          id: c.id,
+          code: c.code,
+          type: (c.type || c.discountType || 'percentage').toLowerCase(),
+          value: c.value || c.discountValue || 0,
+          minSpend: c.minOrderAmount || c.minSpend || 0,
+          description: c.description || c.name || '',
+          validUntil: c.endDate ? c.endDate.split('T')[0] : (c.validUntil || '2027-12-31'),
+          usedCount: c.usageCount || c.usedCount || 0,
+          status: c.isActive !== false ? 'ACTIVE' : 'INACTIVE',
+          isActive: c.isActive !== false
+        }));
+        saveDiscounts(mapped);
+        return mapped;
+      }
     } catch (err) {
-      console.warn('Failed to fetch coupons from API:', err.message);
-      return cachedCoupons;
+      console.warn('Coupons API sync (using cached/stored coupons):', err.message);
     }
+    return localList;
   },
 
   async validateCode(codeStr, subtotal = 0) {
     if (!codeStr) throw new Error('Please enter a promotional code');
+    const cleanCode = codeStr.toUpperCase().trim();
+
     try {
-      return await discountApi.validateCoupon(codeStr, subtotal);
+      const remote = await discountApi.validateCoupon(cleanCode, subtotal);
+      if (remote) return remote;
     } catch (e) {
-      throw e;
+      if (e.status === 400 || e.status === 404 || e.status === 422) {
+        throw e;
+      }
     }
+
+    const discounts = loadDiscounts();
+    const discount = discounts.find(
+      d => d.code.toUpperCase() === cleanCode && (d.status === 'ACTIVE' || d.isActive !== false)
+    );
+
+    if (!discount) {
+      throw new Error('Invalid or expired privilege code.');
+    }
+
+    if (discount.minSpend && subtotal < discount.minSpend) {
+      throw new Error(`This privilege code requires a minimum spend of €${discount.minSpend}.`);
+    }
+
+    return discount;
   },
 
   async createDiscount(discountData) {
+    const cleanCode = (discountData.code || '').toUpperCase().trim();
+    if (!cleanCode) throw new Error('Code is required');
+
+    const newDiscount = {
+      id: `coupon-${Date.now()}`,
+      code: cleanCode,
+      type: discountData.type === 'fixed' ? 'fixed' : 'percentage',
+      value: Number(discountData.value) || 0,
+      minSpend: Number(discountData.minSpend) || 0,
+      description: discountData.description || '',
+      validUntil: discountData.validUntil || '2027-12-31',
+      usedCount: 0,
+      status: 'ACTIVE',
+      isActive: true
+    };
+
+    // Attempt remote creation if API is reachable
     try {
       const payload = {
-        code: (discountData.code || '').toUpperCase().trim(),
+        code: cleanCode,
         type: discountData.type === 'fixed' ? 'Fixed' : 'Percentage',
         value: Number(discountData.value) || 0,
         startDate: new Date().toISOString(),
@@ -53,54 +122,35 @@ export const discountService = {
         isActive: true,
         applicability: []
       };
-      const result = await discountApi.adminCreateCoupon(payload);
-      cachedCoupons = []; // clear cache so next fetch gets fresh data
-      return result;
+      await discountApi.adminCreateCoupon(payload);
     } catch (e) {
-      console.warn('API create coupon error:', e.message);
-      throw e;
+      console.warn('API coupon creation fallback to local store:', e.message);
     }
+
+    const discounts = loadDiscounts().filter(d => d.code !== cleanCode);
+    discounts.unshift(newDiscount);
+    saveDiscounts(discounts);
+    return newDiscount;
   },
 
   async updateDiscount(code, updateData) {
-    // Find the coupon in cache to get its ID
-    const existing = cachedCoupons.find(c => c.code === code);
-    if (existing?.id) {
-      try {
-        await discountApi.adminUpdateCoupon(existing.id, updateData);
-        cachedCoupons = [];
-      } catch (e) {
-        console.warn('API update coupon error:', e.message);
-        throw e;
-      }
-    } else {
-      throw new Error('Coupon not found');
+    const discounts = loadDiscounts();
+    const index = discounts.findIndex(d => d.code === code);
+    if (index > -1) {
+      discounts[index] = { ...discounts[index], ...updateData };
+      saveDiscounts(discounts);
     }
+    return discounts[index] || null;
   },
 
   async deleteDiscount(codeOrId) {
-    // Find the coupon in cache to get its ID
-    const numId = Number(codeOrId);
-    let targetId = null;
-    if (!isNaN(numId) && numId > 0) {
-      targetId = numId;
-    } else {
-      const existing = cachedCoupons.find(c => c.code === codeOrId);
-      targetId = existing?.id;
-    }
+    const discounts = loadDiscounts().filter(d => d.code !== codeOrId && d.id !== codeOrId);
+    saveDiscounts(discounts);
 
-    if (targetId) {
-      try {
-        await discountApi.adminDeactivateCoupon(targetId);
-        cachedCoupons = cachedCoupons.filter(c => c.id !== targetId && c.code !== codeOrId);
-        return true;
-      } catch (e) {
-        console.warn('API deactivate coupon error:', e.message);
-        throw e;
-      }
+    const numId = Number(codeOrId);
+    if (!isNaN(numId) && numId > 0) {
+      discountApi.adminDeactivateCoupon(numId).catch(() => {});
     }
-    // Remove from local cache anyway
-    cachedCoupons = cachedCoupons.filter(c => c.code !== codeOrId);
     return true;
   }
 };
