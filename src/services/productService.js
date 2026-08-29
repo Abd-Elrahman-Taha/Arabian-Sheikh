@@ -323,7 +323,8 @@ export const productService = {
       try {
         updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
       } catch (err) {
-        console.warn('adminUpdateProduct remote error:', err.message);
+        console.error('[Live API Error] adminUpdateProduct failed:', err);
+        throw err;
       }
     }
 
@@ -400,9 +401,9 @@ export const productService = {
     
     if (targetId) {
       if (Boolean(isActive)) {
-        await productApi.adminActivateProduct(targetId, { ...existing, isActive: true }).catch(() => {});
+        await productApi.adminActivateProduct(targetId, existing);
       } else {
-        await productApi.adminDeactivateProduct(targetId, { ...existing, isActive: false }).catch(() => {});
+        await productApi.adminDeactivateProduct(targetId, existing);
       }
     }
 
