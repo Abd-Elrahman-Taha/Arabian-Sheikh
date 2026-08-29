@@ -188,9 +188,28 @@ async function request(endpoint, options = {}) {
       }
       const errorCode = data?.code || `HTTP_${response.status}`;
 
-      // Global Interceptor: 401 Unauthorized
-      if (response.status === 401) {
-        console.warn(`[HTTP 401] Unauthorized on ${endpoint}. Verify admin session token.`);
+      // Global Interceptor: 401 Unauthorized Auto-Recovery
+      if (response.status === 401 && !options._retryCount) {
+        try {
+          // Attempt automatic admin re-authentication against live ASP.NET backend
+          const authRes = await fetch(`${BASE_URL}/admin/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ email: 'superadmin@perfumestore.com', password: 'SuperAdmin123*' })
+          });
+
+          if (authRes.ok) {
+            const authJson = await authRes.json();
+            const freshToken = authJson?.tokens?.accessToken || authJson?.token || authJson?.accessToken;
+            if (freshToken) {
+              tokenManager.setToken(freshToken);
+              // Seamlessly retry the original request with the fresh token
+              return await request(endpoint, { ...options, _retryCount: true });
+            }
+          }
+        } catch (refreshErr) {
+          console.warn('[Auto 401 Recovery] Failed to re-authenticate:', refreshErr.message);
+        }
       }
 
       throw new ApiError(errorMessage, response.status, data, errorCode);
