@@ -3,8 +3,9 @@ import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
 import { brandApi } from '../../api/brand.api';
+import { productApi } from '../../api/product.api';
 import { useToast } from '../../context/ToastContext';
-import { ArrowLeft, Save, Sparkles, Crown, Building2 } from 'lucide-react';
+import { ArrowLeft, Save, Sparkles, Crown, Building2, Layers } from 'lucide-react';
 
 export default function AdminProductEdit() {
   const { currentPath, navigate } = useRouter();
@@ -21,6 +22,14 @@ export default function AdminProductEdit() {
     { id: 4, name: 'Arabian Sheikh' }
   ]);
 
+  const [categories, setCategories] = useState([
+    { id: 1, name: 'Perfumes' },
+    { id: 2, name: 'Oils' },
+    { id: 3, name: 'Bakhoor' },
+    { id: 4, name: 'Cosmetics' },
+    { id: 5, name: 'Bundles' }
+  ]);
+
   const [formData, setFormData] = useState({
     name: '',
     arabicName: '',
@@ -29,6 +38,8 @@ export default function AdminProductEdit() {
     description: '',
     brandId: 1,
     brandName: 'Dior',
+    categoryId: 1,
+    categoryName: 'Perfumes',
     price: 40,
     originalPrice: '',
     hasDiscount: false,
@@ -53,15 +64,21 @@ export default function AdminProductEdit() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function loadBrandsList() {
+    async function loadMeta() {
       try {
-        const list = await brandApi.adminGetBrands().catch(() => null) || await brandApi.getBrands().catch(() => null);
-        if (Array.isArray(list) && list.length > 0) {
-          setBrands(list);
+        const [brandsList, catsList] = await Promise.all([
+          brandApi.adminGetBrands().catch(() => null) || brandApi.getBrands().catch(() => null),
+          productApi.adminGetCategories().catch(() => null) || productApi.getCategories().catch(() => null)
+        ]);
+        if (Array.isArray(brandsList) && brandsList.length > 0) {
+          setBrands(brandsList);
+        }
+        if (Array.isArray(catsList) && catsList.length > 0) {
+          setCategories(catsList);
         }
       } catch {}
     }
-    loadBrandsList();
+    loadMeta();
   }, []);
 
   useEffect(() => {
@@ -77,6 +94,9 @@ export default function AdminProductEdit() {
           setFormData({
             ...item,
             brandId: Number(item.brandId || item.brand?.id) || 1,
+            categoryId: Number(item.categoryId || item.category?.id) || 1,
+            categoryName: item.categoryName || item.category?.name || 'Perfumes',
+            category: (item.category || item.categoryName || 'perfumes').toLowerCase(),
             hasDiscount: isDisc,
             discountPercent: discPct,
             price: isDisc ? item.price : baseP,
@@ -128,7 +148,9 @@ export default function AdminProductEdit() {
         description: formData.description,
         ingredients: formData.ingredients || [topArr.join(', '), heartArr.join(', '), baseArr.join(', ')].filter(Boolean).join(' • ') || 'Rare Oud, Amber, Taif Rose',
         brandId: Number(formData.brandId) || 1,
-        categoryId: isPerfume ? 1 : 2,
+        categoryId: Number(formData.categoryId) || (isPerfume ? 1 : 2),
+        category: formData.category || 'perfumes',
+        categoryName: formData.categoryName || 'Perfumes',
         subcategoryId: formData.subcategoryId ? Number(formData.subcategoryId) : null,
         perfumeCategoryId: isPerfume ? perfumeCatId : null,
         tier: isPerfume ? (formData.tier || 'Luxury') : null,
@@ -249,26 +271,33 @@ export default function AdminProductEdit() {
 
           {/* Category Selector */}
           <div className="space-y-1">
-            <label className="text-[#D8BE99] uppercase font-cinzel">Category</label>
+            <label className="text-[#D8BE99] uppercase font-cinzel flex items-center gap-1">
+              <Layers className="w-3 h-3 text-[#D4AF37]" />
+              <span>Category</span>
+            </label>
             <select
-              value={formData.category}
+              value={formData.categoryId || (formData.category === 'perfumes' ? 1 : 2)}
               onChange={(e) => {
-                const newCat = e.target.value;
-                const isNowPerfume = newCat === 'perfumes';
+                const cId = Number(e.target.value);
+                const matched = categories.find(c => Number(c.id) === cId);
+                const cName = matched ? (matched.name || '').toLowerCase() : 'perfumes';
+                const isNowPerfume = cId === 1 || cName.includes('perfume');
                 setFormData({
                   ...formData,
-                  category: newCat,
+                  categoryId: cId,
+                  categoryName: matched?.name || 'Perfumes',
+                  category: isNowPerfume ? 'perfumes' : cName,
                   tier: isNowPerfume ? (formData.tier || 'Luxury') : '',
                   price: isNowPerfume ? (formData.tier === 'Classic' ? 30 : formData.tier === 'Royal' ? 40 : 50) : formData.price
                 });
               }}
               className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
             >
-              <option value="perfumes">Perfumes (60ml Flacons)</option>
-              <option value="oils">Oils (Attar)</option>
-              <option value="bakhoor">Bakhoor & Incense</option>
-              <option value="cosmetics">Cosmetics</option>
-              <option value="bundles">Exclusive Bundles</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name || `Category #${c.id}`}
+                </option>
+              ))}
             </select>
           </div>
 
