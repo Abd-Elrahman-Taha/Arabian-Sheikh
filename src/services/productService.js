@@ -1,12 +1,39 @@
 import { productApi } from '../api/product.api';
 import { liveCloudSync } from './liveCloudSync';
 
-let memoryCatalog = [];
+const PRODUCTS_STORAGE_KEY = 'arabian_sheikh_cached_catalog_v2';
+
+function loadInitialCatalog() {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+  }
+  return [];
+}
+
+let cachedProducts = loadInitialCatalog();
+
+function persistCatalog(items) {
+  if (Array.isArray(items) && items.length > 0) {
+    cachedProducts = items;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(items));
+      } catch {}
+    }
+  }
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('arabian_sheikh_cloud_updated', () => {
-    if (memoryCatalog.length > 0) {
-      memoryCatalog = liveCloudSync.applyToProducts(memoryCatalog);
+    if (cachedProducts && cachedProducts.length > 0) {
+      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
+      persistCatalog(cachedProducts);
     }
   });
 }
@@ -101,7 +128,7 @@ export const productService = {
   },
 
   getAllProductsSync(filters = {}) {
-    return this.applyFilters(memoryCatalog, filters);
+    return this.applyFilters(cachedProducts, filters);
   },
 
   /**
@@ -124,21 +151,23 @@ export const productService = {
       }
 
       let items = response?.items || (Array.isArray(response) ? response : []);
-      items = liveCloudSync.applyToProducts(items.length > 0 ? items : memoryCatalog);
       if (items.length > 0) {
-        memoryCatalog = items;
+        items = liveCloudSync.applyToProducts(items);
+        persistCatalog(items);
+      } else if (cachedProducts.length > 0) {
+        cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
       }
-      return this.applyFilters(memoryCatalog, filters);
+      return this.applyFilters(cachedProducts, filters);
     } catch (err) {
       console.warn('API getAllProducts error:', err.message);
-      memoryCatalog = liveCloudSync.applyToProducts(memoryCatalog);
-      return this.applyFilters(memoryCatalog, filters);
+      cachedProducts = liveCloudSync.applyToProducts(cachedProducts);
+      return this.applyFilters(cachedProducts, filters);
     }
   },
 
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
-    return memoryCatalog.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
+    return cachedProducts.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
   },
 
   async getProductById(idOrSlug) {
@@ -159,7 +188,7 @@ export const productService = {
   },
 
   getFeaturedProductsSync(limit = 4) {
-    return memoryCatalog.filter(p => p.featured).slice(0, limit);
+    return cachedProducts.filter(p => p.featured).slice(0, limit);
   },
 
   async getFeaturedProducts(limit = 4) {
@@ -168,7 +197,7 @@ export const productService = {
   },
 
   getProductsByCategorySync(category, limit) {
-    const filtered = this.applyFilters(memoryCatalog, { category });
+    const filtered = this.applyFilters(cachedProducts, { category });
     return limit ? filtered.slice(0, limit) : filtered;
   },
 
@@ -178,7 +207,7 @@ export const productService = {
   },
 
   getProductsByTierSync(tier, limit) {
-    const filtered = this.applyFilters(memoryCatalog, { tier });
+    const filtered = this.applyFilters(cachedProducts, { tier });
     return limit ? filtered.slice(0, limit) : filtered;
   },
 
@@ -220,9 +249,9 @@ export const productService = {
   },
 
   getRelatedProductsSync(currentId, limit = 4) {
-    const current = memoryCatalog.find(p => String(p.id) === String(currentId) || p.slug === currentId);
-    if (!current) return memoryCatalog.slice(0, limit);
-    return memoryCatalog.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
+    const current = cachedProducts.find(p => String(p.id) === String(currentId) || p.slug === currentId);
+    if (!current) return cachedProducts.slice(0, limit);
+    return cachedProducts.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
   },
 
   async searchProducts(query, limit = 10) {
@@ -242,7 +271,7 @@ export const productService = {
     if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
     const num = Number(id);
     if (!isNaN(num) && num > 0) return num;
-    const found = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id);
+    const found = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id);
     if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
     if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
     return null;
@@ -265,7 +294,7 @@ export const productService = {
 
   async updateProduct(id, productData) {
     const targetId = this.resolveTargetId(id);
-    const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
+    const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     const isPerfume = Boolean(
       productData.perfumeCategoryId ||
@@ -345,6 +374,14 @@ export const productService = {
       await liveCloudSync.updateProduct(targetId, enrichedProductData).catch(() => {});
     }
 
+    const updatedList = cachedProducts.map(p => {
+      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
+        return { ...p, ...enrichedProductData };
+      }
+      return p;
+    });
+
+    persistCatalog(updatedList);
     return updatedRemote || enrichedProductData;
   },
 
@@ -361,12 +398,14 @@ export const productService = {
     if (targetId) {
       await liveCloudSync.deleteProduct(targetId).catch(() => {});
     }
+    const updatedList = cachedProducts.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
+    persistCatalog(updatedList);
     return true;
   },
 
   async toggleProductActive(id, isActive) {
     const targetId = this.resolveTargetId(id);
-    const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
+    const existing = cachedProducts.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     if (targetId) {
       if (Boolean(isActive)) {
@@ -382,6 +421,14 @@ export const productService = {
       await liveCloudSync.setProductActive(a, isActive).catch(() => {});
     }
 
+    const updatedList = cachedProducts.map(p => {
+      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
+        return { ...p, isActive: Boolean(isActive), status: isActive ? 'ACTIVE' : 'INACTIVE' };
+      }
+      return p;
+    });
+
+    persistCatalog(updatedList);
     return { id: targetId || id, isActive: Boolean(isActive) };
   },
 
@@ -408,7 +455,7 @@ export const productService = {
   },
 
   getDiscountedProductsSync() {
-    return memoryCatalog.filter(p => 
+    return cachedProducts.filter(p => 
       (!p.status || p.status === 'ACTIVE') && (
         p.hasDiscount || 
         (p.discountPercent && p.discountPercent > 0) || 
