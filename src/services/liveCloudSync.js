@@ -7,10 +7,7 @@
 
 const NTFY_ENDPOINT = 'https://ntfy.sh/arabian_sheikh_sync_hub_2026';
 const CLOUD_OBJECT_ID = 'ff8081819ff5b11001a04379654336f1';
-const CLOUD_ENDPOINT = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
-const LOCAL_STORAGE_KEY = 'arabian_sheikh_live_cloud_state_v3';
-
-// In-memory state structure
+// In-memory state structure (Zero localStorage persistence)
 let state = {
   orders: [],
   users: [],              // Registered customer and admin accounts
@@ -21,37 +18,8 @@ let state = {
   newProducts: []         // Array of newly created products
 };
 
-// Load initial state synchronously from localStorage for instant 0ms rendering
-function loadLocalState() {
-  if (typeof window === 'undefined') return;
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      state = {
-        orders: Array.isArray(parsed.orders) ? parsed.orders : [],
-        users: Array.isArray(parsed.users) ? parsed.users : [],
-        inactiveProductIds: Array.isArray(parsed.inactiveProductIds) ? parsed.inactiveProductIds : [],
-        activeProductIds: Array.isArray(parsed.activeProductIds) ? parsed.activeProductIds : [],
-        deletedProductIds: Array.isArray(parsed.deletedProductIds) ? parsed.deletedProductIds : [],
-        modifiedProducts: parsed.modifiedProducts && typeof parsed.modifiedProducts === 'object' ? parsed.modifiedProducts : {},
-        newProducts: Array.isArray(parsed.newProducts) ? parsed.newProducts : []
-      };
-    }
-  } catch (e) {
-    console.warn('Could not read local cloud state:', e);
-  }
-}
-
-// Save state to localStorage
-function saveLocalState() {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('Could not save local cloud state:', e);
-  }
-}
+function loadLocalState() {}
+function saveLocalState() {}
 
 const FIREBASE_ENDPOINT = 'https://arabian-sheikh-2026-default-rtdb.firebaseio.com/sync.json';
 
