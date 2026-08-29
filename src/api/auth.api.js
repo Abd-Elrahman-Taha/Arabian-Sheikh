@@ -147,8 +147,18 @@ export const authApi = {
    * Get Current Customer / Admin Profile
    * GET /api/account/me or /api/admin/auth/me
    */
+  /**
+   * Get Account
+   * GET /api/account
+   */
+  async getAccount() {
+    const response = await apiClient.get(ENDPOINTS.ACCOUNT.GET);
+    const userData = response?.user || response?.data || response;
+    return normalizeUser(userData);
+  },
+
   async getMe(isAdmin = false) {
-    const endpoint = isAdmin ? ENDPOINTS.ADMIN.AUTH.ME : ENDPOINTS.ACCOUNT.ME;
+    const endpoint = isAdmin ? ENDPOINTS.ADMIN.AUTH.ME : ENDPOINTS.ACCOUNT.GET;
     const response = await apiClient.get(endpoint);
     const userData = response?.user || response?.admin || response?.data || response;
     return normalizeUser(userData);
@@ -165,14 +175,37 @@ export const authApi = {
   },
 
   /**
-   * Change Password
-   * POST /api/account/change-password
+   * Update Password
+   * PUT /api/account/password
    */
-  async changePassword(currentPassword, newPassword) {
-    return await apiClient.post(ENDPOINTS.ACCOUNT.CHANGE_PASSWORD, {
-      currentPassword,
+  async updatePassword(oldPassword, newPassword) {
+    return await apiClient.put(ENDPOINTS.ACCOUNT.PASSWORD, {
+      oldPassword,
       newPassword
     });
+  },
+
+  /**
+   * Change Password alias
+   */
+  async changePassword(oldPassword, newPassword) {
+    return this.updatePassword(oldPassword, newPassword);
+  },
+
+  /**
+   * Update Language
+   * PUT /api/account/language
+   */
+  async updateLanguage(language) {
+    return await apiClient.put(ENDPOINTS.ACCOUNT.LANGUAGE, { language });
+  },
+
+  /**
+   * Update Country
+   * PUT /api/account/country
+   */
+  async updateCountry(countryCode) {
+    return await apiClient.put(ENDPOINTS.ACCOUNT.COUNTRY, { countryCode });
   },
 
   /**

@@ -13,7 +13,16 @@ export const cartApi = {
   },
 
   /**
-   * Add Item to Cart (No size property in contract)
+   * Clear Shopping Cart
+   * DELETE /api/cart
+   */
+  async clearCart() {
+    await apiClient.delete(ENDPOINTS.CART.CLEAR);
+    return true;
+  },
+
+  /**
+   * Add Item to Cart
    * POST /api/cart/items
    */
   async addItem(productId, quantity = 1) {
@@ -26,10 +35,10 @@ export const cartApi = {
 
   /**
    * Update Cart Item Quantity
-   * PUT /api/cart/items/{productId}
+   * PUT /api/cart/items/{itemId}
    */
-  async updateItem(productId, quantity) {
-    const response = await apiClient.put(ENDPOINTS.CART.UPDATE_ITEM(productId), {
+  async updateItem(itemId, quantity) {
+    const response = await apiClient.put(ENDPOINTS.CART.UPDATE_ITEM(itemId), {
       quantity: Number(quantity)
     });
     return normalizeCart(response);
@@ -37,10 +46,10 @@ export const cartApi = {
 
   /**
    * Remove Item from Cart
-   * DELETE /api/cart/items/{productId}
+   * DELETE /api/cart/items/{itemId}
    */
-  async removeItem(productId) {
-    await apiClient.delete(ENDPOINTS.CART.REMOVE_ITEM(productId));
+  async removeItem(itemId) {
+    await apiClient.delete(ENDPOINTS.CART.REMOVE_ITEM(itemId));
     return true;
   },
 

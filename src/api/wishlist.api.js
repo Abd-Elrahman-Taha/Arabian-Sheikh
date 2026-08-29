@@ -33,6 +33,15 @@ export const wishlistApi = {
   async removeItem(productId) {
     await apiClient.delete(ENDPOINTS.WISHLIST.REMOVE(productId));
     return true;
+  },
+
+  /**
+   * Move Item to Cart
+   * POST /api/wishlist/move-to-cart/{productId}
+   */
+  async moveToCart(productId) {
+    const response = await apiClient.post(ENDPOINTS.WISHLIST.MOVE_TO_CART(productId));
+    return normalizeObjectKeys(response);
   }
 };
 

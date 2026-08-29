@@ -272,13 +272,144 @@ export const productApi = {
   },
 
   /**
-   * Admin: Publish product translation
-   * POST /api/admin/products/{productId}/translations/{languageCode}/publish
+   * Admin: Get product by ID
+   * GET /api/admin/products/{id}
    */
-  async adminPublishTranslation(productId, languageCode) {
-    return await apiClient.post(
-      ENDPOINTS.ADMIN.PRODUCTS.PUBLISH_TRANSLATION(productId, languageCode)
+  async adminGetProductById(id) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.PRODUCTS.DETAILS(id));
+    return normalizeProduct(response);
+  },
+
+  /**
+   * Admin: Upload product images
+   * POST /api/admin/products/images
+   */
+  async adminUploadProductImages(files) {
+    const formData = new FormData();
+    if (Array.isArray(files)) {
+      files.forEach(f => formData.append('files', f));
+    } else {
+      formData.append('file', files);
+    }
+    return await apiClient.upload(ENDPOINTS.ADMIN.PRODUCTS.IMAGES, formData);
+  },
+
+  /**
+   * Admin: Delete product translation
+   * DELETE /api/admin/products/{productId}/translations/{languageCode}
+   */
+  async adminDeleteTranslation(productId, languageCode) {
+    return await apiClient.delete(
+      ENDPOINTS.ADMIN.PRODUCTS.DELETE_TRANSLATION(productId, languageCode)
     );
+  },
+
+  // ==========================================
+  // ADMIN CATEGORIES
+  // ==========================================
+  async adminGetCategories(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.CATEGORIES.LIST, { params });
+    return response?.items || (Array.isArray(response) ? response : []);
+  },
+
+  async adminCreateCategory(payload) {
+    return await apiClient.post(ENDPOINTS.ADMIN.CATEGORIES.CREATE, payload);
+  },
+
+  async adminGetCategoryById(id) {
+    return await apiClient.get(ENDPOINTS.ADMIN.CATEGORIES.DETAILS(id));
+  },
+
+  async adminUpdateCategory(id, payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.CATEGORIES.UPDATE(id), payload);
+  },
+
+  async adminDeleteCategory(id) {
+    return await apiClient.delete(ENDPOINTS.ADMIN.CATEGORIES.DELETE(id));
+  },
+
+  async adminUpdateCategoryTranslation(id, languageCode, payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.CATEGORIES.UPDATE_TRANSLATION(id, languageCode), payload);
+  },
+
+  async adminDeleteCategoryTranslation(id, languageCode) {
+    return await apiClient.delete(ENDPOINTS.ADMIN.CATEGORIES.DELETE_TRANSLATION(id, languageCode));
+  },
+
+  // ==========================================
+  // ADMIN PERFUME CATEGORIES
+  // ==========================================
+  async adminGetPerfumeCategories(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.LIST, { params });
+    return response?.items || (Array.isArray(response) ? response : []);
+  },
+
+  async adminCreatePerfumeCategory(payload) {
+    return await apiClient.post(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.CREATE, payload);
+  },
+
+  async adminGetPerfumeCategoryById(id) {
+    return await apiClient.get(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.DETAILS(id));
+  },
+
+  async adminUpdatePerfumeCategory(id, payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.UPDATE(id), payload);
+  },
+
+  async adminDeletePerfumeCategory(id) {
+    return await apiClient.delete(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.DELETE(id));
+  },
+
+  // ==========================================
+  // ADMIN SUBCATEGORIES
+  // ==========================================
+  async adminGetSubcategories(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.SUBCATEGORIES.LIST, { params });
+    return response?.items || (Array.isArray(response) ? response : []);
+  },
+
+  async adminCreateSubcategory(payload) {
+    return await apiClient.post(ENDPOINTS.ADMIN.SUBCATEGORIES.CREATE, payload);
+  },
+
+  async adminGetSubcategoryById(id) {
+    return await apiClient.get(ENDPOINTS.ADMIN.SUBCATEGORIES.DETAILS(id));
+  },
+
+  async adminUpdateSubcategory(id, payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.SUBCATEGORIES.UPDATE(id), payload);
+  },
+
+  async adminDeleteSubcategory(id) {
+    return await apiClient.delete(ENDPOINTS.ADMIN.SUBCATEGORIES.DELETE(id));
+  },
+
+  // ==========================================
+  // ADMIN BRANDS
+  // ==========================================
+  async adminGetBrands(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.BRANDS.LIST, { params });
+    return response?.items || (Array.isArray(response) ? response : []);
+  },
+
+  async adminCreateBrand(payload) {
+    return await apiClient.post(ENDPOINTS.ADMIN.BRANDS.CREATE, payload);
+  },
+
+  async adminGetBrandById(id) {
+    return await apiClient.get(ENDPOINTS.ADMIN.BRANDS.DETAILS(id));
+  },
+
+  async adminUpdateBrand(id, payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.BRANDS.UPDATE(id), payload);
+  },
+
+  async adminDeleteBrand(id) {
+    return await apiClient.delete(ENDPOINTS.ADMIN.BRANDS.DELETE(id));
+  },
+
+  async adminUpdateBrandTranslation(id, languageCode, payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.BRANDS.UPDATE_TRANSLATION(id, languageCode), payload);
   }
 };
 

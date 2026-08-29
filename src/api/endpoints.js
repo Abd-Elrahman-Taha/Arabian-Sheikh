@@ -58,12 +58,14 @@ export const ENDPOINTS = {
   WISHLIST: {
     GET: '/wishlist',
     ADD: '/wishlist/items',
-    REMOVE: (productId) => `/wishlist/items/${productId}`
+    REMOVE: (productId) => `/wishlist/items/${productId}`,
+    MOVE_TO_CART: (productId) => `/wishlist/move-to-cart/${productId}`
   },
 
   // Shopping Cart (Authentication Required, No Size property)
   CART: {
     GET: '/cart',
+    CLEAR: '/cart',
     ADD_ITEM: '/cart/items',
     UPDATE_ITEM: (productId) => `/cart/items/${productId}`,
     REMOVE_ITEM: (productId) => `/cart/items/${productId}`,
@@ -77,9 +79,13 @@ export const ENDPOINTS = {
 
   // Account & Customer Profile
   ACCOUNT: {
-    ME: '/account/me',
+    GET: '/account',
+    ME: '/account',
     UPDATE_PROFILE: '/account/profile',
-    CHANGE_PASSWORD: '/account/change-password',
+    PASSWORD: '/account/password',
+    CHANGE_PASSWORD: '/account/password',
+    LANGUAGE: '/account/language',
+    COUNTRY: '/account/country',
     STORE_CREDIT: '/account/store-credit',
     STORE_CREDIT_TRANSACTIONS: '/account/store-credit/transactions',
     NOTIFICATION_PREFERENCES: '/account/notification-preferences'
@@ -179,23 +185,29 @@ export const ENDPOINTS = {
       ACTIVATE: (id) => `/admin/products/${id}/activate`,
       DEACTIVATE: (id) => `/admin/products/${id}/deactivate`,
       DELETE: (id) => `/admin/products/${id}`,
+      IMAGES: '/admin/products/images',
       UPLOAD_IMAGE: (id) => `/admin/products/${id}/image`,
       DELETE_IMAGE: (id) => `/admin/products/${id}/image`,
       UPSERT_TRANSLATION: (productId, lang) => `/admin/products/${productId}/translations/${lang}`,
+      DELETE_TRANSLATION: (productId, lang) => `/admin/products/${productId}/translations/${lang}`,
       PUBLISH_TRANSLATION: (productId, lang) => `/admin/products/${productId}/translations/${lang}/publish`
     },
 
     // Categories
     CATEGORIES: {
       LIST: '/admin/categories',
+      DETAILS: (id) => `/admin/categories/${id}`,
       CREATE: '/admin/categories',
       UPDATE: (id) => `/admin/categories/${id}`,
-      DELETE: (id) => `/admin/categories/${id}`
+      DELETE: (id) => `/admin/categories/${id}`,
+      UPDATE_TRANSLATION: (id, lang) => `/admin/categories/${id}/translations/${lang}`,
+      DELETE_TRANSLATION: (id, lang) => `/admin/categories/${id}/translations/${lang}`
     },
 
     // Subcategories
     SUBCATEGORIES: {
       LIST: '/admin/subcategories',
+      DETAILS: (id) => `/admin/subcategories/${id}`,
       CREATE: '/admin/subcategories',
       UPDATE: (id) => `/admin/subcategories/${id}`,
       DELETE: (id) => `/admin/subcategories/${id}`
@@ -204,16 +216,19 @@ export const ENDPOINTS = {
     // Brands
     BRANDS: {
       LIST: '/admin/brands',
+      DETAILS: (id) => `/admin/brands/${id}`,
       CREATE: '/admin/brands',
       UPDATE: (id) => `/admin/brands/${id}`,
       ACTIVATE: (id) => `/admin/brands/${id}/activate`,
       DEACTIVATE: (id) => `/admin/brands/${id}/deactivate`,
-      DELETE: (id) => `/admin/brands/${id}`
+      DELETE: (id) => `/admin/brands/${id}`,
+      UPDATE_TRANSLATION: (id, lang) => `/admin/brands/${id}/translations/${lang}`
     },
 
     // Perfume Categories (Governs pricing for Perfumes)
     PERFUME_CATEGORIES: {
       LIST: '/admin/perfume-categories',
+      DETAILS: (id) => `/admin/perfume-categories/${id}`,
       CREATE: '/admin/perfume-categories',
       UPDATE: (id) => `/admin/perfume-categories/${id}`,
       DELETE: (id) => `/admin/perfume-categories/${id}`
