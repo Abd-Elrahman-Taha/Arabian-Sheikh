@@ -82,40 +82,39 @@ export default function AdminProductEdit() {
 
       const isPerfume = formData.category === 'perfumes' || !!formData.tier;
       let perfumeCatId = null;
-      if (formData.tier === 'Royal') perfumeCatId = 2;
-      else if (formData.tier === 'Classic') perfumeCatId = 3;
-      else if (formData.tier === 'Luxury' || isPerfume) perfumeCatId = 1;
+      let calculatedPrice = Number(formData.price) || 0;
 
-      let finalPrice = Number(formData.price);
-      let finalOriginalPrice = null;
-      let finalHasDiscount = false;
-      let finalDiscountPercent = 0;
-
-      if (formData.hasDiscount) {
-        const basePrice = formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price);
-        const pct = Number(formData.discountPercent) || 20;
-        finalOriginalPrice = basePrice;
-        finalPrice = Math.round(basePrice * (1 - pct / 100));
-        finalHasDiscount = true;
-        finalDiscountPercent = pct;
-      } else {
-        finalPrice = formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price);
-        finalOriginalPrice = null;
-        finalHasDiscount = false;
-        finalDiscountPercent = 0;
+      if (isPerfume) {
+        if (formData.tier === 'Royal') {
+          perfumeCatId = 2;
+          calculatedPrice = 40;
+        } else if (formData.tier === 'Classic') {
+          perfumeCatId = 3;
+          calculatedPrice = 30;
+        } else {
+          perfumeCatId = 1;
+          calculatedPrice = 50;
+        }
       }
 
       const payload = {
-        ...formData,
+        name: formData.name,
+        arabicName: formData.arabicName,
+        bulgarianName: formData.bulgarianName,
+        spanishName: formData.spanishName,
+        description: formData.description,
+        ingredients: formData.ingredients || [topArr.join(', '), heartArr.join(', '), baseArr.join(', ')].filter(Boolean).join(' • ') || 'Rare Oud, Amber, Taif Rose',
+        brandId: Number(formData.brandId) || 1,
+        categoryId: isPerfume ? 1 : 2,
+        subcategoryId: formData.subcategoryId ? Number(formData.subcategoryId) : null,
         perfumeCategoryId: isPerfume ? perfumeCatId : null,
-        tier: formData.tier || (isPerfume ? 'Luxury' : 'Luxury'),
-        perfumeCategoryName: formData.tier || (isPerfume ? 'Luxury' : 'Luxury'),
-        price: finalPrice,
-        originalPrice: finalOriginalPrice,
-        hasDiscount: finalHasDiscount,
-        discountPercent: finalDiscountPercent,
-        isOffer: finalHasDiscount,
-        stock: Number(formData.stock),
+        tier: isPerfume ? (formData.tier || 'Luxury') : null,
+        perfumeCategoryName: isPerfume ? (formData.tier || 'Luxury') : null,
+        gender: formData.gender || 'Unisex',
+        price: isPerfume ? null : calculatedPrice,
+        stock: Number(formData.stock) || 30,
+        isActive: formData.status !== 'INACTIVE',
+        imageUrl: imagesArr[0] || (typeof formData.images === 'string' ? formData.images : '/products/luxury_designs/07_arabian_gold.webp'),
         topNotes: topArr,
         heartNotes: heartArr,
         baseNotes: baseArr,
@@ -124,7 +123,7 @@ export default function AdminProductEdit() {
           heart: heartArr,
           base: baseArr
         },
-        images: imagesArr,
+        images: imagesArr.length > 0 ? imagesArr : ['/products/luxury_designs/07_arabian_gold.webp'],
         cutoutImage: imagesArr[0] || '/products/luxury_designs/07_arabian_gold.webp'
       };
 
@@ -204,36 +203,21 @@ export default function AdminProductEdit() {
 
         {/* Pricing, Tier, Category */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs pt-4 border-t border-white/5">
-          <div className="space-y-1">
-            <label className="text-[#D8BE99] uppercase font-cinzel">Price (€ EUR)</label>
-            <input
-              type="number"
-              required
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#D4AF37] font-mono font-bold focus:border-[#D4AF37] focus:outline-none"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[#D8BE99] uppercase font-cinzel">Perfume Tier</label>
-            <select
-              value={formData.tier}
-              onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
-              className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-            >
-              <option value="Luxury">Luxury Tier (€50 Default)</option>
-              <option value="Royal">Royal Tier (€40 Default)</option>
-              <option value="Classic">Classic Tier (€30 Default)</option>
-              <option value="">None / Non-Perfume</option>
-            </select>
-          </div>
-
+          {/* Category Selector */}
           <div className="space-y-1">
             <label className="text-[#D8BE99] uppercase font-cinzel">Category</label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) => {
+                const newCat = e.target.value;
+                const isNowPerfume = newCat === 'perfumes';
+                setFormData({
+                  ...formData,
+                  category: newCat,
+                  tier: isNowPerfume ? (formData.tier || 'Luxury') : '',
+                  price: isNowPerfume ? (formData.tier === 'Classic' ? 30 : formData.tier === 'Royal' ? 40 : 50) : formData.price
+                });
+              }}
               className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
             >
               <option value="perfumes">Perfumes (60ml Flacons)</option>
@@ -244,6 +228,55 @@ export default function AdminProductEdit() {
             </select>
           </div>
 
+          {/* Perfume Tier (Shown for Perfumes) */}
+          {(formData.category === 'perfumes' || !!formData.tier) ? (
+            <div className="space-y-1">
+              <label className="text-[#D8BE99] uppercase font-cinzel flex items-center gap-1">
+                <Crown className="w-3 h-3 text-[#D4AF37]" />
+                <span>Perfume Tier</span>
+              </label>
+              <select
+                value={formData.tier || 'Luxury'}
+                onChange={(e) => {
+                  const newTier = e.target.value;
+                  const newPrice = newTier === 'Classic' ? 30 : (newTier === 'Royal' ? 40 : 50);
+                  setFormData({ ...formData, tier: newTier, price: newPrice });
+                }}
+                className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+              >
+                <option value="Luxury">Luxury Tier (€50 Fixed)</option>
+                <option value="Royal">Royal Tier (€40 Fixed)</option>
+                <option value="Classic">Classic Tier (€30 Fixed)</option>
+              </select>
+            </div>
+          ) : null}
+
+          {/* Price Field: Readonly Badge for Perfumes, Editable for Non-Perfumes */}
+          {(formData.category === 'perfumes' || !!formData.tier) ? (
+            <div className="space-y-1">
+              <label className="text-[#D8BE99] uppercase font-cinzel">Price (€ EUR)</label>
+              <div className="w-full bg-black/40 border border-[#D4AF37]/20 px-3 py-2 rounded text-[#D4AF37] font-mono font-bold flex items-center justify-between">
+                <span>
+                  {formData.tier === 'Classic' ? '€30' : (formData.tier === 'Royal' ? '€40' : '€50')}
+                </span>
+                <span className="text-[10px] text-[#D8BE99] font-sans font-normal">(Fixed by Tier)</span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <label className="text-[#D8BE99] uppercase font-cinzel">Price (€ EUR)</label>
+              <input
+                type="number"
+                required
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#D4AF37] font-mono font-bold focus:border-[#D4AF37] focus:outline-none"
+                placeholder="Enter custom price"
+              />
+            </div>
+          )}
+
+          {/* Stock Units */}
           <div className="space-y-1">
             <label className="text-[#D8BE99] uppercase font-cinzel">Stock Units</label>
             <input
@@ -254,81 +287,6 @@ export default function AdminProductEdit() {
               className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
             />
           </div>
-        </div>
-
-        {/* Discount Offer Panel */}
-        <div className="bg-[#140D07]/90 border border-[#D4AF37]/30 p-4 rounded-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-cinzel font-bold text-xs uppercase text-[#F2D675] tracking-wider">
-                Discount Offer Configuration
-              </span>
-              <span className="text-[10px] text-[#D8BE99]">(Appears automatically in Offers & Discounts showcase)</span>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <span className="text-xs font-bold text-[#F3E6D0]">
-                {formData.hasDiscount ? 'Discount Active' : 'No Discount'}
-              </span>
-              <input
-                type="checkbox"
-                checked={formData.hasDiscount}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  setFormData({
-                    ...formData,
-                    hasDiscount: isChecked,
-                    originalPrice: isChecked ? (formData.originalPrice || formData.price) : formData.originalPrice
-                  });
-                }}
-                className="accent-[#D4AF37] w-4 h-4 cursor-pointer"
-              />
-            </label>
-          </div>
-
-          {formData.hasDiscount && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-[#D4AF37]/20 text-xs">
-              <div className="space-y-1">
-                <label className="text-[#D8BE99] uppercase font-cinzel">Discount Rate (%)</label>
-                <select
-                  value={formData.discountPercent || 20}
-                  onChange={(e) => setFormData({ ...formData, discountPercent: Number(e.target.value) })}
-                  className="w-full bg-black/60 border border-[#D4AF37]/40 px-3 py-2 rounded text-[#F2D675] font-bold font-mono focus:border-[#D4AF37] focus:outline-none"
-                >
-                  <option value="10">10% OFF</option>
-                  <option value="15">15% OFF</option>
-                  <option value="20">20% OFF</option>
-                  <option value="25">25% OFF</option>
-                  <option value="30">30% OFF</option>
-                  <option value="40">40% OFF</option>
-                  <option value="50">50% OFF</option>
-                  <option value="70">70% OFF</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[#D8BE99] uppercase font-cinzel">Base Price (€ EUR)</label>
-                <input
-                  type="number"
-                  value={formData.originalPrice || formData.price}
-                  onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2 rounded text-[#F3E6D0] font-mono focus:border-[#D4AF37] focus:outline-none"
-                  placeholder="Base Price before discount"
-                />
-              </div>
-
-              <div className="space-y-1 sm:col-span-1 flex flex-col justify-center">
-                <span className="text-[10px] text-[#D8BE99] uppercase font-cinzel">Discounted Sale Price</span>
-                <div className="text-base font-mono font-bold text-[#D4AF37] flex items-baseline gap-2">
-                  <span>
-                    €{Math.round((Number(formData.originalPrice || formData.price) || 0) * (1 - (Number(formData.discountPercent) || 20) / 100))}
-                  </span>
-                  <span className="text-xs text-neutral-500 line-through">
-                    €{Number(formData.originalPrice || formData.price) || 0}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Olfactory Pyramid */}

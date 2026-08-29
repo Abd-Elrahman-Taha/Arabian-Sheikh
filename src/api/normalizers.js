@@ -78,9 +78,22 @@ export function normalizeProduct(raw) {
     derivedTier = p.tier || null;
   }
 
-  const price = Number(p.price || 0);
-  const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || price) : null);
-  const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > price));
+  const isPerfumeItem = categoryName.toLowerCase() === 'perfumes' || categoryName.toLowerCase() === 'perfume' || !!derivedTier;
+  let finalPrice = Number(p.price || 0);
+
+  if (isPerfumeItem && derivedTier) {
+    const tLower = derivedTier.toLowerCase();
+    if (tLower.includes('royal') || Number(p.perfumeCategoryId) === 2) {
+      finalPrice = 40;
+    } else if (tLower.includes('classic') || Number(p.perfumeCategoryId) === 3) {
+      finalPrice = 30;
+    } else {
+      finalPrice = 50; // Luxury default
+    }
+  }
+
+  const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || finalPrice) : null);
+  const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > finalPrice));
   const isActive = p.isActive !== undefined ? Boolean(p.isActive) : (p.status ? p.status !== 'INACTIVE' : true);
 
   return {
@@ -98,10 +111,10 @@ export function normalizeProduct(raw) {
     subcategoryName,
     brandName,
     gender: p.gender || 'Unisex',
-    price,
+    price: finalPrice,
     originalPrice,
     isDiscounted,
-    discountPercent: p.discount?.value || (originalPrice && originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : (p.discountPercent || 0)),
+    discountPercent: p.discount?.value || (originalPrice && originalPrice > finalPrice ? Math.round((1 - finalPrice / originalPrice) * 100) : (p.discountPercent || 0)),
     hasDiscount: isDiscounted || Boolean(p.hasDiscount || (p.discountPercent > 0)),
     isOffer: isDiscounted || Boolean(p.isOffer || p.hasDiscount || (p.discountPercent > 0)),
     currency: p.currency || 'EUR',
