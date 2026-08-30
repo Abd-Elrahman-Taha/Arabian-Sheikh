@@ -374,7 +374,7 @@ export default function HorizontalCollectionShowcase({
                     }`}
                   >
                     <ShoppingBag className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
-                    <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? 'Sold Out' : 'Add to Bag'}</span>
+                    <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? (t('shop.outOfStock') || 'Sold Out') : (t('shop.addToBag') || 'Add to Bag')}</span>
                   </button>
 
                   <Link
@@ -385,7 +385,7 @@ export default function HorizontalCollectionShowcase({
                         : 'border-[#A8853B]/40 bg-[#FFFDF8] hover:bg-[#E2D5BC] text-[#704622]'
                     }`}
                   >
-                    <span>Details</span>
+                    <span>{t('shop.viewDetails') || t('shop.details') || 'Details'}</span>
                     <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform rtl:rotate-180" />
                   </Link>
                 </div>

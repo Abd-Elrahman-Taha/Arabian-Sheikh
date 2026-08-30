@@ -105,12 +105,12 @@ export default function ThePalace() {
           }`}>
             <Crown className="w-4 h-4 text-[#D4AF37]" />
             <span className="font-cinzel text-xs uppercase tracking-[0.3em] font-bold">
-              {language === 'ar' ? 'صرح العطور الأندلسية والملكية' : language === 'es' ? 'Santuario de Alta Perfumería' : 'Haute Parfumerie Sanctuary'}
+              {language === 'ar' ? 'صرح العطور الأندلسية والملكية' : language === 'bg' ? 'Светилище на висшата парфюмерия' : language === 'es' ? 'Santuario de Alta Perfumería' : 'Haute Parfumerie Sanctuary'}
             </span>
           </div>
 
           <BlurText
-            text={language === 'ar' ? 'قصر أربيان شيخ' : language === 'es' ? 'El Palacio' : 'The Palace'}
+            text={language === 'ar' ? 'قصر أربيان شيخ' : language === 'bg' ? 'Дворецът' : language === 'es' ? 'El Palacio' : 'The Palace'}
             delay={70}
             animateBy="words"
             direction="top"
@@ -123,7 +123,7 @@ export default function ThePalace() {
           <p className={`italic text-xl sm:text-2xl max-w-3xl mx-auto font-serif drop-shadow-md ${
             isDark ? 'text-[#D4AF37]' : 'text-[#8C6239] font-semibold'
           }`}>
-            "{language === 'ar' ? 'حيث يتحول الزمان إلى شذى، والذاكرة إلى خلود ملكي.' : language === 'es' ? 'Donde el tiempo se convierte en aroma y la memoria en eternidad.' : 'Where time dissolves into fragrance and memory into eternity.'}"
+            "{language === 'ar' ? 'حيث يتحول الزمان إلى شذى، والذاكرة إلى خلود ملكي.' : language === 'bg' ? 'Където времето се превръща в аромат, а паметта – във вечност.' : language === 'es' ? 'Donde el tiempo se convierte en aroma y la memoria en eternidad.' : 'Where time dissolves into fragrance and memory into eternity.'}"
           </p>
 
           <div className="pt-4 flex justify-center gap-4">
@@ -135,7 +135,7 @@ export default function ThePalace() {
                   : 'bg-gradient-to-r from-[#2C180F] via-[#120B06] to-[#2C180F] hover:from-[#D4AF37] hover:via-[#F2D675] hover:to-[#D4AF37] text-[#FFFDF9] hover:text-[#120B06] border-[#D4AF37]/50 shadow-[0_10px_30px_rgba(0,0,0,0.15)]'
               }`}
             >
-              <span>{language === 'ar' ? 'استكشف المجموعات الملكية' : language === 'es' ? 'Explorar el Catálogo Real' : 'Explore Palace Reserves'}</span>
+              <span>{language === 'ar' ? 'استكشف المجموعات الملكية' : language === 'bg' ? 'Разгледайте дворцовите резерви' : language === 'es' ? 'Explorar el Catálogo Real' : 'Explore Palace Reserves'}</span>
               <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
           </div>

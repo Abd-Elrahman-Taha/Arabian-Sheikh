@@ -77,6 +77,8 @@ export default function Home() {
       size: '60 ml / 2.0 fl oz',
       tagline: 'Liquid 24K gold distilled with precious Assam agarwood, sparkling diamond accord, and royal amber.',
       spanishTagline: 'Oro líquido de 24K con maderas preciosas de Assam y ámbar real.',
+      bulgarianTagline: 'Течно 24К злато, дестилирано със скъпоценен уд от Асам, искрящ диамантен акорд и кралски кехлибар.',
+      arabicTagline: 'ذهب خالص عيار 24 قيراط مقطر مع دهن عود أسامي عتيق وعنبر ملكي فاخر.',
       notes: 'Kashmiri Saffron • Wild Assamese Oud • Ambergris • Taif Royal Rose',
       color: '#D4AF37',
       image: '/products/black_diamond_flacon.webp'
@@ -93,6 +95,8 @@ export default function Home() {
       size: '60 ml / 2.0 fl oz',
       tagline: 'Dark charisma, power, and magnetic sophistication with noble woods and spiced warmth.',
       spanishTagline: 'Carisma oscuro, poder y sofisticación magnética con maderas nobles.',
+      bulgarianTagline: 'Тъмна харизма, мощ и магнетично излъчване с благородна дървесина и подправки.',
+      arabicTagline: 'كاريزما طاغية وقوة ملكية مع أرقى الأخشاب والجلود والتوابل النبيلة.',
       notes: 'Cardamom Infusion • Smoky Leather Accord • Aged Sandalwood • Warm Amber',
       color: '#F2D675',
       image: '/products/millionaire_flacon.webp'
@@ -109,6 +113,8 @@ export default function Home() {
       size: '60 ml / 2.0 fl oz',
       tagline: 'Velvety sweetness, delicate petals, spun sugar, and comforting Madagascar vanilla.',
       spanishTagline: 'Dulzura aterciopelada, pétalos delicados, azúcar hilado y vainilla de Madagascar.',
+      bulgarianTagline: 'Кадифена сладост, нежни венчелистчета, захарен памук и ванилия от Мадагаскар.',
+      arabicTagline: 'حلاوة مخملية آسرة مع غزل البنات وزهر البرتقال وعبير فانيليا مدغشقر.',
       notes: 'Spun Sugar Nectar • Orange Blossom Petals • Gourmet Vanilla Cream • White Musk',
       color: '#ECC557',
       image: '/products/ana_sukkar_flacon.webp'
@@ -119,26 +125,26 @@ export default function Home() {
     {
       target: 46,
       suffix: '+',
-      label: language === 'ar' ? 'تحفة عطرية استثنائية' : 'Haute Parfumerie Masterpieces',
-      sub: language === 'ar' ? 'عطور، دهن عود، وبخور ملكي' : 'Extraits, Oils & Rare Bakhoor'
+      label: language === 'ar' ? 'تحفة عطرية استثنائية' : language === 'bg' ? 'Шедьоври на висшата парфюмерия' : language === 'es' ? 'Obras Maestras de Alta Perfumería' : 'Haute Parfumerie Masterpieces',
+      sub: language === 'ar' ? 'عطور، دهن عود، وبخور ملكي' : language === 'bg' ? 'Екстракти, масла и рядък бахур' : language === 'es' ? 'Extraits, aceites y bakhoor raro' : 'Extraits, Oils & Rare Bakhoor'
     },
     {
       target: 35,
       suffix: '%',
-      label: language === 'ar' ? 'تركيز الزيوت الخالصة' : 'Pure Extrait Concentration',
-      sub: language === 'ar' ? 'أعلى درجات الفوحان والثبات' : 'Uncompromising Sillage'
+      label: language === 'ar' ? 'تركيز الزيوت الخالصة' : language === 'bg' ? 'Концентрация на чист екстракт' : language === 'es' ? 'Concentración de Extrait Puro' : 'Pure Extrait Concentration',
+      sub: language === 'ar' ? 'أعلى درجات الفوحان والثبات' : language === 'bg' ? 'Безкомпромисна трайност и шлейф' : language === 'es' ? 'Estela y fijación sin concesiones' : 'Uncompromising Sillage'
     },
     {
       target: 60,
       suffix: '+',
-      label: language === 'ar' ? 'عاماً عمر أشجار العود' : 'Years Wild Agarwood Age',
-      sub: language === 'ar' ? 'تقطير نحاسي بطيء وأصيل' : 'Slow Copper Artisanal Stills'
+      label: language === 'ar' ? 'عاماً عمر أشجار العود' : language === 'bg' ? 'Години възраст на дивия уд' : language === 'es' ? 'Años de edad del oud salvaje' : 'Years Wild Agarwood Age',
+      sub: language === 'ar' ? 'تقطير نحاسي بطيء وأصيل' : language === 'bg' ? 'Бавна занаятчийска дестилация' : language === 'es' ? 'Alambiques de cobre artesanales' : 'Slow Copper Artisanal Stills'
     },
     {
       target: 18,
       suffix: 'h+',
-      label: language === 'ar' ? 'ثبات متواصل على البشرة' : 'Continuous Skin Longevity',
-      sub: language === 'ar' ? 'أثر ملكي لا يُمحى' : 'Lasting Sovereign Presence'
+      label: language === 'ar' ? 'ثبات متواصل على البشرة' : language === 'bg' ? 'Непрекъсната трайност върху кожата' : language === 'es' ? 'Fijación continua en la piel' : 'Continuous Skin Longevity',
+      sub: language === 'ar' ? 'أثر ملكي لا يُمحى' : language === 'bg' ? 'Дълготрайно кралско присъствие' : language === 'es' ? 'Presencia soberana duradera' : 'Lasting Sovereign Presence'
     }
   ];
 
@@ -294,6 +300,8 @@ export default function Home() {
 
   const getTagline = (item) => {
     if (!item) return '';
+    if (language === 'ar') return item.arabicTagline || item.tagline;
+    if (language === 'bg') return item.bulgarianTagline || item.tagline;
     if (language === 'es') return item.spanishTagline || item.tagline;
     return item.tagline;
   };
@@ -486,7 +494,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/25 border border-[#D4AF37]/70 shadow-[0_0_18px_rgba(212,175,55,0.45)] backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span className="font-cinzel text-[10.5px] sm:text-xs font-bold uppercase tracking-[0.25em] text-[#FFF2B2]">
-                  {currentHeroFlacon.tier} Tier • {language === 'ar' ? 'خلاصة نقية 100%' : '100% Pure Extrait'}
+                  {t('tiers.' + currentHeroFlacon.tier.toLowerCase()) || currentHeroFlacon.tier} • {language === 'ar' ? 'خلاصة نقية 100%' : language === 'bg' ? '100% Чист Екстракт' : language === 'es' ? 'Extrait 100% Puro' : '100% Pure Extrait'}
                 </span>
               </div>
 
@@ -519,7 +527,7 @@ export default function Home() {
                   }`}
                 >
                   <span className="relative z-10 drop-shadow-sm font-extrabold">
-                    {language === 'ar' ? 'استكشف العطر' : 'FIND OUT MORE'}
+                    {language === 'ar' ? 'استكشف العطر' : language === 'bg' ? 'Научете повече' : language === 'es' ? 'Saber Más' : 'FIND OUT MORE'}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180" />
                 </Link>
@@ -619,18 +627,22 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
             <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                {language === 'ar' ? 'عن دار العطور • ABOUT US' : 'ABOUT THE MAISON'}
+                {language === 'ar' ? 'عن دار العطور • ABOUT US' : language === 'bg' ? 'За Къщата' : language === 'es' ? 'Sobre la Maison' : 'ABOUT THE MAISON'}
               </span>
               <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
-                {language === 'ar' ? 'قصة وتاريخ الدار' : 'The House Heritage'}
+                {language === 'ar' ? 'قصة وتاريخ الدار' : language === 'bg' ? 'Наследството на Къщата' : language === 'es' ? 'El Legado de la Maison' : 'The House Heritage'}
               </h3>
               <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
                 {language === 'ar'
                   ? 'تعرف على تاريخ الدار الأندلسي، سر الخلاصات النقية، وصالوناتنا الملكية حول العالم.'
+                  : language === 'bg'
+                  ? 'Разгледайте нашето андалуско наследство, традиции в дестилацията и частни салони.'
+                  : language === 'es'
+                  ? 'Explore nuestro legado andalusí, tradición en destilación y salones privados.'
                   : 'Explore our Andalusian heritage, artisanal distillation legacy, and global private salons.'}
               </p>
               <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
-                <span>{language === 'ar' ? 'زيارة صفحة عن الدار' : 'Visit About Page'}</span>
+                <span>{language === 'ar' ? 'زيارة صفحة عن الدار' : language === 'bg' ? 'Към За нас' : language === 'es' ? 'Visitar Página' : 'Visit About Page'}</span>
                 <span className="rtl:rotate-180">→</span>
               </div>
             </div>
@@ -647,24 +659,28 @@ export default function Home() {
           >
             <img
               src="/editorial/flacon_craftsmanship.jpg"
-              alt={language === 'ar' ? 'جولة في قصر العطور' : 'Enter The Palace'}
+              alt={language === 'ar' ? 'جولة في قصر العطور' : language === 'bg' ? 'Влезте в Двореца' : language === 'es' ? 'Entrar al Palacio' : 'Enter The Palace'}
               className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
             <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                {language === 'ar' ? 'قصر العطور • THE PALACE' : 'THE SOVEREIGN PALACE'}
+                {language === 'ar' ? 'قصر العطور • THE PALACE' : language === 'bg' ? 'Владетелският Дворец' : language === 'es' ? 'El Palacio Soberano' : 'THE SOVEREIGN PALACE'}
               </span>
               <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
-                {language === 'ar' ? 'جولة في قصر العطور' : 'Enter The Palace'}
+                {language === 'ar' ? 'جولة في قصر العطور' : language === 'bg' ? 'Влезте в Двореца' : language === 'es' ? 'Entrar al Palacio' : 'Enter The Palace'}
               </h3>
               <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
                 {language === 'ar'
                   ? 'استكشف أندر المكونات الطبيعية، صناعة القوارير المذهبة، وطقوس العطور الحية.'
+                  : language === 'bg'
+                  ? 'Открийте нашите свещени съставки, 24К златни флакони и дворцови ритуали.'
+                  : language === 'es'
+                  ? 'Descubra ingredientes sagrados, frascos con oro de 24K y rituales palaciegos.'
                   : 'Discover our sacred raw ingredients, 24K gold flacon artistry, and living palace rituals.'}
               </p>
               <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
-                <span>{language === 'ar' ? 'دخول قصر العطور' : 'Tour The Palace'}</span>
+                <span>{language === 'ar' ? 'دخول قصر العطور' : language === 'bg' ? 'Обиколка на Двореца' : language === 'es' ? 'Recorrer el Palacio' : 'Tour The Palace'}</span>
                 <span className="rtl:rotate-180">→</span>
               </div>
             </div>
@@ -681,24 +697,28 @@ export default function Home() {
           >
             <img
               src="/editorial/imperial_monograph.jpg"
-              alt={language === 'ar' ? 'اختبار اكتشاف العطر' : 'Fragrance Discovery'}
+              alt={language === 'ar' ? 'اختبار اكتشاف العطر' : language === 'bg' ? 'Откриване на Аромат' : language === 'es' ? 'Descubrimiento Olfativo' : 'Fragrance Discovery'}
               className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
             <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                {language === 'ar' ? 'مستشار العطور • DISCOVERY' : 'FRAGRANCE FINDER'}
+                {language === 'ar' ? 'مستشار العطور • DISCOVERY' : language === 'bg' ? 'Търсач на Аромати' : language === 'es' ? 'Buscador de Fragancias' : 'FRAGRANCE FINDER'}
               </span>
               <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
-                {language === 'ar' ? 'اختبار اكتشاف العطر' : 'Fragrance Discovery'}
+                {language === 'ar' ? 'اختبار اكتشاف العطر' : language === 'bg' ? 'Откриване на Аромат' : language === 'es' ? 'Descubrimiento Olfativo' : 'Fragrance Discovery'}
               </h3>
               <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
                 {language === 'ar'
                   ? 'خض اختباراً تفاعلياً ليكشف لك مستشارنا عن العطر الأنسب لشخصيتك ومناسبتك.'
+                  : language === 'bg'
+                  ? 'Направете нашия интерактивен тест, за да откриете аромата за вашата персона.'
+                  : language === 'es'
+                  ? 'Realice nuestro cuestionario interactivo para encontrar el frasco ideal para usted.'
                   : 'Take our bespoke interactive quiz to find the signature flacon tailored to your royal persona.'}
               </p>
               <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
-                <span>{language === 'ar' ? 'بدء اختبار العطور' : 'Start Discovery Quiz'}</span>
+                <span>{language === 'ar' ? 'بدء اختبار العطور' : language === 'bg' ? 'Започнете теста' : language === 'es' ? 'Iniciar Cuestionario' : 'Start Discovery Quiz'}</span>
                 <span className="rtl:rotate-180">→</span>
               </div>
             </div>

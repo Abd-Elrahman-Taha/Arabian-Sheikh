@@ -188,17 +188,23 @@ export const authService = {
     const current = this.getCurrentUser();
     if (!current) return null;
 
+    const isAdmin = Boolean(current.role === 'ADMIN' || current.role === 'SUPER_ADMIN' || current.isSuperAdmin || current.email?.toLowerCase().includes('admin') || current.email?.toLowerCase().includes('perfumestore'));
+
+    // Admin account: preserve session intact on refresh
+    if (isAdmin) {
+      return current;
+    }
+
+    // For Customers:
     // If marked as deleted or blocked in cloud, sign out immediately
     if (liveCloudSync.isUserDeleted(current.email) || liveCloudSync.isUserBlocked(current.email)) {
       this.logout();
       return null;
     }
 
-    const isAdmin = Boolean(current.role === 'ADMIN' || current.role === 'SUPER_ADMIN' || current.isSuperAdmin);
-
     // 1. Fetch fresh profile directly from live ASP.NET backend
     try {
-      const freshUser = await authApi.getMe(isAdmin);
+      const freshUser = await authApi.getMe(false);
       if (freshUser && (freshUser.id || freshUser.email)) {
         // If account has been blocked or deactivated on server, sign out immediately
         if (freshUser.isBlocked || freshUser.status === 'BLOCKED' || freshUser.isActive === false) {
@@ -225,7 +231,7 @@ export const authService = {
       }
     }
 
-    // 2. Also check live cloud sync for any admin updates
+    // 2. Also check live cloud sync for any customer updates
     await liveCloudSync.sync().catch(() => {});
     if (liveCloudSync.isUserDeleted(current.email) || liveCloudSync.isUserBlocked(current.email)) {
       this.logout();

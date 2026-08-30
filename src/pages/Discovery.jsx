@@ -9,7 +9,7 @@ import BlurText from '../components/common/BlurText';
 
 export default function Discovery() {
   const { navigate } = useRouter();
-  const { isRtl } = useTranslation();
+  const { t, language, isRtl } = useTranslation();
   const { isDark } = useTheme();
   const { addToCart } = useCart();
 
@@ -248,7 +248,7 @@ export default function Discovery() {
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add to Bag (€{result.price})</span>
+                <span>{t('shop.addToBag') || 'Add to Bag'} (€{result.price})</span>
               </button>
 
               <Link
@@ -259,7 +259,7 @@ export default function Discovery() {
                     : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] border-[#D4AF37]/40 text-[#120B06]'
                 }`}
               >
-                View Creation Details
+                {t('shop.viewDetails') || 'View Creation Details'}
               </Link>
             </div>
 

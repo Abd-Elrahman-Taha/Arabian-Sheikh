@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '../router/RouterContext';
+import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ChevronRight, Check } from 'lucide-react';
 import BlurText from '../components/common/BlurText';
 
 export default function Compare() {
+  const { t, language } = useTranslation();
   const { addToCart } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +19,7 @@ export default function Compare() {
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [language]);
 
   if (loading) {
     return <div className="pt-36 pb-20 text-center text-xs text-[#D8BE99]">Loading comparison matrix...</div>;
@@ -133,7 +135,7 @@ export default function Compare() {
                       onClick={() => addToCart(p, '60 ml', 1)}
                       className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors"
                     >
-                      Add to Bag (€{p.price})
+                      {t('shop.addToBag') || 'Add to Bag'} (€{p.price})
                     </button>
                   </td>
                 ))}

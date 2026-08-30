@@ -68,11 +68,11 @@ export default function TopSellingShowcase({ products = [] }) {
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
               <Flame className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
-              <span>{language === 'ar' ? 'الأكثر طلباً ومبيعاً' : 'ROYAL TOP SELLING'}</span>
+              <span>{language === 'ar' ? 'الأكثر طلباً ومبيعاً' : language === 'bg' ? 'Кралски бестселъри' : language === 'es' ? 'Los Más Vendidos Reales' : 'ROYAL TOP SELLING'}</span>
             </div>
             
             <BlurText
-              text={language === 'ar' ? 'تحف القصر الأكثر طلباً' : 'CROWNED BEST SELLERS'}
+              text={language === 'ar' ? 'تحف القصر الأكثر طلباً' : language === 'bg' ? 'Короновани шедьоври' : language === 'es' ? 'Obras Maestras Coronadas' : 'CROWNED BEST SELLERS'}
               delay={50}
               animateBy="words"
               direction="top"
@@ -87,6 +87,10 @@ export default function TopSellingShowcase({ products = [] }) {
             }`}>
               {language === 'ar'
                 ? 'العطور والزيوت الاستثنائية التي حازت على إعجاب وتقدير رواد الفخامة في العالم.'
+                : language === 'bg'
+                ? 'Най-търсените и признати екстракти, избрани от нашите почитатели по целия свят.'
+                : language === 'es'
+                ? 'Los extractos más solicitados y aclamados por nuestros distinguidos clientes en todo el mundo.'
                 : 'The most requested and acclaimed extraits chosen by our sovereign patrons worldwide.'}
             </p>
           </div>
@@ -101,7 +105,7 @@ export default function TopSellingShowcase({ products = [] }) {
                   : 'border-[#D4AF37]/50 hover:border-[#D4AF37] text-[#120B06] hover:text-[#5A3517] bg-white/80'
               }`}
             >
-              <span>{language === 'ar' ? 'عرض كافة العطور' : 'View Full Catalog'}</span>
+              <span>{language === 'ar' ? 'عرض كافة العطور' : language === 'bg' ? 'Виж пълния каталог' : language === 'es' ? 'Ver Catálogo Completo' : 'View Full Catalog'}</span>
               <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </Link>
 
@@ -250,7 +254,7 @@ export default function TopSellingShowcase({ products = [] }) {
                       }`}
                     >
                       <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>{language === 'ar' ? 'أضف للسلة' : 'Add to Bag'}</span>
+                      <span>{t('shop.addToBag') || (language === 'ar' ? 'أضف للسلة' : 'Add to Bag')}</span>
                     </button>
                   </div>
                 </div>
