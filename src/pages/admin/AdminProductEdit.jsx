@@ -104,7 +104,9 @@ export default function AdminProductEdit() {
             topNotes: item.topNotes?.join(', ') || item.notes?.top?.join(', ') || '',
             heartNotes: item.heartNotes?.join(', ') || item.notes?.heart?.join(', ') || '',
             baseNotes: item.baseNotes?.join(', ') || item.notes?.base?.join(', ') || '',
-            images: item.images?.join(', ') || item.cutoutImage || ''
+            images: (Array.isArray(item.images) && item.images.length > 0 && item.images[0])
+              ? item.images.join(', ')
+              : (item.imageUrl || item.image || item.cutoutImage || item.originalImage || '/products/luxury_designs/07_arabian_gold.webp')
           });
         }
       } catch (err) {
@@ -121,7 +123,17 @@ export default function AdminProductEdit() {
       const topArr = formData.topNotes.split(',').map(n => n.trim()).filter(Boolean);
       const heartArr = formData.heartNotes.split(',').map(n => n.trim()).filter(Boolean);
       const baseArr = formData.baseNotes.split(',').map(n => n.trim()).filter(Boolean);
-      const imagesArr = formData.images.split(',').map(img => img.trim()).filter(Boolean);
+      const imagesArr = typeof formData.images === 'string'
+        ? formData.images.split(',').map(img => img.trim()).filter(Boolean)
+        : (Array.isArray(formData.images) ? formData.images : []);
+
+      const chosenImg = (imagesArr.length > 0 && imagesArr[0])
+        || formData.imageUrl
+        || formData.image
+        || formData.cutoutImage
+        || '/products/luxury_designs/07_arabian_gold.webp';
+
+      const finalImagesList = imagesArr.length > 0 ? imagesArr : [chosenImg];
 
       const isPerfume = formData.category === 'perfumes' || !!formData.tier;
       let perfumeCatId = null;
@@ -159,7 +171,11 @@ export default function AdminProductEdit() {
         price: isPerfume ? null : calculatedPrice,
         stock: Number(formData.stock) || 30,
         isActive: formData.status !== 'INACTIVE',
-        imageUrl: imagesArr[0] || (typeof formData.images === 'string' ? formData.images : '/products/luxury_designs/07_arabian_gold.webp'),
+        imageUrl: chosenImg,
+        image: chosenImg,
+        cutoutImage: chosenImg,
+        originalImage: chosenImg,
+        images: finalImagesList,
         topNotes: topArr,
         heartNotes: heartArr,
         baseNotes: baseArr,
@@ -167,9 +183,7 @@ export default function AdminProductEdit() {
           top: topArr,
           heart: heartArr,
           base: baseArr
-        },
-        images: imagesArr.length > 0 ? imagesArr : ['/products/luxury_designs/07_arabian_gold.webp'],
-        cutoutImage: imagesArr[0] || '/products/luxury_designs/07_arabian_gold.webp'
+        }
       };
 
       if (isNew) {

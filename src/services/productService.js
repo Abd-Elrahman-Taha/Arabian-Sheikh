@@ -340,9 +340,17 @@ export const productService = {
     }
 
     const tierValue = productData.tier || existing?.tier || (isPerfume ? 'Luxury' : null);
+    const resolvedImage = productData.imageUrl || productData.image || (Array.isArray(productData.images) && productData.images[0]) || existing?.imageUrl || existing?.image || (existing?.images?.[0]) || '/products/luxury_designs/07_arabian_gold.webp';
+    const resolvedImagesList = Array.isArray(productData.images) && productData.images.length > 0 ? productData.images : (Array.isArray(existing?.images) && existing?.images.length > 0 ? existing.images : [resolvedImage]);
 
     const enrichedProductData = {
+      ...existing,
       ...productData,
+      imageUrl: resolvedImage,
+      image: resolvedImage,
+      cutoutImage: productData.cutoutImage || existing?.cutoutImage || resolvedImage,
+      originalImage: productData.originalImage || existing?.originalImage || resolvedImage,
+      images: resolvedImagesList,
       tier: tierValue,
       perfumeCategoryName: tierValue,
       perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,

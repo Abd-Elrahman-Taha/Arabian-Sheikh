@@ -48,6 +48,18 @@ export function toAbsoluteUrl(url) {
 }
 
 /**
+ * Strips remote ASP.NET domain from static asset paths so local bundled webp/png assets display cleanly
+ */
+export function cleanImageUrl(url) {
+  if (!url || typeof url !== 'string') return '/products/luxury_designs/07_arabian_gold.webp';
+  let clean = url.trim();
+  if (clean.includes('runasp.net/products/') || clean.includes('runasp.net/editorial/') || clean.includes('runasp.net/assets/')) {
+    clean = clean.replace(/https?:\/\/[^\/]+/, '');
+  }
+  return clean || '/products/luxury_designs/07_arabian_gold.webp';
+}
+
+/**
  * Product Normalizer (supports both ProductListItemResponse and ProductDetailsResponse)
  */
 export function normalizeProduct(raw) {
@@ -162,12 +174,12 @@ export function normalizeProduct(raw) {
     scentFamily: p.scentFamily || p.fragranceFamily || 'Oriental Woody',
     tagline: p.tagline || '',
     images: Array.isArray(p.images) && p.images.length > 0 
-      ? p.images 
-      : [p.imageUrl || '/products/luxury_designs/07_arabian_gold.webp'],
-    image: p.imageUrl || (Array.isArray(p.images) && p.images[0]) || '/products/luxury_designs/07_arabian_gold.webp',
-    imageUrl: p.imageUrl || (Array.isArray(p.images) && p.images[0]) || '/products/luxury_designs/07_arabian_gold.webp',
-    cutoutImage: p.cutoutImage || p.imageUrl || '/products/luxury_designs/07_arabian_gold.webp',
-    originalImage: p.originalImage || p.imageUrl || '/products/luxury_designs/07_arabian_gold.webp',
+      ? p.images.map(cleanImageUrl)
+      : [cleanImageUrl(p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp')],
+    image: cleanImageUrl(p.imageUrl || (Array.isArray(p.images) && p.images[0]) || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
+    imageUrl: cleanImageUrl(p.imageUrl || (Array.isArray(p.images) && p.images[0]) || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
+    cutoutImage: cleanImageUrl(p.cutoutImage || p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
+    originalImage: cleanImageUrl(p.originalImage || p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
     reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview) : []
   };
 }
