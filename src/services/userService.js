@@ -1,6 +1,7 @@
 import { userApi } from '../api/user.api';
 import { wishlistApi } from '../api/wishlist.api';
 import { apiClient } from '../api/client';
+import { liveCloudSync } from './liveCloudSync';
 
 const WISHLIST_STORAGE_KEY = 'arabian_sheikh_wishlist';
 let inMemoryUsers = [];
@@ -208,8 +209,13 @@ export const userService = {
     const numId = Number(id);
     if (!isNaN(numId) && numId > 0) {
       await userApi.adminBlockCustomer(numId);
+      const existingUser = loadUsers().find(u => u.id === numId || String(u.id) === String(id));
+      const email = existingUser?.email || '';
+      
       const users = loadUsers().map(u => (u.id === numId || String(u.id) === String(id)) ? { ...u, isBlocked: true, status: 'BLOCKED' } : u);
       saveUsers(users);
+      
+      await liveCloudSync.blockUser(numId, email);
       return { id: numId, isBlocked: true, status: 'BLOCKED' };
     }
     throw new Error('Invalid customer ID.');
@@ -219,8 +225,13 @@ export const userService = {
     const numId = Number(id);
     if (!isNaN(numId) && numId > 0) {
       await userApi.adminUnblockCustomer(numId);
+      const existingUser = loadUsers().find(u => u.id === numId || String(u.id) === String(id));
+      const email = existingUser?.email || '';
+
       const users = loadUsers().map(u => (u.id === numId || String(u.id) === String(id)) ? { ...u, isBlocked: false, status: 'ACTIVE' } : u);
       saveUsers(users);
+
+      await liveCloudSync.unblockUser(numId, email);
       return { id: numId, isBlocked: false, status: 'ACTIVE' };
     }
     throw new Error('Invalid customer ID.');
@@ -230,8 +241,13 @@ export const userService = {
     const numId = Number(id);
     if (!isNaN(numId) && numId > 0) {
       await userApi.adminDeleteCustomer(numId);
+      const existingUser = loadUsers().find(u => u.id === numId || String(u.id) === String(id));
+      const email = existingUser?.email || '';
+
       const users = loadUsers().filter(u => u.id !== numId && String(u.id) !== String(id));
       saveUsers(users);
+
+      await liveCloudSync.deleteUser(numId, email);
       return true;
     }
     throw new Error('Invalid customer ID.');

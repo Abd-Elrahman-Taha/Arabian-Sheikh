@@ -31,16 +31,31 @@ export const authService = {
   async login(email, password) {
     const cleanEmail = email.toLowerCase().trim();
 
+    // 0. Check live cloud block and deletion lists
+    if (liveCloudSync.isUserBlocked(cleanEmail)) {
+      throw new Error('This account has been blocked by the Administrator.');
+    }
+    if (liveCloudSync.isUserDeleted(cleanEmail)) {
+      throw new Error('No account found with this email. Please register.');
+    }
+
     // 1. If admin email or superadmin, try Admin Login first
     if (cleanEmail.includes('admin') || cleanEmail.includes('perfumestore')) {
       try {
         const adminUser = await authApi.adminLogin(cleanEmail, password);
         if (adminUser && (adminUser.id || adminUser.email)) {
+          if (adminUser.isBlocked || adminUser.status === 'BLOCKED' || adminUser.isActive === false) {
+            localStorage.removeItem(CURRENT_USER_KEY);
+            throw new Error('This account has been blocked by the Administrator.');
+          }
           localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
           liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
           return adminUser;
         }
       } catch (adminErr) {
+        if (adminErr.message?.toLowerCase().includes('block')) {
+          throw adminErr;
+        }
         console.warn('Admin API login failed, checking customer endpoint:', adminErr.message);
       }
     }
@@ -49,21 +64,22 @@ export const authService = {
     try {
       const user = await authApi.login(cleanEmail, password);
       if (user && (user.id || user.email)) {
+        if (user.isBlocked || user.status === 'BLOCKED' || user.isActive === false || liveCloudSync.isUserBlocked(cleanEmail)) {
+          localStorage.removeItem(CURRENT_USER_KEY);
+          throw new Error('This account has been blocked by the Administrator.');
+        }
+        if (liveCloudSync.isUserDeleted(cleanEmail)) {
+          localStorage.removeItem(CURRENT_USER_KEY);
+          throw new Error('No account found with this email. Please register.');
+        }
+
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
         liveCloudSync.addUser({ ...user, password }).catch(() => {});
         return user;
       }
     } catch (custErr) {
-      // Fallback: If not tried yet, try Admin Login as well
-      if (!cleanEmail.includes('admin') && !cleanEmail.includes('perfumestore')) {
-        try {
-          const adminUser = await authApi.adminLogin(cleanEmail, password);
-          if (adminUser && (adminUser.id || adminUser.email)) {
-            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
-            liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
-            return adminUser;
-          }
-        } catch {}
+      if (custErr.message?.toLowerCase().includes('block')) {
+        throw custErr;
       }
       console.warn('Customer API login error, checking live cloud database:', custErr.message);
     }
@@ -71,74 +87,24 @@ export const authService = {
     // 3. Pull freshest user credentials from live cloud across all devices
     await liveCloudSync.sync().catch(() => {});
 
+    if (liveCloudSync.isUserBlocked(cleanEmail)) {
+      throw new Error('This account has been blocked by the Administrator.');
+    }
+    if (liveCloudSync.isUserDeleted(cleanEmail)) {
+      throw new Error('No account found with this email. Please register.');
+    }
+
     // 4. Check cloud-synced users
     const cloudUser = liveCloudSync.findUserByEmail(cleanEmail);
     const users = loadUsers();
     let user = cloudUser || users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
 
-    // If found in cloud but not local, save to local
-    if (cloudUser && !users.some(u => (u.email || '').toLowerCase().trim() === cleanEmail)) {
-      users.push(cloudUser);
-      saveUsers(users);
+    if (user?.isBlocked || user?.status === 'BLOCKED') {
+      throw new Error('This account has been blocked by the Administrator.');
     }
 
     if (!user) {
-      // Allow demo login for standard testing
-      if (cleanEmail === 'superadmin@perfumestore.com') {
-        user = {
-          id: 1,
-          name: 'System Super Admin',
-          fullName: 'System Super Admin',
-          email: cleanEmail,
-          role: 'SUPER_ADMIN',
-          isSuperAdmin: true,
-          status: 'ACTIVE',
-          isActive: true,
-          memberSince: new Date().toISOString().split('T')[0],
-          ordersCount: 0,
-          totalSpent: 0,
-          addresses: [],
-          paymentMethods: []
-        };
-        users.push(user);
-        saveUsers(users);
-        liveCloudSync.addUser(user).catch(() => {});
-      } else if (cleanEmail.includes('admin') || cleanEmail.includes('perfumestore')) {
-        user = {
-          id: 'user-admin-' + Date.now(),
-          name: 'Palace Admin',
-          email: cleanEmail,
-          role: 'ADMIN',
-          isSuperAdmin: false,
-          status: 'ACTIVE',
-          memberSince: new Date().toISOString().split('T')[0],
-          ordersCount: 0,
-          totalSpent: 0,
-          addresses: [],
-          paymentMethods: []
-        };
-        users.push(user);
-        saveUsers(users);
-        liveCloudSync.addUser(user).catch(() => {});
-      } else if (cleanEmail === 'sheikh.user@luxury.com' || cleanEmail.includes('user') || cleanEmail.includes('sheikh')) {
-        user = {
-          id: 'user-demo-' + Date.now(),
-          name: 'Sheikh Al-Mansoor',
-          email: cleanEmail,
-          role: 'USER',
-          status: 'ACTIVE',
-          memberSince: new Date().toISOString().split('T')[0],
-          ordersCount: 4,
-          totalSpent: 260,
-          addresses: [],
-          paymentMethods: []
-        };
-        users.push(user);
-        saveUsers(users);
-        liveCloudSync.addUser(user).catch(() => {});
-      } else {
-        throw new Error('No royal account found with this email. Please create an account.');
-      }
+      throw new Error('No account found with this email. Please register.');
     }
 
     // Verify password if account has a recorded password
@@ -146,8 +112,8 @@ export const authService = {
       throw new Error('Invalid email or password.');
     }
 
-    if (user.status === 'BLOCKED') {
-      throw new Error('This account has been temporarily restricted by the Palace Master.');
+    if (user.status === 'BLOCKED' || user.isBlocked) {
+      throw new Error('This account has been blocked by the Administrator.');
     }
 
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
@@ -156,6 +122,10 @@ export const authService = {
 
   async signup({ name, email, password, phone = '', countryCode = '' }) {
     const cleanEmail = email.toLowerCase().trim();
+
+    if (liveCloudSync.isUserBlocked(cleanEmail)) {
+      throw new Error('This email address has been blocked from registering.');
+    }
 
     // 1. Send registration directly to live ASP.NET backend database
     if (!apiClient.isMockEnabled()) {

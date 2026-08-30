@@ -11,6 +11,8 @@ const CLOUD_OBJECT_ID = 'ff8081819ff5b11001a04379654336f1';
 let state = {
   orders: [],
   users: [],              // Registered customer and admin accounts
+  blockedUserEmails: [],  // Emails of blocked accounts
+  deletedUserEmails: [],  // Emails of deleted accounts
   inactiveProductIds: [], // IDs of products marked inactive
   activeProductIds: [],   // IDs explicitly marked active
   deletedProductIds: [],  // IDs of deleted products
@@ -29,6 +31,8 @@ function loadLocalState() {
       state = {
         orders: Array.isArray(parsed.orders) ? parsed.orders : [],
         users: Array.isArray(parsed.users) ? parsed.users : [],
+        blockedUserEmails: Array.isArray(parsed.blockedUserEmails) ? parsed.blockedUserEmails : [],
+        deletedUserEmails: Array.isArray(parsed.deletedUserEmails) ? parsed.deletedUserEmails : [],
         inactiveProductIds: Array.isArray(parsed.inactiveProductIds) ? parsed.inactiveProductIds : [],
         activeProductIds: Array.isArray(parsed.activeProductIds) ? parsed.activeProductIds : [],
         deletedProductIds: Array.isArray(parsed.deletedProductIds) ? parsed.deletedProductIds : [],
@@ -113,13 +117,34 @@ function mergeRemoteData(remoteData) {
     state.deletedProductIds = remoteData.deletedProductIds.map(String);
   }
 
+  if (Array.isArray(remoteData.blockedUserEmails)) {
+    state.blockedUserEmails = remoteData.blockedUserEmails.map(e => String(e).toLowerCase().trim());
+  }
+  if (Array.isArray(remoteData.deletedUserEmails)) {
+    state.deletedUserEmails = remoteData.deletedUserEmails.map(e => String(e).toLowerCase().trim());
+  }
+
   const orderMap = new Map();
   (remoteData.orders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
   state.orders.forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
 
   const userMap = new Map();
-  (remoteData.users || []).forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
-  state.users.forEach(u => { if (u?.email) userMap.set(u.email.toLowerCase().trim(), u); });
+  (remoteData.users || []).forEach(u => {
+    if (u?.email) {
+      const em = u.email.toLowerCase().trim();
+      if (!state.deletedUserEmails?.includes(em)) {
+        userMap.set(em, u);
+      }
+    }
+  });
+  state.users.forEach(u => {
+    if (u?.email) {
+      const em = u.email.toLowerCase().trim();
+      if (!state.deletedUserEmails?.includes(em)) {
+        userMap.set(em, u);
+      }
+    }
+  });
 
   // Remote modified products override local state
   const modified = {
@@ -134,6 +159,8 @@ function mergeRemoteData(remoteData) {
   state = {
     orders: Array.from(orderMap.values()),
     users: Array.from(userMap.values()),
+    blockedUserEmails: state.blockedUserEmails,
+    deletedUserEmails: state.deletedUserEmails,
     inactiveProductIds: state.inactiveProductIds,
     activeProductIds: state.activeProductIds,
     deletedProductIds: state.deletedProductIds,
@@ -143,6 +170,20 @@ function mergeRemoteData(remoteData) {
   };
 
   saveLocalState();
+
+  // If current logged-in user is in blocked or deleted list, force sign-out immediately
+  if (typeof window !== 'undefined') {
+    try {
+      const curr = JSON.parse(localStorage.getItem('arabian_sheikh_current_user') || 'null');
+      if (curr && curr.email) {
+        const currEmail = curr.email.toLowerCase().trim();
+        if (state.blockedUserEmails?.includes(currEmail) || state.deletedUserEmails?.includes(currEmail)) {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
+      }
+    } catch {}
+  }
 }
 
 // Pull latest state from live cloud and merge across devices
@@ -424,13 +465,30 @@ export const liveCloudSync = {
   findUserByEmail(email) {
     if (!email) return null;
     const clean = email.toLowerCase().trim();
+    if (state.deletedUserEmails?.includes(clean)) return null;
     return (state.users || []).find(u => (u.email || '').toLowerCase().trim() === clean) || null;
+  },
+
+  isUserBlocked(email) {
+    if (!email) return false;
+    const clean = email.toLowerCase().trim();
+    if (state.blockedUserEmails?.includes(clean)) return true;
+    const found = (state.users || []).find(u => (u.email || '').toLowerCase().trim() === clean);
+    return Boolean(found?.isBlocked || found?.status === 'BLOCKED');
+  },
+
+  isUserDeleted(email) {
+    if (!email) return false;
+    const clean = email.toLowerCase().trim();
+    return Boolean(state.deletedUserEmails?.includes(clean));
   },
 
   // Save new user or update existing user across all devices
   async addUser(user) {
     if (!user || !user.email) return;
     const clean = user.email.toLowerCase().trim();
+    // Un-delete if re-registering
+    state.deletedUserEmails = (state.deletedUserEmails || []).filter(e => e !== clean);
     const list = Array.isArray(state.users) ? state.users : [];
     const idx = list.findIndex(u => (u.email || '').toLowerCase().trim() === clean);
     if (idx > -1) {
@@ -439,6 +497,71 @@ export const liveCloudSync = {
       list.push(user);
     }
     state.users = list;
+    await pushToCloud();
+  },
+
+  async blockUser(id, email) {
+    const clean = (email || '').toLowerCase().trim();
+    if (clean && !state.blockedUserEmails.includes(clean)) {
+      state.blockedUserEmails.push(clean);
+    }
+    state.users = (state.users || []).map(u => {
+      if ((clean && (u.email || '').toLowerCase().trim() === clean) || String(u.id) === String(id)) {
+        return { ...u, isBlocked: true, status: 'BLOCKED' };
+      }
+      return u;
+    });
+
+    // Check if currently logged in user is this blocked user
+    if (typeof window !== 'undefined') {
+      try {
+        const curr = JSON.parse(localStorage.getItem('arabian_sheikh_current_user') || 'null');
+        if (curr && ((clean && curr.email?.toLowerCase().trim() === clean) || String(curr.id) === String(id))) {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
+      } catch {}
+    }
+
+    await pushToCloud();
+  },
+
+  async unblockUser(id, email) {
+    const clean = (email || '').toLowerCase().trim();
+    if (clean) {
+      state.blockedUserEmails = (state.blockedUserEmails || []).filter(e => e !== clean);
+    }
+    state.users = (state.users || []).map(u => {
+      if ((clean && (u.email || '').toLowerCase().trim() === clean) || String(u.id) === String(id)) {
+        return { ...u, isBlocked: false, status: 'ACTIVE' };
+      }
+      return u;
+    });
+    await pushToCloud();
+  },
+
+  async deleteUser(id, email) {
+    const clean = (email || '').toLowerCase().trim();
+    if (clean && !state.deletedUserEmails.includes(clean)) {
+      state.deletedUserEmails.push(clean);
+    }
+    state.users = (state.users || []).filter(u => {
+      if (clean && (u.email || '').toLowerCase().trim() === clean) return false;
+      if (id && String(u.id) === String(id)) return false;
+      return true;
+    });
+
+    // Check if currently logged in user is this deleted user
+    if (typeof window !== 'undefined') {
+      try {
+        const curr = JSON.parse(localStorage.getItem('arabian_sheikh_current_user') || 'null');
+        if (curr && ((clean && curr.email?.toLowerCase().trim() === clean) || String(curr.id) === String(id))) {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
+      } catch {}
+    }
+
     await pushToCloud();
   }
 };

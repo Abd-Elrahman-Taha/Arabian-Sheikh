@@ -8,9 +8,21 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const current = authService.getCurrentUser();
-    setUser(current);
-    setLoading(false);
+    const refreshAuth = () => {
+      const current = authService.getCurrentUser();
+      setUser(current);
+      setLoading(false);
+    };
+
+    refreshAuth();
+
+    window.addEventListener('arabian_sheikh_auth_changed', refreshAuth);
+    window.addEventListener('storage', refreshAuth);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_auth_changed', refreshAuth);
+      window.removeEventListener('storage', refreshAuth);
+    };
   }, []);
 
   const login = async (email, password) => {
