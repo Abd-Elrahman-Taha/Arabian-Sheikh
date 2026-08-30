@@ -371,5 +371,32 @@
     "luxury": "Луксозен клас (€50)",
     "royal": "Кралски клас (€40)",
     "classic": "Класически клас (€30)"
+  },
+  "catalog": {
+    "allCatalog": "Всички артикули",
+    "offersAndDiscounts": "Оферти и намаления",
+    "allTiers": "Всички категории",
+    "filterCollection": "Филтриране на колекцията",
+    "resetAll": "Изчисти всички",
+    "category": "Категория",
+    "categories": "Категории",
+    "tier": "Клас",
+    "gender": "Категория Пол",
+    "family": "Семейство Аромати",
+    "priceRange": "Ценови Диапазон",
+    "inStockOnly": "Само Налични",
+    "minRating": "Минимална Оценка",
+    "sortBy": "Сортирай по",
+    "showingResults": "Показване на {{count}} шедьовъра",
+    "noProductsFound": "Няма намерени аромати по избраните критерии.",
+    "clearAllFilters": "Изчисти Всички Филтри",
+    "flaconVolume": "Обем на флакона",
+    "expressCheckout": "Бърза Експресна Поръчка",
+    "dhlEstimate": "DHL Express: Доставка за 2-4 работни дни",
+    "authenticCreation": "100% Автентично андалуско занаятчийско творение",
+    "returnsPolicy": "Безплатно 14-дневно връщане",
+    "olfactoryPyramid": "Олфактивна Пирамида",
+    "performanceProfile": "Профил и Трайност",
+    "patronReviews": "Отзиви от Ценители"
   }
 }

@@ -83,7 +83,7 @@ export default function ProductDetail() {
         setLoading(false);
       }).catch(() => setLoading(false));
     }
-  }, [productId]);
+  }, [productId, language]);
 
   if (loading) {
     return (
@@ -102,15 +102,10 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="pt-36 pb-24 text-center max-w-md mx-auto px-4 space-y-4">
-        <h2 className="font-cinzel text-2xl font-bold text-[#F3E6D0]">
-          Creation Not Found
-        </h2>
-        <p className="text-xs text-[#D8BE99]">
-          This flacon may have been archived or retired to our historical vaults.
-        </p>
-        <Link to="/shop" className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider inline-block">
-          Return to Boutique
+      <div className="pt-36 pb-24 max-w-xl mx-auto px-4 text-center space-y-6">
+        <h2 className="font-cinzel text-2xl font-bold">{t('shop.noProductsFound') || 'Product Not Found'}</h2>
+        <Link to="/shop" className="luxury-btn-gold px-8 py-3.5 inline-block text-xs uppercase tracking-widest font-bold">
+          {t('cart.startShopping') || 'Explore Boutique'}
         </Link>
       </div>
     );
@@ -123,7 +118,7 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     addToCart(product, selectedSize, quantity);
-    success(`${product.name} added to your royal shopping bag.`);
+    success(`${displayName} ${t('product.addToCart') || 'added to your bag.'}`);
   };
 
   const handleBuyNow = () => {
@@ -171,9 +166,9 @@ export default function ProductDetail() {
         <div className={`flex items-center gap-2 text-xs mb-8 font-cinzel uppercase tracking-wider ${
           isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
         }`}>
-          <Link to="/" className="hover:text-[#D4AF37] transition-colors">Home</Link>
+          <Link to="/" className="hover:text-[#D4AF37] transition-colors">{t('nav.theHouse') || 'Home'}</Link>
           <ChevronRight className="w-3 h-3 rtl:rotate-180" />
-          <Link to="/shop" className="hover:text-[#D4AF37] transition-colors">Shop</Link>
+          <Link to="/shop" className="hover:text-[#D4AF37] transition-colors">{t('nav.shop') || 'Shop'}</Link>
           {product.category && (
             <>
               <ChevronRight className="w-3 h-3 rtl:rotate-180" />
@@ -203,12 +198,12 @@ export default function ProductDetail() {
               <div className="absolute top-4 left-4 rtl:left-auto rtl:right-4 z-10 flex flex-col gap-2">
                 {product.tier && (
                   <span className="bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-                    {product.tier} Tier
+                    {t('tiers.' + product.tier.toLowerCase()) || product.tier}
                   </span>
                 )}
                 {isOutOfStock && (
                   <span className="bg-red-900/90 text-white font-sans text-xs uppercase px-2.5 py-0.5 rounded-full">
-                    Out of Stock
+                    {t('shop.outOfStock') || 'Out of Stock'}
                   </span>
                 )}
               </div>
@@ -379,7 +374,9 @@ export default function ProductDetail() {
                   }`}
                 >
                   <ShoppingBag className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
-                  <span className="relative z-10 drop-shadow-sm">{isOutOfStock ? 'Out of Stock' : `Add to Bag (€${product.price * quantity})`}</span>
+                  <span className="relative z-10 drop-shadow-sm">
+                    {isOutOfStock ? (t('shop.outOfStock') || 'Out of Stock') : `${t('shop.addToBag') || 'Add to Bag'} (€${product.price * quantity})`}
+                  </span>
                 </button>
               </div>
 
@@ -393,7 +390,7 @@ export default function ProductDetail() {
                     : 'bg-[#FAF7F2] hover:bg-[#F0E8DC] border-[#D4AF37]/40 text-[#120B06] hover:text-[#B8860B]'
                 }`}
               >
-                <span>Instant Express Checkout</span>
+                <span>{t('catalog.expressCheckout') || 'Instant Express Checkout'}</span>
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" />
               </button>
             </div>
@@ -406,15 +403,15 @@ export default function ProductDetail() {
             }`}>
               <div className={`flex items-center gap-2 ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
                 <Truck className="w-4 h-4 text-[#D4AF37]" />
-                <span><strong>DHL Express:</strong> Estimated Delivery in 2-4 Business Days</span>
+                <span><strong>DHL Express:</strong> {t('confirmation.deliveryDays') || 'Estimated Delivery in 2-4 Business Days'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
-                <span>100% Authentic Andalusian Artisanal Creation</span>
+                <span>{t('catalog.authenticCreation') || '100% Authentic Andalusian Artisanal Creation'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <RotateCcw className="w-4 h-4 text-[#D4AF37]" />
-                <span>Complimentary 14-Day Vault Return Policy</span>
+                <span>{t('catalog.returnsPolicy') || 'Complimentary 14-Day Vault Return Policy'}</span>
               </div>
             </div>
 
@@ -433,7 +430,7 @@ export default function ProductDetail() {
                   activeTab === 'pyramid' ? 'border-[#D4AF37] text-[#D4AF37]' : isDark ? 'border-transparent text-[#D8BE99]' : 'border-transparent text-[#5A3517]'
                 }`}
               >
-                Olfactory Pyramid
+                {t('catalog.olfactoryPyramid') || 'Olfactory Pyramid'}
               </button>
               <button
                 onClick={() => setActiveTab('performance')}
@@ -441,7 +438,7 @@ export default function ProductDetail() {
                   activeTab === 'performance' ? 'border-[#D4AF37] text-[#D4AF37]' : isDark ? 'border-transparent text-[#D8BE99]' : 'border-transparent text-[#5A3517]'
                 }`}
               >
-                Performance Profile
+                {t('catalog.performanceProfile') || 'Performance Profile'}
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
@@ -449,7 +446,7 @@ export default function ProductDetail() {
                   activeTab === 'reviews' ? 'border-[#D4AF37] text-[#D4AF37]' : isDark ? 'border-transparent text-[#D8BE99]' : 'border-transparent text-[#5A3517]'
                 }`}
               >
-                Patron Reviews ({product.reviews?.length || 1})
+                {t('catalog.patronReviews') || 'Patron Reviews'} ({product.reviews?.length || 1})
               </button>
             </div>
           </div>

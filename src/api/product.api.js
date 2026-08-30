@@ -45,8 +45,8 @@ export const productApi = {
     else if (rawGender === 'unisex') params.Gender = 'Unisex';
 
     // Language
-    const lang = (filters.language || filters.Language || '').toString().trim();
-    if (lang) params.Language = lang;
+    const activeLang = (filters.language || filters.Language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().trim();
+    params.Language = activeLang.toLowerCase();
 
     const response = await apiClient.get(ENDPOINTS.PRODUCTS.LIST, { params, requiresAuth: false });
     const rawList = Array.isArray(response) 
@@ -68,8 +68,9 @@ export const productApi = {
    * Get Product Details
    * GET /api/products/{id}
    */
-  async getProductById(id) {
-    const response = await apiClient.get(ENDPOINTS.PRODUCTS.DETAILS(id), { requiresAuth: false });
+  async getProductById(id, language) {
+    const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
+    const response = await apiClient.get(ENDPOINTS.PRODUCTS.DETAILS(id), { params: { language: activeLang }, requiresAuth: false });
     const rawProduct = response?.product || response?.data || response;
     return normalizeProduct(rawProduct);
   },
@@ -78,8 +79,9 @@ export const productApi = {
    * Get Home Page Data
    * GET /api/home
    */
-  async getHome(language = 'en') {
-    const response = await apiClient.get(ENDPOINTS.HOME, { params: { language }, requiresAuth: false });
+  async getHome(language) {
+    const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
+    const response = await apiClient.get(ENDPOINTS.HOME, { params: { language: activeLang }, requiresAuth: false });
     return response;
   },
 
@@ -87,8 +89,9 @@ export const productApi = {
    * Get Categories
    * GET /api/categories
    */
-  async getCategories(language = 'en') {
-    const response = await apiClient.get(ENDPOINTS.CATEGORIES.LIST, { params: { language }, requiresAuth: false });
+  async getCategories(language) {
+    const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
+    const response = await apiClient.get(ENDPOINTS.CATEGORIES.LIST, { params: { language: activeLang }, requiresAuth: false });
     return response?.items || (Array.isArray(response) ? response : []);
   },
 

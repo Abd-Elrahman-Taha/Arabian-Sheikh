@@ -96,11 +96,37 @@ export function normalizeProduct(raw) {
   const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > finalPrice));
   const isActive = p.isActive !== undefined ? Boolean(p.isActive) : (p.status ? p.status !== 'INACTIVE' : true);
 
+  const currentLang = (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
+
+  let resolvedName = p.name || 'Imperial Extrait';
+  let resolvedDesc = p.description || '';
+  let resolvedIngredients = p.ingredients || 'Rare Oud wood, amber crystals, Taif rose, sandalwood, musk.';
+
+  if (Array.isArray(p.translations) && p.translations.length > 0) {
+    const matched = p.translations.find(t => (t.languageCode || t.language || '').toLowerCase() === currentLang.toLowerCase())
+      || p.translations.find(t => (t.languageCode || t.language || '').toLowerCase() === 'en')
+      || p.translations[0];
+    if (matched) {
+      if (matched.name) resolvedName = matched.name;
+      if (matched.description) resolvedDesc = matched.description;
+      if (matched.ingredients) resolvedIngredients = matched.ingredients;
+    }
+  } else {
+    if (currentLang === 'bg' && (p.bulgarianName || p.bulgarian_name)) {
+      resolvedName = p.bulgarianName || p.bulgarian_name;
+      if (p.bulgarianDescription || p.bulgarian_description) resolvedDesc = p.bulgarianDescription || p.bulgarian_description;
+    } else if (currentLang === 'es' && (p.spanishName || p.spanish_name)) {
+      resolvedName = p.spanishName || p.spanish_name;
+      if (p.spanishDescription || p.spanish_description) resolvedDesc = p.spanishDescription || p.spanish_description;
+    }
+  }
+
   return {
     id: p.id !== undefined && p.id !== null ? p.id : (p.productId || `as-${p.slug || 'prod'}`),
     numericId: typeof p.id === 'number' ? p.id : (!isNaN(Number(p.id)) && Number(p.id) > 0 ? Number(p.id) : (typeof p.productId === 'number' ? p.productId : null)),
     slug: p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : `prod-${p.id || 'item'}`),
-    name: p.name || 'Imperial Extrait',
+    name: resolvedName,
+    rawName: p.name || resolvedName,
     arabicName: p.arabicName || p.arabic_name || '',
     bulgarianName: p.bulgarianName || p.bulgarian_name || '',
     spanishName: p.spanishName || p.spanish_name || '',
@@ -125,8 +151,8 @@ export function normalizeProduct(raw) {
     isBestSeller: Boolean(p.isBestSeller || p.bestSeller),
     rating: Number(p.rating || 5.0),
     reviewsCount: Number(p.reviewCount || p.reviewsCount || (p.reviews ? p.reviews.length : 0)),
-    description: p.description || '',
-    ingredients: p.ingredients || 'Rare Oud wood, amber crystals, Taif rose, sandalwood, musk.',
+    description: resolvedDesc,
+    ingredients: resolvedIngredients,
     spanishDescription: p.spanishDescription || p.description || '',
     bulgarianDescription: p.bulgarianDescription || p.description || '',
     fragranceFamily: p.fragranceFamily || p.scentFamily || 'Oriental Woody',

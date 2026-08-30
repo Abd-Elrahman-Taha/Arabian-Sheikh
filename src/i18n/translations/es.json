@@ -371,5 +371,32 @@
     "luxury": "Gama Lujo (€50)",
     "royal": "Gama Real (€40)",
     "classic": "Gama Clásica (€30)"
+  },
+  "catalog": {
+    "allCatalog": "Todo el catálogo",
+    "offersAndDiscounts": "Ofertas y descuentos",
+    "allTiers": "Todas las gamas",
+    "filterCollection": "Filtrar colección",
+    "resetAll": "Restablecer todo",
+    "category": "Categoría",
+    "categories": "Categorías",
+    "tier": "Gama",
+    "gender": "Género",
+    "family": "Familia Olfativa",
+    "priceRange": "Rango de Precio",
+    "inStockOnly": "Solo en Stock",
+    "minRating": "Calificación Mínima",
+    "sortBy": "Ordenar Por",
+    "showingResults": "Mostrando {{count}} creaciones maestras",
+    "noProductsFound": "No se encontraron creaciones que coincidan con sus criterios.",
+    "clearAllFilters": "Limpiar Todos los Filtros",
+    "flaconVolume": "Volumen del Frasco",
+    "expressCheckout": "Pago Exprés Inmediato",
+    "dhlEstimate": "DHL Express: Entrega estimada en 2-4 días hábiles",
+    "authenticCreation": "Creación artesanal 100% auténtica",
+    "returnsPolicy": "Política de devolución gratuita de 14 días",
+    "olfactoryPyramid": "Pirámide Olfativa",
+    "performanceProfile": "Perfil de Rendimiento",
+    "patronReviews": "Opiniones de Clientes"
   }
 }

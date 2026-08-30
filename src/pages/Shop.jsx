@@ -90,7 +90,8 @@ export default function Shop() {
       try {
         const data = await productService.getAllProducts({
           category, tier, gender, family, search,
-          maxPrice, inStockOnly, minRating, sortBy
+          maxPrice, inStockOnly, minRating, sortBy,
+          language
         });
         setProducts(data);
       } catch (e) {
@@ -100,13 +101,14 @@ export default function Shop() {
       }
     }
     fetchProducts();
-  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy]);
+  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy, language]);
 
   useEffect(() => {
     const handleCloudUpdate = () => {
       productService.getAllProducts({
         category, tier, gender, family, search,
-        maxPrice, inStockOnly, minRating, sortBy
+        maxPrice, inStockOnly, minRating, sortBy,
+        language
       }).then(data => {
         setProducts(data);
       }).catch(() => {});
@@ -114,7 +116,7 @@ export default function Shop() {
 
     window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
     return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy]);
+  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy, language]);
 
   const resetFilters = () => {
     setCategory('all');
@@ -134,19 +136,16 @@ export default function Shop() {
     family !== 'all' || search !== '' || maxPrice < 150 || inStockOnly || minRating > 0;
 
   const categoriesList = [
-    { id: 'all', label: isRtl ? 'جميع المعروضات' : 'All Catalog' },
-    { id: 'offers', label: isRtl ? 'العروض والتخفيضات' : 'Offers & Discounts' },
+    { id: 'all', label: t('catalog.allCatalog') || 'All Catalog' },
+    { id: 'offers', label: t('catalog.offersAndDiscounts') || 'Offers & Discounts' },
     ...apiCategories.map(c => {
       const catKey = (c.slug || c.name || `category-${c.id}`).toLowerCase().trim();
       let displayName = c.name || `Category #${c.id}`;
-      if (isRtl) {
-        if (c.arabicName) displayName = c.arabicName;
-        else if (catKey.includes('perfume')) displayName = 'عطور فاخرة';
-        else if (catKey.includes('oil')) displayName = 'زيوت دهن عود';
-        else if (catKey.includes('bakhoor') || catKey.includes('incense')) displayName = 'بخور ومعطرات';
-        else if (catKey.includes('cosmetic')) displayName = 'مستحضرات تجميل';
-        else if (catKey.includes('bundle')) displayName = 'باقات وهدايا';
-      }
+      if (catKey.includes('perfume')) displayName = t('nav.perfumes') || 'Perfumes';
+      else if (catKey.includes('oil')) displayName = t('nav.oils') || 'Oils';
+      else if (catKey.includes('bakhoor') || catKey.includes('incense')) displayName = t('nav.bakhoor') || 'Bakhoor';
+      else if (catKey.includes('cosmetic')) displayName = t('nav.cosmetics') || 'Cosmetics';
+      else if (catKey.includes('bundle')) displayName = t('nav.bundles') || 'Bundles';
       return {
         id: catKey,
         rawId: c.id,
@@ -156,10 +155,10 @@ export default function Shop() {
   ];
 
   const tiersList = [
-    { id: 'all', label: 'All Tiers' },
-    { id: 'Luxury', label: 'Luxury (€50)' },
-    { id: 'Royal', label: 'Royal (€40)' },
-    { id: 'Classic', label: 'Classic (€30)' }
+    { id: 'all', label: t('catalog.allTiers') || 'All Tiers' },
+    { id: 'Luxury', label: t('tiers.luxury') || 'Luxury (€50)' },
+    { id: 'Royal', label: t('tiers.royal') || 'Royal (€40)' },
+    { id: 'Classic', label: t('tiers.classic') || 'Classic (€30)' }
   ];
 
   const filterSidebar = (
@@ -167,7 +166,7 @@ export default function Shop() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-3">
         <h3 className="font-cinzel text-sm font-bold uppercase tracking-widest text-[#D4AF37]">
-          {isRtl ? 'تصفية المنتجات' : 'Filter Collection'}
+          {t('catalog.filterCollection') || 'Filter Collection'}
         </h3>
         {hasActiveFilters && (
           <button
@@ -175,7 +174,7 @@ export default function Shop() {
             className="text-[11px] text-[#D4AF37] hover:text-[#B8860B] flex items-center gap-1 font-sans cursor-pointer font-bold"
           >
             <RotateCcw className="w-3 h-3" />
-            <span>Reset All</span>
+            <span>{t('catalog.resetAll') || 'Reset All'}</span>
           </button>
         )}
       </div>
@@ -185,7 +184,7 @@ export default function Shop() {
         <label className={`font-cinzel text-[11px] uppercase tracking-wider block font-bold ${
           isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
         }`}>
-          Category
+          {t('catalog.category') || 'Category'}
         </label>
         <div className="flex flex-col gap-1.5">
           {categoriesList.map((c) => (
@@ -212,7 +211,7 @@ export default function Shop() {
           isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
         }`}>
           <Crown className="w-3 h-3 text-[#D4AF37]" />
-          <span>Perfume Tier</span>
+          <span>{t('catalog.tier') || 'Perfume Tier'}</span>
         </label>
         <div className="flex flex-col gap-1.5">
           {tiersList.map((tItem) => (
@@ -238,14 +237,14 @@ export default function Shop() {
         <label className={`font-cinzel text-[11px] uppercase tracking-wider block font-bold ${
           isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
         }`}>
-          Gender Profile
+          {t('catalog.gender') || 'Gender Profile'}
         </label>
         <div className="grid grid-cols-2 gap-1.5">
           {[
-            { id: 'all', label: isRtl ? 'الكل' : 'All' },
-            { id: 'men', label: isRtl ? 'رجالي' : 'Men' },
-            { id: 'women', label: isRtl ? 'نسائي' : 'Women' },
-            { id: 'unisex', label: isRtl ? 'للجنسين' : 'Unisex' }
+            { id: 'all', label: t('shop.allGenders') || 'All' },
+            { id: 'men', label: t('shop.men') || 'Men' },
+            { id: 'women', label: t('shop.women') || 'Women' },
+            { id: 'unisex', label: t('shop.unisex') || 'Unisex' }
           ].map((g) => {
             const gLower = (gender || '').toLowerCase();
             const isActive = gLower === g.id.toLowerCase() ||

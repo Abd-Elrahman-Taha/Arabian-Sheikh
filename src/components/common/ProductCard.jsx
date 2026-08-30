@@ -71,12 +71,12 @@ export default function ProductCard({ product, onCompare }) {
         )}
         {product.tier && (
           <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || 'bg-[#D4AF37] text-black'}`}>
-            {product.tier}
+            {t('tiers.' + product.tier.toLowerCase()) || product.tier}
           </span>
         )}
         {product.featured && !product.tier && (
           <span className="bg-[#D4AF37] text-black text-[10px] font-bold font-cinzel tracking-widest uppercase px-2 py-0.5 rounded-full shadow-md">
-            Featured
+            {t('shop.featured') || 'Featured'}
           </span>
         )}
         {isOutOfStock && (

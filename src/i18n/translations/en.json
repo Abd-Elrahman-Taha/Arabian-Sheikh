@@ -368,8 +368,35 @@
     "suggestedNotes": "Explore by Notes"
   },
   "tiers": {
-    "luxury": "Luxury Tier (€50)",
-    "royal": "Royal Tier (€40)",
-    "classic": "Classic Tier (€30)"
+    "luxury": "Luxury (€50)",
+    "royal": "Royal (€40)",
+    "classic": "Classic (€30)"
+  },
+  "catalog": {
+    "allCatalog": "All Catalog",
+    "offersAndDiscounts": "Offers & Discounts",
+    "allTiers": "All Tiers",
+    "filterCollection": "Filter Collection",
+    "resetAll": "Reset All",
+    "category": "Category",
+    "categories": "Categories",
+    "tier": "Tier",
+    "gender": "Gender",
+    "family": "Fragrance Family",
+    "priceRange": "Price Range",
+    "inStockOnly": "In Stock Only",
+    "minRating": "Minimum Rating",
+    "sortBy": "Sort By",
+    "showingResults": "Showing {{count}} master creations",
+    "noProductsFound": "No master creations match your selected filters.",
+    "clearAllFilters": "Clear All Filters",
+    "flaconVolume": "Flacon Volume",
+    "expressCheckout": "Instant Express Checkout",
+    "dhlEstimate": "DHL Express: Estimated Delivery in 2-4 Business Days",
+    "authenticCreation": "100% Authentic Andalusian Artisanal Creation",
+    "returnsPolicy": "Complimentary 14-Day Vault Return Policy",
+    "olfactoryPyramid": "Olfactory Pyramid",
+    "performanceProfile": "Performance Profile",
+    "patronReviews": "Verified Patron Reviews"
   }
 }
