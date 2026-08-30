@@ -282,13 +282,13 @@ export default function HorizontalCollectionShowcase({
                   <div className="flex items-center justify-between gap-2 mb-4">
                     {product.tier ? (
                       <span className="px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-sm">
-                        {product.tier} Tier
+                        {t('tiers.' + product.tier.toLowerCase()) || product.tier}
                       </span>
                     ) : (
                       <span className={`px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider border ${
                         isDark ? 'bg-black/75 text-[#FFF2B2] border-[#F2D675]/50' : 'bg-[#E2D5BC] text-[#704622] border-[#A8853B]/40 font-bold'
                       }`}>
-                        {product.category || 'Palace Reserve'}
+                        {t('nav.' + (product.category || 'perfumes').toLowerCase()) || product.category || 'Palace Reserve'}
                       </span>
                     )}
 

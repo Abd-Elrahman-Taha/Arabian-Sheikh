@@ -18,7 +18,7 @@ import BlurText from '../common/BlurText';
 
 export default function OffersDiscountSection({ products = [] }) {
   const { navigate } = useRouter();
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   const { addToCart } = useCart();
   const { isDark } = useTheme();
 
@@ -66,11 +66,11 @@ export default function OffersDiscountSection({ products = [] }) {
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] text-xs uppercase font-cinzel font-bold tracking-widest">
             <Percent className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>{language === 'ar' ? 'العروض والتخفيضات الحصرية' : 'EXCLUSIVE PALACE OFFERS & DISCOUNTS'}</span>
+            <span>{language === 'ar' ? 'العروض والتخفيضات الحصرية' : language === 'bg' ? 'Ексклузивни Дворцови Оферти' : language === 'es' ? 'Ofertas Exclusivas del Palacio' : 'EXCLUSIVE PALACE OFFERS & DISCOUNTS'}</span>
           </div>
 
           <BlurText
-            text={language === 'ar' ? 'عروض القصر الملكي والمجموعات الحصرية' : 'ROYAL COFFRETS & VOUCHER CODES'}
+            text={language === 'ar' ? 'عروض القصر الملكي والمجموعات الحصرية' : language === 'bg' ? 'Кралски Комплекти и Промо Кодове' : language === 'es' ? 'Estuches Reales y Códigos Promocionales' : 'ROYAL COFFRETS & VOUCHER CODES'}
             delay={50}
             animateBy="words"
             direction="top"
@@ -85,6 +85,10 @@ export default function OffersDiscountSection({ products = [] }) {
           }`}>
             {language === 'ar'
               ? 'استمتع بمجموعات الهدايا الفاخرة والمنتجات المخفضة مع أكواد خصم حصرية لفترة محدودة.'
+              : language === 'bg'
+              ? 'Насладете се на лимитирани подаръчни сетове, намалени флакони и промоционални кодове.'
+              : language === 'es'
+              ? 'Disfrute de estuches exclusivos de regalo, frascos con descuento y códigos promocionales.'
               : 'Indulge in limited-edition presentation coffrets, discounted royal flacons, and voucher codes for an extraordinary olfactory experience.'}
           </p>
         </div>
@@ -150,7 +154,7 @@ export default function OffersDiscountSection({ products = [] }) {
               <div className="flex items-center gap-2">
                 <Gift className="w-4 h-4 text-[#D4AF37]" />
                 <h3 className={`font-cinzel text-xl sm:text-2xl font-bold ${isDark ? 'text-[#FFF5E6]' : 'text-[#704622]'}`}>
-                  {language === 'ar' ? 'المنتجات المخفضة والباقات الخاصة' : 'Discounted Sovereign Flacons & Bundles'}
+                  {language === 'ar' ? 'المنتجات المخفضة والباقات الخاصة' : language === 'bg' ? 'Намалени Флакони и Специални Сетове' : language === 'es' ? 'Frascos con Descuento y Estuches' : 'Discounted Sovereign Flacons & Bundles'}
                 </h3>
               </div>
 
@@ -158,7 +162,7 @@ export default function OffersDiscountSection({ products = [] }) {
                 to="/shop"
                 className="text-xs font-cinzel font-bold text-[#A8853B] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
               >
-                <span>{language === 'ar' ? 'عرض كل العطور' : 'View All in Boutique'}</span>
+                <span>{language === 'ar' ? 'عرض كل العطور' : language === 'bg' ? 'Виж всички в бутика' : language === 'es' ? 'Ver Todo en la Boutique' : 'View All in Boutique'}</span>
                 <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
               </Link>
             </div>
@@ -185,7 +189,7 @@ export default function OffersDiscountSection({ products = [] }) {
                       </span>
                       <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'}`}>
                         <Clock className="w-3 h-3 text-[#A8853B] dark:text-[#FFDF8A]" />
-                        <span>Palace Offer</span>
+                        <span>{language === 'ar' ? 'عرض خاص' : language === 'bg' ? 'Оферта' : language === 'es' ? 'Oferta Especial' : 'Palace Offer'}</span>
                       </span>
                     </div>
 
@@ -213,7 +217,7 @@ export default function OffersDiscountSection({ products = [] }) {
                             isDark ? 'text-[#FFFDF8] group-hover:text-[#F2D675] drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]' : 'text-[#704622] group-hover:text-[#A8853B]'
                           }`}
                         >
-                          {language === 'ar' ? item.arabicName || item.name : item.name}
+                          {language === 'ar' ? item.arabicName || item.name : language === 'bg' ? item.bulgarianName || item.name : language === 'es' ? item.spanishName || item.name : item.name}
                         </h4>
                         <p className={`text-xs line-clamp-2 mt-1 leading-relaxed ${
                           isDark ? 'text-[#F3E6D0]' : 'text-[#4A2A14]'
@@ -246,7 +250,7 @@ export default function OffersDiscountSection({ products = [] }) {
                           }`}
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? 'اقتنِ العرض' : 'Claim Offer'}</span>
+                          <span>{t('shop.addToBag') || (language === 'ar' ? 'اقتنِ العرض' : 'Claim Offer')}</span>
                         </button>
                       </div>
                     </div>

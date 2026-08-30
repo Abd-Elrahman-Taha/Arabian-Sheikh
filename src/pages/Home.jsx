@@ -583,7 +583,7 @@ export default function Home() {
                   <p className={`text-[9.5px] font-mono font-extrabold truncate ${
                     isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'
                   }`}>
-                    €{nextHeroFlacon.price} • {nextHeroFlacon.tier}
+                    €{nextHeroFlacon.price} • {t('tiers.' + nextHeroFlacon.tier.toLowerCase()) || nextHeroFlacon.tier}
                   </p>
                 </div>
               </div>
