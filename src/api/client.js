@@ -188,8 +188,8 @@ async function request(endpoint, options = {}) {
       }
       const errorCode = data?.code || `HTTP_${response.status}`;
 
-      // Global Interceptor: 401 Unauthorized Auto-Recovery
-      if (response.status === 401 && !options._retryCount) {
+      // Global Interceptor: 401 Unauthorized Auto-Recovery for expired JWT tokens only
+      if (response.status === 401 && requiresAuth && !options._retryCount) {
         try {
           // Attempt automatic admin re-authentication against live ASP.NET backend
           const authRes = await fetch(`${BASE_URL}/admin/auth/login`, {

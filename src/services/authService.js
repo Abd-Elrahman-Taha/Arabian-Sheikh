@@ -53,14 +53,14 @@ export const authService = {
           return adminUser;
         }
       } catch (adminErr) {
-        if (adminErr.message?.toLowerCase().includes('block')) {
-          throw adminErr;
+        if (adminErr.status === 401 || adminErr.status === 400 || adminErr.status === 404 || adminErr.message?.toLowerCase().includes('password') || adminErr.message?.toLowerCase().includes('block') || adminErr.message?.toLowerCase().includes('invalid')) {
+          throw new Error(adminErr.message || 'Invalid admin email or password.');
         }
         console.warn('Admin API login failed, checking customer endpoint:', adminErr.message);
       }
     }
 
-    // 2. Try Customer Login
+    // 2. Try Customer Login against live ASP.NET backend
     try {
       const user = await authApi.login(cleanEmail, password);
       if (user && (user.id || user.email)) {
@@ -78,46 +78,13 @@ export const authService = {
         return user;
       }
     } catch (custErr) {
-      if (custErr.message?.toLowerCase().includes('block')) {
-        throw custErr;
+      if (custErr.status === 401 || custErr.status === 400 || custErr.status === 404 || custErr.message?.toLowerCase().includes('password') || custErr.message?.toLowerCase().includes('invalid') || custErr.message?.toLowerCase().includes('block') || custErr.message?.toLowerCase().includes('not found')) {
+        throw new Error(custErr.message || 'Invalid email or password.');
       }
-      console.warn('Customer API login error, checking live cloud database:', custErr.message);
+      console.warn('Customer API login error:', custErr.message);
     }
 
-    // 3. Pull freshest user credentials from live cloud across all devices
-    await liveCloudSync.sync().catch(() => {});
-
-    if (liveCloudSync.isUserBlocked(cleanEmail)) {
-      throw new Error('This account has been blocked by the Administrator.');
-    }
-    if (liveCloudSync.isUserDeleted(cleanEmail)) {
-      throw new Error('No account found with this email. Please register.');
-    }
-
-    // 4. Check cloud-synced users
-    const cloudUser = liveCloudSync.findUserByEmail(cleanEmail);
-    const users = loadUsers();
-    let user = cloudUser || users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
-
-    if (user?.isBlocked || user?.status === 'BLOCKED') {
-      throw new Error('This account has been blocked by the Administrator.');
-    }
-
-    if (!user) {
-      throw new Error('No account found with this email. Please register.');
-    }
-
-    // Verify password if account has a recorded password
-    if (user.password && password && user.password !== password) {
-      throw new Error('Invalid email or password.');
-    }
-
-    if (user.status === 'BLOCKED' || user.isBlocked) {
-      throw new Error('This account has been blocked by the Administrator.');
-    }
-
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-    return user;
+    throw new Error('Invalid email or password.');
   },
 
   async signup({ name, email, password, phone = '', countryCode = '' }) {
