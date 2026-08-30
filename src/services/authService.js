@@ -33,10 +33,10 @@ export const authService = {
 
     // 0. Check live cloud block and deletion lists
     if (liveCloudSync.isUserBlocked(cleanEmail)) {
-      throw new Error('This account has been blocked by the Administrator.');
+      throw new Error('Account is blocked. Please contact customer support.');
     }
     if (liveCloudSync.isUserDeleted(cleanEmail)) {
-      throw new Error('No account found with this email. Please register.');
+      throw new Error('Account not found, please sign up.');
     }
 
     // 1. If admin email or superadmin, try Admin Login first
@@ -46,15 +46,21 @@ export const authService = {
         if (adminUser && (adminUser.id || adminUser.email)) {
           if (adminUser.isBlocked || adminUser.status === 'BLOCKED' || adminUser.isActive === false) {
             localStorage.removeItem(CURRENT_USER_KEY);
-            throw new Error('This account has been blocked by the Administrator.');
+            throw new Error('Account is blocked. Please contact customer support.');
           }
           localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
           liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
           return adminUser;
         }
       } catch (adminErr) {
-        if (adminErr.status === 401 || adminErr.status === 400 || adminErr.status === 404 || adminErr.message?.toLowerCase().includes('password') || adminErr.message?.toLowerCase().includes('block') || adminErr.message?.toLowerCase().includes('invalid')) {
-          throw new Error(adminErr.message || 'Invalid admin email or password.');
+        if (adminErr.message?.toLowerCase().includes('block')) {
+          throw new Error('Account is blocked. Please contact customer support.');
+        }
+        if (adminErr.status === 404 || adminErr.message?.toLowerCase().includes('not found')) {
+          throw new Error('Account not found, please sign up.');
+        }
+        if (adminErr.status === 401 || adminErr.status === 400 || adminErr.message?.toLowerCase().includes('password') || adminErr.message?.toLowerCase().includes('invalid')) {
+          throw new Error(adminErr.message || 'Invalid email or password.');
         }
         console.warn('Admin API login failed, checking customer endpoint:', adminErr.message);
       }
@@ -66,11 +72,11 @@ export const authService = {
       if (user && (user.id || user.email)) {
         if (user.isBlocked || user.status === 'BLOCKED' || user.isActive === false || liveCloudSync.isUserBlocked(cleanEmail)) {
           localStorage.removeItem(CURRENT_USER_KEY);
-          throw new Error('This account has been blocked by the Administrator.');
+          throw new Error('Account is blocked. Please contact customer support.');
         }
         if (liveCloudSync.isUserDeleted(cleanEmail)) {
           localStorage.removeItem(CURRENT_USER_KEY);
-          throw new Error('No account found with this email. Please register.');
+          throw new Error('Account not found, please sign up.');
         }
 
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
@@ -78,13 +84,19 @@ export const authService = {
         return user;
       }
     } catch (custErr) {
-      if (custErr.status === 401 || custErr.status === 400 || custErr.status === 404 || custErr.message?.toLowerCase().includes('password') || custErr.message?.toLowerCase().includes('invalid') || custErr.message?.toLowerCase().includes('block') || custErr.message?.toLowerCase().includes('not found')) {
+      if (custErr.message?.toLowerCase().includes('block')) {
+        throw new Error('Account is blocked. Please contact customer support.');
+      }
+      if (custErr.status === 404 || custErr.message?.toLowerCase().includes('not found') || custErr.message?.toLowerCase().includes('does not exist')) {
+        throw new Error('Account not found, please sign up.');
+      }
+      if (custErr.status === 401 || custErr.status === 400) {
         throw new Error(custErr.message || 'Invalid email or password.');
       }
       console.warn('Customer API login error:', custErr.message);
     }
 
-    throw new Error('Invalid email or password.');
+    throw new Error('Account not found, please sign up.');
   },
 
   async signup({ name, email, password, phone = '', countryCode = '', preferredLanguage = 'En' }) {
