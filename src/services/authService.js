@@ -87,7 +87,7 @@ export const authService = {
     throw new Error('Invalid email or password.');
   },
 
-  async signup({ name, email, password, phone = '', countryCode = '' }) {
+  async signup({ name, email, password, phone = '', countryCode = '', preferredLanguage = 'En' }) {
     const cleanEmail = email.toLowerCase().trim();
 
     if (liveCloudSync.isUserBlocked(cleanEmail)) {
@@ -97,13 +97,14 @@ export const authService = {
     // 1. Send registration directly to live ASP.NET backend database
     if (!apiClient.isMockEnabled()) {
       try {
-        const user = await authApi.signup({ name, email: cleanEmail, password, phone, countryCode });
+        const user = await authApi.signup({ name, email: cleanEmail, password, phone, countryCode, preferredLanguage });
         if (user && (user.id || user.email)) {
           const userWithPhone = {
             ...user,
             name: user.name || name || 'Royal Patron',
             phone: phone || user.phone || '',
             countryCode: countryCode || user.countryCode || '',
+            preferredLanguage: preferredLanguage || user.preferredLanguage || 'En',
             joinedDate: new Date().toISOString().split('T')[0],
             memberSince: new Date().toISOString().split('T')[0],
             ordersCount: 0,

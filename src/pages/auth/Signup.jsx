@@ -3,7 +3,7 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck, Phone } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck, Phone, Globe } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 const COUNTRIES = [
@@ -32,7 +32,7 @@ const COUNTRIES = [
 
 export default function Signup() {
   const { navigate } = useRouter();
-  const { t } = useTranslation();
+  const { t, setLanguage } = useTranslation();
   const { signup } = useAuth();
   const { success, error } = useToast();
 
@@ -40,6 +40,7 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [countryCode, setCountryCode] = useState('EG');
   const [phone, setPhone] = useState('+20');
+  const [preferredLanguage, setPreferredLanguage] = useState('En');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -115,8 +116,16 @@ export default function Signup() {
         email,
         password,
         phone: finalPhone || null,
-        countryCode: countryCode || 'EG'
+        countryCode: countryCode || 'EG',
+        preferredLanguage: preferredLanguage || 'En'
       });
+
+      // Automatically switch the website to the chosen preferred language
+      const targetLang = (preferredLanguage || 'En').toLowerCase();
+      if (setLanguage) {
+        setLanguage(targetLang);
+      }
+
       success(`Welcome to Arabian Sheikh, ${newUser.name || 'Patron'}.`);
       navigate('/');
     } catch (err) {
@@ -209,6 +218,28 @@ export default function Signup() {
             </div>
             <p className="text-[10px] text-[#D8BE99]/70 mt-1">
               Format: e.g. +201000000000 (Country Code: {countryCode})
+            </p>
+          </div>
+
+          {/* Preferred Language (لغة الحساب المفضلة) */}
+          <div>
+            <label className="block uppercase tracking-wider text-[#D8BE99] font-semibold mb-1">
+              Preferred Language (لغة الحساب والموقع)
+            </label>
+            <div className="relative">
+              <select
+                value={preferredLanguage}
+                onChange={(e) => setPreferredLanguage(e.target.value)}
+                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium text-xs"
+              >
+                <option value="En">🇬🇧 English (الإنجليزية)</option>
+                <option value="Bg">🇧🇬 Български (البلغارية)</option>
+                <option value="Es">🇪🇸 Español (الإسبانية)</option>
+              </select>
+              <Globe className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <p className="text-[10px] text-[#D8BE99]/70 mt-1">
+              The website will automatically switch to this language when your account opens.
             </p>
           </div>
 

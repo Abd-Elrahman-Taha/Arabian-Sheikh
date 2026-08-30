@@ -8,7 +8,7 @@ import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function Login({ returnPath }) {
   const { navigate } = useRouter();
-  const { t } = useTranslation();
+  const { t, setLanguage } = useTranslation();
   const { login } = useAuth();
   const { success, error } = useToast();
 
@@ -22,6 +22,9 @@ export default function Login({ returnPath }) {
     setLoading(true);
     try {
       const user = await login(email, password);
+      if (user?.preferredLanguage && setLanguage) {
+        setLanguage(user.preferredLanguage.toLowerCase());
+      }
       success(`Welcome back to the Palace, ${user.name}.`);
       if (returnPath && returnPath !== '/login' && returnPath !== '/account') {
         navigate(returnPath);
