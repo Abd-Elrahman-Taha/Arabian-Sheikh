@@ -176,6 +176,12 @@ export const authService = {
     const current = this.getCurrentUser();
     if (!current) return null;
 
+    // If marked as deleted or blocked in cloud, sign out immediately
+    if (liveCloudSync.isUserDeleted(current.email) || liveCloudSync.isUserBlocked(current.email)) {
+      this.logout();
+      return null;
+    }
+
     const isAdmin = Boolean(current.role === 'ADMIN' || current.role === 'SUPER_ADMIN' || current.isSuperAdmin);
 
     // 1. Fetch fresh profile directly from live ASP.NET backend
@@ -200,7 +206,8 @@ export const authService = {
         return merged;
       }
     } catch (e) {
-      if (e.status === 401 || e.status === 404 || e.message?.toLowerCase().includes('block')) {
+      // If server returned 401 Unauthorized (invalid/expired/deleted token) or 404 Not Found (user deleted from database):
+      if (e.status === 401 || e.status === 404 || e.message?.toLowerCase().includes('not found') || e.message?.toLowerCase().includes('unauthorized') || e.message?.toLowerCase().includes('block')) {
         this.logout();
         return null;
       }
@@ -208,6 +215,11 @@ export const authService = {
 
     // 2. Also check live cloud sync for any admin updates
     await liveCloudSync.sync().catch(() => {});
+    if (liveCloudSync.isUserDeleted(current.email) || liveCloudSync.isUserBlocked(current.email)) {
+      this.logout();
+      return null;
+    }
+
     const cloudUser = liveCloudSync.findUserByEmail(current.email);
     if (cloudUser) {
       if (cloudUser.isBlocked || cloudUser.status === 'BLOCKED' || liveCloudSync.isUserBlocked(current.email)) {
@@ -289,6 +301,8 @@ export const authService = {
     authApi.logout().catch(() => {});
     if (typeof window !== 'undefined') {
       localStorage.removeItem(CURRENT_USER_KEY);
+      tokenManager.clearTokens();
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
     }
   }
 };

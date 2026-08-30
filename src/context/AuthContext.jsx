@@ -10,16 +10,20 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const refreshAuth = async () => {
       const current = authService.getCurrentUser();
+      if (!current) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       setUser(current);
       setLoading(false);
 
-      if (current) {
-        try {
-          const fresh = await authService.fetchLatestProfile();
-          if (fresh) {
-            setUser(fresh);
-          }
-        } catch {}
+      try {
+        const fresh = await authService.fetchLatestProfile();
+        setUser(fresh || null);
+      } catch {
+        setUser(null);
       }
     };
 
