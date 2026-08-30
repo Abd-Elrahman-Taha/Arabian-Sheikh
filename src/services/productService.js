@@ -18,21 +18,29 @@ export const productService = {
   applyFilters(items, filters = {}) {
     let result = Array.isArray(items) ? [...items] : [];
 
-    // Filter by search query
+    // Filter by search query across all languages (En, Ar, Bg, Es) and notes
     if (filters.search && filters.search.trim()) {
       const q = filters.search.toLowerCase().trim();
-      result = result.filter(p => 
-        p.name?.toLowerCase().includes(q) ||
-        p.arabicName?.includes(q) ||
-        p.bulgarianName?.toLowerCase().includes(q) ||
-        p.spanishName?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.fragranceFamily?.toLowerCase().includes(q) ||
-        p.scentFamily?.toLowerCase().includes(q) ||
-        (p.topNotes && p.topNotes.some(n => String(n).toLowerCase().includes(q))) ||
-        (p.heartNotes && p.heartNotes.some(n => String(n).toLowerCase().includes(q))) ||
-        (p.baseNotes && p.baseNotes.some(n => String(n).toLowerCase().includes(q)))
-      );
+      result = result.filter(p => {
+        const transMatch = Array.isArray(p.translations) && p.translations.some(t => 
+          t.name?.toLowerCase().includes(q) ||
+          t.description?.toLowerCase().includes(q) ||
+          t.ingredients?.toLowerCase().includes(q)
+        );
+        return (
+          p.name?.toLowerCase().includes(q) ||
+          p.arabicName?.toLowerCase().includes(q) ||
+          p.bulgarianName?.toLowerCase().includes(q) ||
+          p.spanishName?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.fragranceFamily?.toLowerCase().includes(q) ||
+          p.scentFamily?.toLowerCase().includes(q) ||
+          (p.topNotes && p.topNotes.some(n => String(n).toLowerCase().includes(q))) ||
+          (p.heartNotes && p.heartNotes.some(n => String(n).toLowerCase().includes(q))) ||
+          (p.baseNotes && p.baseNotes.some(n => String(n).toLowerCase().includes(q))) ||
+          transMatch
+        );
+      });
     }
 
     // Filter by category

@@ -9,7 +9,7 @@ import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollRevea
 
 export default function SearchPage() {
   const { queryParams } = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const [query, setQuery] = useState(queryParams.get('q') || queryParams.get('search') || '');
   const [results, setResults] = useState([]);
@@ -18,13 +18,13 @@ export default function SearchPage() {
   useEffect(() => {
     async function doSearch() {
       if (!query.trim()) {
-        const all = await productService.getAllProducts();
+        const all = await productService.getAllProducts({ language });
         setResults(all);
         return;
       }
       setLoading(true);
       try {
-        const data = await productService.getAllProducts({ search: query });
+        const data = await productService.getAllProducts({ search: query, language });
         setResults(data);
       } catch (err) {
         console.error(err);
@@ -33,7 +33,7 @@ export default function SearchPage() {
       }
     }
     doSearch();
-  }, [query]);
+  }, [query, language]);
 
   return (
     <div className="pt-36 sm:pt-40 pb-6 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-12 animate-fade-in text-[var(--color-earth-dark)]">

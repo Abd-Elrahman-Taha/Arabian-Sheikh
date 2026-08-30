@@ -112,7 +112,10 @@ export function normalizeProduct(raw) {
       if (matched.ingredients) resolvedIngredients = matched.ingredients;
     }
   } else {
-    if (currentLang === 'bg' && (p.bulgarianName || p.bulgarian_name)) {
+    if (currentLang === 'ar' && (p.arabicName || p.arabic_name)) {
+      resolvedName = p.arabicName || p.arabic_name;
+      if (p.arabicDescription || p.arabic_description) resolvedDesc = p.arabicDescription || p.arabic_description;
+    } else if (currentLang === 'bg' && (p.bulgarianName || p.bulgarian_name)) {
       resolvedName = p.bulgarianName || p.bulgarian_name;
       if (p.bulgarianDescription || p.bulgarian_description) resolvedDesc = p.bulgarianDescription || p.bulgarian_description;
     } else if (currentLang === 'es' && (p.spanishName || p.spanish_name)) {
