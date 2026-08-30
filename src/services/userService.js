@@ -200,6 +200,13 @@ export const userService = {
       const updated = await userApi.adminUpdateCustomer(numId, { firstName, lastName, phone });
       const users = loadUsers().map(u => (u.id === numId || String(u.id) === String(id)) ? { ...u, ...updated } : u);
       saveUsers(users);
+
+      await liveCloudSync.updateUser(numId, {
+        firstName,
+        lastName,
+        phone,
+        ...(updated || {})
+      });
       return updated;
     }
     throw new Error('Invalid customer ID.');

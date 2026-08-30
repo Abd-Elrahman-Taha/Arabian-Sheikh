@@ -171,7 +171,7 @@ function mergeRemoteData(remoteData) {
 
   saveLocalState();
 
-  // If current logged-in user is in blocked or deleted list, force sign-out immediately
+  // If current logged-in user is updated, blocked, or deleted, update session & UI immediately
   if (typeof window !== 'undefined') {
     try {
       const curr = JSON.parse(localStorage.getItem('arabian_sheikh_current_user') || 'null');
@@ -180,6 +180,23 @@ function mergeRemoteData(remoteData) {
         if (state.blockedUserEmails?.includes(currEmail) || state.deletedUserEmails?.includes(currEmail)) {
           localStorage.removeItem('arabian_sheikh_current_user');
           window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        } else {
+          const freshUser = state.users.find(u => (u.email || '').toLowerCase().trim() === currEmail || String(u.id) === String(curr.id));
+          if (freshUser) {
+            const hasChanged = freshUser.name !== curr.name || freshUser.firstName !== curr.firstName || freshUser.lastName !== curr.lastName || freshUser.phone !== curr.phone;
+            if (hasChanged) {
+              const updatedCurr = {
+                ...curr,
+                ...freshUser,
+                name: freshUser.name || `${freshUser.firstName || ''} ${freshUser.lastName || ''}`.trim() || curr.name,
+                firstName: freshUser.firstName || curr.firstName,
+                lastName: freshUser.lastName || curr.lastName,
+                phone: freshUser.phone || curr.phone
+              };
+              localStorage.setItem('arabian_sheikh_current_user', JSON.stringify(updatedCurr));
+              window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+            }
+          }
         }
       }
     } catch {}
@@ -562,6 +579,44 @@ export const liveCloudSync = {
       } catch {}
     }
 
+    await pushToCloud();
+  },
+
+  async updateUser(id, updatedFields) {
+    if (!id && !updatedFields?.email) return;
+    const clean = (updatedFields?.email || '').toLowerCase().trim();
+    state.users = (state.users || []).map(u => {
+      if ((clean && (u.email || '').toLowerCase().trim() === clean) || String(u.id) === String(id)) {
+        const fullName = updatedFields.fullName || (updatedFields.firstName ? `${updatedFields.firstName} ${updatedFields.lastName || ''}`.trim() : (updatedFields.name || u.name));
+        return {
+          ...u,
+          ...updatedFields,
+          name: fullName,
+          fullName: fullName
+        };
+      }
+      return u;
+    });
+
+    // Check if current user on this device is this user
+    if (typeof window !== 'undefined') {
+      try {
+        const curr = JSON.parse(localStorage.getItem('arabian_sheikh_current_user') || 'null');
+        if (curr && ((clean && curr.email?.toLowerCase().trim() === clean) || String(curr.id) === String(id))) {
+          const fullName = updatedFields.fullName || (updatedFields.firstName ? `${updatedFields.firstName} ${updatedFields.lastName || ''}`.trim() : (updatedFields.name || curr.name));
+          const merged = {
+            ...curr,
+            ...updatedFields,
+            name: fullName,
+            fullName: fullName
+          };
+          localStorage.setItem('arabian_sheikh_current_user', JSON.stringify(merged));
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
+      } catch {}
+    }
+
+    saveLocalState();
     await pushToCloud();
   }
 };
