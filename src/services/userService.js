@@ -170,73 +170,86 @@ export const userService = {
     return result;
   },
 
+  // Admin Customer Management
   async getAllUsers(filters = {}) {
-    // 1. Fetch from backend API directly
-    let remoteCustomers = [];
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const remote = await userApi.adminGetCustomers(filters);
-        remoteCustomers = remote?.items || (Array.isArray(remote) ? remote : []);
-      } catch (e) {
-        console.warn('Backend adminGetCustomers API error:', e.message);
+    try {
+      const params = {};
+      if (filters.search) params.Search = filters.search;
+      if (filters.isBlocked !== undefined && filters.isBlocked !== 'ALL') {
+        params.IsBlocked = filters.isBlocked === true || filters.isBlocked === 'true' || filters.isBlocked === 'BLOCKED';
       }
-    }
+      if (filters.page) params.Page = Number(filters.page);
+      if (filters.pageSize) params.PageSize = Number(filters.pageSize);
+      if (filters.sortBy) params.SortBy = filters.sortBy;
+      if (filters.sortDirection) params.SortDirection = filters.sortDirection;
 
-    // 2. Apply filters to real remote users
-    let result = Array.isArray(remoteCustomers) ? remoteCustomers : [];
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(u => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
+      const response = await userApi.adminGetCustomers(params);
+      const items = response?.items || (Array.isArray(response) ? response : []);
+      saveUsers(items);
+      return items;
+    } catch (e) {
+      console.warn('Backend adminGetCustomers API error:', e.message);
+      return loadUsers();
     }
-    if (filters.role && filters.role !== 'ALL') {
-      result = result.filter(u => u.role === filters.role);
-    }
-
-    saveUsers(result);
-    return result;
   },
 
-  async updateUserRole(userId, newRole) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await userApi.updateUserRole(userId, newRole);
-      } catch (e) {
-        console.warn('Real API update role fallback:', e.message);
-      }
+  async updateCustomer(id, { firstName, lastName, phone }) {
+    const numId = Number(id);
+    if (!isNaN(numId) && numId > 0) {
+      const updated = await userApi.adminUpdateCustomer(numId, { firstName, lastName, phone });
+      const users = loadUsers().map(u => (u.id === numId || String(u.id) === String(id)) ? { ...u, ...updated } : u);
+      saveUsers(users);
+      return updated;
     }
-
-    const users = loadUsers();
-    const user = users.find(u => u.id === userId);
-    if (!user) throw new Error('User not found');
-    user.role = newRole;
-    saveUsers(users);
-    return user;
+    throw new Error('Invalid customer ID.');
   },
 
+  async blockCustomer(id) {
+    const numId = Number(id);
+    if (!isNaN(numId) && numId > 0) {
+      await userApi.adminBlockCustomer(numId);
+      const users = loadUsers().map(u => (u.id === numId || String(u.id) === String(id)) ? { ...u, isBlocked: true, status: 'BLOCKED' } : u);
+      saveUsers(users);
+      return { id: numId, isBlocked: true, status: 'BLOCKED' };
+    }
+    throw new Error('Invalid customer ID.');
+  },
+
+  async unblockCustomer(id) {
+    const numId = Number(id);
+    if (!isNaN(numId) && numId > 0) {
+      await userApi.adminUnblockCustomer(numId);
+      const users = loadUsers().map(u => (u.id === numId || String(u.id) === String(id)) ? { ...u, isBlocked: false, status: 'ACTIVE' } : u);
+      saveUsers(users);
+      return { id: numId, isBlocked: false, status: 'ACTIVE' };
+    }
+    throw new Error('Invalid customer ID.');
+  },
+
+  async deleteCustomer(id) {
+    const numId = Number(id);
+    if (!isNaN(numId) && numId > 0) {
+      await userApi.adminDeleteCustomer(numId);
+      const users = loadUsers().filter(u => u.id !== numId && String(u.id) !== String(id));
+      saveUsers(users);
+      return true;
+    }
+    throw new Error('Invalid customer ID.');
+  },
+
+  // Backward compatibility alias
   async toggleUserBlock(userId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const user = users.find(u => u.id === userId);
-        const nextStatus = user?.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
-        return await userApi.updateUserStatus(userId, nextStatus);
-      } catch (e) {
-        console.warn('Real API toggle block fallback:', e.message);
-      }
-    }
-
     const users = loadUsers();
-    const user = users.find(u => u.id === userId);
-    if (!user) throw new Error('User not found');
-    user.status = user.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
-    saveUsers(users);
-    return user;
+    const user = users.find(u => String(u.id) === String(userId));
+    if (user?.isBlocked || user?.status === 'BLOCKED') {
+      return await this.unblockCustomer(userId);
+    } else {
+      return await this.blockCustomer(userId);
+    }
   },
 
   async deleteUser(userId) {
-    let users = loadUsers();
-    users = users.filter(u => u.id !== userId);
-    saveUsers(users);
-    return true;
+    return await this.deleteCustomer(userId);
   }
 };
 

@@ -238,6 +238,8 @@ export const ENDPOINTS = {
     CUSTOMERS: {
       LIST: '/admin/customers',
       DETAILS: (id) => `/admin/customers/${id}`,
+      UPDATE: (id) => `/admin/customers/${id}`,
+      DELETE: (id) => `/admin/customers/${id}`,
       BLOCK: (id) => `/admin/customers/${id}/block`,
       UNBLOCK: (id) => `/admin/customers/${id}/unblock`
     },

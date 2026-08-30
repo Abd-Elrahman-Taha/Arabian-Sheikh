@@ -83,11 +83,34 @@ export const userApi = {
   },
 
   /**
+   * Admin: Update customer (Only firstName, lastName, phone)
+   * PUT /api/admin/customers/{id}
+   */
+  async adminUpdateCustomer(id, { firstName, lastName, phone }) {
+    const payload = {
+      firstName: firstName?.trim() || '',
+      lastName: lastName?.trim() || '',
+      phone: phone?.trim() || ''
+    };
+    const response = await apiClient.put(ENDPOINTS.ADMIN.CUSTOMERS.UPDATE(id), payload);
+    return normalizeUser(response);
+  },
+
+  /**
+   * Admin: Delete customer
+   * DELETE /api/admin/customers/{id}
+   */
+  async adminDeleteCustomer(id) {
+    const response = await apiClient.delete(ENDPOINTS.ADMIN.CUSTOMERS.DELETE(id));
+    return normalizeObjectKeys(response);
+  },
+
+  /**
    * Admin: Block customer
    * POST /api/admin/customers/{id}/block
    */
-  async adminBlockCustomer(id, reason = '') {
-    const response = await apiClient.post(ENDPOINTS.ADMIN.CUSTOMERS.BLOCK(id), { reason });
+  async adminBlockCustomer(id) {
+    const response = await apiClient.post(ENDPOINTS.ADMIN.CUSTOMERS.BLOCK(id));
     return normalizeObjectKeys(response);
   },
 
@@ -95,8 +118,8 @@ export const userApi = {
    * Admin: Unblock customer
    * POST /api/admin/customers/{id}/unblock
    */
-  async adminUnblockCustomer(id, reason = '') {
-    const response = await apiClient.post(ENDPOINTS.ADMIN.CUSTOMERS.UNBLOCK(id), { reason });
+  async adminUnblockCustomer(id) {
+    const response = await apiClient.post(ENDPOINTS.ADMIN.CUSTOMERS.UNBLOCK(id));
     return normalizeObjectKeys(response);
   },
 
