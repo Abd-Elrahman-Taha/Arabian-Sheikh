@@ -172,6 +172,63 @@ export const authService = {
     }
   },
 
+  async fetchLatestProfile() {
+    const current = this.getCurrentUser();
+    if (!current) return null;
+
+    const isAdmin = Boolean(current.role === 'ADMIN' || current.role === 'SUPER_ADMIN' || current.isSuperAdmin);
+
+    // 1. Fetch fresh profile directly from live ASP.NET backend
+    try {
+      const freshUser = await authApi.getMe(isAdmin);
+      if (freshUser && (freshUser.id || freshUser.email)) {
+        // If account has been blocked or deactivated on server, sign out immediately
+        if (freshUser.isBlocked || freshUser.status === 'BLOCKED' || freshUser.isActive === false) {
+          this.logout();
+          return null;
+        }
+
+        const merged = {
+          ...current,
+          ...freshUser,
+          name: freshUser.name || (freshUser.firstName ? `${freshUser.firstName} ${freshUser.lastName || ''}`.trim() : current.name),
+          firstName: freshUser.firstName || current.firstName,
+          lastName: freshUser.lastName || current.lastName,
+          phone: freshUser.phone || current.phone || freshUser.phoneNumber || current.phoneNumber
+        };
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(merged));
+        return merged;
+      }
+    } catch (e) {
+      if (e.status === 401 || e.status === 404 || e.message?.toLowerCase().includes('block')) {
+        this.logout();
+        return null;
+      }
+    }
+
+    // 2. Also check live cloud sync for any admin updates
+    await liveCloudSync.sync().catch(() => {});
+    const cloudUser = liveCloudSync.findUserByEmail(current.email);
+    if (cloudUser) {
+      if (cloudUser.isBlocked || cloudUser.status === 'BLOCKED' || liveCloudSync.isUserBlocked(current.email)) {
+        this.logout();
+        return null;
+      }
+      const merged = {
+        ...current,
+        ...cloudUser,
+        name: cloudUser.name || (cloudUser.firstName ? `${cloudUser.firstName} ${cloudUser.lastName || ''}`.trim() : current.name),
+        firstName: cloudUser.firstName || current.firstName,
+        lastName: cloudUser.lastName || current.lastName,
+        phone: cloudUser.phone || current.phone
+      };
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(merged));
+      return merged;
+    }
+
+    return current;
+  },
+
   async updateProfile(updates) {
     if (!apiClient.isMockEnabled()) {
       try {

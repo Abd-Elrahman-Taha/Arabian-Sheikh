@@ -8,10 +8,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const refreshAuth = () => {
+    const refreshAuth = async () => {
       const current = authService.getCurrentUser();
       setUser(current);
       setLoading(false);
+
+      if (current) {
+        try {
+          const fresh = await authService.fetchLatestProfile();
+          if (fresh) {
+            setUser(fresh);
+          }
+        } catch {}
+      }
     };
 
     refreshAuth();
