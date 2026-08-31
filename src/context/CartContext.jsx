@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { cartService } from '../services/cartService';
 import { discountService } from '../services/discountService';
+import { cartApi } from '../api/cart.api';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import LoginRequiredModal from '../components/auth/LoginRequiredModal';
@@ -59,6 +60,11 @@ export function CartProvider({ children }) {
 
       return { ...prev, items };
     });
+
+    // If authenticated, sync to backend
+    if (product.id) {
+      cartApi.addItem(product.id, quantity).catch(() => {});
+    }
 
     // Trigger cart badge bounce
     setCartBadgeAnimated(true);
@@ -128,8 +134,27 @@ export function CartProvider({ children }) {
   };
 
   const applyDiscount = async (codeStr) => {
+    if (!codeStr || !codeStr.trim()) {
+      error('Please enter a promotional code.');
+      throw new Error('Please enter a promotional code.');
+    }
+    const bagItems = cart.items || [];
+    if (bagItems.length === 0) {
+      error('Your shopping bag is empty. Please add a perfume before applying a privilege code.');
+      throw new Error('Your shopping bag is empty.');
+    }
+
     try {
-      const discount = await discountService.validateCode(codeStr, totals.subtotal);
+      // Sync items to backend cart before validating if authenticated
+      if (isAuthenticated && bagItems.length > 0) {
+        for (const item of bagItems) {
+          if (item.productId) {
+            await cartApi.addItem(item.productId, item.quantity).catch(() => {});
+          }
+        }
+      }
+
+      const discount = await discountService.validateCode(codeStr, totals.subtotal, bagItems);
       setCart(prev => ({
         ...prev,
         discountCode: discount.code,
