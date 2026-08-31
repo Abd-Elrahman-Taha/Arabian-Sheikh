@@ -1,5 +1,40 @@
 import { discountApi } from '../api/discount.api';
 
+/**
+ * Calculates live usage statistics for coupons from placed store orders
+ */
+function getLiveCouponStats() {
+  const stats = new Map(); // code -> { count, totalDiscount }
+  if (typeof window === 'undefined') return stats;
+
+  try {
+    const rawOrders = localStorage.getItem('arabian_sheikh_orders');
+    const orders = rawOrders ? JSON.parse(rawOrders) : [];
+
+    const rawCloud = localStorage.getItem('arabian_sheikh_live_cloud_orders');
+    const cloudOrders = rawCloud ? JSON.parse(rawCloud) : [];
+
+    const combined = [...(Array.isArray(orders) ? orders : []), ...(Array.isArray(cloudOrders) ? cloudOrders : [])];
+    const seenOrderIds = new Set();
+
+    combined.forEach(o => {
+      if (!o?.id || seenOrderIds.has(String(o.id))) return;
+      seenOrderIds.add(String(o.id));
+
+      const code = (o.discountCode || o.couponCode || '').toUpperCase().trim();
+      if (code) {
+        const prev = stats.get(code) || { count: 0, totalDiscount: 0 };
+        prev.count += 1;
+        prev.totalDiscount += Number(o.discountAmount || o.discount || 0);
+        stats.set(code, prev);
+      }
+    });
+  } catch (e) {
+    // Non-blocking
+  }
+  return stats;
+}
+
 export const discountService = {
   // ==========================================
   // 1. ADMIN COUPON METHODS
@@ -9,14 +44,58 @@ export const discountService = {
    * Get paginated, filtered, sorted coupons list
    */
   async getCoupons(params = {}) {
-    return await discountApi.adminGetCoupons(params);
+    const res = await discountApi.adminGetCoupons(params);
+    const liveStats = getLiveCouponStats();
+
+    if (Array.isArray(res?.items)) {
+      res.items = res.items.map(c => {
+        const code = (c.code || '').toUpperCase().trim();
+        const stat = liveStats.get(code);
+        const orderUsage = stat ? stat.count : 0;
+        const totalUsed = Math.max(Number(c.usageCount || 0), orderUsage);
+
+        let status = c.status;
+        if (c.usageLimit !== null && c.usageLimit !== undefined && totalUsed >= c.usageLimit) {
+          status = 'Depleted';
+        }
+
+        return {
+          ...c,
+          usageCount: totalUsed,
+          usedCount: totalUsed,
+          status
+        };
+      });
+    }
+
+    return res;
   },
 
   /**
    * Get single coupon details with applicability rules
    */
   async getCouponById(id) {
-    return await discountApi.adminGetCouponById(id);
+    const coupon = await discountApi.adminGetCouponById(id);
+    if (coupon) {
+      const code = (coupon.code || '').toUpperCase().trim();
+      const liveStats = getLiveCouponStats();
+      const stat = liveStats.get(code);
+      const orderUsage = stat ? stat.count : 0;
+      const totalUsed = Math.max(Number(coupon.usageCount || 0), orderUsage);
+
+      let status = coupon.status;
+      if (coupon.usageLimit !== null && coupon.usageLimit !== undefined && totalUsed >= coupon.usageLimit) {
+        status = 'Depleted';
+      }
+
+      return {
+        ...coupon,
+        usageCount: totalUsed,
+        usedCount: totalUsed,
+        status
+      };
+    }
+    return coupon;
   },
 
   /**
@@ -58,7 +137,35 @@ export const discountService = {
    * Get coupon analytics
    */
   async getCouponAnalytics(id) {
-    return await discountApi.adminGetCouponAnalytics(id);
+    let apiAnalytics = null;
+    try {
+      apiAnalytics = await discountApi.adminGetCouponAnalytics(id);
+    } catch (e) {
+      // Non-blocking
+    }
+
+    const coupon = await this.getCouponById(id).catch(() => null);
+    const code = (coupon?.code || '').toUpperCase().trim();
+    const liveStats = getLiveCouponStats();
+    const stat = code ? liveStats.get(code) : null;
+
+    const totalOrders = Math.max(
+      Number(apiAnalytics?.totalOrders || 0),
+      stat ? stat.count : 0,
+      Number(coupon?.usageCount || 0)
+    );
+
+    const totalDiscountGiven = Math.max(
+      Number(apiAnalytics?.totalDiscountGiven || 0),
+      stat ? stat.totalDiscount : 0
+    );
+
+    return {
+      couponId: Number(id),
+      code: code || apiAnalytics?.code || '',
+      totalOrders,
+      totalDiscountGiven
+    };
   },
 
   // ==========================================
