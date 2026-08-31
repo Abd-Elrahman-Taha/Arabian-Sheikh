@@ -466,3 +466,66 @@ export function normalizeCouponAnalytics(raw) {
     totalDiscountGiven: Number(a.totalDiscountGiven ?? a.discountGiven ?? a.totalDiscount ?? 0)
   };
 }
+
+/**
+ * Customer Address Normalizer
+ * Exact mapping with PerfumeStore.Application.DTOs.Address.AddressResponse
+ */
+export function normalizeAddress(raw) {
+  if (!raw) return null;
+  const a = normalizeObjectKeys(raw);
+
+  const rawLabel = a.label || 'Home';
+  // Capitalize first letter: Home, Work, Other
+  const label = typeof rawLabel === 'string'
+    ? rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1)
+    : 'Home';
+
+  return {
+    id: Number(a.id || 0),
+    label: ['Home', 'Work', 'Other'].includes(label) ? label : 'Other',
+    customLabel: a.customLabel ? String(a.customLabel).trim() : null,
+    fullName: a.fullName ? String(a.fullName).trim() : '',
+    phone: a.phone ? String(a.phone).trim() : '',
+    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'AE',
+    region: a.region ? String(a.region).trim() : '',
+    city: a.city ? String(a.city).trim() : '',
+    addressLine1: a.addressLine1 ? String(a.addressLine1).trim() : '',
+    addressLine2: a.addressLine2 ? String(a.addressLine2).trim() : null,
+    postalCode: a.postalCode ? String(a.postalCode).trim() : '',
+    isDefaultShipping: Boolean(a.isDefaultShipping ?? a.isDefault ?? false)
+  };
+}
+
+/**
+ * Customer Address List Normalizer
+ */
+export function normalizeAddressList(raw) {
+  if (!raw) return [];
+  const rawList = Array.isArray(raw)
+    ? raw
+    : (Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw?.data) ? raw.data : []));
+
+  return rawList.map(normalizeAddress).filter(Boolean);
+}
+
+/**
+ * Customer Address Snapshot Normalizer
+ * Exact mapping with PerfumeStore.Application.DTOs.Address.AddressSnapshotResponse
+ */
+export function normalizeAddressSnapshot(raw) {
+  if (!raw) return null;
+  const a = normalizeObjectKeys(raw);
+
+  return {
+    fullName: a.fullName ? String(a.fullName).trim() : '',
+    phone: a.phone ? String(a.phone).trim() : '',
+    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'AE',
+    region: a.region ? String(a.region).trim() : '',
+    city: a.city ? String(a.city).trim() : '',
+    addressLine1: a.addressLine1 ? String(a.addressLine1).trim() : '',
+    addressLine2: a.addressLine2 ? String(a.addressLine2).trim() : null,
+    postalCode: a.postalCode ? String(a.postalCode).trim() : ''
+  };
+}
+

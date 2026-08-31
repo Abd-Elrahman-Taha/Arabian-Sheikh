@@ -95,9 +95,11 @@ export const ENDPOINTS = {
   ADDRESSES: {
     LIST: '/addresses',
     CREATE: '/addresses',
+    DETAILS: (id) => `/addresses/${id}`,
     UPDATE: (id) => `/addresses/${id}`,
     DELETE: (id) => `/addresses/${id}`,
-    SET_DEFAULT: (id) => `/addresses/${id}/default`
+    SET_DEFAULT: (id) => `/addresses/${id}/default`,
+    SNAPSHOT: (id) => `/addresses/${id}/snapshot`
   },
 
   // Checkout & Shipping
