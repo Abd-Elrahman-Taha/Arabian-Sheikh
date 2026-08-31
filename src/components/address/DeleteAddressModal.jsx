@@ -6,9 +6,13 @@ export default function DeleteAddressModal({
   onClose,
   onConfirm,
   address,
-  isDeleting = false
+  isDeleting = false,
+  totalAddressesCount = 1
 }) {
   if (!isOpen || !address) return null;
+
+  const isSoleDefault = address.isDefaultShipping && totalAddressesCount <= 1;
+  const isDefaultWithOthers = address.isDefaultShipping && totalAddressesCount > 1;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
@@ -34,9 +38,19 @@ export default function DeleteAddressModal({
           <p className="text-[#D8BE99]">{address.city}, {address.region} {address.postalCode}</p>
         </div>
 
-        <p className="text-xs text-[#D8BE99] leading-relaxed">
-          Are you sure you want to remove this delivery destination from your saved addresses?
-        </p>
+        {isSoleDefault ? (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs leading-relaxed">
+            This is currently your <strong>only saved delivery address</strong>. The system requires at least one primary destination for royal courier shipping. Please add a new address before removing this one, or edit this address directly.
+          </div>
+        ) : isDefaultWithOthers ? (
+          <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#F2D675] text-xs leading-relaxed">
+            Note: This address is your <strong>default delivery destination</strong>. Your next saved address will automatically become your primary delivery destination.
+          </div>
+        ) : (
+          <p className="text-xs text-[#D8BE99] leading-relaxed">
+            Are you sure you want to remove this delivery destination from your saved addresses?
+          </p>
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-2">
@@ -52,8 +66,8 @@ export default function DeleteAddressModal({
           <button
             type="button"
             onClick={() => onConfirm(address)}
-            disabled={isDeleting}
-            className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-cinzel text-xs uppercase font-bold shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            disabled={isDeleting || isSoleDefault}
+            className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 disabled:bg-rose-950 disabled:text-rose-400/50 disabled:border-rose-900 text-white font-cinzel text-xs uppercase font-bold shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             {isDeleting ? (
               <>

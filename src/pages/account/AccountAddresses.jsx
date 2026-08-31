@@ -114,8 +114,21 @@ export default function AccountAddresses() {
   const handleConfirmDelete = async (addr) => {
     setDeletingId(addr.id);
     try {
-      await addressService.deleteAddress(addr.id);
-      setAddresses(prev => prev.filter(a => a.id !== addr.id));
+      const otherAddresses = addresses.filter(a => a.id !== addr.id);
+      const replacementId = otherAddresses.length > 0 ? otherAddresses[0].id : null;
+      await addressService.deleteAddress(addr.id, replacementId);
+
+      setAddresses(prev => {
+        const remaining = prev.filter(a => a.id !== addr.id);
+        if (addr.isDefaultShipping && remaining.length > 0) {
+          return remaining.map((a, idx) => ({
+            ...a,
+            isDefaultShipping: idx === 0
+          }));
+        }
+        return remaining;
+      });
+
       success('Address deleted successfully.');
       setIsDeleteOpen(false);
       setAddressToDelete(null);
@@ -270,8 +283,10 @@ export default function AccountAddresses() {
         onConfirm={handleConfirmDelete}
         address={addressToDelete}
         isDeleting={deletingId === addressToDelete?.id}
+        totalAddressesCount={addresses.length}
       />
     </div>
   );
 }
+
 

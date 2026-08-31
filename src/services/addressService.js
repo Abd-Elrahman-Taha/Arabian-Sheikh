@@ -71,12 +71,44 @@ export const addressService = {
   },
 
   /**
-   * Delete address
+   * Delete address with smart default address replacement
    */
   async deleteAddress(id, replacementAddressId = null) {
-    await addressApi.deleteAddress(id, replacementAddressId);
-    cachedAddresses = cachedAddresses.filter(a => Number(a.id) !== Number(id));
-    return true;
+    const targetId = Number(id);
+    const existingList = cachedAddresses;
+    const targetAddress = existingList.find(a => Number(a.id) === targetId);
+
+    // If target is default and no replacement was passed, find one automatically from remaining addresses
+    let repId = replacementAddressId;
+    if (targetAddress?.isDefaultShipping && !repId) {
+      const other = existingList.find(a => Number(a.id) !== targetId);
+      if (other) {
+        repId = other.id;
+      }
+    }
+
+    if (existingList.length <= 1 && targetAddress?.isDefaultShipping) {
+      throw new Error('Cannot delete your only saved delivery address. Please add another address first or edit this one.');
+    }
+
+    try {
+      await addressApi.deleteAddress(targetId, repId);
+      cachedAddresses = cachedAddresses.filter(a => Number(a.id) !== targetId);
+      
+      // If a replacement address was promoted to default, update it in cache
+      if (repId) {
+        cachedAddresses = cachedAddresses.map(a => ({
+          ...a,
+          isDefaultShipping: Number(a.id) === Number(repId) ? true : a.isDefaultShipping
+        }));
+      }
+      return true;
+    } catch (err) {
+      if (existingList.length <= 1 && targetAddress?.isDefaultShipping) {
+        throw new Error('Cannot delete your only saved delivery address. Please add another address first.');
+      }
+      throw err;
+    }
   },
 
   /**
