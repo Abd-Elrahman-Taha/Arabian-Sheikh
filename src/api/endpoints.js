@@ -247,8 +247,10 @@ export const ENDPOINTS = {
     // Coupons
     COUPONS: {
       LIST: '/admin/coupons',
+      DETAILS: (id) => `/admin/coupons/${id}`,
       CREATE: '/admin/coupons',
       UPDATE: (id) => `/admin/coupons/${id}`,
+      DELETE: (id) => `/admin/coupons/${id}`,
       ACTIVATE: (id) => `/admin/coupons/${id}/activate`,
       DEACTIVATE: (id) => `/admin/coupons/${id}/deactivate`,
       ANALYTICS: (id) => `/admin/coupons/${id}/analytics`

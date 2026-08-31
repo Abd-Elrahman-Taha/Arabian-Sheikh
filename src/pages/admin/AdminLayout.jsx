@@ -9,7 +9,7 @@ import {
   Users,
   Warehouse,
   BarChart3,
-  Percent,
+  Tag,
   Settings,
   LogOut,
   ExternalLink,
@@ -30,52 +30,67 @@ export default function AdminLayout({ children }) {
     { to: '/admin/users', label: t('admin.users'), icon: Users },
     { to: '/admin/inventory', label: t('admin.inventory'), icon: Warehouse },
     { to: '/admin/analytics', label: t('admin.analytics'), icon: BarChart3 },
-    { to: '/admin/discounts', label: t('admin.discounts'), icon: Percent },
+    { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] },
     { to: '/admin/settings', label: t('admin.settings'), icon: Settings }
   ];
+
+  const isLinkActive = (link) => {
+    if (link.exact) return currentPath === link.to;
+    if (currentPath.startsWith(link.to)) return true;
+    if (link.aliases && link.aliases.some(alias => currentPath.startsWith(alias))) return true;
+    return false;
+  };
 
   return (
     <div className="min-h-screen bg-transparent text-[#F3E6D0] flex flex-col pt-0">
       {/* Admin Top Header Bar in Obsidian Glass */}
       <header className="bg-[#0B0A08]/95 border-b border-[#D4AF37]/30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shadow-2xl sticky top-0 z-40 backdrop-blur-md">
-        <div className="flex items-center gap-3.5">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border border-[#D4AF37]/50 bg-gradient-to-br from-[#D4AF37]/20 via-black to-[#8C6239]/20 flex items-center justify-center text-[#F2D675] font-bold font-cinzel text-sm sm:text-base shadow-[0_0_15px_rgba(212,175,55,0.3)] shrink-0">
-            AS
-          </div>
-          <div className="min-w-0">
-            <span className="font-cinzel text-sm sm:text-lg lg:text-xl font-bold tracking-wider text-[#F3E6D0] uppercase truncate block">
-              Arabian Sheikh <span className="hidden sm:inline">• Atelier Suite</span>
-            </span>
-            <span className="text-xs sm:text-sm text-[#F2D675] font-mono font-bold tracking-wider truncate block">
-              Admin & Inventory Console
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Link
-            to="/"
-            className="group px-3.5 sm:px-5 py-2 rounded-full border border-[#D4AF37]/40 bg-black/50 text-xs sm:text-sm text-[#D8BE99] hover:text-[#F2D675] hover:border-[#D4AF37] flex items-center gap-2 font-cinzel uppercase tracking-wider cursor-pointer font-bold transition-all shadow-sm shrink-0"
-          >
-            <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:scale-110" />
-            <span className="hidden xs:inline">Storefront</span>
-          </Link>
-          
-          <div className="h-6 w-px bg-[#D4AF37]/25 hidden sm:block" />
-          
-          <div className="text-right hidden md:block">
-            <span className="text-sm sm:text-base font-bold text-[#F3E6D0] block font-cinzel">{user?.name || 'Grand Concierge'}</span>
-            <span className="text-xs text-[#F2D675] font-mono uppercase font-bold">Master Administrator</span>
-          </div>
-
-          {/* Mobile Menu Toggle Button */}
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-lg border border-[#D4AF37]/30 bg-black/50 text-[#F2D675] hover:border-[#D4AF37] transition-all cursor-pointer"
-            aria-label="Toggle Admin Menu"
+            className="md:hidden p-2 rounded-xl border border-[#D4AF37]/30 bg-black/40 text-[#D8BE99] hover:text-[#F3E6D0] hover:border-[#D4AF37] transition-all cursor-pointer"
+            aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
+
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-[#D4AF37]/50 bg-gradient-to-br from-[#D4AF37]/20 via-black to-[#8C6239]/20 flex items-center justify-center text-[#F2D675] font-bold font-cinzel text-sm sm:text-base shadow-[0_0_15px_rgba(212,175,55,0.3)] shrink-0">
+              AS
+            </div>
+            <div>
+              <span className="font-cinzel text-base sm:text-lg font-bold tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#F2D675] via-[#D4AF37] to-[#F2D675] block">
+                Arabian Sheikh
+              </span>
+              <span className="text-[10px] sm:text-xs uppercase tracking-widest text-[#D8BE99] font-cinzel font-semibold hidden sm:inline">
+                Royal Maison Management Suite
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link
+            to="/"
+            className="hidden sm:flex items-center gap-2 text-xs font-cinzel tracking-wider text-[#D8BE99] hover:text-[#F2D675] border border-[#D4AF37]/30 hover:border-[#D4AF37] px-3.5 py-1.5 rounded-full transition-all bg-black/40 shadow-sm"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Storefront Sanctuary</span>
+          </Link>
+
+          <div className="flex items-center gap-2.5 pl-2 sm:pl-4 border-l border-[#D4AF37]/20">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#8C6239] to-[#D4AF37] flex items-center justify-center text-white font-bold text-xs font-cinzel border border-[#F2D675]/40 shadow-md">
+              {user?.name?.[0]?.toUpperCase() || 'A'}
+            </div>
+            <div className="hidden lg:block text-left">
+              <p className="text-xs font-cinzel font-bold text-[#F3E6D0] truncate max-w-[120px]">
+                {user?.name || 'Administrator'}
+              </p>
+              <p className="text-[10px] text-[#D8BE99] uppercase tracking-wider font-semibold">
+                {user?.role || 'Super Admin'}
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -83,9 +98,7 @@ export default function AdminLayout({ children }) {
       <div className="md:hidden bg-[#0B0A08]/95 border-b border-[#D4AF37]/20 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none sticky top-[61px] z-30 backdrop-blur-md">
         {navLinks.map((link) => {
           const Icon = link.icon;
-          const isActive = link.exact
-            ? currentPath === link.to
-            : currentPath.startsWith(link.to);
+          const isActive = isLinkActive(link);
 
           return (
             <Link
@@ -113,9 +126,7 @@ export default function AdminLayout({ children }) {
           </p>
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = link.exact
-              ? currentPath === link.to
-              : currentPath.startsWith(link.to);
+            const isActive = isLinkActive(link);
 
             return (
               <Link
@@ -144,7 +155,7 @@ export default function AdminLayout({ children }) {
                 logout();
                 navigate('/login');
               }}
-              className="w-full flex items-center gap-3 text-sm font-cinzel uppercase tracking-wider text-rose-400 py-3.5 px-4 rounded-xl border border-rose-500/20 bg-rose-500/10 font-bold"
+              className="w-full flex items-center gap-3 text-sm font-cinzel uppercase tracking-wider text-rose-400 py-3 px-3 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer font-bold"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out of Suite</span>
@@ -162,9 +173,7 @@ export default function AdminLayout({ children }) {
           </p>
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = link.exact
-              ? currentPath === link.to
-              : currentPath.startsWith(link.to);
+            const isActive = isLinkActive(link);
 
             return (
               <Link

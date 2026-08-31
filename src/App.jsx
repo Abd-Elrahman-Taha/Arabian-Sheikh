@@ -97,7 +97,7 @@ function MainRouter() {
           {currentPath === '/admin/users' && <AdminUsers />}
           {currentPath === '/admin/inventory' && <AdminInventory />}
           {currentPath === '/admin/analytics' && <AdminAnalytics />}
-          {currentPath === '/admin/discounts' && <AdminDiscounts />}
+          {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
           {currentPath === '/admin/settings' && <AdminSettings />}
         </AdminLayout>
       );

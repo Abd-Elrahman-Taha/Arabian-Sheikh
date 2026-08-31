@@ -1,28 +1,51 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
-const ToastContext = createContext();
+const ToastContext = createContext(null);
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
-
-  const addToast = useCallback((message, type = 'success', duration = 3800) => {
-    const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
-    setToasts(prev => [...prev, { id, message, type }]);
-
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-      }, duration);
-    }
-  }, []);
 
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  const addToast = useCallback((message, type = 'success', duration = 3800) => {
+    if (!message) return;
+    const msgStr = String(message);
+
+    setToasts(prev => {
+      // Prevent identical message spam in a short window
+      if (prev.some(t => t.message === msgStr)) {
+        return prev;
+      }
+      const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+      const next = [...prev.slice(-4), { id, message: msgStr, type }]; // Keep max 5 toasts
+
+      if (duration > 0) {
+        setTimeout(() => {
+          setToasts(current => current.filter(t => t.id !== id));
+        }, duration);
+      }
+
+      return next;
+    });
+  }, []);
+
+  const success = useCallback((msg, duration) => addToast(msg, 'success', duration), [addToast]);
+  const error = useCallback((msg, duration) => addToast(msg, 'error', duration), [addToast]);
+  const info = useCallback((msg, duration) => addToast(msg, 'info', duration), [addToast]);
+
+  const value = useMemo(() => ({
+    addToast,
+    removeToast,
+    success,
+    error,
+    info
+  }), [addToast, removeToast, success, error, info]);
+
   return (
-    <ToastContext.Provider value={{ addToast, success: (msg) => addToast(msg, 'success'), error: (msg) => addToast(msg, 'error'), info: (msg) => addToast(msg, 'info') }}>
+    <ToastContext.Provider value={value}>
       {children}
       {/* Luxury Toast Notification Display */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-md w-full px-4 pointer-events-none">
@@ -68,7 +91,14 @@ export function ToastProvider({ children }) {
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+    return {
+      addToast: () => {},
+      removeToast: () => {},
+      success: () => {},
+      error: () => {},
+      info: () => {}
+    };
   }
   return context;
 }
+

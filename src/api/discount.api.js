@@ -1,10 +1,16 @@
 import apiClient from './client';
 import ENDPOINTS from './endpoints';
-import { normalizeCouponValidation, normalizeObjectKeys } from './normalizers';
+import {
+  normalizeCouponValidation,
+  normalizeCoupon,
+  normalizeCouponList,
+  normalizeCouponAnalytics,
+  normalizeObjectKeys
+} from './normalizers';
 
 export const discountApi = {
   // ==========================================
-  // CUSTOMER COUPONS
+  // 1. CUSTOMER STOREFRONT COUPONS
   // ==========================================
 
   /**
@@ -19,17 +25,25 @@ export const discountApi = {
   },
 
   // ==========================================
-  // ADMIN COUPONS & PROMOTIONS
+  // 2. ADMIN COUPONS MANAGEMENT
   // ==========================================
 
   /**
-   * Admin: List coupons
+   * Admin: List coupons with search, status filtering, sorting, pagination
    * GET /api/admin/coupons
    */
   async adminGetCoupons(params = {}) {
     const response = await apiClient.get(ENDPOINTS.ADMIN.COUPONS.LIST, { params });
-    const rawList = response?.items || (Array.isArray(response) ? response : []);
-    return rawList.map(normalizeObjectKeys);
+    return normalizeCouponList(response);
+  },
+
+  /**
+   * Admin: Get single coupon details with applicability rules
+   * GET /api/admin/coupons/{id}
+   */
+  async adminGetCouponById(id) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.COUPONS.DETAILS(id));
+    return normalizeCoupon(response);
   },
 
   /**
@@ -38,7 +52,7 @@ export const discountApi = {
    */
   async adminCreateCoupon(payload) {
     const response = await apiClient.post(ENDPOINTS.ADMIN.COUPONS.CREATE, payload);
-    return normalizeObjectKeys(response);
+    return normalizeCoupon(response);
   },
 
   /**
@@ -47,7 +61,15 @@ export const discountApi = {
    */
   async adminUpdateCoupon(id, payload) {
     const response = await apiClient.put(ENDPOINTS.ADMIN.COUPONS.UPDATE(id), payload);
-    return normalizeObjectKeys(response);
+    return normalizeCoupon(response);
+  },
+
+  /**
+   * Admin: Delete coupon
+   * DELETE /api/admin/coupons/{id}
+   */
+  async adminDeleteCoupon(id) {
+    return await apiClient.delete(ENDPOINTS.ADMIN.COUPONS.DELETE(id));
   },
 
   /**
@@ -65,6 +87,19 @@ export const discountApi = {
   async adminDeactivateCoupon(id) {
     return await apiClient.post(ENDPOINTS.ADMIN.COUPONS.DEACTIVATE(id));
   },
+
+  /**
+   * Admin: Get coupon analytics (total orders, total discount given)
+   * GET /api/admin/coupons/{id}/analytics
+   */
+  async adminGetCouponAnalytics(id) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.COUPONS.ANALYTICS(id));
+    return normalizeCouponAnalytics(response);
+  },
+
+  // ==========================================
+  // 3. ADMIN PROMOTIONS
+  // ==========================================
 
   /**
    * Admin: List promotions

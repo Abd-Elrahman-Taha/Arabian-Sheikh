@@ -333,7 +333,7 @@ export function normalizeReturn(raw) {
 }
 
 /**
- * Coupon Validation Normalizer
+ * Coupon Validation Normalizer (Storefront Cart)
  */
 export function normalizeCouponValidation(raw) {
   if (!raw) return { valid: false, message: 'Invalid coupon response.' };
@@ -341,9 +341,128 @@ export function normalizeCouponValidation(raw) {
   return {
     valid: Boolean(c.valid),
     code: c.code || '',
-    type: c.type || 'Percentage',
-    value: Number(c.value || 0),
+    type: c.discountType || c.type || 'Percentage',
+    value: Number(c.discountValue ?? c.value ?? 0),
     discountAmount: Number(c.discountAmount || 0),
+    eligibleItemsSubtotal: Number(c.eligibleItemsSubtotal || 0),
     message: c.message || (c.valid ? 'Coupon applied successfully.' : 'Invalid coupon.')
+  };
+}
+
+/**
+ * Single Admin Coupon Normalizer
+ */
+export function normalizeCoupon(raw) {
+  if (!raw) return null;
+  const c = normalizeObjectKeys(raw);
+  
+  const rawApplicabilities = Array.isArray(c.applicabilities)
+    ? c.applicabilities
+    : (Array.isArray(c.applicability) ? c.applicability : []);
+
+  const applicability = rawApplicabilities.map(app => {
+    const a = normalizeObjectKeys(app);
+    return {
+      id: a.id || null,
+      targetType: a.targetType || 'Category',
+      targetId: Number(a.targetId || 0),
+      isExcluded: Boolean(a.isExcluded)
+    };
+  });
+
+  const isActive = c.isActive !== undefined ? Boolean(c.isActive) : true;
+  const usageLimit = c.usageLimit !== null && c.usageLimit !== undefined ? Number(c.usageLimit) : null;
+  const usageCount = Number(c.usageCount || 0);
+
+  // Compute or format status
+  let status = c.status || 'Active';
+  if (!c.status) {
+    if (!isActive) {
+      status = 'Inactive';
+    } else if (c.endDate && new Date(c.endDate).getTime() < Date.now()) {
+      status = 'Expired';
+    } else if (usageLimit !== null && usageCount >= usageLimit) {
+      status = 'Depleted';
+    } else {
+      status = 'Active';
+    }
+  }
+
+  return {
+    id: c.id,
+    code: (c.code || '').toUpperCase().trim(),
+    type: c.type === 'Fixed' ? 'Fixed' : 'Percentage',
+    value: Number(c.value || 0),
+    startDate: c.startDate || new Date().toISOString(),
+    endDate: c.endDate || new Date().toISOString(),
+    usageLimit,
+    usageCount,
+    minOrderAmount: c.minOrderAmount !== null && c.minOrderAmount !== undefined ? Number(c.minOrderAmount) : null,
+    maxDiscountAmount: c.maxDiscountAmount !== null && c.maxDiscountAmount !== undefined ? Number(c.maxDiscountAmount) : null,
+    allowOnDiscountedItems: Boolean(c.allowOnDiscountedItems),
+    isActive,
+    status,
+    applicability,
+    applicabilities: applicability,
+    createdAt: c.createdAt || null,
+    updatedAt: c.updatedAt || null
+  };
+}
+
+/**
+ * Admin Coupons Paginated List Normalizer
+ */
+export function normalizeCouponList(raw) {
+  if (!raw) {
+    return {
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  if (Array.isArray(raw)) {
+    const items = raw.map(normalizeCoupon).filter(Boolean);
+    return {
+      items,
+      page: 1,
+      pageSize: items.length || 20,
+      totalCount: items.length,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  const res = normalizeObjectKeys(raw);
+  const rawItems = Array.isArray(res.items) ? res.items : [];
+  const items = rawItems.map(normalizeCoupon).filter(Boolean);
+
+  return {
+    items,
+    page: Number(res.page || 1),
+    pageSize: Number(res.pageSize || 20),
+    totalCount: Number(res.totalCount || items.length),
+    totalPages: Number(res.totalPages || Math.ceil((res.totalCount || items.length) / (res.pageSize || 20)) || 1),
+    hasPreviousPage: Boolean(res.hasPreviousPage),
+    hasNextPage: Boolean(res.hasNextPage)
+  };
+}
+
+/**
+ * Admin Coupon Analytics Normalizer
+ */
+export function normalizeCouponAnalytics(raw) {
+  if (!raw) return { couponId: 0, code: '', totalOrders: 0, totalDiscountGiven: 0 };
+  const a = normalizeObjectKeys(raw);
+  return {
+    couponId: Number(a.couponId || a.id || 0),
+    code: (a.code || '').toUpperCase().trim(),
+    totalOrders: Number(a.totalOrders ?? a.ordersUsingCoupon ?? a.ordersCount ?? 0),
+    totalDiscountGiven: Number(a.totalDiscountGiven ?? a.discountGiven ?? a.totalDiscount ?? 0)
   };
 }
