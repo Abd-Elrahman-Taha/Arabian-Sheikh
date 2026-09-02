@@ -171,6 +171,12 @@ export default function AdminPromotions() {
     applicability: []
   });
 
+  // Scope Quick-Mode (All shop, Single product, Single category, Single brand, Custom)
+  const [scopeMode, setScopeMode] = useState('ALL_SHOP');
+  const [scopeProductId, setScopeProductId] = useState('');
+  const [scopeCategoryId, setScopeCategoryId] = useState('');
+  const [scopeBrandId, setScopeBrandId] = useState('');
+
   // Bundle Form State
   const [bundleFormData, setBundleFormData] = useState({
     name: '',
@@ -203,10 +209,19 @@ export default function AdminPromotions() {
         ]);
 
         if (isMounted) {
-          if (cats.status === 'fulfilled' && Array.isArray(cats.value)) setCatalogCategories(cats.value);
-          if (brands.status === 'fulfilled' && Array.isArray(brands.value)) setCatalogBrands(brands.value);
+          if (cats.status === 'fulfilled' && Array.isArray(cats.value)) {
+            setCatalogCategories(cats.value);
+            if (cats.value.length > 0) setScopeCategoryId(cats.value[0].id);
+          }
+          if (brands.status === 'fulfilled' && Array.isArray(brands.value)) {
+            setCatalogBrands(brands.value);
+            if (brands.value.length > 0) setScopeBrandId(brands.value[0].id);
+          }
           if (perfCats.status === 'fulfilled' && Array.isArray(perfCats.value)) setCatalogPerfumeCats(perfCats.value);
-          if (prods.status === 'fulfilled' && Array.isArray(prods.value)) setCatalogProducts(prods.value);
+          if (prods.status === 'fulfilled' && Array.isArray(prods.value)) {
+            setCatalogProducts(prods.value);
+            if (prods.value.length > 0) setScopeProductId(prods.value[0].id);
+          }
         }
       } catch (err) {
         console.warn('[AdminPromotions] Catalog meta warning:', err);
@@ -215,6 +230,59 @@ export default function AdminPromotions() {
     loadCatalogMeta();
     return () => { isMounted = false; };
   }, []);
+
+  // Scope change helpers
+  const handleScopeModeChange = (mode) => {
+    setScopeMode(mode);
+    if (mode === 'ALL_SHOP') {
+      setFormData(prev => ({ ...prev, applicability: [] }));
+    } else if (mode === 'SINGLE_PRODUCT') {
+      const pId = scopeProductId || catalogProducts[0]?.id || 1;
+      setScopeProductId(pId);
+      setFormData(prev => ({
+        ...prev,
+        applicability: [{ targetType: 'Product', targetId: Number(pId), isExcluded: false }]
+      }));
+    } else if (mode === 'SINGLE_CATEGORY') {
+      const cId = scopeCategoryId || catalogCategories[0]?.id || 1;
+      setScopeCategoryId(cId);
+      setFormData(prev => ({
+        ...prev,
+        applicability: [{ targetType: 'Category', targetId: Number(cId), isExcluded: false }]
+      }));
+    } else if (mode === 'SINGLE_BRAND') {
+      const bId = scopeBrandId || catalogBrands[0]?.id || 1;
+      setScopeBrandId(bId);
+      setFormData(prev => ({
+        ...prev,
+        applicability: [{ targetType: 'Brand', targetId: Number(bId), isExcluded: false }]
+      }));
+    }
+  };
+
+  const handleSelectScopeProduct = (productId) => {
+    setScopeProductId(productId);
+    setFormData(prev => ({
+      ...prev,
+      applicability: [{ targetType: 'Product', targetId: Number(productId), isExcluded: false }]
+    }));
+  };
+
+  const handleSelectScopeCategory = (catId) => {
+    setScopeCategoryId(catId);
+    setFormData(prev => ({
+      ...prev,
+      applicability: [{ targetType: 'Category', targetId: Number(catId), isExcluded: false }]
+    }));
+  };
+
+  const handleSelectScopeBrand = (brandId) => {
+    setScopeBrandId(brandId);
+    setFormData(prev => ({
+      ...prev,
+      applicability: [{ targetType: 'Brand', targetId: Number(brandId), isExcluded: false }]
+    }));
+  };
 
   // Fetch Promotions from API
   const fetchPromotions = useCallback(async () => {
@@ -255,6 +323,7 @@ export default function AdminPromotions() {
     future.setMonth(future.getMonth() + 2);
 
     setEditingPromotion(null);
+    setScopeMode('ALL_SHOP');
     setFormData({
       name: '',
       type: 'Discount',
@@ -276,6 +345,23 @@ export default function AdminPromotions() {
       setActionLoadingId(promo.id);
       const full = await promotionService.getPromotionById(promo.id);
       setEditingPromotion(full);
+
+      const rules = Array.isArray(full.applicability) ? full.applicability : [];
+      if (rules.length === 0) {
+        setScopeMode('ALL_SHOP');
+      } else if (rules.length === 1 && rules[0].targetType === 'Product' && !rules[0].isExcluded) {
+        setScopeMode('SINGLE_PRODUCT');
+        setScopeProductId(rules[0].targetId);
+      } else if (rules.length === 1 && rules[0].targetType === 'Category' && !rules[0].isExcluded) {
+        setScopeMode('SINGLE_CATEGORY');
+        setScopeCategoryId(rules[0].targetId);
+      } else if (rules.length === 1 && rules[0].targetType === 'Brand' && !rules[0].isExcluded) {
+        setScopeMode('SINGLE_BRAND');
+        setScopeBrandId(rules[0].targetId);
+      } else {
+        setScopeMode('CUSTOM');
+      }
+
       setFormData({
         name: full.name || '',
         type: full.type || 'Discount',
@@ -1087,87 +1173,203 @@ export default function AdminPromotions() {
                 </div>
               </div>
 
-              {/* Applicability / Targeting Rules */}
-              <div className="border-t border-[#D4AF37]/20 pt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#F2D675]">
-                      Applicability & Targeting Rules
-                    </h4>
-                    <p className="text-[11px] text-[#D8BE99]">
-                      Target specific categories, perfume tiers, maisons, or flacons.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addApplicabilityRule}
-                    className="px-3 py-1.5 rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#F2D675] font-cinzel text-xs uppercase font-bold tracking-wider flex items-center gap-1.5 cursor-pointer transition-all"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Rule</span>
-                  </button>
+              {/* Applicability / Offer Scope Selector */}
+              <div className="border-t border-[#D4AF37]/20 pt-4 space-y-4">
+                <div>
+                  <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#F2D675]">
+                    Offer Scope & Targeting
+                  </h4>
+                  <p className="text-[11px] text-[#D8BE99]">
+                    Choose whether this offer applies to the entire store, a single product, a single category, or a single brand.
+                  </p>
                 </div>
 
-                {formData.applicability.length === 0 ? (
-                  <p className="text-xs text-[#D8BE99]/60 italic py-2">
-                    Applies globally to all flacons and creations in the palace catalogue.
-                  </p>
-                ) : (
-                  <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-                    {formData.applicability.map((rule, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-black/60 p-2.5 rounded-xl border border-white/10">
-                        {/* Target Type */}
-                        <select
-                          value={rule.targetType}
-                          onChange={(e) => updateApplicabilityRule(idx, 'targetType', e.target.value)}
-                          className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
-                        >
-                          {TARGET_TYPES.map(tt => (
-                            <option key={tt.id} value={tt.id}>{tt.label}</option>
-                          ))}
-                        </select>
+                {/* Scope Selection Pills */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {[
+                    { id: 'ALL_SHOP', label: 'All the Shop', icon: Sparkles, desc: 'Entire store' },
+                    { id: 'SINGLE_PRODUCT', label: 'One Product', icon: Package, desc: 'Single flacon' },
+                    { id: 'SINGLE_CATEGORY', label: 'One Category', icon: Layers, desc: 'Specific category' },
+                    { id: 'SINGLE_BRAND', label: 'One Brand', icon: Crown, desc: 'Specific maison' },
+                    { id: 'CUSTOM', label: 'Custom Rules', icon: Tag, desc: 'Multi-target' }
+                  ].map(sc => {
+                    const Icon = sc.icon;
+                    const isSel = scopeMode === sc.id;
+                    return (
+                      <button
+                        key={sc.id}
+                        type="button"
+                        onClick={() => handleScopeModeChange(sc.id)}
+                        className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                          isSel
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] shadow-[0_0_12px_rgba(212,175,55,0.3)] ring-1 ring-[#D4AF37]'
+                            : 'border-[#D4AF37]/20 bg-black/40 text-[#D8BE99] hover:border-[#D4AF37]/50'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-[#D4AF37]" />
+                        <span className="font-cinzel font-bold text-[11px] uppercase whitespace-nowrap">{sc.label}</span>
+                        <span className="text-[9px] text-[#D8BE99]/60">{sc.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                        {/* Target Item Selector */}
-                        <select
-                          value={rule.targetId}
-                          onChange={(e) => updateApplicabilityRule(idx, 'targetId', Number(e.target.value))}
-                          className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none flex-1 cursor-pointer"
-                        >
-                          {rule.targetType === 'Category' && catalogCategories.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                          {rule.targetType === 'Brand' && catalogBrands.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                          ))}
-                          {rule.targetType === 'PerfumeCategory' && catalogPerfumeCats.map(pc => (
-                            <option key={pc.id} value={pc.id}>{pc.name}</option>
-                          ))}
-                          {rule.targetType === 'Product' && catalogProducts.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} (${p.price})</option>
-                          ))}
-                        </select>
+                {/* 1. All Shop Scope */}
+                {scopeMode === 'ALL_SHOP' && (
+                  <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300 animate-fade-in">
+                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>This promotion will apply automatically across <strong>all creations and flacons</strong> in the entire shop.</span>
+                  </div>
+                )}
 
-                        {/* Excluded Toggle */}
-                        <label className="flex items-center gap-1.5 text-[11px] text-[#D8BE99] cursor-pointer whitespace-nowrap px-1">
-                          <input
-                            type="checkbox"
-                            checked={rule.isExcluded}
-                            onChange={(e) => updateApplicabilityRule(idx, 'isExcluded', e.target.checked)}
-                            className="rounded accent-[#D4AF37]"
-                          />
-                          <span>Exclude</span>
-                        </label>
+                {/* 2. Single Product Scope */}
+                {scopeMode === 'SINGLE_PRODUCT' && (
+                  <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
+                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                      Select Target Product *
+                    </label>
+                    <select
+                      value={scopeProductId}
+                      onChange={(e) => handleSelectScopeProduct(e.target.value)}
+                      className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
+                    >
+                      {catalogProducts.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — €{p.price} (ID #{p.id})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-[#D8BE99]/70">
+                      Only this specific perfume flacon will receive the offer.
+                    </p>
+                  </div>
+                )}
 
-                        {/* Remove */}
-                        <button
-                          type="button"
-                          onClick={() => removeApplicabilityRule(idx)}
-                          className="text-neutral-400 hover:text-rose-400 p-1 cursor-pointer transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                {/* 3. Single Category Scope */}
+                {scopeMode === 'SINGLE_CATEGORY' && (
+                  <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
+                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                      Select Target Category *
+                    </label>
+                    <select
+                      value={scopeCategoryId}
+                      onChange={(e) => handleSelectScopeCategory(e.target.value)}
+                      className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
+                    >
+                      {catalogCategories.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} (ID #{c.id})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-[#D8BE99]/70">
+                      All products under this category will automatically qualify for the promotion.
+                    </p>
+                  </div>
+                )}
+
+                {/* 4. Single Brand Scope */}
+                {scopeMode === 'SINGLE_BRAND' && (
+                  <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
+                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                      Select Target Brand / Maison *
+                    </label>
+                    <select
+                      value={scopeBrandId}
+                      onChange={(e) => handleSelectScopeBrand(e.target.value)}
+                      className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
+                    >
+                      {catalogBrands.map(b => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} (ID #{b.id})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-[#D8BE99]/70">
+                      All creations from this perfume house will automatically qualify.
+                    </p>
+                  </div>
+                )}
+
+                {/* 5. Custom Multi-Rule Scope */}
+                {scopeMode === 'CUSTOM' && (
+                  <div className="space-y-2.5 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider">
+                        Custom Rule Items ({formData.applicability.length})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={addApplicabilityRule}
+                        className="px-3 py-1 rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#F2D675] font-cinzel text-[11px] uppercase font-bold tracking-wider flex items-center gap-1 cursor-pointer transition-all"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Rule</span>
+                      </button>
+                    </div>
+
+                    {formData.applicability.length === 0 ? (
+                      <p className="text-xs text-[#D8BE99]/60 italic py-2">
+                        No custom rules configured yet. Click "Add Rule" to target specific items.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {formData.applicability.map((rule, idx) => (
+                          <div key={idx} className="flex items-center gap-2 bg-black/60 p-2.5 rounded-xl border border-white/10">
+                            {/* Target Type */}
+                            <select
+                              value={rule.targetType}
+                              onChange={(e) => updateApplicabilityRule(idx, 'targetType', e.target.value)}
+                              className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
+                            >
+                              {TARGET_TYPES.map(tt => (
+                                <option key={tt.id} value={tt.id}>{tt.label}</option>
+                              ))}
+                            </select>
+
+                            {/* Target Item Selector */}
+                            <select
+                              value={rule.targetId}
+                              onChange={(e) => updateApplicabilityRule(idx, 'targetId', Number(e.target.value))}
+                              className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none flex-1 cursor-pointer"
+                            >
+                              {rule.targetType === 'Category' && catalogCategories.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                              ))}
+                              {rule.targetType === 'Brand' && catalogBrands.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                              ))}
+                              {rule.targetType === 'PerfumeCategory' && catalogPerfumeCats.map(pc => (
+                                <option key={pc.id} value={pc.id}>{pc.name}</option>
+                              ))}
+                              {rule.targetType === 'Product' && catalogProducts.map(p => (
+                                <option key={p.id} value={p.id}>{p.name} (€{p.price})</option>
+                              ))}
+                            </select>
+
+                            {/* Excluded Toggle */}
+                            <label className="flex items-center gap-1.5 text-[11px] text-[#D8BE99] cursor-pointer whitespace-nowrap px-1">
+                              <input
+                                type="checkbox"
+                                checked={rule.isExcluded}
+                                onChange={(e) => updateApplicabilityRule(idx, 'isExcluded', e.target.checked)}
+                                className="rounded accent-[#D4AF37]"
+                              />
+                              <span>Exclude</span>
+                            </label>
+
+                            {/* Remove */}
+                            <button
+                              type="button"
+                              onClick={() => removeApplicabilityRule(idx)}
+                              className="text-neutral-400 hover:text-rose-400 p-1 cursor-pointer transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>

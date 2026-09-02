@@ -39,64 +39,74 @@ export const authService = {
       throw new Error('Account not found, please sign up.');
     }
 
-    // 1. If admin email or superadmin, try Admin Login first
-    if (cleanEmail.includes('admin') || cleanEmail.includes('perfumestore')) {
+    const isAdminLikely = cleanEmail.includes('admin') || cleanEmail.includes('perfumestore');
+
+    // Helper: Attempt Admin API login
+    const tryAdminLogin = async () => {
       try {
         const adminUser = await authApi.adminLogin(cleanEmail, password);
         if (adminUser && (adminUser.id || adminUser.email)) {
           if (adminUser.isBlocked || adminUser.status === 'BLOCKED' || adminUser.isActive === false) {
             localStorage.removeItem(CURRENT_USER_KEY);
-            throw new Error('Account is blocked. Please contact customer support.');
+            throw new Error('This administrator account is inactive or blocked.');
           }
           localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
           liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
           return adminUser;
         }
-      } catch (adminErr) {
-        if (adminErr.message?.toLowerCase().includes('block')) {
-          throw new Error('Account is blocked. Please contact customer support.');
+      } catch (err) {
+        if (err.message?.toLowerCase().includes('inactive') || err.message?.toLowerCase().includes('block')) {
+          throw err;
         }
-        if (adminErr.status === 404 || adminErr.message?.toLowerCase().includes('not found')) {
-          throw new Error('Account not found, please sign up.');
-        }
-        if (adminErr.status === 401 || adminErr.status === 400 || adminErr.message?.toLowerCase().includes('password') || adminErr.message?.toLowerCase().includes('invalid')) {
-          throw new Error(adminErr.message || 'Invalid email or password.');
-        }
-        console.warn('Admin API login failed, checking customer endpoint:', adminErr.message);
+        return null;
       }
+      return null;
+    };
+
+    // Helper: Attempt Customer API login
+    const tryCustomerLogin = async () => {
+      try {
+        const user = await authApi.login(cleanEmail, password);
+        if (user && (user.id || user.email)) {
+          if (user.isBlocked || user.status === 'BLOCKED' || user.isActive === false || liveCloudSync.isUserBlocked(cleanEmail)) {
+            localStorage.removeItem(CURRENT_USER_KEY);
+            throw new Error('Account is blocked. Please contact customer support.');
+          }
+          if (liveCloudSync.isUserDeleted(cleanEmail)) {
+            localStorage.removeItem(CURRENT_USER_KEY);
+            throw new Error('Account not found, please sign up.');
+          }
+
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+          liveCloudSync.addUser({ ...user, password }).catch(() => {});
+          return user;
+        }
+      } catch (err) {
+        if (err.message?.toLowerCase().includes('blocked') || err.message?.toLowerCase().includes('block')) {
+          throw err;
+        }
+        return null;
+      }
+      return null;
+    };
+
+    // If email contains admin keywords, try admin first
+    if (isAdminLikely) {
+      const adminResult = await tryAdminLogin();
+      if (adminResult) return adminResult;
+
+      const customerResult = await tryCustomerLogin();
+      if (customerResult) return customerResult;
+    } else {
+      // Otherwise try customer first, fallback to admin (for promoted customers with standard emails)
+      const customerResult = await tryCustomerLogin();
+      if (customerResult) return customerResult;
+
+      const adminResult = await tryAdminLogin();
+      if (adminResult) return adminResult;
     }
 
-    // 2. Try Customer Login against live ASP.NET backend
-    try {
-      const user = await authApi.login(cleanEmail, password);
-      if (user && (user.id || user.email)) {
-        if (user.isBlocked || user.status === 'BLOCKED' || user.isActive === false || liveCloudSync.isUserBlocked(cleanEmail)) {
-          localStorage.removeItem(CURRENT_USER_KEY);
-          throw new Error('Account is blocked. Please contact customer support.');
-        }
-        if (liveCloudSync.isUserDeleted(cleanEmail)) {
-          localStorage.removeItem(CURRENT_USER_KEY);
-          throw new Error('Account not found, please sign up.');
-        }
-
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-        liveCloudSync.addUser({ ...user, password }).catch(() => {});
-        return user;
-      }
-    } catch (custErr) {
-      if (custErr.message?.toLowerCase().includes('block')) {
-        throw new Error('Account is blocked. Please contact customer support.');
-      }
-      if (custErr.status === 404 || custErr.message?.toLowerCase().includes('not found') || custErr.message?.toLowerCase().includes('does not exist')) {
-        throw new Error('Account not found, please sign up.');
-      }
-      if (custErr.status === 401 || custErr.status === 400) {
-        throw new Error(custErr.message || 'Invalid email or password.');
-      }
-      console.warn('Customer API login error:', custErr.message);
-    }
-
-    throw new Error('Account not found, please sign up.');
+    throw new Error('Invalid email or password, or account does not exist.');
   },
 
   async signup({ name, email, password, phone = '', countryCode = '', preferredLanguage = 'En' }) {
