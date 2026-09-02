@@ -292,7 +292,7 @@ export const promotionService = {
   _lastFetchTime: 0,
 
   /**
-   * Get currently active promotions for customer storefront
+   * Get currently active promotions for customer storefront with full applicability rules
    */
   async getActivePromotions(forceRefresh = false) {
     const now = Date.now();
@@ -303,9 +303,22 @@ export const promotionService = {
     try {
       const response = await promotionApi.getPromotions();
       const items = response?.items || (Array.isArray(response) ? response : []);
-      this._cachedActivePromos = items;
+
+      // Fetch full details with applicability rules for active campaigns
+      const fullItems = await Promise.all(
+        items.map(async (item) => {
+          try {
+            const detail = await promotionApi.getPromotionById(item.id);
+            return detail || item;
+          } catch {
+            return item;
+          }
+        })
+      );
+
+      this._cachedActivePromos = fullItems;
       this._lastFetchTime = now;
-      return items;
+      return fullItems;
     } catch (err) {
       console.warn('[promotionService] Could not fetch public promotions:', err.message);
       return this._cachedActivePromos || [];
@@ -327,6 +340,12 @@ export const promotionService = {
 
     const now = new Date();
 
+    const prodId = Number(product.id || product.numericId || 0);
+    const catId = Number(product.categoryId || product.category?.id || (typeof product.category === 'object' ? product.category?.id : 0) || (product.category === 'perfumes' ? 1 : 0));
+    const brandId = Number(product.brandId || product.brand?.id || (typeof product.brand === 'object' ? product.brand?.id : 0) || 0);
+    const subcatId = Number(product.subcategoryId || product.subcategory?.id || 0);
+    const perfumeCatId = Number(product.perfumeCategoryId || product.perfumeCategory?.id || 0);
+
     for (const promo of activePromos) {
       if (promo.type !== 'Discount') continue;
 
@@ -346,11 +365,11 @@ export const promotionService = {
           const targetId = Number(r.targetId);
           let match = false;
 
-          if (r.targetType === 'Product' && (Number(product.id) === targetId || Number(product.numericId) === targetId)) match = true;
-          if (r.targetType === 'Category' && Number(product.categoryId) === targetId) match = true;
-          if (r.targetType === 'Subcategory' && Number(product.subcategoryId) === targetId) match = true;
-          if (r.targetType === 'Brand' && Number(product.brandId) === targetId) match = true;
-          if (r.targetType === 'PerfumeCategory' && Number(product.perfumeCategoryId) === targetId) match = true;
+          if (r.targetType === 'Product' && prodId > 0 && prodId === targetId) match = true;
+          if (r.targetType === 'Category' && catId > 0 && catId === targetId) match = true;
+          if (r.targetType === 'Subcategory' && subcatId > 0 && subcatId === targetId) match = true;
+          if (r.targetType === 'Brand' && brandId > 0 && brandId === targetId) match = true;
+          if (r.targetType === 'PerfumeCategory' && perfumeCatId > 0 && perfumeCatId === targetId) match = true;
 
           if (match) {
             if (r.isExcluded) {

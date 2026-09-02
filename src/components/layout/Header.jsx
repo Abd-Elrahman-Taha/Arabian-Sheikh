@@ -121,7 +121,19 @@ export default function Header({ onOpenSearch }) {
                 <Sparkles className={`w-3 h-3 ${isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'}`} />
                 {activePromos.length > 0 ? (
                   <Link to="/shop" className="hover:underline flex items-center gap-1.5 font-bold">
-                    <span>👑 Palace Offer: "{activePromos[0].name.toUpperCase()}" is live — {activePromos[0].discountValue}% OFF sitewide!</span>
+                    <span>
+                      👑 Palace Offer: "{activePromos[0].name.toUpperCase()}" is live —{' '}
+                      {activePromos[0].discountType === 'Fixed' ? `€${activePromos[0].discountValue}` : `${activePromos[0].discountValue}%`}{' '}
+                      OFF{' '}
+                      {(() => {
+                        const rules = activePromos[0].applicabilities || activePromos[0].applicability || [];
+                        if (rules.length === 0) return 'sitewide!';
+                        if (rules.length === 1 && rules[0].targetType === 'Category') return 'on select category!';
+                        if (rules.length === 1 && rules[0].targetType === 'Product') return 'on select flacon!';
+                        if (rules.length === 1 && rules[0].targetType === 'Brand') return 'on select maison!';
+                        return 'on select creations!';
+                      })()}
+                    </span>
                   </Link>
                 ) : (
                   <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
