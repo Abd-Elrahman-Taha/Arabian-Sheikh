@@ -1,4 +1,5 @@
 import { adminManagementApi } from '../api/adminManagement.api';
+import { userApi } from '../api/user.api';
 import { liveCloudSync } from './liveCloudSync';
 
 /**
@@ -251,6 +252,17 @@ export const adminManagementService = {
     try {
       return await adminManagementApi.promoteUser(userId, payload);
     } catch (err) {
+      // If customer was marked as blocked, unblock them and retry promotion
+      const status = err.response?.status || err.status;
+      const data = err.response?.data || err.data;
+      if (status === 409 && (data?.code === 'CUSTOMER_ALREADY_BLOCKED' || err.message?.toLowerCase().includes('blocked'))) {
+        try {
+          await userApi.adminUnblockCustomer(Number(userId));
+          return await adminManagementApi.promoteUser(userId, payload);
+        } catch (retryErr) {
+          this.handleApiError(retryErr);
+        }
+      }
       this.handleApiError(err);
     }
   },
