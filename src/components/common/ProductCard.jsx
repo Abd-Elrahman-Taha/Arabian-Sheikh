@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
