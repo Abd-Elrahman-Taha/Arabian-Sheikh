@@ -63,6 +63,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminInventory from './pages/admin/AdminInventory';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminDiscounts from './pages/admin/AdminDiscounts';
+import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminSettings from './pages/admin/AdminSettings';
 
 // Error Pages
@@ -97,6 +98,7 @@ function MainRouter() {
           {currentPath === '/admin/users' && <AdminUsers />}
           {currentPath === '/admin/inventory' && <AdminInventory />}
           {currentPath === '/admin/analytics' && <AdminAnalytics />}
+          {currentPath === '/admin/promotions' && <AdminPromotions />}
           {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
           {currentPath === '/admin/settings' && <AdminSettings />}
         </AdminLayout>

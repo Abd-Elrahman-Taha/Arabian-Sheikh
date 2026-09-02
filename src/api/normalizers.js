@@ -529,3 +529,168 @@ export function normalizeAddressSnapshot(raw) {
   };
 }
 
+/**
+ * Bundle Item Normalizer
+ */
+export function normalizeBundleItem(raw) {
+  if (!raw) return null;
+  const item = normalizeObjectKeys(raw);
+  return {
+    productId: Number(item.productId || 0),
+    productName: item.productName || item.name || '',
+    brandName: item.brandName || item.brand || '',
+    imageUrl: cleanImageUrl(item.imageUrl || item.image),
+    unitPrice: Number(item.unitPrice || item.price || 0),
+    quantity: Number(item.quantity || 1),
+    lineTotal: Number(item.lineTotal || (Number(item.unitPrice || 0) * Number(item.quantity || 1)) || 0)
+  };
+}
+
+/**
+ * Promotion Bundle Normalizer
+ */
+export function normalizeBundle(raw) {
+  if (!raw) return null;
+  const b = normalizeObjectKeys(raw);
+  const items = Array.isArray(b.items) ? b.items.map(normalizeBundleItem).filter(Boolean) : [];
+  
+  const computedOriginalTotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const bundlePrice = Number(b.bundlePrice ?? 0);
+  const individualItemsTotal = Number(b.individualItemsTotal || computedOriginalTotal);
+  const savingsAmount = Number(b.savingsAmount || Math.max(0, individualItemsTotal - bundlePrice));
+  const savingsPercentage = Number(b.savingsPercentage || (individualItemsTotal > 0 ? ((savingsAmount / individualItemsTotal) * 100) : 0));
+
+  return {
+    id: Number(b.id || 0),
+    promotionId: Number(b.promotionId || 0),
+    name: String(b.name || '').trim(),
+    bundlePrice,
+    individualItemsTotal,
+    savingsAmount,
+    savingsPercentage: Math.round(savingsPercentage * 10) / 10,
+    items
+  };
+}
+
+/**
+ * Promotion Applicability Rule Normalizer
+ */
+export function normalizePromotionApplicability(raw) {
+  if (!raw) return null;
+  const rule = normalizeObjectKeys(raw);
+  return {
+    id: Number(rule.id || 0),
+    targetType: rule.targetType || 'Category',
+    targetId: Number(rule.targetId || 0),
+    isExcluded: Boolean(rule.isExcluded)
+  };
+}
+
+/**
+ * Promotion Normalizer
+ */
+export function normalizePromotion(raw) {
+  if (!raw) return null;
+  const p = normalizeObjectKeys(raw);
+
+  const rawType = p.type || 'Discount';
+  const type = rawType.toLowerCase() === 'bundle' ? 'Bundle' : 'Discount';
+  const rawDiscountType = p.discountType;
+  const discountType = type === 'Discount'
+    ? (rawDiscountType?.toLowerCase() === 'fixed' ? 'Fixed' : 'Percentage')
+    : null;
+
+  const rawApplicabilities = p.applicabilities || p.applicability || [];
+  const applicability = Array.isArray(rawApplicabilities)
+    ? rawApplicabilities.map(normalizePromotionApplicability).filter(Boolean)
+    : [];
+
+  const rawBundles = p.bundles || [];
+  const bundles = Array.isArray(rawBundles)
+    ? rawBundles.map(normalizeBundle).filter(Boolean)
+    : [];
+
+  return {
+    id: Number(p.id || 0),
+    name: String(p.name || '').trim(),
+    type,
+    discountType,
+    discountValue: p.discountValue !== null && p.discountValue !== undefined ? Number(p.discountValue) : null,
+    startDate: p.startDate || '',
+    endDate: p.endDate || '',
+    minOrderAmount: p.minOrderAmount !== null && p.minOrderAmount !== undefined ? Number(p.minOrderAmount) : null,
+    maxDiscountAmount: p.maxDiscountAmount !== null && p.maxDiscountAmount !== undefined ? Number(p.maxDiscountAmount) : null,
+    usageLimit: p.usageLimit !== null && p.usageLimit !== undefined ? Number(p.usageLimit) : null,
+    usageCount: Number(p.usageCount || 0),
+    status: p.status || (p.isActive === false ? 'Inactive' : 'Active'),
+    deactivatedBy: p.deactivatedBy || null,
+    deactivatedAt: p.deactivatedAt || null,
+    applicability,
+    applicabilities: applicability,
+    bundles,
+    bundlesCount: Number(p.bundlesCount ?? bundles.length),
+    createdAt: p.createdAt || null,
+    updatedAt: p.updatedAt || null
+  };
+}
+
+/**
+ * Promotion Paginated List Normalizer
+ */
+export function normalizePromotionList(raw) {
+  if (!raw) {
+    return {
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  if (Array.isArray(raw)) {
+    const items = raw.map(normalizePromotion).filter(Boolean);
+    return {
+      items,
+      page: 1,
+      pageSize: items.length || 20,
+      totalCount: items.length,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  const res = normalizeObjectKeys(raw);
+  const rawItems = Array.isArray(res.items) ? res.items : [];
+  const items = rawItems.map(normalizePromotion).filter(Boolean);
+
+  return {
+    items,
+    page: Number(res.page || 1),
+    pageSize: Number(res.pageSize || 20),
+    totalCount: Number(res.totalCount || items.length),
+    totalPages: Number(res.totalPages || Math.ceil((res.totalCount || items.length) / (res.pageSize || 20)) || 1),
+    hasPreviousPage: Boolean(res.hasPreviousPage),
+    hasNextPage: Boolean(res.hasNextPage)
+  };
+}
+
+/**
+ * Promotion Analytics Normalizer
+ */
+export function normalizePromotionAnalytics(raw) {
+  if (!raw) return { promotionId: 0, name: '', orders: 0, promotionUsageCount: 0, discountGiven: 0 };
+  const a = normalizeObjectKeys(raw);
+  return {
+    promotionId: Number(a.promotionId || a.id || 0),
+    name: a.name || '',
+    orders: Number(a.orders ?? a.totalOrders ?? 0),
+    promotionUsageCount: Number(a.promotionUsageCount ?? a.usageCount ?? 0),
+    discountGiven: Number(a.discountGiven ?? a.totalDiscountGiven ?? 0)
+  };
+}
+
+

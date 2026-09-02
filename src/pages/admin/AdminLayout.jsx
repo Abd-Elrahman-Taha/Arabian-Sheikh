@@ -10,6 +10,7 @@ import {
   Warehouse,
   BarChart3,
   Tag,
+  Sparkles,
   Settings,
   LogOut,
   ExternalLink,
@@ -30,6 +31,7 @@ export default function AdminLayout({ children }) {
     { to: '/admin/users', label: t('admin.users'), icon: Users },
     { to: '/admin/inventory', label: t('admin.inventory'), icon: Warehouse },
     { to: '/admin/analytics', label: t('admin.analytics'), icon: BarChart3 },
+    { to: '/admin/promotions', label: 'Promotions', icon: Sparkles },
     { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] },
     { to: '/admin/settings', label: t('admin.settings'), icon: Settings }
   ];

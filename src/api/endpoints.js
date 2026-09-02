@@ -77,6 +77,13 @@ export const ENDPOINTS = {
     VALIDATE: '/coupons/validate'
   },
 
+  // Public Promotions
+  PROMOTIONS: {
+    LIST: '/promotions',
+    DETAILS: (id) => `/promotions/${id}`,
+    BUNDLES: '/promotions/bundles'
+  },
+
   // Account & Customer Profile
   ACCOUNT: {
     GET: '/account',
@@ -258,15 +265,20 @@ export const ENDPOINTS = {
       ANALYTICS: (id) => `/admin/coupons/${id}/analytics`
     },
 
-    // Promotions
+    // Admin Promotions & Bundles
     PROMOTIONS: {
       LIST: '/admin/promotions',
       CREATE: '/admin/promotions',
+      DETAILS: (id) => `/admin/promotions/${id}`,
       UPDATE: (id) => `/admin/promotions/${id}`,
+      DELETE: (id) => `/admin/promotions/${id}`,
       ACTIVATE: (id) => `/admin/promotions/${id}/activate`,
       DEACTIVATE: (id) => `/admin/promotions/${id}/deactivate`,
       ANALYTICS: (id) => `/admin/promotions/${id}/analytics`,
-      CREATE_BUNDLE: (promotionId) => `/admin/promotions/${promotionId}/bundles`
+      CREATE_BUNDLE: (promotionId) => `/admin/promotions/${promotionId}/bundles`,
+      BUNDLE_DETAILS: (promotionId, bundleId) => `/admin/promotions/${promotionId}/bundles/${bundleId}`,
+      BUNDLE_UPDATE: (promotionId, bundleId) => `/admin/promotions/${promotionId}/bundles/${bundleId}`,
+      BUNDLE_DELETE: (promotionId, bundleId) => `/admin/promotions/${promotionId}/bundles/${bundleId}`
     },
 
     // Orders
