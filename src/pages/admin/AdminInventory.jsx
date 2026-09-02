@@ -294,8 +294,12 @@ export default function AdminInventory() {
                         <div className="flex items-center gap-3.5">
                           <div className="relative w-12 h-14 rounded-xl border border-[#D4AF37]/40 overflow-hidden bg-black/60 shrink-0 shadow-md">
                             <img
-                              src={p.images?.[0] || p.cutoutImage}
+                              src={p.imageUrl || p.image || p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
                               alt={p.name}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/products/luxury_designs/07_arabian_gold.webp';
+                              }}
                               className="w-full h-full object-cover"
                             />
                             {p.tier && (

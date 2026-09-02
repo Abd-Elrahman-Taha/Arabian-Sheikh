@@ -248,8 +248,12 @@ export default function AdminProducts() {
                 <tr key={p.id} className="hover:bg-white/5 transition-colors">
                   <td className="py-4 px-4">
                     <img
-                      src={p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
+                      src={p.imageUrl || p.image || p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
                       alt={p.name}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/products/luxury_designs/07_arabian_gold.webp';
+                      }}
                       className="w-12 h-16 object-contain bg-black/50 p-1 border border-white/10 rounded-lg"
                     />
                   </td>

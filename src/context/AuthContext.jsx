@@ -50,9 +50,12 @@ export function AuthProvider({ children }) {
     return newUser;
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = (redirectTo = '/login') => {
     setUser(null);
+    authService.logout();
+    if (typeof window !== 'undefined' && redirectTo) {
+      window.location.href = redirectTo;
+    }
   };
 
   const updateProfile = async (updates) => {

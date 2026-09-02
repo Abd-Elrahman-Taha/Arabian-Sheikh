@@ -31,14 +31,6 @@ export const authService = {
   async login(email, password) {
     const cleanEmail = email.toLowerCase().trim();
 
-    // 0. Check live cloud block and deletion lists
-    if (liveCloudSync.isUserBlocked(cleanEmail)) {
-      throw new Error('Account is blocked. Please contact customer support.');
-    }
-    if (liveCloudSync.isUserDeleted(cleanEmail)) {
-      throw new Error('Account not found, please sign up.');
-    }
-
     const isAdminLikely = cleanEmail.includes('admin') || cleanEmail.includes('perfumestore');
 
     // Helper: Attempt Admin API login
@@ -46,10 +38,12 @@ export const authService = {
       try {
         const adminUser = await authApi.adminLogin(cleanEmail, password);
         if (adminUser && (adminUser.id || adminUser.email)) {
-          if (adminUser.isBlocked || adminUser.status === 'BLOCKED' || adminUser.isActive === false) {
+          if (adminUser.isActive === false || adminUser.status === 'INACTIVE' || adminUser.isBlocked) {
             localStorage.removeItem(CURRENT_USER_KEY);
-            throw new Error('This administrator account is inactive or blocked.');
+            throw new Error('This administrator account is currently inactive.');
           }
+          // Clean any stale local block records
+          liveCloudSync.unblockUser(adminUser.id, cleanEmail).catch(() => {});
           localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
           liveCloudSync.addUser({ ...adminUser, password }).catch(() => {});
           return adminUser;
@@ -68,13 +62,9 @@ export const authService = {
       try {
         const user = await authApi.login(cleanEmail, password);
         if (user && (user.id || user.email)) {
-          if (user.isBlocked || user.status === 'BLOCKED' || user.isActive === false || liveCloudSync.isUserBlocked(cleanEmail)) {
+          if (user.isBlocked || user.status === 'BLOCKED' || user.isActive === false) {
             localStorage.removeItem(CURRENT_USER_KEY);
             throw new Error('Account is blocked. Please contact customer support.');
-          }
-          if (liveCloudSync.isUserDeleted(cleanEmail)) {
-            localStorage.removeItem(CURRENT_USER_KEY);
-            throw new Error('Account not found, please sign up.');
           }
 
           localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));

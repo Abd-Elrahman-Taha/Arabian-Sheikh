@@ -1,4 +1,5 @@
 import { adminManagementApi } from '../api/adminManagement.api';
+import { liveCloudSync } from './liveCloudSync';
 
 /**
  * Arabian Sheikh - SuperAdmin Administrator Management Service
@@ -212,7 +213,11 @@ export const adminManagementService = {
       throw new Error('The SuperAdmin account cannot be deactivated.');
     }
     try {
-      return await adminManagementApi.toggleStatus(id, isActive);
+      const result = await adminManagementApi.toggleStatus(id, isActive);
+      if (isActive) {
+        liveCloudSync.unblockUser(id, '').catch(() => {});
+      }
+      return result;
     } catch (err) {
       this.handleApiError(err);
     }
