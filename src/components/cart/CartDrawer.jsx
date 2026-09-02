@@ -346,10 +346,16 @@ export default function CartDrawer() {
                   <span className={isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}>Subtotal</span>
                   <span className={`font-mono font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>€{totals.subtotal.toFixed(2)}</span>
                 </div>
-                {totals.discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-semibold">
-                    <span>Privilege Discount</span>
-                    <span>-€{totals.discountAmount.toFixed(2)}</span>
+                {totals.promoDiscountAmount > 0 && (
+                  <div className="flex justify-between text-amber-500 font-bold">
+                    <span>👑 Palace Offer ({totals.activePromoName || 'Promotion'})</span>
+                    <span>-€{totals.promoDiscountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {totals.couponDiscountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-500 font-semibold">
+                    <span>Privilege Code ({cart.discountCode})</span>
+                    <span>-€{totals.couponDiscountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-cinzel font-bold pt-2 border-t border-black/10 dark:border-white/10">

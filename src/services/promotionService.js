@@ -282,6 +282,124 @@ export const promotionService = {
     }
 
     throw new Error(msg);
+  },
+
+  // ==========================================
+  // 4. PUBLIC STOREFRONT PROMOTIONS
+  // ==========================================
+
+  _cachedActivePromos: null,
+  _lastFetchTime: 0,
+
+  /**
+   * Get currently active promotions for customer storefront
+   */
+  async getActivePromotions(forceRefresh = false) {
+    const now = Date.now();
+    if (!forceRefresh && this._cachedActivePromos && (now - this._lastFetchTime < 60000)) {
+      return this._cachedActivePromos;
+    }
+
+    try {
+      const response = await promotionApi.getPromotions();
+      const items = response?.items || (Array.isArray(response) ? response : []);
+      this._cachedActivePromos = items;
+      this._lastFetchTime = now;
+      return items;
+    } catch (err) {
+      console.warn('[promotionService] Could not fetch public promotions:', err.message);
+      return this._cachedActivePromos || [];
+    }
+  },
+
+  /**
+   * Calculate live promotion discount for a product
+   */
+  calculateProductPromotion(product, activePromos = []) {
+    if (!product || !Array.isArray(activePromos) || activePromos.length === 0) {
+      return {
+        hasPromotion: false,
+        discountPercent: product?.discountPercent || 0,
+        price: product?.price || 0,
+        originalPrice: product?.originalPrice || null
+      };
+    }
+
+    const now = new Date();
+
+    for (const promo of activePromos) {
+      if (promo.type !== 'Discount') continue;
+
+      // Check dates
+      if (promo.startDate && new Date(promo.startDate) > now) continue;
+      if (promo.endDate && new Date(promo.endDate) < now) continue;
+
+      // Check applicability rules if present
+      const rules = promo.applicability || promo.applicabilities || [];
+      let isEligible = true;
+
+      if (rules.length > 0) {
+        let hasMatchingInclude = false;
+        let isExplicitlyExcluded = false;
+
+        for (const r of rules) {
+          const targetId = Number(r.targetId);
+          let match = false;
+
+          if (r.targetType === 'Product' && (Number(product.id) === targetId || Number(product.numericId) === targetId)) match = true;
+          if (r.targetType === 'Category' && Number(product.categoryId) === targetId) match = true;
+          if (r.targetType === 'Subcategory' && Number(product.subcategoryId) === targetId) match = true;
+          if (r.targetType === 'Brand' && Number(product.brandId) === targetId) match = true;
+          if (r.targetType === 'PerfumeCategory' && Number(product.perfumeCategoryId) === targetId) match = true;
+
+          if (match) {
+            if (r.isExcluded) {
+              isExplicitlyExcluded = true;
+              break;
+            } else {
+              hasMatchingInclude = true;
+            }
+          }
+        }
+
+        if (isExplicitlyExcluded || (!hasMatchingInclude && rules.some(r => !r.isExcluded))) {
+          isEligible = false;
+        }
+      }
+
+      if (isEligible) {
+        const basePrice = Number(product.originalPrice || product.price || 0);
+        let finalPrice = basePrice;
+        let discountPercent = 0;
+
+        if (promo.discountType === 'Percentage' && promo.discountValue > 0) {
+          discountPercent = Number(promo.discountValue);
+          finalPrice = Math.round(basePrice * (1 - discountPercent / 100));
+        } else if (promo.discountType === 'Fixed' && promo.discountValue > 0) {
+          finalPrice = Math.max(1, basePrice - Number(promo.discountValue));
+          discountPercent = Math.round(((basePrice - finalPrice) / basePrice) * 100);
+        }
+
+        return {
+          hasPromotion: true,
+          promotionName: promo.name,
+          promotionId: promo.id,
+          discountType: promo.discountType,
+          discountValue: promo.discountValue,
+          discountPercent,
+          price: finalPrice,
+          originalPrice: basePrice > finalPrice ? basePrice : null,
+          savings: Math.max(0, basePrice - finalPrice)
+        };
+      }
+    }
+
+    return {
+      hasPromotion: false,
+      discountPercent: product.discountPercent || 0,
+      price: product.price,
+      originalPrice: product.originalPrice || null
+    };
   }
 };
 

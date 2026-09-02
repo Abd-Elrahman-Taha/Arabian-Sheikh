@@ -6,6 +6,8 @@ import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import LoginRequiredModal from '../components/auth/LoginRequiredModal';
 
+import { promotionService } from '../services/promotionService';
+
 const CartContext = createContext();
 
 const PENDING_CART_KEY = 'arabian_sheikh_pending_cart_intent';
@@ -17,6 +19,7 @@ export function CartProvider({ children }) {
   const [cart, setCart] = useState(() => cartService.getCart());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [activePromos, setActivePromos] = useState([]);
   const [pendingItem, setPendingItem] = useState(() => {
     try {
       const saved = sessionStorage.getItem(PENDING_CART_KEY);
@@ -27,12 +30,21 @@ export function CartProvider({ children }) {
   });
   const [cartBadgeAnimated, setCartBadgeAnimated] = useState(false);
 
+  // Load active promotions for automatic cart discounts
+  useEffect(() => {
+    promotionService.getActivePromotions().then(promos => {
+      if (Array.isArray(promos)) {
+        setActivePromos(promos);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Sync cart to storage
   useEffect(() => {
     cartService.saveCart(cart);
   }, [cart]);
 
-  const totals = cartService.calculateTotals(cart);
+  const totals = cartService.calculateTotals(cart, activePromos);
 
   // Direct internal add without auth check
   const _internalAdd = useCallback((product, size = '100ml', quantity = 1) => {

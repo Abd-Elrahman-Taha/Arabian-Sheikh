@@ -21,6 +21,7 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
+import { promotionService } from '../../services/promotionService';
 
 export default function Header({ onOpenSearch }) {
   const { currentPath, queryParams } = useRouter();
@@ -33,6 +34,17 @@ export default function Header({ onOpenSearch }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [activePromos, setActivePromos] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    promotionService.getActivePromotions().then(promos => {
+      if (isMounted && Array.isArray(promos)) {
+        setActivePromos(promos.filter(p => p.type === 'Discount'));
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, [currentPath]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -107,7 +119,13 @@ export default function Header({ onOpenSearch }) {
             }`}>
               <div className="flex items-center gap-2">
                 <Sparkles className={`w-3 h-3 ${isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'}`} />
-                <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
+                {activePromos.length > 0 ? (
+                  <Link to="/shop" className="hover:underline flex items-center gap-1.5 font-bold">
+                    <span>👑 Palace Offer: "{activePromos[0].name.toUpperCase()}" is live — {activePromos[0].discountValue}% OFF sitewide!</span>
+                  </Link>
+                ) : (
+                  <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
+                )}
               </div>
               <div className={`flex items-center gap-6 normal-case text-xs tracking-normal ${
                 isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'

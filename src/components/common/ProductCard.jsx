@@ -4,7 +4,8 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Heart, ShoppingBag, Star, Sparkles, Scale, Percent } from 'lucide-react';
+import { Heart, ShoppingBag, Star, Sparkles, Scale, Percent, Tag } from 'lucide-react';
+import { promotionService } from '../../services/promotionService';
 
 export default function ProductCard({ product, onCompare }) {
   const { navigate } = useRouter();
@@ -13,12 +14,28 @@ export default function ProductCard({ product, onCompare }) {
   const { isInWishlist, toggleWishlist, heartAnimatedId } = useWishlist();
   const { isDark } = useTheme();
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [promoInfo, setPromoInfo] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    promotionService.getActivePromotions().then(promos => {
+      if (isMounted && product) {
+        const info = promotionService.calculateProductPromotion(product, promos);
+        setPromoInfo(info);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, [product]);
 
   if (!product) return null;
 
   const isSaved = isInWishlist(product.id);
   const isOutOfStock = product.status === 'OUT_OF_STOCK' || product.stock === 0;
   const isHeartPopping = heartAnimatedId === product.id;
+
+  const currentPrice = promoInfo?.hasPromotion ? promoInfo.price : product.price;
+  const strikePrice = promoInfo?.hasPromotion ? promoInfo.originalPrice : (product.originalPrice || null);
+  const discountPct = promoInfo?.hasPromotion ? promoInfo.discountPercent : (product.discountPercent || 0);
 
   const displayName = language === 'bg' && product.bulgarianName
     ? product.bulgarianName
@@ -30,7 +47,12 @@ export default function ProductCard({ product, onCompare }) {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) return;
-    addToCart(product, product.size || '60 ml', 1);
+    const itemToAdd = {
+      ...product,
+      price: currentPrice,
+      originalPrice: strikePrice
+    };
+    addToCart(itemToAdd, product.size || '60 ml', 1);
   };
 
   const handleWishlistToggle = (e) => {
@@ -63,12 +85,17 @@ export default function ProductCard({ product, onCompare }) {
     >
       {/* Top Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
-        {(product.hasDiscount || (product.discountPercent && product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) && (
+        {promoInfo?.hasPromotion ? (
+          <span className="bg-gradient-to-r from-amber-600 via-[#D4AF37] to-amber-700 text-black text-[10px] font-bold font-cinzel tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-[#F2D675] flex items-center gap-1">
+            <Sparkles className="w-2.5 h-2.5" />
+            <span>-{discountPct}% • {promoInfo.promotionName}</span>
+          </span>
+        ) : (product.hasDiscount || (product.discountPercent && product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) ? (
           <span className="bg-gradient-to-r from-red-700 via-amber-600 to-red-800 text-white text-[10px] font-bold font-cinzel tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-amber-300/50 flex items-center gap-1">
             <Percent className="w-2.5 h-2.5" />
             <span>-{product.discountPercent || Math.round((1 - product.price / product.originalPrice) * 100)}%</span>
           </span>
-        )}
+        ) : null}
         {product.tier && (
           <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || 'bg-[#D4AF37] text-black'}`}>
             {t('tiers.' + product.tier.toLowerCase()) || product.tier}
@@ -181,11 +208,11 @@ export default function ProductCard({ product, onCompare }) {
             <span className={`font-cinzel text-base sm:text-lg font-extrabold ${
               isDark ? 'text-[#FFDF8A] drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]' : 'text-[#A8853B]'
             }`}>
-              €{product.price}
+              €{currentPrice}
             </span>
-            {product.originalPrice && (
+            {strikePrice && strikePrice > currentPrice && (
               <span className="text-xs text-neutral-500 line-through">
-                €{product.originalPrice}
+                €{strikePrice}
               </span>
             )}
           </div>

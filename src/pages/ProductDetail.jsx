@@ -3,6 +3,7 @@ import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { productService } from '../services/productService';
+import { promotionService } from '../services/promotionService';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
@@ -27,7 +28,8 @@ import {
   Scale,
   Award,
   Lock,
-  ArrowRight
+  ArrowRight,
+  Tag
 } from 'lucide-react';
 
 export default function ProductDetail() {
@@ -45,6 +47,7 @@ export default function ProductDetail() {
   const initialRelated = initialProduct ? productService.getRelatedProductsSync(initialProduct.id, 4) : [];
 
   const [product, setProduct] = useState(initialProduct);
+  const [promoInfo, setPromoInfo] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState(initialRelated);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(initialProduct?.size || '60 ml / 2.0 fl oz');
@@ -64,25 +67,40 @@ export default function ProductDetail() {
     window.scrollTo({ top: 0, behavior: 'instant' });
     if (!productId) return;
 
+    let isMounted = true;
+
+    const setupPromo = (prod) => {
+      promotionService.getActivePromotions().then(promos => {
+        if (isMounted && prod) {
+          const info = promotionService.calculateProductPromotion(prod, promos);
+          setPromoInfo(info);
+        }
+      }).catch(() => {});
+    };
+
     const cached = productService.getProductByIdSync(productId);
     if (cached) {
       setProduct(cached);
       setSelectedImage(0);
       setSelectedSize(cached.size || '60 ml / 2.0 fl oz');
       setRelatedProducts(productService.getRelatedProductsSync(cached.id, 4));
+      setupPromo(cached);
       setLoading(false);
     } else {
       setLoading(true);
       productService.getProductById(productId).then(item => {
-        if (item) {
+        if (item && isMounted) {
           setProduct(item);
           setSelectedImage(0);
           setSelectedSize(item.size || '60 ml / 2.0 fl oz');
           setRelatedProducts(productService.getRelatedProductsSync(item.id, 4));
+          setupPromo(item);
         }
-        setLoading(false);
-      }).catch(() => setLoading(false));
+        if (isMounted) setLoading(false);
+      }).catch(() => { if (isMounted) setLoading(false); });
     }
+
+    return () => { isMounted = false; };
   }, [productId, language]);
 
   if (loading) {
@@ -115,15 +133,29 @@ export default function ProductDetail() {
   const isOutOfStock = product.status === 'OUT_OF_STOCK' || product.stock === 0;
   const galleryImages = product.images && product.images.length > 0 ? product.images : ['/products/luxury_designs/07_arabian_gold.webp'];
 
+  const currentPrice = promoInfo?.hasPromotion ? promoInfo.price : product.price;
+  const strikePrice = promoInfo?.hasPromotion ? promoInfo.originalPrice : (product.originalPrice || null);
+  const discountPct = promoInfo?.hasPromotion ? promoInfo.discountPercent : (product.discountPercent || 0);
+
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    addToCart(product, selectedSize, quantity);
+    const itemToAdd = {
+      ...product,
+      price: currentPrice,
+      originalPrice: strikePrice
+    };
+    addToCart(itemToAdd, selectedSize, quantity);
     success(`${displayName} ${t('product.addToCart') || 'added to your bag.'}`);
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
-    addToCart(product, selectedSize, quantity);
+    const itemToAdd = {
+      ...product,
+      price: currentPrice,
+      originalPrice: strikePrice
+    };
+    addToCart(itemToAdd, selectedSize, quantity);
     navigate('/checkout');
   };
 
@@ -304,18 +336,23 @@ export default function ProductDetail() {
             {/* Price Display */}
             <div className="py-4 border-y border-[#D4AF37]/20 flex flex-wrap items-baseline gap-4">
               <span className="font-cinzel text-3xl font-bold text-[#D4AF37]">
-                €{product.price}
+                €{currentPrice}
               </span>
-              {product.originalPrice && product.originalPrice > product.price && (
+              {strikePrice && strikePrice > currentPrice && (
                 <span className="text-lg line-through text-neutral-400 font-mono">
-                  €{product.originalPrice}
+                  €{strikePrice}
                 </span>
               )}
-              {(product.hasDiscount || (product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) && (
+              {promoInfo?.hasPromotion ? (
+                <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-600 via-[#D4AF37] to-amber-700 text-black font-cinzel font-bold text-xs uppercase tracking-wider shadow-md border border-[#F2D675] flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" />
+                  <span>{discountPct}% OFF • {promoInfo.promotionName}</span>
+                </span>
+              ) : (product.hasDiscount || (product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) ? (
                 <span className="px-3 py-1 rounded-full bg-red-800/90 text-white font-cinzel font-bold text-xs uppercase tracking-widest shadow-md">
                   {product.discountPercent || Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
                 </span>
-              )}
+              ) : null}
               <span className={`text-xs uppercase tracking-wider font-medium ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
                 EUR (Tax Included • Complimentary DHL over €100)
               </span>

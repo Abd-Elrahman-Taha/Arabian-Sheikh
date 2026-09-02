@@ -247,10 +247,17 @@ export default function CartPage() {
                 <span className="font-mono text-[var(--color-earth-dark)] font-bold">${totals.subtotal}</span>
               </div>
 
-              {totals.discountAmount > 0 && (
+              {totals.promoDiscountAmount > 0 && (
+                <div className="flex justify-between text-amber-700 font-bold bg-amber-500/10 p-2 border border-amber-500/30">
+                  <span>👑 Palace Offer ({totals.activePromoName || 'Special'}):</span>
+                  <span className="font-mono">-${totals.promoDiscountAmount}</span>
+                </div>
+              )}
+
+              {totals.couponDiscountAmount > 0 && (
                 <div className="flex justify-between text-[var(--color-terracotta)] font-bold">
-                  <span>Privilege Discount:</span>
-                  <span className="font-mono">-${totals.discountAmount}</span>
+                  <span>Privilege Code ({cart.discountCode}):</span>
+                  <span className="font-mono">-${totals.couponDiscountAmount}</span>
                 </div>
               )}
 
