@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { paymentService } from '../../services/paymentService';
 import { productService } from '../../services/productService';
+import { checkoutApi } from '../../api/checkout.api';
 import { useToast } from '../../context/ToastContext';
 import {
   ShieldCheck,
@@ -92,6 +93,20 @@ export default function CheckoutPage() {
 
   const handleNextStep = (e) => {
     e.preventDefault();
+    if (step === 1) {
+      checkoutApi.setCheckoutAddress({
+        fullName: formData.fullName,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
+        postalCode: formData.postalCode,
+        phone: formData.phone
+      }).catch(() => {});
+    } else if (step === 2) {
+      checkoutApi.setCheckoutShipping({
+        shippingMethod: formData.shippingMethod
+      }).catch(() => {});
+    }
     if (step < 3) {
       setStep(step + 1);
       window.scrollTo({ top: 120, behavior: 'smooth' });
