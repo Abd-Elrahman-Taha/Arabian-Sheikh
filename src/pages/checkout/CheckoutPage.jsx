@@ -87,8 +87,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const shippingCost = totals.subtotal >= 100 ? 0 : 15;
-  const grandTotal = totals.subtotal - totals.discountAmount + shippingCost;
+  const shippingCost = totals.shipping;
+  const grandTotal = totals.total;
 
   const handleNextStep = (e) => {
     e.preventDefault();
