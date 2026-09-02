@@ -37,7 +37,7 @@ function loadLocalState() {
         activeProductIds: Array.isArray(parsed.activeProductIds) ? parsed.activeProductIds : [],
         deletedProductIds: Array.isArray(parsed.deletedProductIds) ? parsed.deletedProductIds : [],
         modifiedProducts: parsed.modifiedProducts && typeof parsed.modifiedProducts === 'object' ? parsed.modifiedProducts : {},
-        newProducts: Array.isArray(parsed.newProducts) ? parsed.newProducts : []
+        newProducts: [] // Purge legacy mock products
       };
     }
   } catch (e) {
@@ -152,10 +152,6 @@ function mergeRemoteData(remoteData) {
     ...(remoteData.modifiedProducts || {})
   };
 
-  const newProdMap = new Map();
-  (remoteData.newProducts || []).forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
-  state.newProducts.forEach(p => { if (p?.id) newProdMap.set(String(p.id), p); });
-
   state = {
     orders: Array.from(orderMap.values()),
     users: Array.from(userMap.values()),
@@ -165,7 +161,7 @@ function mergeRemoteData(remoteData) {
     activeProductIds: state.activeProductIds,
     deletedProductIds: state.deletedProductIds,
     modifiedProducts: modified,
-    newProducts: Array.from(newProdMap.values()),
+    newProducts: [],
     lastUpdated: remoteData.lastUpdated || state.lastUpdated || new Date().toISOString()
   };
 
@@ -391,7 +387,7 @@ export const liveCloudSync = {
     await pushToCloud();
   },
 
-  // Apply all live cloud overrides (active/inactive, edits, new products, deleted products)
+  // Apply all live cloud overrides (active/inactive, edits, deleted products)
   applyToProducts(baseProducts) {
     if (!Array.isArray(baseProducts)) return [];
     
@@ -399,16 +395,7 @@ export const liveCloudSync = {
     const deletedSet = new Set(state.deletedProductIds.map(String));
     let prods = baseProducts.filter(p => !deletedSet.has(String(p.id)) && !deletedSet.has(String(p.slug)));
 
-    // 2. Prepend newly added products that aren't in baseProducts
-    const existingIds = new Set(prods.map(p => String(p.id)));
-    for (const newP of state.newProducts) {
-      if (!existingIds.has(String(newP.id)) && !deletedSet.has(String(newP.id))) {
-        prods.unshift(newP);
-        existingIds.add(String(newP.id));
-      }
-    }
-
-    // 3. Apply modified fields and active/inactive status
+    // 2. Apply modified fields and active/inactive status
     const inactiveSet = new Set(state.inactiveProductIds.map(String));
     const activeSet = new Set(state.activeProductIds.map(String));
 
