@@ -1246,9 +1246,12 @@ export default function AdminManagement() {
             <form onSubmit={handlePromoteSubmit} className="p-6 space-y-4 text-xs">
               <div className="bg-amber-950/20 border border-amber-500/30 p-3 rounded-xl flex items-start gap-2.5">
                 <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                  Promoting a customer will block their storefront customer portal and grant them back-office Administrator privileges.
-                </p>
+                <div className="space-y-1 text-[11px] text-amber-200/90 leading-relaxed">
+                  <p>Promoting a customer will grant them full back-office Administrator privileges.</p>
+                  <p className="text-amber-400/90 text-[10px]">
+                    <strong>Note:</strong> If this account was previously an administrator and was deleted or demoted, the backend database retains the soft-deleted record under unique email constraints. Please use a fresh email/account if re-assignment is needed.
+                  </p>
+                </div>
               </div>
 
               {/* Customer Search / Selection */}

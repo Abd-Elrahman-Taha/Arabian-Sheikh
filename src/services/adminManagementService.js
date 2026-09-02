@@ -319,10 +319,8 @@ export const adminManagementService = {
       }
     }
 
-    if (status === 500) {
-      if (msg.toLowerCase().includes('delete') || msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('key') || msg.toLowerCase().includes('duplicate')) {
-        throw new Error('Cannot recreate this administrator because their previous record was soft-deleted in the database. Please use Demote instead of Delete when converting admins back and forth.');
-      }
+    if (status === 500 || code === 'INTERNAL_SERVER_ERROR') {
+      throw new Error('This account was previously an administrator. The database retains soft-deleted administrator records with unique constraints, preventing duplicate re-assignment of the same email/user. Please use a new email address or create a fresh customer account.');
     }
 
     if (status === 404 || code === 'NOT_FOUND') {
