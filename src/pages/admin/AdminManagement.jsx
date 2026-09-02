@@ -1244,12 +1244,17 @@ export default function AdminManagement() {
             </div>
 
             <form onSubmit={handlePromoteSubmit} className="p-6 space-y-4 text-xs">
-              <div className="bg-amber-950/20 border border-amber-500/30 p-3 rounded-xl flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-[11px] text-amber-200/90 leading-relaxed">
-                  <p>Promoting a customer will grant them full back-office Administrator privileges.</p>
-                  <p className="text-amber-400/90 text-[10px]">
-                    <strong>Note:</strong> If this account was previously an administrator and was deleted or demoted, the backend database retains the soft-deleted record under unique email constraints. Please use a fresh email/account if re-assignment is needed.
+              <div className="bg-amber-950/20 border border-amber-500/30 p-3.5 rounded-xl flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                <div className="space-y-1 text-[11px] text-[#F3E6D0] leading-relaxed">
+                  <p className="font-semibold text-[#F2D675]">
+                    Account Transition Notice:
+                  </p>
+                  <p className="text-[#D8BE99]">
+                    When you make someone an Administrator, their user account is blocked to grant back-office privileges.
+                  </p>
+                  <p className="text-[#D8BE99]">
+                    When you remove them from administration, unblock their account in <strong className="text-[#F2D675]">Customers Management</strong> so they return to normal and can be made an admin again.
                   </p>
                 </div>
               </div>

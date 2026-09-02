@@ -331,10 +331,6 @@ export const adminManagementService = {
       }
     }
 
-    if (status === 500 || code === 'INTERNAL_SERVER_ERROR') {
-      throw new Error('This account was previously an administrator. The database retains soft-deleted administrator records with unique constraints, preventing duplicate re-assignment of the same email/user. Please use a new email address or create a fresh customer account.');
-    }
-
     if (status === 404 || code === 'NOT_FOUND') {
       const notFoundErr = new Error('Administrator or customer account was not found.');
       notFoundErr.status = 404;

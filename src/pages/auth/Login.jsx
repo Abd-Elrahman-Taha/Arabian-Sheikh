@@ -3,7 +3,7 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { Lock, Mail, ArrowRight, ShieldAlert, KeyRound } from 'lucide-react';
+import { Lock, Mail, ArrowRight, KeyRound } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function Login({ returnPath }) {
@@ -38,16 +38,6 @@ export default function Login({ returnPath }) {
     }
   };
 
-  const handleDemoAdmin = () => {
-    setEmail('superadmin@perfumestore.com');
-    setPassword('SuperAdmin123*');
-  };
-
-  const handleDemoCustomer = () => {
-    setEmail('sheikh.user@luxury.com');
-    setPassword('user123');
-  };
-
   return (
     <div className="pt-36 sm:pt-40 pb-6 min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 animate-fade-in text-[#F3E6D0]">
       <ScrollReveal direction="up">
@@ -63,30 +53,6 @@ export default function Login({ returnPath }) {
           <p className="text-xs text-[#D8BE99] font-medium">
             {t('auth.loginSubtitle')}
           </p>
-        </div>
-
-        {/* Demo Fast Login Buttons */}
-        <div className="p-3.5 rounded-2xl bg-black/60 border border-[#D4AF37]/30 space-y-2 text-xs shadow-inner">
-          <p className="text-[11px] uppercase tracking-wider text-[#F2D675] font-cinzel font-bold text-center">
-            ✦ Quick Access Demo Credentials
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleDemoCustomer}
-              className="py-2 px-2.5 rounded-xl bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/25 text-[11px] text-[#F3E6D0] font-semibold text-center transition-all cursor-pointer hover:border-[#D4AF37]"
-            >
-              Patron User
-            </button>
-            <button
-              type="button"
-              onClick={handleDemoAdmin}
-              className="py-2 px-2.5 rounded-xl bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 text-[11px] text-[#F2D675] font-bold text-center transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:border-[#F2D675]"
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>Grand Admin</span>
-            </button>
-          </div>
         </div>
 
         {/* Form */}
