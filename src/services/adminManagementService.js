@@ -286,28 +286,25 @@ export const adminManagementService = {
       throw forbiddenErr;
     }
 
-    if (status === 409) {
-      if (code === 'EMAIL_ALREADY_EXISTS' || msg.toLowerCase().includes('email')) {
-        const conflictErr = new Error('This email address is already in use by another account.');
+    if (status === 409 || status === 400) {
+      if (code === 'EMAIL_ALREADY_EXISTS' || msg.toLowerCase().includes('email') || msg.toLowerCase().includes('already exists')) {
+        const conflictErr = new Error('This email address is already in use (or was previously registered as an administrator).');
         conflictErr.field = 'email';
         conflictErr.status = 409;
         throw conflictErr;
       }
       if (code === 'USER_ALREADY_PROMOTED' || msg.toLowerCase().includes('already')) {
-        const conflictErr = new Error('This user is already an administrator.');
+        const conflictErr = new Error('This user has already been promoted or linked to an existing administrator record.');
         conflictErr.status = 409;
         throw conflictErr;
       }
       if (code === 'CUSTOMER_ALREADY_BLOCKED' || msg.toLowerCase().includes('blocked')) {
-        const conflictErr = new Error('This customer account is currently blocked. Please unblock them before promoting.');
+        const conflictErr = new Error('This customer account is currently blocked in the database.');
         conflictErr.status = 409;
         throw conflictErr;
       }
-    }
-
-    if (status === 400) {
       if (code === 'PASSWORD_REQUIRED' || msg.toLowerCase().includes('password')) {
-        const passReqErr = new Error('This customer registered via social login. Please provide an initial password for their administrator account.');
+        const passReqErr = new Error('Please provide an initial password for this administrator account.');
         passReqErr.field = 'initialPassword';
         passReqErr.status = 400;
         throw passReqErr;
@@ -319,6 +316,12 @@ export const adminManagementService = {
         valErr.errors = data.errors;
         valErr.status = 400;
         throw valErr;
+      }
+    }
+
+    if (status === 500) {
+      if (msg.toLowerCase().includes('delete') || msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('key') || msg.toLowerCase().includes('duplicate')) {
+        throw new Error('Cannot recreate this administrator because their previous record was soft-deleted in the database. Please use Demote instead of Delete when converting admins back and forth.');
       }
     }
 

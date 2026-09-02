@@ -176,7 +176,7 @@ async function request(endpoint, options = {}) {
 
     // Handle HTTP Error Codes
     if (!response.ok) {
-      let errorMessage = data?.message || data?.error || data?.title;
+      let errorMessage = data?.detail || data?.message || data?.error || data?.title;
       if (data?.errors && typeof data.errors === 'object') {
         const errorList = Object.entries(data.errors)
           .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
