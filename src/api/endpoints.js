@@ -343,13 +343,17 @@ export const ENDPOINTS = {
       UPDATE_STATUS: (id) => `/admin/shipments/${id}/status`
     },
 
-    // Admin Users (Super Admin only for create)
+    // SuperAdmin - Administrator Management
     ADMINS: {
       LIST: '/admin/admins',
       CREATE: '/admin/admins',
+      DETAILS: (id) => `/admin/admins/${id}`,
       UPDATE: (id) => `/admin/admins/${id}`,
-      ACTIVATE: (id) => `/admin/admins/${id}/activate`,
-      DEACTIVATE: (id) => `/admin/admins/${id}/deactivate`
+      DELETE: (id) => `/admin/admins/${id}`,
+      STATUS: (id) => `/admin/admins/${id}/status`,
+      PASSWORD: (id) => `/admin/admins/${id}/password`,
+      PROMOTE_USER: (userId) => `/admin/admins/promote-user/${userId}`,
+      DEMOTE: (id) => `/admin/admins/${id}/demote`
     },
 
     // Settings

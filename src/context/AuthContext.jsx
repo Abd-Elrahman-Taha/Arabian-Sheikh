@@ -61,10 +61,15 @@ export function AuthProvider({ children }) {
     return updated;
   };
 
-  const isAdmin = Boolean(
-    user?.role === 'ADMIN' ||
-    user?.role === 'SUPER_ADMIN' ||
+  const isSuperAdmin = Boolean(
     user?.isSuperAdmin === true ||
+    user?.role === 'SUPER_ADMIN' ||
+    (user?.email && user.email.toLowerCase().includes('superadmin'))
+  );
+
+  const isAdmin = Boolean(
+    isSuperAdmin ||
+    user?.role === 'ADMIN' ||
     (user?.email && (user.email.toLowerCase().includes('admin') || user.email.toLowerCase().includes('perfumestore')))
   );
 
@@ -73,6 +78,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         isAdmin,
+        isSuperAdmin,
         loading,
         login,
         signup,

@@ -17,6 +17,8 @@ export { default as userApi } from './user.api';
 export { default as addressApi } from './address.api';
 export { default as brandApi } from './brand.api';
 export { default as promotionApi } from './promotion.api';
+export { default as adminManagementApi } from './adminManagement.api';
 export { default as analyticsApi } from './analytics.api';
+
 
 

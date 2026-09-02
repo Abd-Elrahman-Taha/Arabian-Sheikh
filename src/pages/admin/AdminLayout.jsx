@@ -11,6 +11,7 @@ import {
   BarChart3,
   Tag,
   Sparkles,
+  ShieldCheck,
   Settings,
   LogOut,
   ExternalLink,
@@ -21,7 +22,7 @@ import {
 export default function AdminLayout({ children }) {
   const { currentPath, navigate } = useRouter();
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, isSuperAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -29,6 +30,7 @@ export default function AdminLayout({ children }) {
     { to: '/admin/products', label: t('admin.products'), icon: Package },
     { to: '/admin/orders', label: t('admin.orders'), icon: ShoppingBag },
     { to: '/admin/users', label: t('admin.users'), icon: Users },
+    { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] },
     { to: '/admin/inventory', label: t('admin.inventory'), icon: Warehouse },
     { to: '/admin/analytics', label: t('admin.analytics'), icon: BarChart3 },
     { to: '/admin/promotions', label: 'Promotions', icon: Sparkles },

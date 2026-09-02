@@ -64,6 +64,7 @@ import AdminInventory from './pages/admin/AdminInventory';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminDiscounts from './pages/admin/AdminDiscounts';
 import AdminPromotions from './pages/admin/AdminPromotions';
+import AdminManagement from './pages/admin/AdminManagement';
 import AdminSettings from './pages/admin/AdminSettings';
 
 // Error Pages
@@ -72,7 +73,7 @@ import Unauthorized from './pages/Unauthorized';
 
 function MainRouter() {
   const { currentPath } = useRouter();
-  const { user, isAdmin, isAuthenticated } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
 
@@ -96,6 +97,9 @@ function MainRouter() {
           )}
           {currentPath === '/admin/orders' && <AdminOrders />}
           {currentPath === '/admin/users' && <AdminUsers />}
+          {(currentPath === '/admin/admins' || currentPath === '/admin/administrators' || currentPath === '/admin/management') && (
+            <AdminManagement />
+          )}
           {currentPath === '/admin/inventory' && <AdminInventory />}
           {currentPath === '/admin/analytics' && <AdminAnalytics />}
           {currentPath === '/admin/promotions' && <AdminPromotions />}

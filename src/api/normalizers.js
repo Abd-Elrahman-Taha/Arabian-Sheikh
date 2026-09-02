@@ -693,4 +693,109 @@ export function normalizePromotionAnalytics(raw) {
   };
 }
 
+// ==========================================
+// 14. SUPERADMIN / ADMINISTRATOR MANAGEMENT NORMALIZERS
+// ==========================================
+
+/**
+ * Maps dashboard language values (0: Bg, 1: En, 2: Es or 'Bg', 'En', 'Es') to display labels
+ */
+export function getDashboardLanguageLabel(val) {
+  if (val === 0 || val === '0' || String(val).toLowerCase() === 'bg') return 'Bulgarian';
+  if (val === 2 || val === '2' || String(val).toLowerCase() === 'es') return 'Spanish';
+  return 'English';
+}
+
+export function getDashboardLanguageCode(val) {
+  if (val === 0 || val === '0' || String(val).toLowerCase() === 'bg') return 'Bg';
+  if (val === 2 || val === '2' || String(val).toLowerCase() === 'es') return 'Es';
+  return 'En';
+}
+
+export function getDashboardLanguageNumeric(val) {
+  if (val === 0 || val === '0' || String(val).toLowerCase() === 'bg') return 0;
+  if (val === 2 || val === '2' || String(val).toLowerCase() === 'es') return 2;
+  return 1;
+}
+
+/**
+ * Administrator Summary & Profile Normalizer
+ */
+export function normalizeAdmin(raw) {
+  if (!raw) return null;
+  const a = normalizeObjectKeys(raw);
+
+  const rawLang = a.preferredDashboardLanguage !== undefined ? a.preferredDashboardLanguage : (a.dashboardLanguage ?? 1);
+  const isSuperAdmin = Boolean(a.isSuperAdmin === true || (a.email && a.email.toLowerCase().includes('superadmin')));
+  const isActive = a.isActive !== false;
+
+  return {
+    id: Number(a.id || 0),
+    fullName: String(a.fullName || a.name || 'Administrator').trim(),
+    email: String(a.email || '').trim(),
+    isSuperAdmin,
+    isActive,
+    status: isActive ? 'ACTIVE' : 'INACTIVE',
+    preferredDashboardLanguage: rawLang,
+    languageLabel: getDashboardLanguageLabel(rawLang),
+    languageCode: getDashboardLanguageCode(rawLang),
+    languageNumeric: getDashboardLanguageNumeric(rawLang),
+    lastLoginAt: a.lastLoginAt || null,
+    promotedFromUserId: a.promotedFromUserId !== null && a.promotedFromUserId !== undefined ? Number(a.promotedFromUserId) : null,
+    isPromoted: Boolean(a.promotedFromUserId),
+    createdBy: a.createdBy !== null && a.createdBy !== undefined ? Number(a.createdBy) : null,
+    createdAt: a.createdAt || null
+  };
+}
+
+/**
+ * Paginated Administrator List Normalizer
+ */
+export function normalizeAdminList(raw) {
+  if (!raw) {
+    return {
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  if (Array.isArray(raw)) {
+    const items = raw.map(normalizeAdmin).filter(Boolean);
+    return {
+      items,
+      page: 1,
+      pageSize: items.length || 20,
+      totalCount: items.length,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  const res = normalizeObjectKeys(raw);
+  const rawItems = Array.isArray(res.items) ? res.items : [];
+  const items = rawItems.map(normalizeAdmin).filter(Boolean);
+
+  const page = Number(res.page || res.pageNumber || 1);
+  const pageSize = Number(res.pageSize || 20);
+  const totalCount = Number(res.totalCount !== undefined ? res.totalCount : items.length);
+  const totalPages = Number(res.totalPages !== undefined ? res.totalPages : Math.ceil(totalCount / pageSize) || 1);
+
+  return {
+    items,
+    page,
+    pageSize,
+    totalCount,
+    totalPages,
+    hasPreviousPage: Boolean(res.hasPreviousPage || res.hasPrevious || page > 1),
+    hasNextPage: Boolean(res.hasNextPage || res.hasNext || page < totalPages)
+  };
+}
+
+
 
