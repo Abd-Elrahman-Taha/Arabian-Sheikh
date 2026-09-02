@@ -165,11 +165,18 @@ export default function CartPage() {
 
                     <div className="text-right">
                       <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)] block">
-                        ${item.price * item.quantity}
+                        €{item.price * item.quantity}
                       </span>
-                      <span className="text-[11px] text-[var(--color-terracotta-deep)] font-mono">
-                        (${item.price} each)
-                      </span>
+                      {item.hasPromoDiscount ? (
+                        <div className="text-[11px] font-mono">
+                          <span className="line-through text-neutral-400 mr-1.5">€{item.unitBasePrice}</span>
+                          <span className="text-amber-600 font-bold">€{item.price} each</span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-[var(--color-terracotta-deep)] font-mono">
+                          (€{item.price} each)
+                        </span>
+                      )}
                     </div>
 
                     <button
@@ -244,20 +251,20 @@ export default function CartPage() {
             <div className="space-y-2 text-xs text-[var(--color-terracotta-deep)] border-t border-[var(--color-terracotta-deep)]/20 pt-4 font-medium">
               <div className="flex justify-between">
                 <span>Subtotal ({totals.totalCount} items):</span>
-                <span className="font-mono text-[var(--color-earth-dark)] font-bold">${totals.subtotal}</span>
+                <span className="font-mono text-[var(--color-earth-dark)] font-bold">€{totals.subtotal.toFixed(2)}</span>
               </div>
 
               {totals.promoDiscountAmount > 0 && (
                 <div className="flex justify-between text-amber-700 font-bold bg-amber-500/10 p-2 border border-amber-500/30">
                   <span>👑 Palace Offer ({totals.activePromoName || 'Special'}):</span>
-                  <span className="font-mono">-${totals.promoDiscountAmount}</span>
+                  <span className="font-mono">-€{totals.promoDiscountAmount.toFixed(2)}</span>
                 </div>
               )}
 
               {totals.couponDiscountAmount > 0 && (
                 <div className="flex justify-between text-[var(--color-terracotta)] font-bold">
                   <span>Privilege Code ({cart.discountCode}):</span>
-                  <span className="font-mono">-${totals.couponDiscountAmount}</span>
+                  <span className="font-mono">-€{totals.couponDiscountAmount.toFixed(2)}</span>
                 </div>
               )}
 
@@ -267,14 +274,14 @@ export default function CartPage() {
                   {totals.shipping === 0 ? (
                     <span className="text-[var(--color-terracotta)]">Complimentary</span>
                   ) : (
-                    `$${totals.shipping}`
+                    `€${totals.shipping.toFixed(2)}`
                   )}
                 </span>
               </div>
 
               <div className="flex justify-between text-base font-bold text-[var(--color-earth-dark)] pt-3 border-t border-[var(--color-terracotta-deep)]/20 font-cinzel">
                 <span>Estimated Total:</span>
-                <span className="text-[var(--color-terracotta)] font-mono text-xl font-bold">${totals.total}</span>
+                <span className="text-[var(--color-terracotta)] font-mono text-xl font-bold">€{totals.total.toFixed(2)}</span>
               </div>
             </div>
 

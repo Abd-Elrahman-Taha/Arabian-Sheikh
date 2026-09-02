@@ -240,9 +240,16 @@ export default function CartDrawer() {
                         </button>
                       </div>
 
-                      <span className="font-cinzel text-sm font-bold text-[#D4AF37]">
-                        €{(item.price * item.quantity).toFixed(2)}
-                      </span>
+                      <div className="text-right">
+                        <span className="font-cinzel text-sm font-bold text-[#D4AF37] block">
+                          €{(item.price * item.quantity).toFixed(2)}
+                        </span>
+                        {item.hasPromoDiscount && (
+                          <span className="text-[10px] text-neutral-400 line-through font-mono block">
+                            €{(item.unitBasePrice * item.quantity).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

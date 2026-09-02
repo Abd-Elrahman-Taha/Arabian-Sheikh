@@ -54,16 +54,26 @@ export function CartProvider({ children }) {
         item => item.productId === product.id && item.size === size
       );
 
+      const basePrice = Number(product.originalPrice || product.price || 0);
+
       if (existingIndex > -1) {
         items[existingIndex].quantity += quantity;
       } else {
         items.push({
           productId: product.id,
+          id: product.id,
           name: product.name,
           arabicName: product.arabicName || '',
-          price: product.price,
-          originalPrice: product.originalPrice || null,
-          image: product.images?.[0] || '',
+          categoryId: product.categoryId || product.category?.id || (product.category === 'perfumes' ? 1 : 0),
+          category: product.category,
+          brandId: product.brandId || product.brand?.id || 0,
+          brand: product.brand,
+          subcategoryId: product.subcategoryId || product.subcategory?.id || 0,
+          perfumeCategoryId: product.perfumeCategoryId || product.perfumeCategory?.id || 0,
+          tier: product.tier,
+          price: basePrice,
+          originalPrice: basePrice,
+          image: product.imageUrl || product.image || product.images?.[0] || '',
           fragranceFamily: product.fragranceFamily || 'Haute Parfumerie',
           size,
           quantity
@@ -204,7 +214,7 @@ export function CartProvider({ children }) {
     <CartContext.Provider
       value={{
         cart,
-        items: cart.items || [],
+        items: totals.items || cart.items || [],
         totals,
         isDrawerOpen,
         openDrawer: () => {
