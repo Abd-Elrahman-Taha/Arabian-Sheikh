@@ -15,7 +15,7 @@ import {
   X,
   Sparkles,
   ExternalLink,
-  Power
+  AlertCircle
 } from 'lucide-react';
 
 export default function AdminPages() {
@@ -29,7 +29,6 @@ export default function AdminPages() {
   // Edit Modal State
   const [editingPage, setEditingPage] = useState(null);
   const [formData, setFormData] = useState({
-    isActive: true,
     translations: {
       en: { title: '', content: '' },
       bg: { title: '', content: '' },
@@ -37,7 +36,7 @@ export default function AdminPages() {
     }
   });
   const [activeTabLang, setActiveTabLang] = useState('en');
-  const [previewMode, setPreviewMode] = useState(false); // Code / Edit vs Live Preview
+  const [previewMode, setPreviewMode] = useState(false);
 
   const fetchPages = useCallback(async () => {
     setLoading(true);
@@ -55,49 +54,76 @@ export default function AdminPages() {
     fetchPages();
   }, [fetchPages]);
 
-  // Open Edit Modal
+  // Open Edit Modal — Prepopulate immediately from existing page data
   const handleOpenEdit = async (page) => {
     setEditingPage(page);
     setActiveTabLang('en');
     setPreviewMode(false);
 
+    // Initial instant populate from cached list data
+    const transMap = {
+      en: { title: '', content: '' },
+      bg: { title: '', content: '' },
+      es: { title: '', content: '' }
+    };
+
+    (page?.translations || []).forEach((tr) => {
+      const lang = String(tr.languageCode || '').toLowerCase();
+      if (transMap[lang]) {
+        transMap[lang] = {
+          title: tr.title || '',
+          content: tr.content || ''
+        };
+      }
+    });
+
+    setFormData({ translations: transMap });
+
+    // Background fetch detailed slug translations to ensure absolute freshness
     try {
       const details = await contentService.getAdminPageBySlug(page.slug);
-      const transMap = {
-        en: { title: '', content: '' },
-        bg: { title: '', content: '' },
-        es: { title: '', content: '' }
-      };
-
-      (details?.translations || []).forEach(t => {
-        const lang = String(t.languageCode || '').toLowerCase();
-        if (transMap[lang]) {
-          transMap[lang] = {
-            title: t.title || '',
-            content: t.content || ''
-          };
-        }
-      });
-
-      setFormData({
-        isActive: details?.isActive !== false,
-        translations: transMap
-      });
+      if (details?.translations && Array.isArray(details.translations)) {
+        const freshMap = { ...transMap };
+        details.translations.forEach((tr) => {
+          const lang = String(tr.languageCode || '').toLowerCase();
+          if (freshMap[lang]) {
+            freshMap[lang] = {
+              title: tr.title || '',
+              content: tr.content || ''
+            };
+          }
+        });
+        setFormData({ translations: freshMap });
+      }
     } catch (err) {
-      error(err.message || 'Failed to fetch page details for editing.');
-      setEditingPage(null);
+      // Non-blocking: local pre-fill is already active
+      console.warn('Could not refresh detailed page translations:', err.message);
     }
   };
 
-  // Submit Edit
+  // Submit Edit Policy
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!editingPage) return;
     setActionLoading(true);
 
     try {
-      const translationsArray = Object.entries(formData.translations)
-        .filter(([_, trans]) => trans.title.trim() && trans.content.trim())
+      const entries = Object.entries(formData.translations);
+      
+      // Validate each language tab
+      for (const [lang, trans] of entries) {
+        const hasTitle = Boolean(trans.title?.trim());
+        const hasContent = Boolean(trans.content?.trim());
+        if (hasTitle && !hasContent) {
+          throw new Error(`Please provide content for the [${lang.toUpperCase()}] translation, or clear its title.`);
+        }
+        if (!hasTitle && hasContent) {
+          throw new Error(`Please provide a title for the [${lang.toUpperCase()}] translation, or clear its content.`);
+        }
+      }
+
+      const translationsArray = entries
+        .filter(([_, trans]) => trans.title?.trim() && trans.content?.trim())
         .map(([lang, trans]) => ({
           languageCode: lang,
           title: trans.title.trim(),
@@ -108,13 +134,14 @@ export default function AdminPages() {
         throw new Error('At least one complete language translation (Title and Content) is required.');
       }
 
+      // System policies are permanently active contracts
       const payload = {
-        isActive: Boolean(formData.isActive),
+        isActive: true,
         translations: translationsArray
       };
 
       await contentService.updatePage(editingPage.slug, payload);
-      success(`System policy '${editingPage.title}' updated successfully.`);
+      success(`System policy '${editingPage.title || editingPage.slug}' updated successfully.`);
       setEditingPage(null);
       fetchPages();
     } catch (err) {
@@ -134,11 +161,11 @@ export default function AdminPages() {
               <FileText className="w-5 h-5" />
             </div>
             <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
-              Static Pages & Legal Policies
+              Legal Policies
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-[#D8BE99] font-medium mt-1">
-            Manage multilingual charters, legal guarantees, and terms displayed throughout the royal storefront.
+            Predefined system charters. Administrators can edit policy terms and multilingual translations.
           </p>
         </div>
 
@@ -146,28 +173,28 @@ export default function AdminPages() {
           onClick={fetchPages}
           disabled={loading}
           className="p-2.5 rounded-xl bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/30 text-[#D8BE99] hover:text-[#F2D675] transition-all cursor-pointer disabled:opacity-50 self-start sm:self-auto"
-          title="Refresh Pages"
+          title="Refresh Policies"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* System Pages Notice Banner */}
+      {/* System Policy Information Banner */}
       <div className="p-4 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 flex items-start gap-3.5 shadow-xl backdrop-blur-md">
         <div className="p-2 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#F2D675] shrink-0 mt-0.5">
           <Shield className="w-4 h-4" />
         </div>
         <div className="space-y-1 text-xs text-[#D8BE99]">
           <p className="font-cinzel text-[#F2D675] font-bold text-xs uppercase tracking-wider">
-            Protected System Pages
+            Permanent System Charters
           </p>
           <p className="leading-relaxed">
-            These four foundational pages (<strong className="text-[#F3E6D0]">Privacy Policy, Terms & Conditions, Shipping Policy, Returns & Refunds</strong>) are system-governed contracts wired to customer checkout and footer gateways. They cannot be created or deleted; administrators can localize titles, update terms, and toggle publication status.
+            These four foundational policies (<strong className="text-[#F3E6D0]">Privacy Policy, Terms & Conditions, Shipping Policy, Returns & Refunds</strong>) are permanent legal contracts bound to the storefront, customer checkout, and consumer law. You can <strong className="text-[#F2D675]">only edit</strong> their terms, titles, and multilingual translations. They cannot be created, deleted, or deactivated.
           </p>
         </div>
       </div>
 
-      {/* Pages Grid Cards */}
+      {/* Policies Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {loading ? (
           <div className="col-span-full py-16 text-center text-[#D8BE99]">
@@ -192,28 +219,21 @@ export default function AdminPages() {
                         <h3 className="font-cinzel text-base font-bold text-[#F3E6D0] group-hover:text-[#F2D675] transition-colors">
                           {displayTitle}
                         </h3>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F2D675]">
-                          <Lock className="w-2.5 h-2.5" />
-                          <span>System Page</span>
-                        </span>
                       </div>
                       <p className="font-mono text-[11px] text-[#D4AF37]/80 mt-0.5">
                         /{page.slug}
                       </p>
                     </div>
 
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-cinzel font-bold uppercase tracking-wider border shrink-0 ${
-                      page.isActive
-                        ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-400'
-                        : 'bg-zinc-900/60 border-zinc-700/50 text-zinc-400'
-                    }`}>
-                      {page.isActive ? 'Active' : 'Inactive'}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F2D675] shrink-0">
+                      <Lock className="w-3 h-3 text-[#D4AF37]" />
+                      <span>System Charter</span>
                     </span>
                   </div>
 
                   {/* Description */}
                   <p className="text-xs text-[#D8BE99]/80 font-sans leading-relaxed line-clamp-2">
-                    {meta?.description || 'Foundational royal legal charter governing patron relations.'}
+                    {meta?.description || 'Permanent royal legal charter governing patron relations and boutique orders.'}
                   </p>
 
                   {/* Available Languages */}
@@ -222,7 +242,7 @@ export default function AdminPages() {
                       <Globe className="w-3 h-3 text-[#D4AF37]" />
                       <span>Translations:</span>
                     </span>
-                    {SUPPORTED_LANGUAGES.map(lang => {
+                    {SUPPORTED_LANGUAGES.map((lang) => {
                       const hasLang = page.availableLanguages?.includes(lang.code);
                       return (
                         <span
@@ -240,7 +260,7 @@ export default function AdminPages() {
                   </div>
                 </div>
 
-                {/* Card Actions */}
+                {/* Card Actions: Single Primary Action is Edit Policy */}
                 <div className="pt-4 mt-4 border-t border-[#D4AF37]/20 flex items-center justify-between">
                   <a
                     href={`/${page.slug}`}
@@ -249,15 +269,15 @@ export default function AdminPages() {
                     className="text-xs text-[#D8BE99] hover:text-[#F2D675] flex items-center gap-1.5 transition-colors"
                   >
                     <ExternalLink className="w-3 h-3" />
-                    <span>View Storefront</span>
+                    <span>Storefront View</span>
                   </a>
 
                   <button
                     onClick={() => handleOpenEdit(page)}
-                    className="px-4 py-2 bg-gradient-to-r from-[#D4AF37]/20 to-[#F2D675]/20 hover:from-[#D4AF37] hover:to-[#F2D675] border border-[#D4AF37]/40 text-[#F2D675] hover:text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#F2D675] hover:brightness-110 text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
-                    <span>Edit Page</span>
+                    <span>Edit Policy</span>
                   </button>
                 </div>
               </div>
@@ -266,7 +286,7 @@ export default function AdminPages() {
         )}
       </div>
 
-      {/* Edit Page Modal */}
+      {/* Edit Policy Modal */}
       {editingPage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#120B06] border border-[#D4AF37]/50 rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
@@ -274,20 +294,20 @@ export default function AdminPages() {
             <div className="flex items-center justify-between p-5 border-b border-[#D4AF37]/30 bg-black/40 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-[#D4AF37] rounded-lg text-black">
-                  <FileText className="w-5 h-5" />
+                  <Edit2 className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-cinzel text-lg font-bold text-[#F2D675] uppercase">
                     Edit {editingPage.title || editingPage.slug}
                   </h3>
                   <p className="text-[11px] text-[#D8BE99]">
-                    System Page Slug: <span className="font-mono text-[#D4AF37]">/{editingPage.slug}</span>
+                    System Charter: <span className="font-mono text-[#D4AF37]">/{editingPage.slug}</span>
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingPage(null)}
-                className="text-[#D8BE99] hover:text-white p-1"
+                className="text-[#D8BE99] hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -295,34 +315,11 @@ export default function AdminPages() {
 
             {/* Modal Body */}
             <form onSubmit={handleFormSubmit} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
-              {/* Active Publication Toggle */}
-              <div className="flex items-center justify-between p-3.5 rounded-xl bg-black/40 border border-[#D4AF37]/20">
-                <div>
-                  <p className="font-cinzel text-xs uppercase tracking-wider text-[#F2D675] font-bold">
-                    Storefront Publication
-                  </p>
-                  <p className="text-[11px] text-[#D8BE99]/70">
-                    When active, customers can read this policy via storefront footer and checkout links.
-                  </p>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="accent-[#D4AF37] w-4 h-4 cursor-pointer"
-                  />
-                  <span className={`text-xs font-semibold ${formData.isActive ? 'text-emerald-400' : 'text-zinc-400'}`}>
-                    {formData.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </label>
-              </div>
-
               {/* Multilingual Tabs */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-[#D8BE99] font-cinzel uppercase tracking-wider font-semibold text-[11px]">
-                    Multilingual Policy Content <span className="text-red-400">*</span>
+                    Multilingual Content <span className="text-red-400">*</span>
                   </label>
                   {/* Mode switch: Edit vs Preview */}
                   <div className="flex items-center gap-1 bg-black/60 p-1 rounded-lg border border-[#D4AF37]/25">
@@ -349,11 +346,14 @@ export default function AdminPages() {
                   </div>
                 </div>
 
-                {/* Tabs */}
+                {/* Language Select Tabs */}
                 <div className="flex border-b border-[#D4AF37]/30 gap-1 bg-black/30 p-1 rounded-t-xl">
-                  {SUPPORTED_LANGUAGES.map(lang => {
+                  {SUPPORTED_LANGUAGES.map((lang) => {
                     const trans = formData.translations[lang.code];
-                    const isFilled = Boolean(trans?.title?.trim() && trans?.content?.trim());
+                    const hasTitle = Boolean(trans?.title?.trim());
+                    const hasContent = Boolean(trans?.content?.trim());
+                    const isComplete = hasTitle && hasContent;
+                    const isPartial = (hasTitle && !hasContent) || (!hasTitle && hasContent);
                     const isActive = activeTabLang === lang.code;
 
                     return (
@@ -369,8 +369,11 @@ export default function AdminPages() {
                       >
                         <span>{lang.flag}</span>
                         <span>{lang.label}</span>
-                        {isFilled && (
-                          <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-black' : 'bg-emerald-400'}`} />
+                        {isComplete && (
+                          <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-black' : 'bg-emerald-400'}`} title="Complete" />
+                        )}
+                        {isPartial && (
+                          <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-black' : 'bg-amber-400'}`} title="Partially filled" />
                         )}
                       </button>
                     );
@@ -383,7 +386,7 @@ export default function AdminPages() {
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <label className="text-[11px] font-semibold text-[#D8BE99] uppercase">
-                        Page Title ({activeTabLang.toUpperCase()})
+                        Policy Title ({activeTabLang.toUpperCase()})
                       </label>
                       <span className="text-[10px] font-mono text-[#D8BE99]/60">
                         {formData.translations[activeTabLang]?.title?.length || 0}/200
@@ -419,7 +422,7 @@ export default function AdminPages() {
                       </label>
                       <div className="p-5 bg-black/70 border border-[#D4AF37]/20 rounded-xl text-[#F3E6D0] min-h-[220px] max-h-[350px] overflow-y-auto space-y-3 font-sans leading-relaxed text-xs">
                         <h2 className="font-cinzel text-base font-bold text-[#F2D675] border-b border-[#D4AF37]/20 pb-2">
-                          {formData.translations[activeTabLang]?.title || 'Page Title Preview'}
+                          {formData.translations[activeTabLang]?.title || 'Policy Title Preview'}
                         </h2>
                         <div className="whitespace-pre-wrap text-[#D8BE99]">
                           {formData.translations[activeTabLang]?.content || (
@@ -432,9 +435,9 @@ export default function AdminPages() {
                     <div>
                       <div className="flex justify-between items-center mb-1">
                         <label className="text-[11px] font-semibold text-[#D8BE99] uppercase">
-                          Policy Body Content ({activeTabLang.toUpperCase()})
+                          Policy Body Terms ({activeTabLang.toUpperCase()})
                         </label>
-                        <span className="text-[10px] text-[#D8BE99]/60">Supports plain text & Markdown paragraphs</span>
+                        <span className="text-[10px] text-[#D8BE99]/60">Supports plain text & paragraphs</span>
                       </div>
                       <textarea
                         rows={10}
@@ -460,7 +463,7 @@ export default function AdminPages() {
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Actions: Exclusively Save Policy or Cancel */}
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#D4AF37]/20">
                 <button
                   type="button"
