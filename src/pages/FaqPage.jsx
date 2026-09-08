@@ -48,7 +48,8 @@ const PALACE_POLICIES = [
 ];
 
 export default function FaqPage() {
-  const { currentLanguage } = useTranslation();
+  const { language, currentLanguage, setLanguage, t } = useTranslation();
+  const activeLang = String(language || currentLanguage || 'en').toLowerCase();
   const { isDark } = useTheme();
 
   const [faqs, setFaqs] = useState([]);
@@ -59,8 +60,9 @@ export default function FaqPage() {
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+    setOpenIndex(0);
 
-    contentService.getPublicFaqs(currentLanguage || 'en')
+    contentService.getPublicFaqs(activeLang)
       .then(items => {
         if (isMounted) {
           setFaqs(items || []);
@@ -72,7 +74,7 @@ export default function FaqPage() {
       });
 
     return () => { isMounted = false; };
-  }, [currentLanguage]);
+  }, [activeLang]);
 
   const filteredFaqs = faqs.filter(faq => {
     if (!search.trim()) return true;
@@ -200,6 +202,33 @@ export default function FaqPage() {
               Instant answers regarding rare oud macerations, dispatch timelines, and authentic bottle seals.
             </p>
           </div>
+
+          {/* Language Selector Pills */}
+          <div className="flex items-center justify-center gap-2 pt-1 pb-1">
+            {[
+              { code: 'en', label: 'English', flag: '🇬🇧' },
+              { code: 'es', label: 'Español', flag: '🇪🇸' },
+              { code: 'bg', label: 'Български', flag: '🇧🇬' }
+            ].map((langItem) => {
+              const isSelected = activeLang === langItem.code;
+              return (
+                <button
+                  key={langItem.code}
+                  type="button"
+                  onClick={() => setLanguage(langItem.code)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer border ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black border-[#F2D675] shadow-[0_0_15px_rgba(212,175,55,0.45)] scale-105'
+                      : 'bg-black/60 text-[#D8BE99] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#F3E6D0]'
+                  }`}
+                >
+                  <span className="text-sm">{langItem.flag}</span>
+                  <span>{langItem.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           <div className="relative max-w-lg mx-auto">
             <input
               type="text"
