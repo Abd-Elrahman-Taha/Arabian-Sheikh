@@ -380,14 +380,18 @@ export const ENDPOINTS = {
     CONTENT: {
       FAQS: '/admin/content/faqs',
       CREATE_FAQ: '/admin/content/faqs',
+      FAQ_DETAILS: (id) => `/admin/content/faqs/${id}`,
       UPDATE_FAQ: (id) => `/admin/content/faqs/${id}`,
       DELETE_FAQ: (id) => `/admin/content/faqs/${id}`,
+      SET_FAQ_ACTIVE: (id) => `/admin/content/faqs/${id}/active`,
       PAGES: '/admin/content/pages',
       PAGE: (slug) => `/admin/content/pages/${slug}`,
       UPDATE_PAGE: (slug) => `/admin/content/pages/${slug}`,
       CONTACT: '/admin/content/contact',
       CREATE_CONTACT: '/admin/content/contact',
-      UPDATE_CONTACT: (id) => `/admin/content/contact/${id}`
+      CONTACT_DETAILS: (id) => `/admin/content/contact/${id}`,
+      UPDATE_CONTACT: (id) => `/admin/content/contact/${id}`,
+      DELETE_CONTACT: (id) => `/admin/content/contact/${id}`
     },
 
     // Audit Logs

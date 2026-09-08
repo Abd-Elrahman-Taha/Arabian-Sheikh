@@ -320,6 +320,16 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  to="/faqs"
+                  className={`transition-colors ${
+                    isDark ? 'hover:text-[#FFDF8A]' : 'hover:text-[#704622] font-medium'
+                  }`}
+                >
+                  Client Inquiries & FAQs
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/the-house"
                   className={`transition-colors ${
                     isDark ? 'hover:text-[#FFDF8A]' : 'hover:text-[#704622] font-medium'
@@ -395,28 +405,39 @@ export default function Footer() {
           }`}
         >
           <p>© {new Date().getFullYear()} Arabian Sheikh Haute Parfumerie. All Sovereign Rights Reserved.</p>
-          <div className="flex flex-wrap gap-5 sm:gap-6">
-            <span
-              className={`cursor-pointer transition-colors ${
+          <div className="flex flex-wrap gap-4 sm:gap-6">
+            <Link
+              to="/privacy-policy"
+              className={`transition-colors ${
                 isDark ? 'hover:text-[#FFDF8A]' : 'hover:text-[#704622] font-medium'
               }`}
             >
-              Privacy Charter
-            </span>
-            <span
-              className={`cursor-pointer transition-colors ${
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms-and-conditions"
+              className={`transition-colors ${
                 isDark ? 'hover:text-[#FFDF8A]' : 'hover:text-[#704622] font-medium'
               }`}
             >
-              Terms of Patronage
-            </span>
-            <span
-              className={`cursor-pointer transition-colors ${
+              Terms & Conditions
+            </Link>
+            <Link
+              to="/shipping-policy"
+              className={`transition-colors ${
                 isDark ? 'hover:text-[#FFDF8A]' : 'hover:text-[#704622] font-medium'
               }`}
             >
-              Authenticity Certificate
-            </span>
+              Shipping Policy
+            </Link>
+            <Link
+              to="/returns-policy"
+              className={`transition-colors ${
+                isDark ? 'hover:text-[#FFDF8A]' : 'hover:text-[#704622] font-medium'
+              }`}
+            >
+              Returns & Refunds
+            </Link>
           </div>
         </div>
       </div>

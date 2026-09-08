@@ -61,16 +61,27 @@ export default function Header({ onOpenSearch }) {
 
   const navCategories = [
     { name: t('nav.perfumes') || 'Perfumes', path: '/shop?category=perfumes' },
-    { name: t('nav.oils') || 'Oils', path: '/shop?category=oils' },
     { name: t('nav.bakhoor') || 'Bakhoor', path: '/shop?category=bakhoor' },
-    { name: t('nav.cosmetics') || 'Cosmetics', path: '/shop?category=cosmetics' },
     { name: t('nav.bundles') || 'Bundles', path: '/shop?category=bundles' },
-    { name: t('nav.thePalace') || t('nav.about') || 'The Palace', path: '/the-palace' }
+    { name: t('nav.thePalace') || t('nav.about') || 'The Palace', path: '/the-palace' },
+    { name: t('nav.faqsAndPolicies') || 'Questions & Policies', path: '/faqs' }
   ];
 
   const isItemActive = (itemPath) => {
     if (!itemPath) return false;
     const [basePath, queryString] = itemPath.split('?');
+
+    if (itemPath === '/faqs') {
+      return (
+        currentPath === '/faqs' ||
+        currentPath === '/questions-and-policies' ||
+        currentPath === '/faqs-and-policies' ||
+        currentPath === '/privacy-policy' ||
+        currentPath === '/terms-and-conditions' ||
+        currentPath === '/shipping-policy' ||
+        currentPath === '/returns-policy'
+      );
+    }
 
     if (queryString) {
       const targetParams = new URLSearchParams(queryString);
@@ -172,7 +183,7 @@ export default function Header({ onOpenSearch }) {
           <div className="flex items-center justify-between gap-2 sm:gap-6">
             
             {/* 1. FIRST IN NAVBAR: OFFICIAL ARABIAN SHEIKH LOGO */}
-            <div className="flex items-center shrink min-w-0 py-0.5">
+            <div className="flex items-center shrink min-w-0 py-0.5 -translate-y-1 sm:-translate-y-1.5 transition-transform duration-300">
               <Link
                 to="/"
                 className="inline-block focus:outline-none"
@@ -188,7 +199,7 @@ export default function Header({ onOpenSearch }) {
             </div>
 
             {/* 2. CENTER: CATEGORY NAVIGATION WITH GOLDEN LINE ON HOVER OR ACTIVE */}
-            <nav className={`hidden lg:flex items-center space-x-7 text-[13.5px] xl:text-[14.5px] tracking-[0.22em] uppercase font-cinzel font-semibold ${
+            <nav className={`hidden lg:flex items-center space-x-5 xl:space-x-7 text-[13px] xl:text-[14.5px] tracking-[0.16em] xl:tracking-[0.22em] uppercase font-cinzel font-semibold translate-y-1 sm:translate-y-1.5 transition-transform duration-300 ${
               isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}>
               {navCategories.map((item) => {
@@ -197,7 +208,7 @@ export default function Header({ onOpenSearch }) {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`transition-colors duration-300 relative py-2 group cursor-pointer ${
+                    className={`transition-colors duration-300 relative py-2 group cursor-pointer whitespace-nowrap ${
                       active
                         ? isDark
                           ? 'text-[#D4AF37] font-bold'

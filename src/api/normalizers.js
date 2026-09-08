@@ -797,5 +797,137 @@ export function normalizeAdminList(raw) {
   };
 }
 
+// ==========================================
+// CONTENT MANAGEMENT NORMALIZERS
+// ==========================================
+
+export function normalizeFaqTranslation(raw) {
+  if (!raw) return null;
+  const t = normalizeObjectKeys(raw);
+  return {
+    languageCode: String(t.languageCode || 'en').toLowerCase(),
+    question: t.question || '',
+    answer: t.answer || ''
+  };
+}
+
+export function normalizeFaq(raw) {
+  if (!raw) return null;
+  const f = normalizeObjectKeys(raw);
+  const rawTranslations = Array.isArray(f.translations) ? f.translations : [];
+  const translations = rawTranslations.map(normalizeFaqTranslation).filter(Boolean);
+
+  // Preferred display question: English -> first available translation -> top-level property
+  const enTrans = translations.find(t => t.languageCode === 'en');
+  const firstTrans = translations[0];
+  const question = enTrans?.question || firstTrans?.question || f.question || '';
+  const answer = enTrans?.answer || firstTrans?.answer || f.answer || '';
+  const availableLanguages = translations.map(t => t.languageCode);
+
+  return {
+    id: Number(f.id),
+    sortOrder: Number(f.sortOrder || 0),
+    isActive: f.isActive !== false,
+    translations,
+    question,
+    answer,
+    availableLanguages
+  };
+}
+
+export function normalizeFaqList(raw) {
+  if (!raw) {
+    return {
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  if (Array.isArray(raw)) {
+    const items = raw.map(normalizeFaq).filter(Boolean);
+    return {
+      items,
+      page: 1,
+      pageSize: items.length || 20,
+      totalCount: items.length,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false
+    };
+  }
+
+  const res = normalizeObjectKeys(raw);
+  const rawItems = Array.isArray(res.items) ? res.items : [];
+  const items = rawItems.map(normalizeFaq).filter(Boolean);
+  const page = Number(res.page || 1);
+  const pageSize = Number(res.pageSize || 20);
+  const totalCount = Number(res.totalCount !== undefined ? res.totalCount : items.length);
+  const totalPages = Number(res.totalPages !== undefined ? res.totalPages : Math.ceil(totalCount / pageSize) || 1);
+
+  return {
+    items,
+    page,
+    pageSize,
+    totalCount,
+    totalPages,
+    hasPreviousPage: Boolean(res.hasPreviousPage || page > 1),
+    hasNextPage: Boolean(res.hasNextPage || page < totalPages)
+  };
+}
+
+export function normalizeStaticPageTranslation(raw) {
+  if (!raw) return null;
+  const t = normalizeObjectKeys(raw);
+  return {
+    languageCode: String(t.languageCode || 'en').toLowerCase(),
+    title: t.title || '',
+    content: t.content || ''
+  };
+}
+
+export function normalizeStaticPage(raw) {
+  if (!raw) return null;
+  const p = normalizeObjectKeys(raw);
+  const rawTranslations = Array.isArray(p.translations) ? p.translations : [];
+  const translations = rawTranslations.map(normalizeStaticPageTranslation).filter(Boolean);
+
+  const enTrans = translations.find(t => t.languageCode === 'en');
+  const firstTrans = translations[0];
+  const title = enTrans?.title || firstTrans?.title || p.title || p.name || '';
+  const content = enTrans?.content || firstTrans?.content || p.content || '';
+  const availableLanguages = translations.map(t => t.languageCode);
+
+  return {
+    slug: p.slug || '',
+    isActive: p.isActive !== false,
+    translations,
+    title,
+    content,
+    availableLanguages
+  };
+}
+
+export function normalizeContact(raw) {
+  if (!raw) return null;
+  const c = normalizeObjectKeys(raw);
+  return {
+    id: c.id !== undefined ? Number(c.id) : null,
+    type: c.type || 'Phone',
+    value: c.value || '',
+    isActive: c.isActive !== false
+  };
+}
+
+export function normalizeContactList(raw) {
+  if (!raw) return [];
+  const items = Array.isArray(raw) ? raw : Array.isArray(raw.items) ? raw.items : [];
+  return items.map(normalizeContact).filter(Boolean);
+}
+
 
 

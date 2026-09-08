@@ -66,6 +66,13 @@ import AdminDiscounts from './pages/admin/AdminDiscounts';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminManagement from './pages/admin/AdminManagement';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminFaqs from './pages/admin/AdminFaqs';
+import AdminPages from './pages/admin/AdminPages';
+import AdminContact from './pages/admin/AdminContact';
+
+// Public Content Pages
+import FaqPage from './pages/FaqPage';
+import PolicyPage from './pages/PolicyPage';
 
 // Error Pages
 import NotFound from './pages/NotFound';
@@ -77,7 +84,7 @@ function MainRouter() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
 
-  const isAdminRoute = currentPath.startsWith('/admin');
+  const isAdminRoute = currentPath.startsWith('/admin') || currentPath.startsWith('/dashboard');
   const isAccountRoute = currentPath.startsWith('/account');
 
   // Route Dispatcher
@@ -104,6 +111,9 @@ function MainRouter() {
           {currentPath === '/admin/analytics' && <AdminAnalytics />}
           {currentPath === '/admin/promotions' && <AdminPromotions />}
           {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
+          {(currentPath === '/admin/content/faqs' || currentPath === '/dashboard/content/faqs') && <AdminFaqs />}
+          {(currentPath === '/admin/content/pages' || currentPath === '/dashboard/content/pages') && <AdminPages />}
+          {(currentPath === '/admin/content/contact' || currentPath === '/dashboard/content/contact') && <AdminContact />}
           {currentPath === '/admin/settings' && <AdminSettings />}
         </AdminLayout>
       );
@@ -165,6 +175,18 @@ function MainRouter() {
         return <About />;
       case currentPath === '/contact':
         return <Contact />;
+      case currentPath === '/faqs':
+      case currentPath === '/questions-and-policies':
+      case currentPath === '/faqs-and-policies':
+        return <FaqPage />;
+      case currentPath === '/privacy-policy':
+        return <PolicyPage policySlug="privacy-policy" />;
+      case currentPath === '/terms-and-conditions':
+        return <PolicyPage policySlug="terms-and-conditions" />;
+      case currentPath === '/shipping-policy':
+        return <PolicyPage policySlug="shipping-policy" />;
+      case currentPath === '/returns-policy':
+        return <PolicyPage policySlug="returns-policy" />;
       case currentPath.startsWith('/search'):
         return <SearchPage />;
 

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { contentService } from '../services/contentService';
+import { MapPin, Phone, Mail, Clock, Send, Share2, ExternalLink } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../components/common/ScrollReveal';
 
 export default function Contact() {
@@ -10,6 +11,7 @@ export default function Contact() {
   const { isDark } = useTheme();
   const { success } = useToast();
 
+  const [liveContacts, setLiveContacts] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,6 +19,16 @@ export default function Contact() {
     message: ''
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    contentService.getPublicContact()
+      .then(items => {
+        if (Array.isArray(items) && items.length > 0) {
+          setLiveContacts(items);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -135,35 +147,41 @@ export default function Contact() {
               </h3>
 
               <div className="space-y-4 text-xs font-sans text-[var(--color-terracotta-deep)]">
-                <ScrollRevealItem index={0} desktopDirection="up">
-                  <div className="flex gap-3 items-start">
-                    <MapPin className="w-4 h-4 text-[var(--color-terracotta)] shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-[var(--color-earth-dark)] block font-cinzel">Dubai Flagship Palace</strong>
-                      <span>Downtown Dubai Boulevard, Burj Royale Pavilion, UAE</span>
-                    </div>
-                  </div>
-                </ScrollRevealItem>
+                {liveContacts.filter(c => c.type === 'Address').length > 0 ? (
+                  liveContacts.filter(c => c.type === 'Address').map((addr, idx) => (
+                    <ScrollRevealItem key={idx} index={idx} desktopDirection="up">
+                      <div className="flex gap-3 items-start">
+                        <MapPin className="w-4 h-4 text-[var(--color-terracotta)] shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-[var(--color-earth-dark)] block font-cinzel">Official Boutique Address</strong>
+                          <span>{addr.value}</span>
+                        </div>
+                      </div>
+                    </ScrollRevealItem>
+                  ))
+                ) : (
+                  <>
+                    <ScrollRevealItem index={0} desktopDirection="up">
+                      <div className="flex gap-3 items-start">
+                        <MapPin className="w-4 h-4 text-[var(--color-terracotta)] shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-[var(--color-earth-dark)] block font-cinzel">Dubai Flagship Palace</strong>
+                          <span>Downtown Dubai Boulevard, Burj Royale Pavilion, UAE</span>
+                        </div>
+                      </div>
+                    </ScrollRevealItem>
 
-                <ScrollRevealItem index={1} desktopDirection="up">
-                  <div className="flex gap-3 items-start">
-                    <MapPin className="w-4 h-4 text-[var(--color-terracotta)] shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-[var(--color-earth-dark)] block font-cinzel">London Private Salon</strong>
-                      <span>28 Mount Street, Mayfair, London W1K 2RY, UK</span>
-                    </div>
-                  </div>
-                </ScrollRevealItem>
-
-                <ScrollRevealItem index={2} desktopDirection="up">
-                  <div className="flex gap-3 items-start">
-                    <MapPin className="w-4 h-4 text-[var(--color-terracotta)] shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-[var(--color-earth-dark)] block font-cinzel">Paris Atelier</strong>
-                      <span>14 Place Vendôme, 75001 Paris, France</span>
-                    </div>
-                  </div>
-                </ScrollRevealItem>
+                    <ScrollRevealItem index={1} desktopDirection="up">
+                      <div className="flex gap-3 items-start">
+                        <MapPin className="w-4 h-4 text-[var(--color-terracotta)] shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-[var(--color-earth-dark)] block font-cinzel">London Private Salon</strong>
+                          <span>28 Mount Street, Mayfair, London W1K 2RY, UK</span>
+                        </div>
+                      </div>
+                    </ScrollRevealItem>
+                  </>
+                )}
               </div>
             </div>
 
@@ -172,24 +190,47 @@ export default function Contact() {
                 Direct Concierge Lines
               </h3>
               <div className="space-y-2 text-xs text-[var(--color-terracotta-deep)] font-sans">
-                <ScrollRevealItem index={0} desktopDirection="up">
+                {liveContacts.filter(c => c.type === 'Phone').length > 0 ? (
+                  liveContacts.filter(c => c.type === 'Phone').map((p, idx) => (
+                    <p key={idx} className="flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
+                      <a href={`tel:${p.value}`} className="hover:underline">{p.value}</a>
+                    </p>
+                  ))
+                ) : (
                   <p className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
                     <span>+971 4 800-SHEIKH (UAE Toll-Free)</span>
                   </p>
-                </ScrollRevealItem>
-                <ScrollRevealItem index={1} desktopDirection="up">
+                )}
+
+                {liveContacts.filter(c => c.type === 'Email').length > 0 ? (
+                  liveContacts.filter(c => c.type === 'Email').map((em, idx) => (
+                    <p key={idx} className="flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
+                      <a href={`mailto:${em.value}`} className="hover:underline">{em.value}</a>
+                    </p>
+                  ))
+                ) : (
                   <p className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
                     <span>concierge@arabiansheikh.com</span>
                   </p>
-                </ScrollRevealItem>
-                <ScrollRevealItem index={2} desktopDirection="up">
-                  <p className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
-                    <span>Daily: 08:00 — 22:00 Gulf Standard Time</span>
+                )}
+
+                {liveContacts.filter(c => c.type === 'Social').map((soc, idx) => (
+                  <p key={idx} className="flex items-center gap-2">
+                    <Share2 className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
+                    <a href={soc.value} target="_blank" rel="noreferrer" className="hover:underline truncate max-w-[240px]">
+                      {soc.value}
+                    </a>
                   </p>
-                </ScrollRevealItem>
+                ))}
+
+                <p className="flex items-center gap-2 pt-1 border-t border-[var(--color-terracotta-deep)]/15">
+                  <Clock className="w-3.5 h-3.5 text-[var(--color-terracotta)]" />
+                  <span>Daily: 08:00 — 22:00 Gulf Standard Time</span>
+                </p>
               </div>
             </div>
           </ScrollReveal>

@@ -12,6 +12,9 @@ import {
   Tag,
   Sparkles,
   ShieldCheck,
+  HelpCircle,
+  FileText,
+  PhoneCall,
   Settings,
   LogOut,
   ExternalLink,
@@ -35,6 +38,9 @@ export default function AdminLayout({ children }) {
     { to: '/admin/analytics', label: t('admin.analytics'), icon: BarChart3 },
     { to: '/admin/promotions', label: 'Promotions', icon: Sparkles },
     { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] },
+    { to: '/admin/content/faqs', label: 'FAQs', icon: HelpCircle, aliases: ['/dashboard/content/faqs'] },
+    { to: '/admin/content/pages', label: 'Policies', icon: FileText, aliases: ['/dashboard/content/pages'] },
+    { to: '/admin/content/contact', label: 'Contact Info', icon: PhoneCall, aliases: ['/dashboard/content/contact'] },
     { to: '/admin/settings', label: t('admin.settings'), icon: Settings }
   ];
 
