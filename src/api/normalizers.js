@@ -156,7 +156,7 @@ export function normalizeProduct(raw) {
     stock: Number(p.stock !== undefined ? p.stock : 50),
     status: isActive ? 'ACTIVE' : 'INACTIVE',
     isActive: isActive,
-    featured: Boolean(p.featured !== undefined ? p.featured : (p.isFeatured !== undefined ? p.isFeatured : true)),
+    featured: Boolean(p.featured === true || p.isFeatured === true),
     isBestSeller: Boolean(p.isBestSeller || p.bestSeller),
     rating: Number(p.rating || 5.0),
     reviewsCount: Number(p.reviewCount || p.reviewsCount || (p.reviews ? p.reviews.length : 0)),

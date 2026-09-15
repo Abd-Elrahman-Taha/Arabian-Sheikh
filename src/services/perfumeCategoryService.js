@@ -1,6 +1,12 @@
 import { perfumeCategoryApi } from '../api/perfumeCategory.api';
 
-let cachedTiers = [];
+const DEFAULT_TIERS = [
+  { id: 1, name: 'Standard', price: 100, notes: 'Standard Perfume Tier' },
+  { id: 2, name: 'Premium', price: 150, notes: 'Premium Perfume Tier' },
+  { id: 3, name: 'Luxury', price: 300, notes: 'Luxury Perfume Tier' }
+];
+
+let cachedTiers = [...DEFAULT_TIERS];
 
 export const perfumeCategoryService = {
   handleApiError(err, fallbackMessage = 'An unexpected error occurred.') {

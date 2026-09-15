@@ -93,16 +93,19 @@ export default function AdminProducts() {
   const handleToggleDiscount = async (product, isEnabling, percent = 20) => {
     try {
       const pct = Number(percent) || 20;
+      const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(product.perfumeCategoryId))
+        || perfumeCategories.find(t => t.name?.toLowerCase() === (product.tier || product.perfumeCategoryName)?.toLowerCase());
+      const basePrice = product.originalPrice || (matchedTier && matchedTier.price ? Number(matchedTier.price) : product.price);
+
       setProducts(prev => prev.map(p => {
-        if (p.id === product.id) {
-          const basePrice = p.originalPrice || p.price;
+        if (p.id === product.id || String(p.id) === String(product.id)) {
           return {
             ...p,
             hasDiscount: isEnabling,
             isOffer: isEnabling,
             discountPercent: isEnabling ? pct : 0,
             originalPrice: isEnabling ? basePrice : null,
-            price: isEnabling ? Math.round(basePrice * (1 - pct / 100)) : (p.originalPrice || p.price)
+            price: isEnabling ? Math.round(basePrice * (1 - pct / 100)) : basePrice
           };
         }
         return p;
@@ -115,7 +118,7 @@ export default function AdminProducts() {
         await productService.removeProductDiscount(product.id);
         success(`Discount removed from '${product.name}'.`);
       }
-      fetchProducts();
+      await fetchProducts();
     } catch (err) {
       error(err.message || 'Failed to update discount');
       fetchProducts();
@@ -125,9 +128,12 @@ export default function AdminProducts() {
   const handleUpdateDiscountPercent = async (product, newPercent) => {
     try {
       const pct = Number(newPercent) || 10;
+      const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(product.perfumeCategoryId))
+        || perfumeCategories.find(t => t.name?.toLowerCase() === (product.tier || product.perfumeCategoryName)?.toLowerCase());
+      const basePrice = product.originalPrice || (matchedTier && matchedTier.price ? Number(matchedTier.price) : product.price);
+
       setProducts(prev => prev.map(p => {
-        if (p.id === product.id) {
-          const basePrice = p.originalPrice || p.price;
+        if (p.id === product.id || String(p.id) === String(product.id)) {
           return {
             ...p,
             hasDiscount: true,
@@ -141,7 +147,7 @@ export default function AdminProducts() {
       }));
       await productService.applyProductDiscount(product.id, pct);
       success(`Discount updated to ${pct}% for '${product.name}'.`);
-      fetchProducts();
+      await fetchProducts();
     } catch (err) {
       error(err.message || 'Failed to update discount');
       fetchProducts();
@@ -303,7 +309,7 @@ export default function AdminProducts() {
                               <span>{p.discountPercent || Math.round((1 - effectivePrice / p.originalPrice) * 100)}% OFF</span>
                             </span>
                             <button
-                              onClick={() => handleToggleDiscount({ ...p, price: effectivePrice }, false)}
+                              onClick={() => handleToggleDiscount(p, false)}
                               className="text-xs text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
                               title="Remove Discount"
                             >
@@ -314,7 +320,7 @@ export default function AdminProducts() {
                             <span className="text-xs text-[#D8BE99]">Rate:</span>
                             <select
                               value={p.discountPercent || 20}
-                              onChange={(e) => handleUpdateDiscountPercent({ ...p, price: effectivePrice }, e.target.value)}
+                              onChange={(e) => handleUpdateDiscountPercent(p, e.target.value)}
                               className="bg-black/90 border border-[#D4AF37]/50 text-[#F2D675] text-xs rounded px-2 py-1 focus:outline-none cursor-pointer font-medium"
                             >
                               <option value="10">10%</option>
@@ -330,7 +336,7 @@ export default function AdminProducts() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleToggleDiscount({ ...p, price: effectivePrice }, true, 20)}
+                          onClick={() => handleToggleDiscount(p, true, 20)}
                           className="px-3 py-1.5 bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-lg text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
                         >
                           <Percent className="w-3.5 h-3.5" />

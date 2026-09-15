@@ -108,10 +108,15 @@ export const productService = {
 
     // Filter by perfume tier
     if (filters.tier && filters.tier !== 'all') {
-      const targetTier = filters.tier.toLowerCase().trim();
+      const targetTier = filters.tier.toLowerCase().replace(/tier/g, '').trim();
       result = result.filter(p => {
-        const t = (p.tier || p.perfumeCategoryName || '').toLowerCase().trim();
-        return t === targetTier;
+        const t = (p.tier || p.perfumeCategoryName || '').toLowerCase().replace(/tier/g, '').trim();
+        const tId = String(p.perfumeCategoryId || p.perfumeCategory?.id || '');
+        return (
+          (t && (t === targetTier || t.includes(targetTier) || targetTier.includes(t))) ||
+          tId === targetTier ||
+          (p.perfumeCategory && String(p.perfumeCategory.name || '').toLowerCase().includes(targetTier))
+        );
       });
     }
 
@@ -194,6 +199,19 @@ export const productService = {
         delete apiFilters.BrandId;
       }
 
+      // Map tier name or id to perfumeCategoryId for backend API filtering
+      if (filters.tier && filters.tier !== 'all') {
+        const tiers = perfumeCategoryService.getCachedTiers() || [];
+        const targetTierName = String(filters.tier).toLowerCase().replace(/tier/g, '').trim();
+        const matched = tiers.find(t =>
+          String(t.id) === targetTierName ||
+          (t.name && t.name.toLowerCase().replace(/tier/g, '').trim() === targetTierName)
+        );
+        if (matched?.id) {
+          apiFilters.perfumeCategoryId = matched.id;
+        }
+      }
+
       let response = null;
       if (filters.includeDrafts) {
         try {
@@ -216,25 +234,43 @@ export const productService = {
           tiers = tiersRes?.items || [];
         }
         if (Array.isArray(tiers) && tiers.length > 0) {
-          const tierMap = new Map();
+          const tierById = new Map();
+          const tierByName = new Map();
+          const tierByPrice = new Map();
           tiers.forEach(t => {
-            tierMap.set(Number(t.id), t);
-            if (t.name) tierMap.set(String(t.name).toLowerCase(), t);
+            tierById.set(Number(t.id), t);
+            if (t.name) tierByName.set(String(t.name).toLowerCase().replace(/tier/g, '').trim(), t);
+            if (t.price !== undefined && !isNaN(Number(t.price)) && Number(t.price) > 0) {
+              tierByPrice.set(Number(t.price), t);
+            }
           });
 
           items = items.map(p => {
-            const pCatId = Number(p.perfumeCategoryId);
-            const isPerfume = Number(p.categoryId) === 1 || p.category === 'perfumes' || !!pCatId;
+            const pCatId = Number(p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null));
+            const catIdNum = Number(p.categoryId || (typeof p.category === 'object' ? p.category?.id : null));
+            const catNameStr = String(p.categoryName || (typeof p.category === 'object' ? p.category?.name : p.category) || '').toLowerCase();
+            const isPerfume = catIdNum === 1 || catNameStr.includes('perfume') || !!pCatId;
+
             if (isPerfume) {
-              const matchedTier = pCatId ? tierMap.get(pCatId) : (p.tier ? tierMap.get(String(p.tier).toLowerCase()) : null);
+              const matchedTier = pCatId
+                ? tierById.get(pCatId)
+                : (p.tier
+                    ? tierByName.get(String(p.tier).toLowerCase().replace(/tier/g, '').trim())
+                    : (p.perfumeCategoryName
+                        ? tierByName.get(String(p.perfumeCategoryName).toLowerCase().replace(/tier/g, '').trim())
+                        : tierByPrice.get(Number(p.originalPrice || p.price))));
+
               if (matchedTier) {
                 const tierPrice = Number(matchedTier.price);
+                const basePrice = tierPrice > 0 ? tierPrice : (Number(p.price) || 0);
                 return {
                   ...p,
                   tier: matchedTier.name,
                   perfumeCategoryName: matchedTier.name,
                   perfumeCategoryId: matchedTier.id,
-                  price: tierPrice > 0 ? tierPrice : (Number(p.price) || 0)
+                  price: (p.hasDiscount || (p.discountPercent > 0)) ? p.price : basePrice,
+                  originalPrice: p.originalPrice || basePrice,
+                  tierPrice: tierPrice
                 };
               }
             }
@@ -258,17 +294,32 @@ export const productService = {
           const pNumStr = p.numericId ? String(p.numericId) : null;
           const discountOverride = storedDiscounts[pIdStr] || (pNumStr && storedDiscounts[pNumStr]);
 
-          if (discountOverride && discountOverride.hasDiscount) {
-            const pct = Number(discountOverride.discountPercent) || 10;
-            const basePrice = p.originalPrice || p.price;
-            return {
-              ...p,
-              hasDiscount: true,
-              isOffer: true,
-              discountPercent: pct,
-              originalPrice: basePrice,
-              price: Math.round(basePrice * (1 - pct / 100))
-            };
+          if (discountOverride) {
+            if (discountOverride.removed === true || discountOverride.hasDiscount === false) {
+              // Explicitly removed by admin: force un-discounted price, DO NOT let activePromos resurrect it!
+              const unDiscountedPrice = p.tierPrice || (p.perfumeCategoryId ? perfumeCategoryService.getTierPrice(p.perfumeCategoryId) : null) || p.originalPrice || p.price;
+              return {
+                ...p,
+                hasDiscount: false,
+                isOffer: false,
+                discountPercent: 0,
+                originalPrice: null,
+                price: unDiscountedPrice
+              };
+            }
+
+            if (discountOverride.hasDiscount === true) {
+              const pct = Number(discountOverride.discountPercent) || 10;
+              const basePrice = discountOverride.originalPrice || p.tierPrice || (p.perfumeCategoryId ? perfumeCategoryService.getTierPrice(p.perfumeCategoryId) : null) || p.originalPrice || p.price;
+              return {
+                ...p,
+                hasDiscount: true,
+                isOffer: true,
+                discountPercent: pct,
+                originalPrice: basePrice,
+                price: Math.round(basePrice * (1 - pct / 100))
+              };
+            }
           }
 
           if (Array.isArray(activePromos) && activePromos.length > 0) {
@@ -279,7 +330,7 @@ export const productService = {
                 hasDiscount: true,
                 isOffer: true,
                 discountPercent: promoCalc.discountPercent,
-                originalPrice: promoCalc.originalPrice || p.price,
+                originalPrice: promoCalc.originalPrice || p.tierPrice || p.price,
                 price: promoCalc.price
               };
             }
@@ -528,12 +579,18 @@ export const productService = {
     const targetId = this.resolveTargetId(id) || id;
     const targetKey = String(targetId);
 
-    // 1. Save to persistent storage immediately so refresh never loses the discount
+    // Determine genuine un-discounted base price
+    const prod = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id);
+    const unDiscountedBase = prod?.originalPrice || prod?.tierPrice || (prod?.perfumeCategoryId ? perfumeCategoryService.getTierPrice(prod.perfumeCategoryId) : null) || prod?.price;
+
+    // 1. Save to persistent storage immediately with explicit base price
     const stored = getStoredDiscounts();
     stored[targetKey] = {
       discountPercent: pct,
       hasDiscount: true,
       isOffer: true,
+      originalPrice: unDiscountedBase,
+      removed: false,
       updatedAt: Date.now()
     };
     if (String(id) !== targetKey) {
@@ -541,11 +598,12 @@ export const productService = {
     }
     saveStoredDiscounts(stored);
 
+    // Invalidate promotions cache so stale promotions don't interfere
+    promotionService.clearCache();
+
     // 2. Also create/activate backend promotion in database via promotionApi
     try {
-      const prod = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(targetId));
       const prodName = prod?.name || `Product #${targetId}`;
-
       const promosRes = await promotionApi.adminGetPromotions({ pageSize: 100 }).catch(() => null);
       const items = promosRes?.items || (Array.isArray(promosRes) ? promosRes : []);
       const existingPromo = items.find(p => {
@@ -584,14 +642,13 @@ export const productService = {
     // 3. Update memory catalog
     memoryCatalog = memoryCatalog.map(p => {
       if (String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id) {
-        const base = p.originalPrice || p.price;
         return {
           ...p,
           hasDiscount: true,
           isOffer: true,
           discountPercent: pct,
-          originalPrice: base,
-          price: Math.round(base * (1 - pct / 100))
+          originalPrice: unDiscountedBase,
+          price: Math.round(unDiscountedBase * (1 - pct / 100))
         };
       }
       return p;
@@ -604,38 +661,55 @@ export const productService = {
     const targetId = this.resolveTargetId(id) || id;
     const targetKey = String(targetId);
 
-    // 1. Remove from persistent storage
+    // Determine genuine un-discounted base price
+    const prod = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id);
+    const unDiscountedBase = prod?.originalPrice || prod?.tierPrice || (prod?.perfumeCategoryId ? perfumeCategoryService.getTierPrice(prod.perfumeCategoryId) : null) || prod?.price;
+
+    // 1. Explicitly record discount removal in persistent storage so it is never resurrected
     const stored = getStoredDiscounts();
-    delete stored[targetKey];
-    delete stored[String(id)];
+    stored[targetKey] = {
+      discountPercent: 0,
+      hasDiscount: false,
+      isOffer: false,
+      originalPrice: unDiscountedBase,
+      removed: true,
+      updatedAt: Date.now()
+    };
+    if (String(id) !== targetKey) {
+      stored[String(id)] = stored[targetKey];
+    }
     saveStoredDiscounts(stored);
+
+    // Invalidate promotions cache so stale promotions don't resurrect the discount
+    promotionService.clearCache();
 
     // 2. Deactivate backend promotion if exists
     try {
       const promosRes = await promotionApi.adminGetPromotions({ pageSize: 100 }).catch(() => null);
       const items = promosRes?.items || (Array.isArray(promosRes) ? promosRes : []);
-      const existingPromo = items.find(p => {
+      const existingPromos = items.filter(p => {
         const rules = p.applicability || p.applicabilities || [];
         return rules.some(r => r.targetType === 'Product' && Number(r.targetId) === Number(targetId));
       });
-      if (existingPromo?.id) {
-        await promotionApi.adminDeactivatePromotion(existingPromo.id, 'Discount removed from dashboard').catch(() => {});
+      for (const promo of existingPromos) {
+        if (promo?.id) {
+          await promotionApi.adminDeactivatePromotion(promo.id, 'Discount removed from dashboard').catch(() => {});
+        }
       }
     } catch (e) {
       console.warn('Backend promotion removal warning:', e.message);
     }
 
-    // 3. Update memory catalog
+    // 3. Update memory catalog to restored un-discounted base price
     memoryCatalog = memoryCatalog.map(p => {
       if (String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id) {
-        const orig = p.originalPrice || p.price;
         return {
           ...p,
           hasDiscount: false,
           isOffer: false,
           discountPercent: 0,
           originalPrice: null,
-          price: orig
+          price: unDiscountedBase
         };
       }
       return p;

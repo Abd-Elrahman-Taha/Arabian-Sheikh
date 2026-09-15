@@ -14,18 +14,6 @@ export default function ProductCard({ product, onCompare }) {
   const { isInWishlist, toggleWishlist, heartAnimatedId } = useWishlist();
   const { isDark } = useTheme();
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [promoInfo, setPromoInfo] = useState(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    promotionService.getActivePromotions().then(promos => {
-      if (isMounted && product) {
-        const info = promotionService.calculateProductPromotion(product, promos);
-        setPromoInfo(info);
-      }
-    }).catch(() => {});
-    return () => { isMounted = false; };
-  }, [product]);
 
   if (!product) return null;
 
@@ -33,9 +21,20 @@ export default function ProductCard({ product, onCompare }) {
   const isOutOfStock = product.status === 'OUT_OF_STOCK' || product.stock === 0;
   const isHeartPopping = heartAnimatedId === product.id;
 
-  const currentPrice = promoInfo?.hasPromotion ? promoInfo.price : product.price;
-  const strikePrice = promoInfo?.hasPromotion ? promoInfo.originalPrice : (product.originalPrice || null);
-  const discountPct = promoInfo?.hasPromotion ? promoInfo.discountPercent : (product.discountPercent || 0);
+  const hasActiveDiscount = Boolean(
+    product.hasDiscount && (
+      (product.discountPercent && Number(product.discountPercent) > 0) ||
+      (product.originalPrice && Number(product.originalPrice) > Number(product.price))
+    )
+  );
+
+  const currentPrice = Number(product.price) || 0;
+  const strikePrice = hasActiveDiscount && product.originalPrice && Number(product.originalPrice) > currentPrice
+    ? Number(product.originalPrice)
+    : null;
+  const discountPct = hasActiveDiscount
+    ? (Number(product.discountPercent) || (strikePrice ? Math.round((1 - currentPrice / strikePrice) * 100) : 0))
+    : 0;
 
   const displayName = language === 'bg' && product.bulgarianName
     ? product.bulgarianName
@@ -69,8 +68,12 @@ export default function ProductCard({ product, onCompare }) {
 
   // Tier color styling
   const tierBadges = {
-    Luxury: 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]',
+    Luxury: 'bg-gradient-to-r from-amber-500 to-amber-700 text-black font-bold border border-amber-300 shadow-md',
+    Premium: 'bg-gradient-to-r from-blue-900 to-indigo-900 text-blue-100 font-bold border border-blue-400/50 shadow-md',
+    Standard: 'bg-neutral-800 text-neutral-100 font-bold border border-neutral-600 shadow-md',
     Royal: isDark ? 'bg-[#180F08] text-[#F5EAD3] border border-[#D4AF37]/50' : 'bg-[#E2D5BC] text-[#704622] border border-[#A8853B]/40',
+    Imperial: 'bg-gradient-to-r from-purple-900 to-purple-950 text-amber-200 font-bold border border-amber-400/50',
+    Signature: 'bg-[#1A1813] text-[#F2D675] font-bold border border-[#D4AF37]/50',
     Classic: isDark ? 'bg-[#F5EAD3] text-black border border-[#D4AF37]/40' : 'bg-[#FBF6EC] text-[#704622] border border-[#A8853B]/30'
   };
 
@@ -85,19 +88,14 @@ export default function ProductCard({ product, onCompare }) {
     >
       {/* Top Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
-        {promoInfo?.hasPromotion ? (
-          <span className="bg-gradient-to-r from-amber-600 via-[#D4AF37] to-amber-700 text-black text-[10px] font-bold font-cinzel tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-[#F2D675] flex items-center gap-1">
-            <Sparkles className="w-2.5 h-2.5" />
-            <span>-{discountPct}% • {promoInfo.promotionName}</span>
-          </span>
-        ) : (product.hasDiscount || (product.discountPercent && product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) ? (
+        {hasActiveDiscount && discountPct > 0 ? (
           <span className="bg-gradient-to-r from-red-700 via-amber-600 to-red-800 text-white text-[10px] font-bold font-cinzel tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-amber-300/50 flex items-center gap-1">
             <Percent className="w-2.5 h-2.5" />
-            <span>-{product.discountPercent || Math.round((1 - product.price / product.originalPrice) * 100)}%</span>
+            <span>-{discountPct}%</span>
           </span>
         ) : null}
         {product.tier && (
-          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
+          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || tierBadges[String(product.tier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
             {product.tier.toLowerCase().includes('tier') ? product.tier : `${product.tier} Tier`}
           </span>
         )}

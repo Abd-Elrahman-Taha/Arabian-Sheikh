@@ -43,7 +43,9 @@ export const promotionService = {
   async createPromotion(payload) {
     this.validatePromotionData(payload);
     try {
-      return await promotionApi.adminCreatePromotion(payload);
+      const result = await promotionApi.adminCreatePromotion(payload);
+      this.clearCache();
+      return result;
     } catch (err) {
       this.handleApiError(err);
     }
@@ -55,7 +57,9 @@ export const promotionService = {
   async updatePromotion(id, payload) {
     this.validatePromotionData(payload);
     try {
-      return await promotionApi.adminUpdatePromotion(id, payload);
+      const result = await promotionApi.adminUpdatePromotion(id, payload);
+      this.clearCache();
+      return result;
     } catch (err) {
       this.handleApiError(err);
     }
@@ -66,7 +70,9 @@ export const promotionService = {
    */
   async deletePromotion(id) {
     try {
-      return await promotionApi.adminDeletePromotion(id);
+      const result = await promotionApi.adminDeletePromotion(id);
+      this.clearCache();
+      return result;
     } catch (err) {
       this.handleApiError(err);
     }
@@ -77,7 +83,9 @@ export const promotionService = {
    */
   async activatePromotion(id) {
     try {
-      return await promotionApi.adminActivatePromotion(id);
+      const result = await promotionApi.adminActivatePromotion(id);
+      this.clearCache();
+      return result;
     } catch (err) {
       this.handleApiError(err);
     }
@@ -88,7 +96,9 @@ export const promotionService = {
    */
   async deactivatePromotion(id, reason = '') {
     try {
-      return await promotionApi.adminDeactivatePromotion(id, reason);
+      const result = await promotionApi.adminDeactivatePromotion(id, reason);
+      this.clearCache();
+      return result;
     } catch (err) {
       this.handleApiError(err);
     }
@@ -290,6 +300,11 @@ export const promotionService = {
 
   _cachedActivePromos: null,
   _lastFetchTime: 0,
+
+  clearCache() {
+    this._cachedActivePromos = null;
+    this._lastFetchTime = 0;
+  },
 
   /**
    * Get currently active promotions for customer storefront with full applicability rules
