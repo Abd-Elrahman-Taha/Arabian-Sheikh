@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
 import { productApi } from '../../api/product.api';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -24,13 +25,7 @@ export default function AdminProducts() {
   const { success, error } = useToast();
 
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Perfumes' },
-    { id: 2, name: 'Oils' },
-    { id: 3, name: 'Bakhoor' },
-    { id: 4, name: 'Cosmetics' },
-    { id: 5, name: 'Bundles' }
-  ]);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
@@ -39,11 +34,13 @@ export default function AdminProducts() {
   useEffect(() => {
     async function loadCategories() {
       try {
-        const list = await productApi.adminGetCategories().catch(() => null) || await productApi.getCategories().catch(() => null);
-        if (Array.isArray(list) && list.length > 0) {
-          setCategories(list);
+        const data = await categoryService.getAdminCategories({ pageSize: 100 });
+        if (data?.items && data.items.length > 0) {
+          setCategories(data.items);
         }
-      } catch {}
+      } catch (err) {
+        console.warn('Failed to load categories for filter:', err.message);
+      }
     }
     loadCategories();
   }, []);

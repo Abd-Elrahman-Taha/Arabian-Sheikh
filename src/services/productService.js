@@ -43,8 +43,17 @@ export const productService = {
       });
     }
 
+    // Filter by brand
+    if (filters.brandId && filters.brandId !== 'all') {
+      const bId = Number(filters.brandId);
+      result = result.filter(p => Number(p.brandId || p.brand?.id) === bId);
+    }
+
     // Filter by category
-    if (filters.category && filters.category !== 'all') {
+    if (filters.categoryId && filters.categoryId !== 'all') {
+      const cId = Number(filters.categoryId);
+      result = result.filter(p => Number(p.categoryId || p.category?.id) === cId);
+    } else if (filters.category && filters.category !== 'all') {
       const cat = filters.category.toLowerCase().trim();
       if (cat === 'offers' || cat === 'discounts') {
         result = result.filter(p => p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
@@ -61,6 +70,12 @@ export const productService = {
             (cat === 'bundles' && (c.includes('bundle') || catId === '5'));
         });
       }
+    }
+
+    // Filter by subcategory
+    if (filters.subcategoryId && filters.subcategoryId !== 'all') {
+      const sId = Number(filters.subcategoryId);
+      result = result.filter(p => Number(p.subcategoryId || p.subcategory?.id) === sId);
     }
 
     // Filter by perfume tier
@@ -123,8 +138,34 @@ export const productService = {
    */
   async getAllProducts(filters = {}) {
     try {
-      const { gender, Gender, category, Category, categoryId, CategoryId, ...apiFilters } = filters;
-      
+      const apiFilters = { ...filters };
+      delete apiFilters.category;
+      delete apiFilters.Category;
+
+      if (filters.categoryId && filters.categoryId !== 'all') {
+        const cId = Number(filters.categoryId);
+        if (!isNaN(cId) && cId > 0) apiFilters.categoryId = cId;
+      } else {
+        delete apiFilters.categoryId;
+        delete apiFilters.CategoryId;
+      }
+
+      if (filters.subcategoryId && filters.subcategoryId !== 'all') {
+        const sId = Number(filters.subcategoryId);
+        if (!isNaN(sId) && sId > 0) apiFilters.subcategoryId = sId;
+      } else {
+        delete apiFilters.subcategoryId;
+        delete apiFilters.SubcategoryId;
+      }
+
+      if (filters.brandId && filters.brandId !== 'all') {
+        const bId = Number(filters.brandId);
+        if (!isNaN(bId) && bId > 0) apiFilters.brandId = bId;
+      } else {
+        delete apiFilters.brandId;
+        delete apiFilters.BrandId;
+      }
+
       let response = null;
       if (filters.includeDrafts) {
         try {
@@ -260,6 +301,11 @@ export const productService = {
     if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
     if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
     return null;
+  },
+
+  async uploadProductImage(file) {
+    const res = await productApi.adminUploadProductImages(file);
+    return res?.url || res?.imageUrl || (Array.isArray(res) ? res[0]?.url : null) || res;
   },
 
   async createProduct(productData) {

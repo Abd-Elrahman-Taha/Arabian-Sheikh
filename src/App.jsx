@@ -69,6 +69,10 @@ import AdminSettings from './pages/admin/AdminSettings';
 import AdminFaqs from './pages/admin/AdminFaqs';
 import AdminPages from './pages/admin/AdminPages';
 import AdminContact from './pages/admin/AdminContact';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminSubcategories from './pages/admin/AdminSubcategories';
+import AdminBrands from './pages/admin/AdminBrands';
+import AdminPerfumeCategories from './pages/admin/AdminPerfumeCategories';
 
 // Public Content Pages
 import FaqPage from './pages/FaqPage';
@@ -99,9 +103,13 @@ function MainRouter() {
         <AdminLayout>
           {currentPath === '/admin' && <AdminDashboard />}
           {currentPath === '/admin/products' && <AdminProducts />}
-          {(currentPath === '/admin/products/new' || (currentPath.startsWith('/admin/products/') && currentPath.endsWith('/edit'))) && (
+          {(currentPath === '/admin/products/new' || currentPath === '/admin/products/add' || currentPath === '/admin/add-product' || (currentPath.startsWith('/admin/products/') && currentPath.endsWith('/edit'))) && (
             <AdminProductEdit />
           )}
+          {currentPath === '/admin/categories' && <AdminCategories />}
+          {currentPath === '/admin/subcategories' && <AdminSubcategories />}
+          {currentPath === '/admin/brands' && <AdminBrands />}
+          {currentPath === '/admin/perfume-categories' && <AdminPerfumeCategories />}
           {currentPath === '/admin/orders' && <AdminOrders />}
           {currentPath === '/admin/users' && <AdminUsers />}
           {(currentPath === '/admin/admins' || currentPath === '/admin/administrators' || currentPath === '/admin/management') && (

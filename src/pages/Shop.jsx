@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { productService } from '../services/productService';
-import { productApi } from '../api/product.api';
+import { categoryService } from '../services/categoryService';
+import { brandService } from '../services/brandService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import {
@@ -12,11 +13,12 @@ import {
   X,
   RotateCcw,
   Sparkles,
-  ChevronDown,
   Layers,
-  Crown
+  FolderTree,
+  Crown,
+  Building2,
+  Tag
 } from 'lucide-react';
-
 import BlurText from '../components/common/BlurText';
 
 export default function Shop() {
@@ -24,55 +26,226 @@ export default function Shop() {
   const { t, language, isRtl } = useTranslation();
   const { isDark } = useTheme();
 
+  // Dynamic Lookup Data
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+
+  // Catalog Products & Loading States
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [apiCategories, setApiCategories] = useState([
-    { id: 1, name: 'Perfumes', slug: 'perfumes' },
-    { id: 2, name: 'Oils', slug: 'oils' },
-    { id: 3, name: 'Bakhoor', slug: 'bakhoor' },
-    { id: 4, name: 'Cosmetics', slug: 'cosmetics' },
-    { id: 5, name: 'Bundles', slug: 'bundles' }
-  ]);
 
-  const initialCategory = queryParams.get('category') || 'all';
+  // Active Filter States (initialized from URL params)
+  const initialCategory = queryParams.get('category') || queryParams.get('categoryId') || 'all';
+  const initialSubcategory = queryParams.get('subcategoryId') || 'all';
+  const initialBrand = queryParams.get('brandId') || 'all';
   const initialTier = queryParams.get('tier') || 'all';
   const initialGender = queryParams.get('gender') || 'all';
-  const initialFamily = queryParams.get('family') || 'all';
   const initialSearch = queryParams.get('search') || '';
-  const initialSort = queryParams.get('sort') || 'featured';
+  const initialMaxPrice = Number(queryParams.get('maxPrice')) || 500;
+  const initialSort = queryParams.get('sortBy') || queryParams.get('sort') || 'featured';
+  const initialInStock = queryParams.get('inStock') === 'true';
 
-  const [category, setCategory] = useState(initialCategory);
-  const [tier, setTier] = useState(initialTier);
-  const [gender, setGender] = useState(initialGender);
-  const [family, setFamily] = useState(initialFamily);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(initialSubcategory);
+  const [selectedBrand, setSelectedBrand] = useState(initialBrand);
+  const [selectedTier, setSelectedTier] = useState(initialTier);
+  const [selectedGender, setSelectedGender] = useState(initialGender);
   const [search, setSearch] = useState(initialSearch);
-  const [maxPrice, setMaxPrice] = useState(500);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [minRating, setMinRating] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+  const [inStockOnly, setInStockOnly] = useState(initialInStock);
   const [sortBy, setSortBy] = useState(initialSort);
 
+  // Helper to resolve numeric category ID from current selection
+  const activeCategoryId = useMemo(() => {
+    if (selectedCategory === 'all' || selectedCategory === 'offers') return null;
+    const num = Number(selectedCategory);
+    if (!isNaN(num) && num > 0) return num;
+    const found = categories.find(c =>
+      c.id === selectedCategory ||
+      (c.name && c.name.toLowerCase() === selectedCategory.toLowerCase()) ||
+      (c.slug && c.slug.toLowerCase() === selectedCategory.toLowerCase())
+    );
+    return found ? Number(found.id) : null;
+  }, [selectedCategory, categories]);
+
+  // 1. Fetch Dynamic Categories and Brands on Mount / Language Change
   useEffect(() => {
-    async function loadCategories() {
+    let isMounted = true;
+
+    async function loadCatalogTaxonomy() {
       try {
-        const list = await productApi.getCategories().catch(() => null) || await productApi.adminGetCategories().catch(() => null);
-        if (Array.isArray(list) && list.length > 0) {
-          setApiCategories(list);
+        const [catsData, brandsData] = await Promise.all([
+          categoryService.getStoreCategories(language).catch(() => []),
+          brandService.getStoreBrands(language).catch(() => [])
+        ]);
+
+        if (isMounted) {
+          setCategories(Array.isArray(catsData) ? catsData : []);
+          setBrands(Array.isArray(brandsData) ? brandsData : []);
         }
-      } catch {}
+      } catch (err) {
+        console.warn('Failed to load store taxonomy:', err.message);
+      }
     }
-    loadCategories();
-  }, []);
 
+    loadCatalogTaxonomy();
+    return () => { isMounted = false; };
+  }, [language]);
+
+  // 2. Fetch Cascading Subcategories when category changes
   useEffect(() => {
-    if (queryParams.get('category')) setCategory(queryParams.get('category'));
-    if (queryParams.get('tier')) setTier(queryParams.get('tier'));
-    if (queryParams.get('gender')) setGender(queryParams.get('gender'));
-    if (queryParams.get('family')) setFamily(queryParams.get('family'));
-    if (queryParams.get('search')) setSearch(queryParams.get('search'));
-    if (queryParams.get('sort')) setSortBy(queryParams.get('sort'));
-  }, [queryParams]);
+    let isMounted = true;
 
+    if (!activeCategoryId) {
+      setSubcategories([]);
+      return;
+    }
+
+    async function loadSubcategories() {
+      setSubcategoriesLoading(true);
+      try {
+        const subData = await categoryService.getStoreSubcategories(activeCategoryId, language);
+        if (isMounted) {
+          setSubcategories(Array.isArray(subData) ? subData : []);
+        }
+      } catch (err) {
+        console.warn('Failed to load subcategories for category', activeCategoryId, err.message);
+        if (isMounted) setSubcategories([]);
+      } finally {
+        if (isMounted) setSubcategoriesLoading(false);
+      }
+    }
+
+    loadSubcategories();
+    return () => { isMounted = false; };
+  }, [activeCategoryId, language]);
+
+  // 3. Synchronize Filters to URL Query Parameters
+  const updateUrlParams = useCallback((newParams) => {
+    const params = new URLSearchParams();
+
+    if (newParams.category && newParams.category !== 'all') {
+      params.set('category', newParams.category);
+      if (newParams.categoryId) params.set('categoryId', newParams.categoryId);
+    }
+    if (newParams.subcategoryId && newParams.subcategoryId !== 'all') {
+      params.set('subcategoryId', newParams.subcategoryId);
+    }
+    if (newParams.brandId && newParams.brandId !== 'all') {
+      params.set('brandId', newParams.brandId);
+    }
+    if (newParams.tier && newParams.tier !== 'all') {
+      params.set('tier', newParams.tier);
+    }
+    if (newParams.gender && newParams.gender !== 'all') {
+      params.set('gender', newParams.gender);
+    }
+    if (newParams.search && newParams.search.trim()) {
+      params.set('search', newParams.search.trim());
+    }
+    if (newParams.maxPrice && newParams.maxPrice < 500) {
+      params.set('maxPrice', String(newParams.maxPrice));
+    }
+    if (newParams.inStockOnly) {
+      params.set('inStock', 'true');
+    }
+    if (newParams.sortBy && newParams.sortBy !== 'featured') {
+      params.set('sortBy', newParams.sortBy);
+    }
+
+    const queryStr = params.toString();
+    const targetPath = `/shop${queryStr ? `?${queryStr}` : ''}`;
+    navigate(targetPath);
+  }, [navigate]);
+
+  // 4. Fetch Products whenever filters change
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchProducts() {
+      setLoading(true);
+      try {
+        const queryFilter = {
+          category: selectedCategory,
+          categoryId: activeCategoryId || undefined,
+          subcategoryId: selectedSubcategory !== 'all' ? selectedSubcategory : undefined,
+          brandId: selectedBrand !== 'all' ? selectedBrand : undefined,
+          tier: selectedTier !== 'all' ? selectedTier : undefined,
+          gender: selectedGender !== 'all' ? selectedGender : undefined,
+          search: search.trim() || undefined,
+          maxPrice,
+          inStockOnly,
+          sortBy,
+          language
+        };
+
+        const data = await productService.getAllProducts(queryFilter);
+        if (isMounted) {
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching catalog products:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchProducts();
+    return () => { isMounted = false; };
+  }, [
+    selectedCategory,
+    activeCategoryId,
+    selectedSubcategory,
+    selectedBrand,
+    selectedTier,
+    selectedGender,
+    search,
+    maxPrice,
+    inStockOnly,
+    sortBy,
+    language
+  ]);
+
+  // Listen to cloud updates across browsers/tabs
+  useEffect(() => {
+    const handleCloudUpdate = () => {
+      productService.getAllProducts({
+        category: selectedCategory,
+        categoryId: activeCategoryId || undefined,
+        subcategoryId: selectedSubcategory !== 'all' ? selectedSubcategory : undefined,
+        brandId: selectedBrand !== 'all' ? selectedBrand : undefined,
+        tier: selectedTier !== 'all' ? selectedTier : undefined,
+        gender: selectedGender !== 'all' ? selectedGender : undefined,
+        search: search.trim() || undefined,
+        maxPrice,
+        inStockOnly,
+        sortBy,
+        language
+      }).then(data => {
+        setProducts(data);
+      }).catch(() => {});
+    };
+
+    window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+  }, [
+    selectedCategory,
+    activeCategoryId,
+    selectedSubcategory,
+    selectedBrand,
+    selectedTier,
+    selectedGender,
+    search,
+    maxPrice,
+    inStockOnly,
+    sortBy,
+    language
+  ]);
+
+  // Lock body scroll when mobile filter is open
   useEffect(() => {
     if (mobileFilterOpen) {
       document.body.style.overflow = 'hidden';
@@ -84,89 +257,196 @@ export default function Shop() {
     };
   }, [mobileFilterOpen]);
 
-  useEffect(() => {
-    async function fetchProducts() {
-      setLoading(true);
-      try {
-        const data = await productService.getAllProducts({
-          category, tier, gender, family, search,
-          maxPrice, inStockOnly, minRating, sortBy,
-          language
-        });
-        setProducts(data);
-      } catch (e) {
-        console.error('Error fetching products:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy, language]);
+  // Handlers for Filter Updates with URL Sync
+  const handleCategorySelect = (catId) => {
+    setSelectedCategory(catId);
+    setSelectedSubcategory('all'); // Reset subcategory on category change
 
-  useEffect(() => {
-    const handleCloudUpdate = () => {
-      productService.getAllProducts({
-        category, tier, gender, family, search,
-        maxPrice, inStockOnly, minRating, sortBy,
-        language
-      }).then(data => {
-        setProducts(data);
-      }).catch(() => {});
-    };
+    const isNum = !isNaN(Number(catId)) && Number(catId) > 0;
+    updateUrlParams({
+      category: catId,
+      categoryId: isNum ? catId : undefined,
+      subcategoryId: 'all',
+      brandId: selectedBrand,
+      tier: selectedTier,
+      gender: selectedGender,
+      search,
+      maxPrice,
+      inStockOnly,
+      sortBy
+    });
+  };
 
-    window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-    return () => window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
-  }, [category, tier, gender, family, search, maxPrice, inStockOnly, minRating, sortBy, language]);
+  const handleSubcategorySelect = (subId) => {
+    setSelectedSubcategory(subId);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: subId,
+      brandId: selectedBrand,
+      tier: selectedTier,
+      gender: selectedGender,
+      search,
+      maxPrice,
+      inStockOnly,
+      sortBy
+    });
+  };
+
+  const handleBrandSelect = (bId) => {
+    setSelectedBrand(bId);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: selectedSubcategory,
+      brandId: bId,
+      tier: selectedTier,
+      gender: selectedGender,
+      search,
+      maxPrice,
+      inStockOnly,
+      sortBy
+    });
+  };
+
+  const handleTierSelect = (tId) => {
+    setSelectedTier(tId);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: selectedSubcategory,
+      brandId: selectedBrand,
+      tier: tId,
+      gender: selectedGender,
+      search,
+      maxPrice,
+      inStockOnly,
+      sortBy
+    });
+  };
+
+  const handleGenderSelect = (gId) => {
+    setSelectedGender(gId);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: selectedSubcategory,
+      brandId: selectedBrand,
+      tier: selectedTier,
+      gender: gId,
+      search,
+      maxPrice,
+      inStockOnly,
+      sortBy
+    });
+  };
+
+  const handlePriceChange = (val) => {
+    setMaxPrice(val);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: selectedSubcategory,
+      brandId: selectedBrand,
+      tier: selectedTier,
+      gender: selectedGender,
+      search,
+      maxPrice: val,
+      inStockOnly,
+      sortBy
+    });
+  };
+
+  const handleInStockToggle = (checked) => {
+    setInStockOnly(checked);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: selectedSubcategory,
+      brandId: selectedBrand,
+      tier: selectedTier,
+      gender: selectedGender,
+      search,
+      maxPrice,
+      inStockOnly: checked,
+      sortBy
+    });
+  };
+
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    updateUrlParams({
+      category: selectedCategory,
+      categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+      subcategoryId: selectedSubcategory,
+      brandId: selectedBrand,
+      tier: selectedTier,
+      gender: selectedGender,
+      search,
+      maxPrice,
+      inStockOnly,
+      sortBy: newSort
+    });
+  };
 
   const resetFilters = () => {
-    setCategory('all');
-    setTier('all');
-    setGender('all');
-    setFamily('all');
+    setSelectedCategory('all');
+    setSelectedSubcategory('all');
+    setSelectedBrand('all');
+    setSelectedTier('all');
+    setSelectedGender('all');
     setSearch('');
     setMaxPrice(500);
     setInStockOnly(false);
-    setMinRating(0);
     setSortBy('featured');
     navigate('/shop');
   };
 
   const hasActiveFilters =
-    category !== 'all' || tier !== 'all' || gender !== 'all' ||
-    family !== 'all' || search !== '' || maxPrice < 150 || inStockOnly || minRating > 0;
+    selectedCategory !== 'all' ||
+    selectedSubcategory !== 'all' ||
+    selectedBrand !== 'all' ||
+    selectedTier !== 'all' ||
+    selectedGender !== 'all' ||
+    search !== '' ||
+    maxPrice < 500 ||
+    inStockOnly;
 
-  const categoriesList = [
+  // Build Dynamic Categories List (with "All" and "Offers")
+  const categoriesList = useMemo(() => [
     { id: 'all', label: t('catalog.allCatalog') || 'All Catalog' },
     { id: 'offers', label: t('catalog.offersAndDiscounts') || 'Offers & Discounts' },
-    ...apiCategories.map(c => {
-      const catKey = (c.slug || c.name || `category-${c.id}`).toLowerCase().trim();
-      let displayName = c.name || `Category #${c.id}`;
-      if (catKey.includes('perfume')) displayName = t('nav.perfumes') || 'Perfumes';
-      else if (catKey.includes('oil')) displayName = t('nav.oils') || 'Oils';
-      else if (catKey.includes('bakhoor') || catKey.includes('incense')) displayName = t('nav.bakhoor') || 'Bakhoor';
-      else if (catKey.includes('cosmetic')) displayName = t('nav.cosmetics') || 'Cosmetics';
-      else if (catKey.includes('bundle')) displayName = t('nav.bundles') || 'Bundles';
-      return {
-        id: catKey,
-        rawId: c.id,
-        label: displayName
-      };
-    })
-  ];
+    ...categories.map(c => ({
+      id: String(c.id),
+      rawId: c.id,
+      label: c.name
+    }))
+  ], [categories, t]);
 
+  // Perfume Tiers
   const tiersList = [
     { id: 'all', label: t('catalog.allTiers') || 'All Tiers' },
-    { id: 'Luxury', label: t('tiers.luxury') || 'Luxury (€50)' },
-    { id: 'Royal', label: t('tiers.royal') || 'Royal (€40)' },
-    { id: 'Classic', label: t('tiers.classic') || 'Classic (€30)' }
+    { id: 'Luxury', label: t('tiers.luxury') || 'Luxury Tier (€50)' },
+    { id: 'Royal', label: t('tiers.royal') || 'Royal Tier (€40)' },
+    { id: 'Classic', label: t('tiers.classic') || 'Classic Tier (€30)' }
   ];
 
+  // Active Category Name for Header
+  const activeCategoryTitle = useMemo(() => {
+    if (selectedCategory === 'all') return t('catalog.allCreations') || 'All Creations';
+    if (selectedCategory === 'offers') return t('catalog.offersAndDiscounts') || 'Offers & Discounts';
+    const found = categories.find(c => String(c.id) === String(selectedCategory));
+    return found ? found.name : selectedCategory.toUpperCase();
+  }, [selectedCategory, categories, t]);
+
+  // Filter Sidebar UI
   const filterSidebar = (
     <div className={`space-y-6 text-xs ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-3">
-        <h3 className="font-cinzel text-sm font-bold uppercase tracking-widest text-[#D4AF37]">
-          {t('catalog.filterCollection') || 'Filter Collection'}
+        <h3 className="font-cinzel text-sm font-bold uppercase tracking-widest text-[#D4AF37] flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4" />
+          <span>{t('catalog.filterCollection') || 'Filter Collection'}</span>
         </h3>
         {hasActiveFilters && (
           <button
@@ -179,61 +459,161 @@ export default function Shop() {
         )}
       </div>
 
-      {/* Category Filter */}
+      {/* 1. Dynamic Categories */}
       <div className="space-y-2">
-        <label className={`font-cinzel text-[11px] uppercase tracking-wider block font-bold ${
+        <label className={`font-cinzel text-[11px] uppercase tracking-wider flex items-center gap-1.5 font-bold ${
           isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
         }`}>
-          {t('catalog.category') || 'Category'}
+          <Layers className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <span>{t('catalog.category') || 'Category'}</span>
         </label>
-        <div className="flex flex-col gap-1.5">
-          {categoriesList.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setCategory(c.id)}
-              className={`text-left rtl:text-right px-3 py-2 rounded-lg transition-colors flex items-center justify-between font-medium ${
-                category === c.id
-                  ? 'bg-[#D4AF37] text-black font-bold shadow-sm'
-                  : isDark
-                  ? 'hover:bg-white/5 text-[#F3E6D0]'
-                  : 'hover:bg-black/5 text-[#120B06]'
-              }`}
-            >
-              <span>{c.label}</span>
-            </button>
-          ))}
+        <div className="flex flex-col gap-1">
+          {categoriesList.map((c) => {
+            const isCatActive = selectedCategory === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => handleCategorySelect(c.id)}
+                className={`text-left rtl:text-right px-3 py-2 rounded-xl transition-all flex items-center justify-between font-medium cursor-pointer ${
+                  isCatActive
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#F2D675] text-black font-bold shadow-md'
+                    : isDark
+                    ? 'hover:bg-white/5 text-[#F3E6D0]'
+                    : 'hover:bg-black/5 text-[#120B06]'
+                }`}
+              >
+                <span>{c.label}</span>
+                {isCatActive && <span className="w-1.5 h-1.5 rounded-full bg-black" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Perfume Tier Filter */}
-      <div className="space-y-2 pt-2 border-t border-black/10 dark:border-white/5">
-        <label className={`font-cinzel text-[11px] uppercase tracking-wider flex items-center gap-1 font-bold ${
-          isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
-        }`}>
-          <Crown className="w-3 h-3 text-[#D4AF37]" />
-          <span>{t('catalog.tier') || 'Perfume Tier'}</span>
-        </label>
-        <div className="flex flex-col gap-1.5">
-          {tiersList.map((tItem) => (
+      {/* 2. Dynamic Cascading Subcategories (shown when parent category selected) */}
+      {subcategories.length > 0 && (
+        <div className="space-y-2 pt-3 border-t border-[#D4AF37]/15 animate-fade-in">
+          <label className={`font-cinzel text-[11px] uppercase tracking-wider flex items-center gap-1.5 font-bold ${
+            isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
+          }`}>
+            <FolderTree className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Subcategory</span>
+            {subcategoriesLoading && <span className="text-[10px] text-[#D4AF37] animate-pulse">(updating...)</span>}
+          </label>
+          <div className="flex flex-wrap gap-1.5">
             <button
-              key={tItem.id}
-              onClick={() => setTier(tItem.id)}
-              className={`text-left rtl:text-right px-3 py-2 rounded-lg transition-colors flex items-center justify-between font-medium ${
-                tier === tItem.id
-                  ? 'bg-[#D4AF37] text-black font-bold shadow-sm'
+              onClick={() => handleSubcategorySelect('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                selectedSubcategory === 'all'
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] font-bold shadow-sm'
                   : isDark
-                  ? 'hover:bg-white/5 text-[#F3E6D0]'
-                  : 'hover:bg-black/5 text-[#120B06]'
+                  ? 'border-white/10 text-[#D8BE99] hover:border-[#D4AF37]/40'
+                  : 'border-black/10 text-[#5A3517] hover:border-[#D4AF37]/40'
               }`}
             >
-              <span>{tItem.label}</span>
+              All Subcategories
             </button>
-          ))}
+            {subcategories.map((sub) => {
+              const isSubActive = String(selectedSubcategory) === String(sub.id);
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => handleSubcategorySelect(String(sub.id))}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                    isSubActive
+                      ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] font-bold shadow-sm'
+                      : isDark
+                      ? 'border-white/10 text-[#D8BE99] hover:border-[#D4AF37]/40'
+                      : 'border-black/10 text-[#5A3517] hover:border-[#D4AF37]/40'
+                  }`}
+                >
+                  {sub.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Gender Filter */}
-      <div className="space-y-2 pt-2 border-t border-black/10 dark:border-white/5">
+      {/* 3. Dynamic Brands */}
+      {brands.length > 0 && (
+        <div className="space-y-2 pt-3 border-t border-[#D4AF37]/15">
+          <label className={`font-cinzel text-[11px] uppercase tracking-wider flex items-center gap-1.5 font-bold ${
+            isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
+          }`}>
+            <Building2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Fragrance Brand</span>
+          </label>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              onClick={() => handleBrandSelect('all')}
+              className={`px-2.5 py-1.5 rounded-lg border text-center text-xs transition-colors font-medium cursor-pointer ${
+                selectedBrand === 'all'
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37] font-bold'
+                  : isDark
+                  ? 'border-white/10 text-[#F3E6D0] hover:border-white/30'
+                  : 'border-black/10 text-[#120B06] hover:border-black/30'
+              }`}
+            >
+              All Brands
+            </button>
+            {brands.map((b) => {
+              const isBrandActive = String(selectedBrand) === String(b.id);
+              return (
+                <button
+                  key={b.id}
+                  onClick={() => handleBrandSelect(String(b.id))}
+                  className={`px-2.5 py-1.5 rounded-lg border text-center text-xs transition-colors font-medium truncate cursor-pointer ${
+                    isBrandActive
+                      ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37] font-bold'
+                      : isDark
+                      ? 'border-white/10 text-[#F3E6D0] hover:border-white/30'
+                      : 'border-black/10 text-[#120B06] hover:border-black/30'
+                  }`}
+                  title={b.name}
+                >
+                  {b.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Perfume Tiers (Only relevant if perfumes are included) */}
+      {(selectedCategory === 'all' || activeCategoryId === 1) && (
+        <div className="space-y-2 pt-3 border-t border-[#D4AF37]/15">
+          <label className={`font-cinzel text-[11px] uppercase tracking-wider flex items-center gap-1.5 font-bold ${
+            isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
+          }`}>
+            <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>{t('catalog.tier') || 'Perfume Tier'}</span>
+          </label>
+          <div className="flex flex-col gap-1">
+            {tiersList.map((tItem) => {
+              const isTierActive = selectedTier === tItem.id;
+              return (
+                <button
+                  key={tItem.id}
+                  onClick={() => handleTierSelect(tItem.id)}
+                  className={`text-left rtl:text-right px-3 py-1.5 rounded-lg transition-colors flex items-center justify-between font-medium cursor-pointer ${
+                    isTierActive
+                      ? 'bg-[#D4AF37]/20 border border-[#D4AF37] text-[#F2D675] font-bold'
+                      : isDark
+                      ? 'hover:bg-white/5 text-[#F3E6D0]'
+                      : 'hover:bg-black/5 text-[#120B06]'
+                  }`}
+                >
+                  <span>{tItem.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 5. Gender Filter */}
+      <div className="space-y-2 pt-3 border-t border-[#D4AF37]/15">
         <label className={`font-cinzel text-[11px] uppercase tracking-wider block font-bold ${
           isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'
         }`}>
@@ -242,11 +622,11 @@ export default function Shop() {
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { id: 'all', label: t('shop.allGenders') || 'All' },
-            { id: 'men', label: t('shop.men') || 'Men' },
-            { id: 'women', label: t('shop.women') || 'Women' },
+            { id: 'men', label: t('shop.men') || 'Pour Homme' },
+            { id: 'women', label: t('shop.women') || 'Pour Femme' },
             { id: 'unisex', label: t('shop.unisex') || 'Unisex' }
           ].map((g) => {
-            const gLower = (gender || '').toLowerCase();
+            const gLower = (selectedGender || '').toLowerCase();
             const isActive = gLower === g.id.toLowerCase() ||
               (g.id === 'men' && (gLower === 'masculine' || gLower === 'male')) ||
               (g.id === 'women' && (gLower === 'feminine' || gLower === 'female'));
@@ -254,8 +634,8 @@ export default function Shop() {
             return (
               <button
                 key={g.id}
-                onClick={() => setGender(g.id)}
-                className={`px-2.5 py-1.5 rounded-lg border text-center text-[11px] transition-colors font-medium ${
+                onClick={() => handleGenderSelect(g.id)}
+                className={`px-2.5 py-1.5 rounded-lg border text-center text-[11px] transition-colors font-medium cursor-pointer ${
                   isActive
                     ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37] font-bold'
                     : isDark
@@ -270,10 +650,12 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Max Price Slider */}
-      <div className="space-y-2 pt-2 border-t border-black/10 dark:border-white/5">
+      {/* 6. Max Price Slider */}
+      <div className="space-y-2 pt-3 border-t border-[#D4AF37]/15">
         <div className="flex justify-between items-center text-[11px] font-cinzel">
-          <span className={`uppercase tracking-wider font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>Max Price:</span>
+          <span className={`uppercase tracking-wider font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
+            Max Price:
+          </span>
           <span className="text-[#D4AF37] font-bold text-sm">€{maxPrice}</span>
         </div>
         <input
@@ -282,7 +664,7 @@ export default function Shop() {
           max="500"
           step="10"
           value={maxPrice}
-          onChange={(e) => setMaxPrice(Number(e.target.value))}
+          onChange={(e) => handlePriceChange(Number(e.target.value))}
           className="w-full accent-[#D4AF37] cursor-pointer"
         />
         <div className="flex justify-between text-[10px] text-neutral-500 font-mono">
@@ -291,16 +673,18 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* In Stock Only */}
-      <div className="pt-2 border-t border-black/10 dark:border-white/5">
+      {/* 7. In Stock Only Checkbox */}
+      <div className="pt-3 border-t border-[#D4AF37]/15">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={inStockOnly}
-            onChange={(e) => setInStockOnly(e.target.checked)}
-            className="accent-[#D4AF37] rounded"
+            onChange={(e) => handleInStockToggle(e.target.checked)}
+            className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
           />
-          <span className={`text-xs font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>In Stock Only</span>
+          <span className={`text-xs font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
+            In Stock Only
+          </span>
         </label>
       </div>
 
@@ -314,18 +698,18 @@ export default function Shop() {
       <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10">
         
         {/* Page Banner Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
           <span className={`text-xs uppercase tracking-[0.35em] font-cinzel font-bold ${
             isDark ? 'text-[#F2D675]' : 'text-[#8C6239]'
           }`}>
             The Master Catalogue
           </span>
           <BlurText
-            text={category !== 'all' ? category.toUpperCase() : 'ALL CREATIONS'}
+            text={activeCategoryTitle}
             delay={70}
             animateBy="words"
             direction="top"
-            className={`text-3xl sm:text-5xl font-cinzel font-bold justify-center ${
+            className={`text-3xl sm:text-5xl font-cinzel font-bold justify-center uppercase ${
               isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}
             as="h1"
@@ -333,22 +717,22 @@ export default function Shop() {
           <p className={`text-xs sm:text-sm font-medium ${
             isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
           }`}>
-            Prestige perfumes in fixed 60 ml flacons (€30 Classic, €40 Royal, €50 Luxury), concentrated oils, and royal incense.
+            Artisanal creations, fixed perfume flacon tiers, precious attars, and royal incense.
           </p>
         </div>
 
         {/* Top Filter & Sort Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 mb-8 border-b border-black/10 dark:border-white/10">
           
-          {/* Mobile Filter Button */}
+          {/* Mobile Filter Trigger Button */}
           <button
             onClick={() => setMobileFilterOpen(true)}
-            className={`lg:hidden w-full sm:w-auto px-4 py-2.5 border text-xs font-cinzel uppercase tracking-wider flex items-center justify-center gap-2 rounded-xl ${
+            className={`lg:hidden w-full sm:w-auto px-4 py-2.5 border text-xs font-cinzel uppercase tracking-wider flex items-center justify-center gap-2 rounded-xl cursor-pointer ${
               isDark ? 'bg-white/5 border-[#D4AF37]/30 text-[#D4AF37]' : 'bg-white border-[#D4AF37]/40 text-[#120B06] shadow-sm'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4 text-[#D4AF37]" />
-            <span>Filter Catalog ({products.length})</span>
+            <span>Filter Collection ({products.length})</span>
           </button>
 
           {/* Search Box */}
@@ -358,8 +742,26 @@ export default function Shop() {
               placeholder="Search notes, names..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  updateUrlParams({
+                    category: selectedCategory,
+                    categoryId: activeCategoryId ? String(activeCategoryId) : undefined,
+                    subcategoryId: selectedSubcategory,
+                    brandId: selectedBrand,
+                    tier: selectedTier,
+                    gender: selectedGender,
+                    search,
+                    maxPrice,
+                    inStockOnly,
+                    sortBy
+                  });
+                }
+              }}
               className={`w-full border px-3 py-2 pl-9 rounded-full text-xs focus:border-[#D4AF37] focus:outline-none ${
-                isDark ? 'bg-black/60 border-[#D4AF37]/25 text-[#F3E6D0] placeholder-neutral-500' : 'bg-white border-[#D4AF37]/35 text-[#120B06] placeholder-neutral-400 shadow-sm'
+                isDark
+                  ? 'bg-black/60 border-[#D4AF37]/25 text-[#F3E6D0] placeholder-neutral-500'
+                  : 'bg-white border-[#D4AF37]/35 text-[#120B06] placeholder-neutral-400 shadow-sm'
               }`}
             />
             <Search className="w-3.5 h-3.5 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -367,11 +769,13 @@ export default function Shop() {
 
           {/* Sort Selector */}
           <div className="flex items-center gap-2 self-end sm:self-auto text-xs">
-            <span className={`font-cinzel uppercase tracking-wider font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>Sort by:</span>
+            <span className={`font-cinzel uppercase tracking-wider font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
+              Sort by:
+            </span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className={`border px-3 py-2 rounded-full text-xs focus:border-[#D4AF37] focus:outline-none font-medium ${
+              onChange={(e) => handleSortChange(e.target.value)}
+              className={`border px-3 py-2 rounded-full text-xs focus:border-[#D4AF37] focus:outline-none font-medium cursor-pointer ${
                 isDark ? 'bg-black/60 border-[#D4AF37]/25 text-[#F3E6D0]' : 'bg-white border-[#D4AF37]/35 text-[#120B06] shadow-sm'
               }`}
             >
@@ -385,7 +789,7 @@ export default function Shop() {
 
         </div>
 
-        {/* Main Catalog Layout */}
+        {/* Main Catalog Layout: Sidebar + Product Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left Desktop Filter Sidebar */}
@@ -406,10 +810,12 @@ export default function Shop() {
                 isDark ? 'bg-[#0B0A08]/60 border-white/5' : 'bg-white border-[#D4AF37]/30 shadow-md'
               }`}>
                 <p className="font-cinzel text-lg text-[#D4AF37] font-bold">No creations found matching criteria</p>
-                <p className={`text-xs ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Try resetting your filter parameters or search terms.</p>
+                <p className={`text-xs ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                  Try resetting your filter parameters or search terms.
+                </p>
                 <button
                   onClick={resetFilters}
-                  className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider rounded-full hover:bg-[#F2D675] transition-colors"
+                  className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider rounded-full hover:bg-[#F2D675] transition-colors cursor-pointer"
                 >
                   Reset Filters
                 </button>
@@ -440,7 +846,7 @@ export default function Shop() {
           <div className={`relative z-10 w-full sm:max-w-md h-full flex flex-col justify-between shadow-2xl ${
             isDark ? 'bg-[#0B0A08] border-l border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-[#FAF7F2] border-l border-[#D4AF37]/40 text-[#120B06]'
           }`}>
-            {/* Drawer Top Header (Shifted down comfortably away from navbar collapse button) */}
+            {/* Drawer Top Header */}
             <div className={`px-6 pt-20 sm:pt-14 pb-4 border-b flex items-center justify-between ${
               isDark ? 'border-[#D4AF37]/20 bg-[#0B0A08]' : 'border-[#D4AF37]/30 bg-[#FAF7F2]'
             }`}>
@@ -475,7 +881,7 @@ export default function Shop() {
               {hasActiveFilters && (
                 <button
                   onClick={resetFilters}
-                  className={`px-4 py-3 border rounded-full text-xs font-cinzel uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-1.5 ${
+                  className={`px-4 py-3 border rounded-full text-xs font-cinzel uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                     isDark ? 'border-white/20 text-[#F3E6D0] hover:border-[#D4AF37]' : 'border-black/20 text-[#120B06] hover:border-[#8C6239]'
                   }`}
                 >
@@ -485,7 +891,7 @@ export default function Shop() {
               )}
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="flex-1 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-all shadow-md active:scale-95 text-center"
+                className="flex-1 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-all shadow-md active:scale-95 text-center cursor-pointer"
               >
                 Show Results ({products.length})
               </button>

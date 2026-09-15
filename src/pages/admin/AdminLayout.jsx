@@ -5,12 +5,16 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
   Package,
+  PlusCircle,
+  Layers,
+  FolderTree,
+  Crown,
+  Sparkles,
   ShoppingBag,
   Users,
   Warehouse,
   BarChart3,
   Tag,
-  Sparkles,
   ShieldCheck,
   HelpCircle,
   FileText,
@@ -25,28 +29,61 @@ import {
 export default function AdminLayout({ children }) {
   const { currentPath, navigate } = useRouter();
   const { t } = useTranslation();
-  const { user, logout, isSuperAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
-    { to: '/admin', label: t('admin.dashboard'), icon: LayoutDashboard, exact: true },
-    { to: '/admin/products', label: t('admin.products'), icon: Package },
-    { to: '/admin/orders', label: t('admin.orders'), icon: ShoppingBag },
-    { to: '/admin/users', label: t('admin.users'), icon: Users },
-    { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] },
-    { to: '/admin/inventory', label: t('admin.inventory'), icon: Warehouse },
-    { to: '/admin/analytics', label: t('admin.analytics'), icon: BarChart3 },
-    { to: '/admin/promotions', label: 'Promotions', icon: Sparkles },
-    { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] },
-    { to: '/admin/content/faqs', label: 'FAQs', icon: HelpCircle, aliases: ['/dashboard/content/faqs'] },
-    { to: '/admin/content/pages', label: 'Policies', icon: FileText, aliases: ['/dashboard/content/pages'] },
-    { to: '/admin/content/contact', label: 'Contact Info', icon: PhoneCall, aliases: ['/dashboard/content/contact'] },
-    { to: '/admin/settings', label: t('admin.settings'), icon: Settings }
+  const navSections = [
+    {
+      title: 'Overview',
+      links: [
+        { to: '/admin', label: t('admin.dashboard') || 'Dashboard', icon: LayoutDashboard, exact: true },
+        { to: '/admin/analytics', label: t('admin.analytics') || 'Analytics', icon: BarChart3 }
+      ]
+    },
+    {
+      title: 'Catalog',
+      links: [
+        { to: '/admin/products', label: t('admin.products') || 'Products', icon: Package, exact: true },
+        { to: '/admin/products/new', label: 'Add Product', icon: PlusCircle, aliases: ['/admin/products/add', '/admin/add-product'] },
+        { to: '/admin/categories', label: 'Categories', icon: Layers },
+        { to: '/admin/subcategories', label: 'Subcategories', icon: FolderTree },
+        { to: '/admin/brands', label: 'Brands', icon: Crown },
+        { to: '/admin/perfume-categories', label: 'Pricing Tiers', icon: Sparkles }
+      ]
+    },
+    {
+      title: 'Operations',
+      links: [
+        { to: '/admin/orders', label: t('admin.orders') || 'Orders', icon: ShoppingBag },
+        { to: '/admin/inventory', label: t('admin.inventory') || 'Inventory', icon: Warehouse },
+        { to: '/admin/users', label: t('admin.users') || 'Customers', icon: Users },
+        { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] }
+      ]
+    },
+    {
+      title: 'Marketing & Offers',
+      links: [
+        { to: '/admin/promotions', label: 'Promotions', icon: Sparkles },
+        { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] }
+      ]
+    },
+    {
+      title: 'Content & Settings',
+      links: [
+        { to: '/admin/content/faqs', label: 'FAQs', icon: HelpCircle, aliases: ['/dashboard/content/faqs'] },
+        { to: '/admin/content/pages', label: 'Policies', icon: FileText, aliases: ['/dashboard/content/pages'] },
+        { to: '/admin/content/contact', label: 'Contact Info', icon: PhoneCall, aliases: ['/dashboard/content/contact'] },
+        { to: '/admin/settings', label: t('admin.settings') || 'Settings', icon: Settings }
+      ]
+    }
   ];
+
+  const allNavLinks = navSections.flatMap(s => s.links);
 
   const isLinkActive = (link) => {
     if (link.exact) return currentPath === link.to;
-    if (currentPath.startsWith(link.to)) return true;
+    if (currentPath === link.to) return true;
+    if (link.to !== '/admin' && currentPath.startsWith(link.to)) return true;
     if (link.aliases && link.aliases.some(alias => currentPath.startsWith(alias))) return true;
     return false;
   };
@@ -106,7 +143,7 @@ export default function AdminLayout({ children }) {
 
       {/* Horizontal Fast-Pills Nav for Mobile */}
       <div className="md:hidden bg-[#0B0A08]/95 border-b border-[#D4AF37]/20 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none sticky top-[61px] z-30 backdrop-blur-md">
-        {navLinks.map((link) => {
+        {allNavLinks.map((link) => {
           const Icon = link.icon;
           const isActive = isLinkActive(link);
 
@@ -115,7 +152,7 @@ export default function AdminLayout({ children }) {
               key={link.to}
               to={link.to}
               onClick={() => setMobileMenuOpen(false)}
-              className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-full text-xs sm:text-sm font-cinzel uppercase tracking-wider font-bold transition-all border whitespace-nowrap ${
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-cinzel uppercase tracking-wider font-bold transition-all border whitespace-nowrap ${
                 isActive
                   ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-md'
                   : 'border-[#D4AF37]/25 bg-black/60 text-[#D8BE99] hover:text-[#F3E6D0]'
@@ -130,34 +167,38 @@ export default function AdminLayout({ children }) {
 
       {/* Mobile Drawer (When Open) */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-[105px] bottom-0 bg-[#0B0A08]/95 backdrop-blur-xl z-50 p-4 border-t border-[#D4AF37]/30 overflow-y-auto space-y-2 animate-fade-in">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#F2D675] font-cinzel px-3 py-1 font-bold">
-            Palace Administration
-          </p>
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = isLinkActive(link);
+        <div className="md:hidden fixed inset-x-0 top-[105px] bottom-0 bg-[#0B0A08]/95 backdrop-blur-xl z-50 p-4 border-t border-[#D4AF37]/30 overflow-y-auto space-y-4 animate-fade-in">
+          {navSections.map((section) => (
+            <div key={section.title} className="space-y-1">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel px-3 py-1 font-bold">
+                {section.title}
+              </p>
+              {section.links.map((link) => {
+                const Icon = link.icon;
+                const isActive = isLinkActive(link);
 
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm sm:text-base font-cinzel uppercase tracking-wider transition-all border ${
-                  isActive
-                    ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] font-bold shadow-md'
-                    : 'border-transparent text-[#D8BE99] hover:bg-white/5'
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
-                  isActive ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]' : 'border-[#D4AF37]/30 bg-black/50 text-[#D8BE99]'
-                }`}>
-                  <Icon className="w-4 h-4" />
-                </div>
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-cinzel uppercase tracking-wider transition-all border ${
+                      isActive
+                        ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] font-bold shadow-md'
+                        : 'border-transparent text-[#D8BE99] hover:bg-white/5'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
+                      isActive ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]' : 'border-[#D4AF37]/30 bg-black/50 text-[#D8BE99]'
+                    }`}>
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
 
           <div className="pt-4 border-t border-[#D4AF37]/20">
             <button
@@ -165,7 +206,7 @@ export default function AdminLayout({ children }) {
                 logout();
                 navigate('/login');
               }}
-              className="w-full flex items-center gap-3 text-sm font-cinzel uppercase tracking-wider text-rose-400 py-3 px-3 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer font-bold"
+              className="w-full flex items-center gap-3 text-xs font-cinzel uppercase tracking-wider text-rose-400 py-3 px-3 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer font-bold"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out of Suite</span>
@@ -177,46 +218,50 @@ export default function AdminLayout({ children }) {
       {/* Admin Body: Sidebar (Desktop) + Main Content */}
       <div className="flex-1 flex flex-col md:flex-row min-w-0">
         {/* Admin Navigation Sidebar in Obsidian Glass (Desktop) */}
-        <aside className="hidden md:block w-72 bg-[#0B0A08]/90 border-r border-[#D4AF37]/25 p-4 space-y-2 shrink-0 backdrop-blur-md shadow-2xl">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#F2D675] font-cinzel px-3 py-2 font-bold flex items-center gap-2">
-            <span>Palace Administration</span>
-          </p>
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = isLinkActive(link);
+        <aside className="hidden md:block w-64 bg-[#0B0A08]/90 border-r border-[#D4AF37]/25 p-4 space-y-4 shrink-0 backdrop-blur-md shadow-2xl">
+          {navSections.map((section) => (
+            <div key={section.title} className="space-y-1">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#F2D675]/80 font-cinzel px-3 py-1 font-bold">
+                {section.title}
+              </p>
+              {section.links.map((link) => {
+                const Icon = link.icon;
+                const isActive = isLinkActive(link);
 
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`group flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-cinzel uppercase tracking-wider transition-all border ${
-                  isActive
-                    ? 'border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/20 via-[#8C6239]/15 to-transparent text-[#F2D675] font-bold shadow-md'
-                    : 'border-transparent text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-white/5 font-medium'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shrink-0 ${
-                  isActive
-                    ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]'
-                    : 'border-[#D4AF37]/30 bg-black/50 text-[#D8BE99] group-hover:border-[#D4AF37] group-hover:text-[#F2D675]'
-                }`}>
-                  <Icon className="w-4 h-4 shrink-0" />
-                </div>
-                <span className="truncate">{link.label}</span>
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`group flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-cinzel uppercase tracking-wider transition-all border ${
+                      isActive
+                        ? 'border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/20 via-[#8C6239]/15 to-transparent text-[#F2D675] font-bold shadow-md'
+                        : 'border-transparent text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-white/5 font-medium'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all shrink-0 ${
+                      isActive
+                        ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]'
+                        : 'border-[#D4AF37]/30 bg-black/50 text-[#D8BE99] group-hover:border-[#D4AF37] group-hover:text-[#F2D675]'
+                    }`}>
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                    </div>
+                    <span className="truncate">{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
 
-          <div className="pt-6 mt-6 border-t border-[#D4AF37]/20 px-3">
+          <div className="pt-4 border-t border-[#D4AF37]/20 px-2">
             <button
               onClick={() => {
                 logout();
                 navigate('/login');
               }}
-              className="w-full flex items-center gap-3 text-sm font-cinzel uppercase tracking-wider text-rose-400 hover:text-rose-300 transition-colors py-2.5 cursor-pointer font-bold"
+              className="w-full flex items-center gap-3 text-xs font-cinzel uppercase tracking-wider text-rose-400 hover:text-rose-300 transition-colors py-2 cursor-pointer font-bold"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out of Suite</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </aside>
