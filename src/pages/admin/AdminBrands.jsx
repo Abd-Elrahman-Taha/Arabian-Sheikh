@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { brandService } from '../../services/brandService';
+import { productService } from '../../services/productService';
 import {
   Crown,
   Plus,
@@ -14,7 +15,8 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 
 export default function AdminBrands() {
@@ -38,6 +40,7 @@ export default function AdminBrands() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
   const [deletingBrand, setDeletingBrand] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -87,6 +90,7 @@ export default function AdminBrands() {
       isActive: true
     });
     setFormErrors({});
+    setUploadingLogo(false);
     setCreateModalOpen(true);
   };
 
@@ -98,6 +102,45 @@ export default function AdminBrands() {
       isActive: brand.isActive !== false
     });
     setFormErrors({});
+    setUploadingLogo(false);
+  };
+
+  // Upload Logo from Device via POST /api/admin/products/images
+  const handleLogoFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side MIME validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      error('Unsupported image format. Allowed: JPG, PNG, WEBP, GIF, SVG.');
+      e.target.value = '';
+      return;
+    }
+
+    // Client-side Max 20MB validation
+    const maxBytes = 20 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      error('File exceeds maximum size of 20MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const uploadedUrl = await productService.uploadProductImage(file);
+      if (uploadedUrl) {
+        setFormData(prev => ({ ...prev, logoUrl: uploadedUrl }));
+        success('Brand logo uploaded successfully.');
+      } else {
+        error('Upload succeeded but no image URL was returned.');
+      }
+    } catch (err) {
+      error(err.message || 'Image upload failed.');
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
   };
 
   const validateForm = () => {
@@ -470,21 +513,81 @@ export default function AdminBrands() {
                 )}
               </div>
 
-              {/* Logo URL */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#D8BE99] mb-1">
-                  Logo URL
+              {/* Brand Logo & Device Upload */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#D8BE99]">
+                  Brand Logo
                 </label>
-                <input
-                  type="text"
-                  placeholder="https://... or /assets/brand-logo.svg"
-                  value={formData.logoUrl}
-                  onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-                />
-                <p className="text-[10px] text-[#D8BE99]/60 mt-1">
-                  Leave empty to use the default Arabian Sheikh crest.
-                </p>
+
+                {/* Attached Logo Preview */}
+                {formData.logoUrl && (
+                  <div className="flex items-center gap-3 p-2.5 bg-black/60 border border-[#D4AF37]/30 rounded-xl">
+                    <div className="w-12 h-12 rounded-lg bg-black/80 border border-[#D4AF37]/40 p-1 flex items-center justify-center overflow-hidden shrink-0">
+                      <img
+                        src={formData.logoUrl}
+                        alt="Brand preview"
+                        className="w-full h-full object-contain"
+                        onError={(e) => { e.currentTarget.src = '/assets/arabian-sheikh-logo.svg'; }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#F3E6D0] truncate font-mono">{formData.logoUrl}</p>
+                      <p className="text-[10px] text-emerald-400 font-medium">✓ Custom logo attached</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, logoUrl: '' }))}
+                      className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                      title="Remove logo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Device Upload Drag-and-Drop Area */}
+                <label className="block w-full px-4 py-3 border border-dashed border-[#D4AF37]/40 rounded-xl bg-black/40 hover:bg-[#1A1108]/50 text-center cursor-pointer transition-all">
+                  {uploadingLogo ? (
+                    <div className="flex items-center justify-center gap-2 text-[#F2D675] py-1">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">Uploading logo to server...</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 py-1">
+                      <Upload className="w-5 h-5 text-[#F2D675] mx-auto" />
+                      <p className="text-xs text-[#F3E6D0] font-medium">
+                        Click to browse or drag & drop logo from device
+                      </p>
+                      <p className="text-[10px] text-[#D8BE99]/60">
+                        Max file size: 20MB. Allowed: WEBP, PNG, JPG, SVG, GIF
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                    onChange={handleLogoFileChange}
+                    disabled={uploadingLogo}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Direct URL Fallback */}
+                <div className="space-y-1">
+                  <label className="text-[#D8BE99] font-medium text-[11px]">
+                    Or direct Logo / Image URL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://... or /assets/brand-logo.svg"
+                    value={formData.logoUrl}
+                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none font-mono"
+                  />
+                  <p className="text-[10px] text-[#D8BE99]/60">
+                    Leave empty to use the default Arabian Sheikh crest.
+                  </p>
+                </div>
               </div>
 
               {/* Active Toggle */}
@@ -506,14 +609,14 @@ export default function AdminBrands() {
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  disabled={actionLoading}
+                  disabled={actionLoading || uploadingLogo}
                   className="px-4 py-2 rounded-xl bg-black/40 border border-[#D4AF37]/20 text-xs text-[#D8BE99] hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={actionLoading}
+                  disabled={actionLoading || uploadingLogo}
                   className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:brightness-110 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {actionLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
@@ -562,17 +665,78 @@ export default function AdminBrands() {
                 )}
               </div>
 
-              {/* Logo URL */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#D8BE99] mb-1">
-                  Logo URL
+              {/* Brand Logo & Device Upload */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#D8BE99]">
+                  Brand Logo
                 </label>
-                <input
-                  type="text"
-                  value={formData.logoUrl}
-                  onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-                />
+
+                {/* Attached Logo Preview */}
+                {formData.logoUrl && (
+                  <div className="flex items-center gap-3 p-2.5 bg-black/60 border border-[#D4AF37]/30 rounded-xl">
+                    <div className="w-12 h-12 rounded-lg bg-black/80 border border-[#D4AF37]/40 p-1 flex items-center justify-center overflow-hidden shrink-0">
+                      <img
+                        src={formData.logoUrl}
+                        alt="Brand preview"
+                        className="w-full h-full object-contain"
+                        onError={(e) => { e.currentTarget.src = '/assets/arabian-sheikh-logo.svg'; }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#F3E6D0] truncate font-mono">{formData.logoUrl}</p>
+                      <p className="text-[10px] text-emerald-400 font-medium">✓ Custom logo attached</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, logoUrl: '' }))}
+                      className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                      title="Remove logo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Device Upload Drag-and-Drop Area */}
+                <label className="block w-full px-4 py-3 border border-dashed border-[#D4AF37]/40 rounded-xl bg-black/40 hover:bg-[#1A1108]/50 text-center cursor-pointer transition-all">
+                  {uploadingLogo ? (
+                    <div className="flex items-center justify-center gap-2 text-[#F2D675] py-1">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">Uploading logo to server...</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 py-1">
+                      <Upload className="w-5 h-5 text-[#F2D675] mx-auto" />
+                      <p className="text-xs text-[#F3E6D0] font-medium">
+                        Click to browse or drag & drop logo from device
+                      </p>
+                      <p className="text-[10px] text-[#D8BE99]/60">
+                        Max file size: 20MB. Allowed: WEBP, PNG, JPG, SVG, GIF
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                    onChange={handleLogoFileChange}
+                    disabled={uploadingLogo}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Direct URL Fallback */}
+                <div className="space-y-1">
+                  <label className="text-[#D8BE99] font-medium text-[11px]">
+                    Or direct Logo / Image URL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://... or /assets/brand-logo.svg"
+                    value={formData.logoUrl}
+                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none font-mono"
+                  />
+                </div>
               </div>
 
               {/* Active Toggle */}
@@ -594,14 +758,14 @@ export default function AdminBrands() {
                 <button
                   type="button"
                   onClick={() => setEditingBrand(null)}
-                  disabled={actionLoading}
+                  disabled={actionLoading || uploadingLogo}
                   className="px-4 py-2 rounded-xl bg-black/40 border border-[#D4AF37]/20 text-xs text-[#D8BE99] hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={actionLoading}
+                  disabled={actionLoading || uploadingLogo}
                   className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:brightness-110 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {actionLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}

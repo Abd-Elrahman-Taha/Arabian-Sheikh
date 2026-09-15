@@ -89,9 +89,49 @@ export default function AdminLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F3E6D0] flex flex-col pt-0">
+    <div className="relative min-h-screen bg-[#0B0A08] text-[#F3E6D0] flex flex-col pt-0">
+      {/* 1. Full-Bleed 24K Grand Palace Architecture Wallpaper */}
+      <div className="fixed inset-0 z-0 select-none pointer-events-none overflow-hidden">
+        <picture className="w-full h-full">
+          {/* Mobile Phone WebP (< 768px) */}
+          <source
+            media="(max-width: 767px)"
+            type="image/webp"
+            srcSet="/editorial/arabian_palace_phone_opt.webp"
+          />
+          {/* Mobile Phone JPG Fallback (< 768px) */}
+          <source
+            media="(max-width: 767px)"
+            srcSet="/editorial/arabian_palace_phone_opt.jpg"
+          />
+          {/* Desktop / Tablet WebP (>= 768px) */}
+          <source
+            type="image/webp"
+            srcSet="/editorial/arabian_palace_desktop_opt.webp"
+          />
+          {/* Desktop Fallback */}
+          <img
+            src="/editorial/arabian_palace_desktop_opt.jpg"
+            alt="The Grand Sovereign Palace of Arabian Sheikh"
+            className="w-full h-full object-cover object-center transform scale-100 sm:scale-105"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+        </picture>
+
+        {/* Top Vignette for Navbar / Header Readability */}
+        <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none" />
+
+        {/* Center Subtle Golden Radiant Bloom */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.12),transparent_70%)] pointer-events-none" />
+
+        {/* Royal Obsidian Glass Overlay / Layout Overlay for Readability */}
+        <div className="absolute inset-0 pointer-events-none backdrop-blur-[3px] bg-gradient-to-b from-[#0B0A08]/90 via-[#0B0A08]/85 to-[#0B0A08]/95" />
+      </div>
+
       {/* Admin Top Header Bar in Obsidian Glass */}
-      <header className="bg-[#0B0A08]/95 border-b border-[#D4AF37]/30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shadow-2xl sticky top-0 z-40 backdrop-blur-md">
+      <header className="relative z-40 bg-[#0B0A08]/95 border-b border-[#D4AF37]/30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shadow-2xl sticky top-0 backdrop-blur-md">
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -216,7 +256,7 @@ export default function AdminLayout({ children }) {
       )}
 
       {/* Admin Body: Sidebar (Desktop) + Main Content */}
-      <div className="flex-1 flex flex-col md:flex-row min-w-0">
+      <div className="relative z-10 flex-1 flex flex-col md:flex-row min-w-0">
         {/* Admin Navigation Sidebar in Obsidian Glass (Desktop) */}
         <aside className="hidden md:block w-64 bg-[#0B0A08]/90 border-r border-[#D4AF37]/25 p-4 space-y-4 shrink-0 backdrop-blur-md shadow-2xl">
           {navSections.map((section) => (
