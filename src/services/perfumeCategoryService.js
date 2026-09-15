@@ -1,5 +1,7 @@
 import { perfumeCategoryApi } from '../api/perfumeCategory.api';
 
+let cachedTiers = [];
+
 export const perfumeCategoryService = {
   handleApiError(err, fallbackMessage = 'An unexpected error occurred.') {
     const status = err?.status || err?.response?.status;
@@ -31,10 +33,27 @@ export const perfumeCategoryService = {
     throw finalErr;
   },
 
+  getCachedTiers() {
+    return cachedTiers;
+  },
+
+  getTierById(id) {
+    if (!id) return null;
+    return cachedTiers.find(t => Number(t.id) === Number(id)) || null;
+  },
+
+  getTierPrice(id) {
+    const tier = this.getTierById(id);
+    return tier && tier.price !== undefined ? Number(tier.price) : null;
+  },
+
   async getAdminPerfumeCategories(params = {}) {
     try {
       const response = await perfumeCategoryApi.adminGetPerfumeCategories(params);
       const items = response?.items || (Array.isArray(response) ? response : []);
+      if (items.length > 0) {
+        cachedTiers = items;
+      }
       return {
         items,
         page: response?.page || 1,

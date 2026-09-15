@@ -416,25 +416,11 @@ export const liveCloudSync = {
         item = { ...item, ...state.modifiedProducts[numStr] };
       }
 
-      // Enforce live perfume tier and tier pricing dynamically
-      const isPerfume = item.category === 'perfumes' || item.category === 'perfume' || !!item.tier || Number(item.categoryId) === 1;
-      if (isPerfume && item.tier) {
-        const tLower = item.tier.toLowerCase();
-        if (tLower.includes('royal') || Number(item.perfumeCategoryId) === 2) {
-          item.tier = 'Royal';
-          item.perfumeCategoryName = 'Royal';
-          item.perfumeCategoryId = 2;
-          item.price = 40;
-        } else if (tLower.includes('classic') || Number(item.perfumeCategoryId) === 3) {
-          item.tier = 'Classic';
-          item.perfumeCategoryName = 'Classic';
-          item.perfumeCategoryId = 3;
-          item.price = 30;
-        } else {
-          item.tier = 'Luxury';
-          item.perfumeCategoryName = 'Luxury';
-          item.perfumeCategoryId = 1;
-          item.price = 50;
+      // Preserve live product price and tier directly from backend API without hardcoded overrides
+      if (item.perfumeCategory && typeof item.perfumeCategory === 'object') {
+        if (!item.tier && item.perfumeCategory.name) item.tier = item.perfumeCategory.name;
+        if (item.perfumeCategory.price !== undefined && (!item.price || Number(item.price) === 0)) {
+          item.price = Number(item.perfumeCategory.price);
         }
       }
 

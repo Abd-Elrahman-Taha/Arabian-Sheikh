@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
+import { perfumeCategoryService } from '../../services/perfumeCategoryService';
 import { useToast } from '../../context/ToastContext';
 import {
   Check,
@@ -21,6 +22,7 @@ export default function AdminInventory() {
   const { success, error } = useToast();
 
   const [products, setProducts] = useState([]);
+  const [perfumeCategories, setPerfumeCategories] = useState([]);
   const [loadingInventory, setLoadingInventory] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [search, setSearch] = useState('');
@@ -30,8 +32,14 @@ export default function AdminInventory() {
   const fetchInventory = async () => {
     setLoadingInventory(true);
     try {
-      const list = await productService.getAllProducts({ includeDrafts: true });
+      const [list, tiersData] = await Promise.all([
+        productService.getAllProducts({ includeDrafts: true }),
+        perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 }).catch(() => ({ items: [] }))
+      ]);
       setProducts(list);
+      if (tiersData?.items && tiersData.items.length > 0) {
+        setPerfumeCategories(tiersData.items);
+      }
     } catch (err) {
       const list = productService.getAllProductsSync({ includeDrafts: true });
       setProducts(list);
@@ -286,6 +294,12 @@ export default function AdminInventory() {
                 filteredProducts.map((p) => {
                   const isActive = p.isActive !== false && p.status !== 'INACTIVE';
                   const isUpdating = updatingId === p.id;
+                  const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(p.perfumeCategoryId))
+                    || perfumeCategories.find(t => t.name?.toLowerCase() === (p.tier || p.perfumeCategoryName)?.toLowerCase());
+                  const effectivePrice = (p.price && Number(p.price) > 0)
+                    ? Number(p.price)
+                    : (matchedTier && matchedTier.price !== undefined ? Number(matchedTier.price) : Number(p.price || 0));
+                  const effectiveTier = matchedTier?.name || p.tier || p.perfumeCategoryName;
 
                   return (
                     <tr key={p.id} className="hover:bg-white/5 transition-colors">
@@ -302,9 +316,9 @@ export default function AdminInventory() {
                               }}
                               className="w-full h-full object-cover"
                             />
-                            {p.tier && (
+                            {effectiveTier && (
                               <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-mono text-[#F2D675] text-center uppercase tracking-tighter py-0.5">
-                                {p.tier}
+                                {effectiveTier}
                               </span>
                             )}
                           </div>
@@ -335,7 +349,7 @@ export default function AdminInventory() {
                       {/* Category & Tier */}
                       <td className="py-4 px-4">
                         <span className="font-cinzel text-xs text-[#F3E6D0] font-bold uppercase tracking-wider block">
-                          {p.tier ? `${p.tier} Flacon` : (p.category || 'Perfumes')}
+                          {effectiveTier ? `${effectiveTier} Flacon` : (p.category || 'Perfumes')}
                         </span>
                         <span className="text-[10px] text-[#D8BE99] font-mono">
                           {p.gender || 'Unisex'} • {p.volume || '60ml'}
@@ -345,7 +359,7 @@ export default function AdminInventory() {
                       {/* Price */}
                       <td className="py-4 px-4">
                         <span className="font-cinzel text-xs font-bold text-[#F3E6D0]">
-                          €{p.price}
+                          €{effectivePrice}
                         </span>
                       </td>
 

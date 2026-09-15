@@ -72,36 +72,30 @@ export function normalizeProduct(raw) {
   const subcategoryName = typeof p.subcategory === 'object' ? p.subcategory?.name : (p.subcategoryName || p.subcategory || null);
   const perfumeCategoryName = typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : (p.perfumeCategoryName || p.perfumeCategory || null);
 
-  // Accurately derive tier from perfumeCategoryName or perfumeCategoryId
-  let derivedTier = 'Luxury';
+  // Derive tier dynamically from backend perfumeCategory object, perfumeCategoryName, or p.tier
+  let derivedTier = null;
   if (perfumeCategoryName) {
-    const rawTier = String(perfumeCategoryName).trim();
-    if (rawTier.toLowerCase().includes('royal') || Number(p.perfumeCategoryId) === 2) derivedTier = 'Royal';
-    else if (rawTier.toLowerCase().includes('classic') || Number(p.perfumeCategoryId) === 3) derivedTier = 'Classic';
-    else if (rawTier.toLowerCase().includes('luxury') || Number(p.perfumeCategoryId) === 1) derivedTier = 'Luxury';
-    else derivedTier = rawTier;
-  } else if (Number(p.perfumeCategoryId) === 2) {
-    derivedTier = 'Royal';
-  } else if (Number(p.perfumeCategoryId) === 3) {
-    derivedTier = 'Classic';
-  } else if (categoryName.toLowerCase() === 'perfumes' || categoryName.toLowerCase() === 'perfume') {
-    derivedTier = p.tier || 'Luxury';
-  } else {
-    derivedTier = p.tier || null;
+    derivedTier = String(perfumeCategoryName).trim();
+  } else if (p.tier) {
+    derivedTier = String(p.tier).trim();
   }
 
-  const isPerfumeItem = categoryName.toLowerCase() === 'perfumes' || categoryName.toLowerCase() === 'perfume' || !!derivedTier;
-  let finalPrice = Number(p.price || 0);
-
-  if (isPerfumeItem && derivedTier) {
-    const tLower = derivedTier.toLowerCase();
-    if (tLower.includes('royal') || Number(p.perfumeCategoryId) === 2) {
-      finalPrice = 40;
-    } else if (tLower.includes('classic') || Number(p.perfumeCategoryId) === 3) {
-      finalPrice = 30;
-    } else {
-      finalPrice = 50; // Luxury default
-    }
+  // Price coming directly from backend API endpoints (zero hardcoded values):
+  // 1. Direct p.price from backend
+  // 2. p.perfumeCategory.price from backend object
+  // 3. p.perfumeCategoryPrice
+  // 4. p.tierPrice
+  let finalPrice = 0;
+  if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price)) && Number(p.price) > 0) {
+    finalPrice = Number(p.price);
+  } else if (p.perfumeCategory && p.perfumeCategory.price !== undefined && !isNaN(Number(p.perfumeCategory.price))) {
+    finalPrice = Number(p.perfumeCategory.price);
+  } else if (p.perfumeCategoryPrice !== undefined && !isNaN(Number(p.perfumeCategoryPrice))) {
+    finalPrice = Number(p.perfumeCategoryPrice);
+  } else if (p.tierPrice !== undefined && !isNaN(Number(p.tierPrice))) {
+    finalPrice = Number(p.tierPrice);
+  } else if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price))) {
+    finalPrice = Number(p.price);
   }
 
   const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || finalPrice) : null);

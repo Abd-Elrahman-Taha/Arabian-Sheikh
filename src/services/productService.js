@@ -1,4 +1,5 @@
 import { productApi } from '../api/product.api';
+import { perfumeCategoryService } from './perfumeCategoryService';
 
 let memoryCatalog = [];
 
@@ -89,7 +90,7 @@ export const productService = {
       const targetTier = filters.tier.toLowerCase().trim();
       result = result.filter(p => {
         const t = (p.tier || p.perfumeCategoryName || '').toLowerCase().trim();
-        return !t || t === targetTier;
+        return t === targetTier;
       });
     }
 
@@ -185,6 +186,44 @@ export const productService = {
       }
 
       let items = response?.items || (Array.isArray(response) ? response : []);
+
+      // Ensure perfume products reflect the exact dynamic tier pricing from backend
+      try {
+        let tiers = perfumeCategoryService.getCachedTiers();
+        if (!tiers || tiers.length === 0) {
+          const tiersRes = await perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 }).catch(() => null);
+          tiers = tiersRes?.items || [];
+        }
+        if (Array.isArray(tiers) && tiers.length > 0) {
+          const tierMap = new Map();
+          tiers.forEach(t => {
+            tierMap.set(Number(t.id), t);
+            if (t.name) tierMap.set(String(t.name).toLowerCase(), t);
+          });
+
+          items = items.map(p => {
+            const pCatId = Number(p.perfumeCategoryId);
+            const isPerfume = Number(p.categoryId) === 1 || p.category === 'perfumes' || !!pCatId;
+            if (isPerfume) {
+              const matchedTier = pCatId ? tierMap.get(pCatId) : (p.tier ? tierMap.get(String(p.tier).toLowerCase()) : null);
+              if (matchedTier) {
+                const tierPrice = Number(matchedTier.price);
+                return {
+                  ...p,
+                  tier: matchedTier.name,
+                  perfumeCategoryName: matchedTier.name,
+                  perfumeCategoryId: matchedTier.id,
+                  price: tierPrice > 0 ? tierPrice : (Number(p.price) || 0)
+                };
+              }
+            }
+            return p;
+          });
+        }
+      } catch (e) {
+        // Continue with raw backend items if tier enrichment fails
+      }
+
       if (items.length > 0) {
         memoryCatalog = items;
       }
@@ -207,7 +246,20 @@ export const productService = {
     if (!isNaN(numId) && numId > 0) {
       try {
         const remote = await productApi.getProductById(numId);
-        if (remote) return remote;
+        if (remote) {
+          if (remote.perfumeCategoryId || Number(remote.categoryId) === 1) {
+            const tierPrice = perfumeCategoryService.getTierPrice(remote.perfumeCategoryId);
+            if (tierPrice && tierPrice > 0) {
+              remote.price = tierPrice;
+            }
+            const tier = perfumeCategoryService.getTierById(remote.perfumeCategoryId);
+            if (tier?.name) {
+              remote.tier = tier.name;
+              remote.perfumeCategoryName = tier.name;
+            }
+          }
+          return remote;
+        }
       } catch (err) {
         console.warn('API getProductById fallback:', err.message);
       }
@@ -332,12 +384,14 @@ export const productService = {
       Number(productData.categoryId || existing?.categoryId) === 1
     );
 
-    let perfumeCatId = productData.perfumeCategoryId;
-    if (!perfumeCatId) {
+    let perfumeCatId = productData.perfumeCategoryId !== undefined ? productData.perfumeCategoryId : existing?.perfumeCategoryId;
+    if (!perfumeCatId && isPerfume) {
       const tierName = productData.tier || existing?.tier;
-      if (tierName === 'Royal') perfumeCatId = 2;
-      else if (tierName === 'Classic') perfumeCatId = 3;
-      else if (isPerfume) perfumeCatId = 1;
+      if (tierName) {
+        const tiers = perfumeCategoryService.getCachedTiers();
+        const found = tiers.find(t => t.name?.toLowerCase() === String(tierName).toLowerCase());
+        if (found) perfumeCatId = found.id;
+      }
     }
 
     let updatedRemote = null;

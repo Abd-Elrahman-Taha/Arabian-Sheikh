@@ -3,6 +3,7 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
+import { perfumeCategoryService } from '../../services/perfumeCategoryService';
 import { productApi } from '../../api/product.api';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -26,23 +27,30 @@ export default function AdminProducts() {
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [perfumeCategories, setPerfumeCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadCategories() {
+    async function loadCatalogMetadata() {
       try {
-        const data = await categoryService.getAdminCategories({ pageSize: 100 });
-        if (data?.items && data.items.length > 0) {
-          setCategories(data.items);
+        const [catsData, tiersData] = await Promise.all([
+          categoryService.getAdminCategories({ pageSize: 100 }).catch(() => ({ items: [] })),
+          perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 }).catch(() => ({ items: [] }))
+        ]);
+        if (catsData?.items && catsData.items.length > 0) {
+          setCategories(catsData.items);
+        }
+        if (tiersData?.items && tiersData.items.length > 0) {
+          setPerfumeCategories(tiersData.items);
         }
       } catch (err) {
-        console.warn('Failed to load categories for filter:', err.message);
+        console.warn('Failed to load catalog metadata:', err.message);
       }
     }
-    loadCategories();
+    loadCatalogMetadata();
   }, []);
 
   const fetchProducts = async () => {
@@ -203,9 +211,11 @@ export default function AdminProducts() {
           className="bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 text-sm text-[#F3E6D0] rounded-lg focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
         >
           <option value="all">All Tiers</option>
-          <option value="Luxury">Luxury Tier (€50)</option>
-          <option value="Royal">Royal Tier (€40)</option>
-          <option value="Classic">Classic Tier (€30)</option>
+          {perfumeCategories.map(tier => (
+            <option key={tier.id} value={tier.name}>
+              {tier.name} Tier (€{Number(tier.price).toFixed(0)})
+            </option>
+          ))}
         </select>
       </div>
 
@@ -234,90 +244,98 @@ export default function AdminProducts() {
                 <td colSpan="8" className="p-8 text-center text-sm text-neutral-400">No products found.</td>
               </tr>
             ) : (
-              products.map((p) => (
-                <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-4 px-4">
-                    <img
-                      src={p.imageUrl || p.image || p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
-                      alt={p.name}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = '/products/luxury_designs/07_arabian_gold.webp';
-                      }}
-                      className="w-12 h-16 object-contain bg-black/50 p-1 border border-white/10 rounded-lg"
-                    />
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="font-cinzel font-bold text-[#F3E6D0] text-sm sm:text-base">{p.name}</div>
-                    {p.arabicName && <div className="font-arabic text-[#D4AF37] text-xs sm:text-sm mt-0.5">{p.arabicName}</div>}
-                    <div className="text-xs text-[#D8BE99] mt-0.5">{p.size || '60 ml'}</div>
-                  </td>
-                  <td className="py-4 px-4">
-                    {p.tier ? (
-                      <span className="px-2.5 py-1 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-cinzel text-xs font-bold">
-                        {p.tier} Tier
-                      </span>
-                    ) : (
-                      <span className="text-[#D8BE99] uppercase tracking-wider text-xs font-semibold">
-                        {p.category}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-4 px-4 font-mono">
-                    {p.originalPrice && p.originalPrice > p.price ? (
-                      <div>
-                        <div className="text-[#D4AF37] text-sm sm:text-base font-bold">€{p.price}</div>
-                        <div className="text-xs text-neutral-500 line-through">€{p.originalPrice}</div>
-                      </div>
-                    ) : (
-                      <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{p.price}</span>
-                    )}
-                  </td>
-                  {/* Discount Controls Column */}
-                  <td className="py-4 px-4">
-                    {p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) ? (
-                      <div className="flex flex-col gap-1.5 min-w-[160px]">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full bg-red-900/90 border border-red-500 text-white font-bold font-mono text-xs flex items-center gap-1 shadow-sm">
-                            <Percent className="w-3 h-3" />
-                            <span>{p.discountPercent || Math.round((1 - p.price / p.originalPrice) * 100)}% OFF</span>
-                          </span>
-                          <button
-                            onClick={() => handleToggleDiscount(p, false)}
-                            className="text-xs text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
-                            title="Remove Discount"
-                          >
-                            Remove
-                          </button>
+              products.map((p) => {
+                const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(p.perfumeCategoryId))
+                  || perfumeCategories.find(t => t.name?.toLowerCase() === (p.tier || p.perfumeCategoryName)?.toLowerCase());
+                const effectivePrice = (p.price && Number(p.price) > 0)
+                  ? Number(p.price)
+                  : (matchedTier && matchedTier.price !== undefined ? Number(matchedTier.price) : Number(p.price || 0));
+                const effectiveTier = matchedTier?.name || p.tier || p.perfumeCategoryName;
+
+                return (
+                  <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-4 px-4">
+                      <img
+                        src={p.imageUrl || p.image || p.cutoutImage || p.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
+                        alt={p.name}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/products/luxury_designs/07_arabian_gold.webp';
+                        }}
+                        className="w-12 h-16 object-contain bg-black/50 p-1 border border-white/10 rounded-lg"
+                      />
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="font-cinzel font-bold text-[#F3E6D0] text-sm sm:text-base">{p.name}</div>
+                      {p.arabicName && <div className="font-arabic text-[#D4AF37] text-xs sm:text-sm mt-0.5">{p.arabicName}</div>}
+                      <div className="text-xs text-[#D8BE99] mt-0.5">{p.size || '60 ml'}</div>
+                    </td>
+                    <td className="py-4 px-4">
+                      {effectiveTier ? (
+                        <span className="px-2.5 py-1 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 font-cinzel text-xs font-bold">
+                          {effectiveTier} Tier
+                        </span>
+                      ) : (
+                        <span className="text-[#D8BE99] uppercase tracking-wider text-xs font-semibold">
+                          {p.category}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 font-mono">
+                      {p.originalPrice && p.originalPrice > effectivePrice ? (
+                        <div>
+                          <div className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</div>
+                          <div className="text-xs text-neutral-500 line-through">€{p.originalPrice}</div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-[#D8BE99]">Rate:</span>
-                          <select
-                            value={p.discountPercent || 20}
-                            onChange={(e) => handleUpdateDiscountPercent(p, e.target.value)}
-                            className="bg-black/90 border border-[#D4AF37]/50 text-[#F2D675] text-xs rounded px-2 py-1 focus:outline-none cursor-pointer font-medium"
-                          >
-                            <option value="10">10%</option>
-                            <option value="15">15%</option>
-                            <option value="20">20%</option>
-                            <option value="25">25%</option>
-                            <option value="30">30%</option>
-                            <option value="40">40%</option>
-                            <option value="50">50%</option>
-                            <option value="70">70%</option>
-                          </select>
+                      ) : (
+                        <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</span>
+                      )}
+                    </td>
+                    {/* Discount Controls Column */}
+                    <td className="py-4 px-4">
+                      {p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > effectivePrice) ? (
+                        <div className="flex flex-col gap-1.5 min-w-[160px]">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full bg-red-900/90 border border-red-500 text-white font-bold font-mono text-xs flex items-center gap-1 shadow-sm">
+                              <Percent className="w-3 h-3" />
+                              <span>{p.discountPercent || Math.round((1 - effectivePrice / p.originalPrice) * 100)}% OFF</span>
+                            </span>
+                            <button
+                              onClick={() => handleToggleDiscount({ ...p, price: effectivePrice }, false)}
+                              className="text-xs text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
+                              title="Remove Discount"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-[#D8BE99]">Rate:</span>
+                            <select
+                              value={p.discountPercent || 20}
+                              onChange={(e) => handleUpdateDiscountPercent({ ...p, price: effectivePrice }, e.target.value)}
+                              className="bg-black/90 border border-[#D4AF37]/50 text-[#F2D675] text-xs rounded px-2 py-1 focus:outline-none cursor-pointer font-medium"
+                            >
+                              <option value="10">10%</option>
+                              <option value="15">15%</option>
+                              <option value="20">20%</option>
+                              <option value="25">25%</option>
+                              <option value="30">30%</option>
+                              <option value="40">40%</option>
+                              <option value="50">50%</option>
+                              <option value="70">70%</option>
+                            </select>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleToggleDiscount(p, true, 20)}
-                        className="px-3 py-1.5 bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-lg text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
-                      >
-                        <Percent className="w-3.5 h-3.5" />
-                        <span>Add Discount</span>
-                      </button>
-                    )}
-                  </td>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleDiscount({ ...p, price: effectivePrice }, true, 20)}
+                          className="px-3 py-1.5 bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-lg text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Percent className="w-3.5 h-3.5" />
+                          <span>Add Discount</span>
+                        </button>
+                      )}
+                    </td>
                   <td className="py-4 px-4 font-mono text-sm sm:text-base">
                     <span className={p.stock > 10 ? 'text-emerald-400 font-semibold' : p.stock > 0 ? 'text-amber-400 font-semibold' : 'text-red-400 font-semibold'}>
                       {p.stock} units
@@ -345,7 +363,8 @@ export default function AdminProducts() {
                     </button>
                   </td>
                 </tr>
-              ))
+              );
+            })
             )}
           </tbody>
         </table>
