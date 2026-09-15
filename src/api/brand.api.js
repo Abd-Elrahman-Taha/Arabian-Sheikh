@@ -33,7 +33,7 @@ export const brandApi = {
    */
   async adminGetBrands(params = {}) {
     const response = await apiClient.get(ENDPOINTS.ADMIN.BRANDS.LIST, { params });
-    return response?.items || (Array.isArray(response) ? response : []);
+    return response;
   },
 
   /**

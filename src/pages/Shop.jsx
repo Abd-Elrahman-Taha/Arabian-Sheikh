@@ -83,13 +83,6 @@ export default function Shop() {
 
     async function loadCatalogTaxonomy() {
       try {
-        const canonicalCats = [
-          { id: 1, name: 'Perfumes', isActive: true },
-          { id: 3, name: 'Body & Bath Care', isActive: true },
-          { id: 7, name: 'Cosmetics', isActive: true },
-          { id: 8, name: 'Hair Care', isActive: true }
-        ];
-
         const [catsData, brandsData] = await Promise.all([
           categoryService.getStoreCategories(language).catch(() => []),
           brandService.getStoreBrands(language).catch(() => [])
@@ -97,7 +90,7 @@ export default function Shop() {
 
         if (isMounted) {
           const apiCats = Array.isArray(catsData) ? catsData.filter(c => c.isActive !== false) : [];
-          setCategories(apiCats.length > 0 ? apiCats : canonicalCats);
+          setCategories(apiCats);
           setBrands(Array.isArray(brandsData) ? brandsData : []);
         }
       } catch (err) {
@@ -122,27 +115,14 @@ export default function Shop() {
       setSubcategoriesLoading(true);
       try {
         const subData = await categoryService.getStoreSubcategories(activeCategoryId, language);
-        let items = Array.isArray(subData) ? subData.filter(s => s.isActive !== false) : [];
-        if (Number(activeCategoryId) === 1 && items.length === 0) {
-          items = [
-            { id: 6, name: 'Oriental', categoryId: 1, isActive: true },
-            { id: 7, name: 'Niche & Rare', categoryId: 1, isActive: true }
-          ];
-        }
+        const items = Array.isArray(subData) ? subData.filter(s => s.isActive !== false) : [];
         if (isMounted) {
           setSubcategories(items);
         }
       } catch (err) {
         console.warn('Failed to load subcategories for category', activeCategoryId, err.message);
         if (isMounted) {
-          if (Number(activeCategoryId) === 1) {
-            setSubcategories([
-              { id: 6, name: 'Oriental', categoryId: 1, isActive: true },
-              { id: 7, name: 'Niche & Rare', categoryId: 1, isActive: true }
-            ]);
-          } else {
-            setSubcategories([]);
-          }
+          setSubcategories([]);
         }
       } finally {
         if (isMounted) setSubcategoriesLoading(false);

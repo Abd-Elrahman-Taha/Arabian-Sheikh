@@ -1,15 +1,6 @@
 import { productApi } from '../api/product.api';
-import { liveCloudSync } from './liveCloudSync';
 
 let memoryCatalog = [];
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('arabian_sheikh_cloud_updated', () => {
-    if (memoryCatalog && memoryCatalog.length > 0) {
-      memoryCatalog = liveCloudSync.applyToProducts(memoryCatalog);
-    }
-  });
-}
 
 export const productService = {
   /**
@@ -194,14 +185,12 @@ export const productService = {
       }
 
       let items = response?.items || (Array.isArray(response) ? response : []);
-      items = liveCloudSync.applyToProducts(items.length > 0 ? items : memoryCatalog);
       if (items.length > 0) {
         memoryCatalog = items;
       }
       return this.applyFilters(memoryCatalog, filters);
     } catch (err) {
       console.warn('API getAllProducts error:', err.message);
-      memoryCatalog = liveCloudSync.applyToProducts(memoryCatalog);
       return this.applyFilters(memoryCatalog, filters);
     }
   },
@@ -218,7 +207,7 @@ export const productService = {
     if (!isNaN(numId) && numId > 0) {
       try {
         const remote = await productApi.getProductById(numId);
-        if (remote) return liveCloudSync.applyToProducts([remote])[0] || remote;
+        if (remote) return remote;
       } catch (err) {
         console.warn('API getProductById fallback:', err.message);
       }
@@ -324,17 +313,8 @@ export const productService = {
   },
 
   async createProduct(productData) {
-    let created = null;
-    try {
-      created = await productApi.adminCreateProduct(productData);
-    } catch (err) {
-      console.warn('adminCreateProduct API fallback:', err.message);
-      created = { ...productData, id: 'as-prod-' + Date.now() };
-    }
-    if (created?.id) {
-      await liveCloudSync.addProduct(created).catch(() => {});
-    }
-    const all = await this.getAllProducts({ includeDrafts: true });
+    const created = await productApi.adminCreateProduct(productData);
+    await this.getAllProducts({ includeDrafts: true });
     return created;
   },
 
@@ -379,89 +359,17 @@ export const productService = {
         ingredients: productData.ingredients || existing?.ingredients
       };
 
-      try {
-        updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
-      } catch (err) {
-        console.warn('adminUpdateProduct API fallback:', err.message);
-      }
+      updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
     }
 
-    // Compute final prices and discount fields
-    let finalHasDiscount = productData.hasDiscount !== undefined ? Boolean(productData.hasDiscount) : Boolean(existing?.hasDiscount);
-    let finalDiscountPct = productData.discountPercent !== undefined ? Number(productData.discountPercent) : (Number(existing?.discountPercent) || 0);
-    let finalOriginalPrice = productData.originalPrice !== undefined ? productData.originalPrice : existing?.originalPrice;
-    let finalPrice = productData.price !== undefined ? Number(productData.price) : Number(existing?.price || 0);
-
-    if (finalDiscountPct > 0 && finalHasDiscount) {
-      const basePrice = finalOriginalPrice ? Number(finalOriginalPrice) : finalPrice;
-      finalOriginalPrice = basePrice;
-      finalPrice = Math.round(basePrice * (1 - finalDiscountPct / 100));
-      finalHasDiscount = true;
-    } else if (finalDiscountPct === 0 || !finalHasDiscount) {
-      if (finalOriginalPrice) finalPrice = Number(finalOriginalPrice);
-      finalHasDiscount = false;
-      finalDiscountPct = 0;
-    }
-
-    const tierValue = productData.tier || existing?.tier || (isPerfume ? 'Luxury' : null);
-    const resolvedImage = productData.imageUrl || productData.image || (Array.isArray(productData.images) && productData.images[0]) || existing?.imageUrl || existing?.image || (existing?.images?.[0]) || '/products/luxury_designs/07_arabian_gold.webp';
-    const resolvedImagesList = Array.isArray(productData.images) && productData.images.length > 0 ? productData.images : (Array.isArray(existing?.images) && existing?.images.length > 0 ? existing.images : [resolvedImage]);
-
-    const enrichedProductData = {
-      ...existing,
-      ...productData,
-      imageUrl: resolvedImage,
-      image: resolvedImage,
-      cutoutImage: productData.cutoutImage || existing?.cutoutImage || resolvedImage,
-      originalImage: productData.originalImage || existing?.originalImage || resolvedImage,
-      images: resolvedImagesList,
-      tier: tierValue,
-      perfumeCategoryName: tierValue,
-      perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,
-      hasDiscount: finalHasDiscount,
-      discountPercent: finalDiscountPct,
-      isOffer: finalHasDiscount,
-      price: finalPrice,
-      originalPrice: finalHasDiscount ? finalOriginalPrice : null
-    };
-
-    // Broadcast across all devices via live cloud sync
-    const aliases = Array.from(new Set([
-      String(id),
-      targetId ? String(targetId) : null,
-      existing.id ? String(existing.id) : null,
-      existing.slug ? String(existing.slug) : null,
-      existing.numericId ? String(existing.numericId) : null
-    ].filter(Boolean)));
-
-    for (const a of aliases) {
-      await liveCloudSync.updateProduct(a, enrichedProductData).catch(() => {});
-    }
-
-    memoryCatalog = memoryCatalog.map(p => {
-      const pAliases = [String(p.id), p.slug ? String(p.slug) : null, p.numericId ? String(p.numericId) : null].filter(Boolean);
-      const isMatch = aliases.some(a => pAliases.includes(a));
-      if (isMatch) {
-        return { ...p, ...enrichedProductData };
-      }
-      return p;
-    });
-
-    return updatedRemote || enrichedProductData;
+    await this.getAllProducts({ includeDrafts: true });
+    return updatedRemote || productData;
   },
 
   async deleteProduct(id) {
     const targetId = this.resolveTargetId(id);
     if (targetId) {
-      try {
-        await productApi.adminDeleteProduct(targetId);
-      } catch (err) {
-        console.warn('adminDeleteProduct API fallback:', err.message);
-      }
-    }
-    await liveCloudSync.deleteProduct(id).catch(() => {});
-    if (targetId) {
-      await liveCloudSync.deleteProduct(targetId).catch(() => {});
+      await productApi.adminDeleteProduct(targetId);
     }
     memoryCatalog = memoryCatalog.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
     return true;
@@ -473,16 +381,10 @@ export const productService = {
     
     if (targetId) {
       if (Boolean(isActive)) {
-        await productApi.adminActivateProduct(targetId, existing).catch(() => {});
+        await productApi.adminActivateProduct(targetId, existing);
       } else {
-        await productApi.adminDeactivateProduct(targetId, existing).catch(() => {});
+        await productApi.adminDeactivateProduct(targetId, existing);
       }
-    }
-
-    // Broadcast across all devices via live cloud sync
-    const aliases = Array.from(new Set([id, targetId, existing.id, existing.slug, existing.numericId].filter(Boolean)));
-    for (const a of aliases) {
-      await liveCloudSync.setProductActive(a, isActive).catch(() => {});
     }
 
     memoryCatalog = memoryCatalog.map(p => {

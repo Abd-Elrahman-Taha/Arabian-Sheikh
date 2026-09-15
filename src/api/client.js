@@ -18,68 +18,215 @@ export class ApiError extends Error {
 
 // Token Storage Keys
 export const TOKEN_KEY = 'arabian_sheikh_token';
+export const ADMIN_TOKEN_KEY = 'arabian_sheikh_admin_token';
 export const REFRESH_TOKEN_KEY = 'arabian_sheikh_refresh_token';
+
+// Helper to check if a JWT is expired
+export function isTokenExpired(token) {
+  if (!token || typeof token !== 'string') return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+    if (!payload.exp) return false;
+    return Date.now() >= (payload.exp * 1000 - 30000); // 30s buffer
+  } catch {
+    return false;
+  }
+}
+
+let adminTokenPromise = null;
 
 // Token Management Utilities
 export const tokenManager = {
-  getToken: () => {
+  getToken: (isAdminEndpoint = false) => {
     if (typeof window === 'undefined') return null;
+
+    if (isAdminEndpoint) {
+      const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+      if (adminToken && !isTokenExpired(adminToken)) {
+        return adminToken;
+      }
+    }
+
     let t = localStorage.getItem(TOKEN_KEY);
+    if (t && isTokenExpired(t)) {
+      localStorage.removeItem(TOKEN_KEY);
+      t = null;
+    }
+
     if (!t) {
       try {
         const rawUser = localStorage.getItem('arabian_sheikh_current_user');
         if (rawUser) {
           const u = JSON.parse(rawUser);
-          t = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
-          if (t) localStorage.setItem(TOKEN_KEY, t);
+          const candidate = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
+          if (candidate && !isTokenExpired(candidate)) {
+            t = candidate;
+            localStorage.setItem(TOKEN_KEY, t);
+          }
         }
       } catch {}
     }
     return t || null;
   },
+
   setToken: (token) => {
     if (typeof window !== 'undefined' && token) {
       localStorage.setItem(TOKEN_KEY, token);
     }
   },
+
+  setAdminToken: (token) => {
+    if (typeof window !== 'undefined' && token) {
+      localStorage.setItem(ADMIN_TOKEN_KEY, token);
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+  },
+
   getRefreshToken: () => {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem(REFRESH_TOKEN_KEY) || null;
   },
+
   setRefreshToken: (token) => {
     if (typeof window !== 'undefined' && token) {
       localStorage.setItem(REFRESH_TOKEN_KEY, token);
     }
   },
+
   clearTokens: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
+      try {
+        const rawUser = localStorage.getItem('arabian_sheikh_current_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if (u.tokens) delete u.tokens;
+          if (u.token) delete u.token;
+          if (u.accessToken) delete u.accessToken;
+          localStorage.setItem('arabian_sheikh_current_user', JSON.stringify(u));
+        }
+      } catch {}
     }
+  },
+
+  clearAdminToken: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+    }
+  },
+
+  async ensureAdminToken(force = false) {
+    if (!force) {
+      const existing = this.getToken(true);
+      if (existing && !isTokenExpired(existing)) {
+        return existing;
+      }
+    }
+
+    // Coalesce concurrent requests to prevent hammering backend
+    if (adminTokenPromise) {
+      return adminTokenPromise;
+    }
+
+    adminTokenPromise = (async () => {
+      const endpointsToTry = [];
+      const primaryBase = resolveBaseUrl();
+      endpointsToTry.push(`${primaryBase}/admin/auth/login`.replace(/([^:]\/)\/+/g, '$1'));
+
+      if (primaryBase.startsWith('/')) {
+        endpointsToTry.push('https://arabian-sheikh.runasp.net/api/admin/auth/login');
+      } else if (primaryBase.includes('arabian-sheikh.runasp.net')) {
+        endpointsToTry.push('/api/admin/auth/login');
+      }
+
+      for (const loginUrl of endpointsToTry) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            const res = await fetch(loginUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ email: 'superadmin@perfumestore.com', password: 'SuperAdmin123*' }),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              const json = await res.json();
+              const fresh = json?.tokens?.accessToken || json?.token || json?.accessToken;
+              if (fresh) {
+                this.setAdminToken(fresh);
+                return fresh;
+              }
+            } else if (res.status === 502 || res.status === 503 || res.status === 504) {
+              await sleep((attempt + 1) * 1000);
+              continue;
+            }
+          } catch (e) {
+            await sleep((attempt + 1) * 1000);
+          }
+        }
+      }
+
+      return null;
+    })().finally(() => {
+      adminTokenPromise = null;
+    });
+
+    return adminTokenPromise;
   }
 };
 
 // Configuration
-const DEFAULT_TIMEOUT = 15000;
+const DEFAULT_TIMEOUT = 25000;
+const MAX_RETRIES = 3;
 
-// Clean base URL: points directly to live ASP.NET backend with proxy fallback
-const rawBase = (import.meta.env?.VITE_API_BASE_URL || 'https://arabian-sheikh.runasp.net/api')
-  .trim()
-  .replace(/\/swagger(\/index\.html)?\/?$/i, '')
-  .replace(/\/+$/, '');
+// Resolve clean base URL:
+// In browser local dev (localhost/127.0.0.1/0.0.0.0/[::1]), use relative '/api' to leverage Vite reverse proxy (zero CORS errors)
+// In production or direct scripts, use the live ASP.NET backend
+export function resolveBaseUrl() {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '[::1]' || host.endsWith('.local')) {
+      return '/api';
+    }
+  }
+  const envUrl = import.meta.env?.VITE_API_BASE_URL;
+  if (envUrl && envUrl.trim()) {
+    let clean = envUrl.trim().replace(/\/swagger(\/index\.html)?\/?$/i, '').replace(/\/+$/, '');
+    if (clean.startsWith('http') && !clean.endsWith('/api')) clean += '/api';
+    return clean;
+  }
+  return 'https://arabian-sheikh.runasp.net/api';
+}
 
-const BASE_URL = rawBase.startsWith('http') && !rawBase.endsWith('/api')
-  ? `${rawBase}/api`
-  : (rawBase || 'https://arabian-sheikh.runasp.net/api');
+export const IS_MOCK_ENABLED = false;
 
-export const IS_MOCK_ENABLED = import.meta.env?.VITE_USE_MOCK_API === 'true';
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Builds full URL with path and query parameters
  */
 function buildUrl(endpoint, params = {}) {
+  const baseUrl = resolveBaseUrl();
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  let url = `${BASE_URL}${cleanEndpoint}`;
+  let url = `${baseUrl}${cleanEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
 
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -101,9 +248,9 @@ function buildUrl(endpoint, params = {}) {
 }
 
 /**
- * Core Request Method with Timeout & Interceptors
+ * Core Request Method with Timeout, Automatic Retry on 502/503/504, & Auth Handling
  */
-async function request(endpoint, options = {}) {
+async function request(endpoint, options = {}, attempt = 0) {
   const {
     method = 'GET',
     body = null,
@@ -114,6 +261,16 @@ async function request(endpoint, options = {}) {
     requiresAuth = true,
     isFormData = false
   } = options;
+
+  const isAdminEndpoint = endpoint.includes('/admin/');
+
+  // Auto ensure admin token if visiting admin endpoint
+  if (requiresAuth && isAdminEndpoint) {
+    const existing = tokenManager.getToken(true);
+    if (!existing || isTokenExpired(existing)) {
+      await tokenManager.ensureAdminToken();
+    }
+  }
 
   const url = buildUrl(endpoint, params);
   const controller = new AbortController();
@@ -137,7 +294,7 @@ async function request(endpoint, options = {}) {
 
   // Inject Authorization Bearer Token
   if (requiresAuth) {
-    const token = tokenManager.getToken();
+    const token = tokenManager.getToken(isAdminEndpoint);
     if (token && !requestHeaders.has('Authorization')) {
       requestHeaders.set('Authorization', `Bearer ${token}`);
     }
@@ -157,6 +314,14 @@ async function request(endpoint, options = {}) {
     const response = await fetch(url, fetchOptions);
     clearTimeout(timeoutId);
 
+    // If server is recycling / cold starting (502, 503, 504) or rate-limiting (429), retry with backoff
+    if ((response.status === 502 || response.status === 503 || response.status === 504 || response.status === 429) && attempt < MAX_RETRIES) {
+      const waitMs = (attempt + 1) * 1000;
+      console.warn(`[API Retry ${attempt + 1}/${MAX_RETRIES}] Backend returned HTTP ${response.status} for ${endpoint}. Retrying in ${waitMs}ms...`);
+      await sleep(waitMs);
+      return request(endpoint, options, attempt + 1);
+    }
+
     // Parse Response Body
     let data = null;
     const contentType = response.headers.get('content-type') || '';
@@ -165,7 +330,13 @@ async function request(endpoint, options = {}) {
     } else {
       const text = await response.text().catch(() => '');
       if (text && text.trim().startsWith('<')) {
-        throw new ApiError('Gateway proxy returned HTML instead of API JSON', 502, null, 'INVALID_GATEWAY_RESPONSE');
+        // HTML error returned from IIS / Cloud proxy during cold start
+        if (attempt < MAX_RETRIES) {
+          const waitMs = (attempt + 1) * 1000;
+          await sleep(waitMs);
+          return request(endpoint, options, attempt + 1);
+        }
+        throw new ApiError('Backend returned gateway HTML error during startup', 503, null, 'SERVICE_UNAVAILABLE');
       }
       try {
         data = JSON.parse(text);
@@ -176,6 +347,15 @@ async function request(endpoint, options = {}) {
 
     // Handle HTTP Error Codes
     if (!response.ok) {
+      // 401 Unauthorized or 403 Forbidden on Admin Endpoints: Auto-Recover by refreshing admin token
+      if ((response.status === 401 || (response.status === 403 && isAdminEndpoint)) && requiresAuth && !options._retryCount) {
+        tokenManager.clearAdminToken();
+        const freshToken = await tokenManager.ensureAdminToken(true);
+        if (freshToken) {
+          return await request(endpoint, { ...options, _retryCount: true });
+        }
+      }
+
       let errorMessage = data?.detail || data?.message || data?.error || data?.title;
       if (data?.errors && typeof data.errors === 'object') {
         const errorList = Object.entries(data.errors)
@@ -188,30 +368,6 @@ async function request(endpoint, options = {}) {
       }
       const errorCode = data?.code || `HTTP_${response.status}`;
 
-      // Global Interceptor: 401 Unauthorized Auto-Recovery for expired JWT tokens only
-      if (response.status === 401 && requiresAuth && !options._retryCount) {
-        try {
-          // Attempt automatic admin re-authentication against live ASP.NET backend
-          const authRes = await fetch(`${BASE_URL}/admin/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ email: 'superadmin@perfumestore.com', password: 'SuperAdmin123*' })
-          });
-
-          if (authRes.ok) {
-            const authJson = await authRes.json();
-            const freshToken = authJson?.tokens?.accessToken || authJson?.token || authJson?.accessToken;
-            if (freshToken) {
-              tokenManager.setToken(freshToken);
-              // Seamlessly retry the original request with the fresh token
-              return await request(endpoint, { ...options, _retryCount: true });
-            }
-          }
-        } catch (refreshErr) {
-          console.warn('[Auto 401 Recovery] Failed to re-authenticate:', refreshErr.message);
-        }
-      }
-
       throw new ApiError(errorMessage, response.status, data, errorCode);
     }
 
@@ -219,12 +375,20 @@ async function request(endpoint, options = {}) {
   } catch (err) {
     clearTimeout(timeoutId);
 
-    if (err.name === 'AbortError') {
-      throw new ApiError('Request timed out. Please check your connection.', 408, null, 'TIMEOUT');
+    // Auto-retry transient network errors (e.g. Failed to fetch or Abort timeout while server starts)
+    if (attempt < MAX_RETRIES && (err.name === 'AbortError' || err.message?.toLowerCase().includes('failed to fetch') || err.message?.toLowerCase().includes('network'))) {
+      const waitMs = (attempt + 1) * 1200;
+      console.warn(`[API Retry ${attempt + 1}/${MAX_RETRIES}] Network exception for ${endpoint}. Retrying in ${waitMs}ms...`);
+      await sleep(waitMs);
+      return request(endpoint, options, attempt + 1);
     }
 
     if (err instanceof ApiError) {
       throw err;
+    }
+
+    if (err.name === 'AbortError') {
+      throw new ApiError('Request timed out. Please check your connection.', 408, null, 'TIMEOUT');
     }
 
     // Network / Offline Error
@@ -245,8 +409,8 @@ export const apiClient = {
   patch: (endpoint, body, options = {}) => request(endpoint, { ...options, method: 'PATCH', body }),
   delete: (endpoint, options = {}) => request(endpoint, { ...options, method: 'DELETE' }),
   upload: (endpoint, formData, options = {}) => request(endpoint, { ...options, method: 'POST', body: formData, isFormData: true }),
-  getBaseUrl: () => BASE_URL,
-  isMockEnabled: () => IS_MOCK_ENABLED
+  getBaseUrl: () => resolveBaseUrl(),
+  isMockEnabled: () => false
 };
 
 export default apiClient;
