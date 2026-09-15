@@ -3,22 +3,10 @@ import { perfumeCategoryService } from './perfumeCategoryService';
 import { promotionApi } from '../api/promotion.api';
 import { promotionService } from './promotionService';
 
-const DISCOUNT_STORAGE_KEY = 'arabian_sheikh_product_discounts';
-
-function getStoredDiscounts() {
-  if (typeof window === 'undefined') return {};
+// Purge any legacy device-specific discount overrides so backend promotions are the sole source of truth
+if (typeof window !== 'undefined') {
   try {
-    const raw = localStorage.getItem(DISCOUNT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveStoredDiscounts(map) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(DISCOUNT_STORAGE_KEY, JSON.stringify(map));
+    localStorage.removeItem('arabian_sheikh_product_discounts');
   } catch {}
 }
 
@@ -268,8 +256,8 @@ export const productService = {
                   tier: matchedTier.name,
                   perfumeCategoryName: matchedTier.name,
                   perfumeCategoryId: matchedTier.id,
-                  price: (p.hasDiscount || (p.discountPercent > 0)) ? p.price : basePrice,
-                  originalPrice: p.originalPrice || basePrice,
+                  price: basePrice,
+                  originalPrice: basePrice,
                   tierPrice: tierPrice
                 };
               }
@@ -281,65 +269,41 @@ export const productService = {
         // Continue with raw backend items if tier enrichment fails
       }
 
-      // Enrich products with active discounts (Persistent Storage + Backend Promotions)
+      // Enrich products with active discounts strictly from Backend Promotions
       try {
-        const storedDiscounts = getStoredDiscounts();
         let activePromos = [];
         try {
           activePromos = await promotionService.getActivePromotions().catch(() => []);
         } catch {}
 
         items = items.map(p => {
-          const pIdStr = String(p.id);
-          const pNumStr = p.numericId ? String(p.numericId) : null;
-          const discountOverride = storedDiscounts[pIdStr] || (pNumStr && storedDiscounts[pNumStr]);
-
-          if (discountOverride) {
-            if (discountOverride.removed === true || discountOverride.hasDiscount === false) {
-              // Explicitly removed by admin: force un-discounted price, DO NOT let activePromos resurrect it!
-              const unDiscountedPrice = p.tierPrice || (p.perfumeCategoryId ? perfumeCategoryService.getTierPrice(p.perfumeCategoryId) : null) || p.originalPrice || p.price;
-              return {
-                ...p,
-                hasDiscount: false,
-                isOffer: false,
-                discountPercent: 0,
-                originalPrice: null,
-                price: unDiscountedPrice
-              };
-            }
-
-            if (discountOverride.hasDiscount === true) {
-              const pct = Number(discountOverride.discountPercent) || 10;
-              const basePrice = discountOverride.originalPrice || p.tierPrice || (p.perfumeCategoryId ? perfumeCategoryService.getTierPrice(p.perfumeCategoryId) : null) || p.originalPrice || p.price;
-              return {
-                ...p,
-                hasDiscount: true,
-                isOffer: true,
-                discountPercent: pct,
-                originalPrice: basePrice,
-                price: Math.round(basePrice * (1 - pct / 100))
-              };
-            }
-          }
+          const basePrice = p.tierPrice || (p.perfumeCategoryId ? perfumeCategoryService.getTierPrice(p.perfumeCategoryId) : null) || p.originalPrice || p.price;
 
           if (Array.isArray(activePromos) && activePromos.length > 0) {
-            const promoCalc = promotionService.calculateProductPromotion(p, activePromos);
+            const promoCalc = promotionService.calculateProductPromotion({ ...p, price: basePrice, originalPrice: basePrice }, activePromos);
             if (promoCalc?.hasPromotion) {
               return {
                 ...p,
                 hasDiscount: true,
                 isOffer: true,
                 discountPercent: promoCalc.discountPercent,
-                originalPrice: promoCalc.originalPrice || p.tierPrice || p.price,
+                originalPrice: promoCalc.originalPrice || basePrice,
                 price: promoCalc.price
               };
             }
           }
 
-          return p;
+          return {
+            ...p,
+            hasDiscount: false,
+            isOffer: false,
+            discountPercent: 0,
+            originalPrice: null,
+            price: basePrice
+          };
         });
       } catch (e) {
-        console.warn('Discount enrichment error:', e.message);
+        console.warn('Backend promotions enrichment error:', e.message);
       }
 
       if (items.length > 0) {
@@ -365,10 +329,12 @@ export const productService = {
       try {
         const remote = await productApi.getProductById(numId);
         if (remote) {
+          let basePrice = Number(remote.price) || 0;
           if (remote.perfumeCategoryId || Number(remote.categoryId) === 1) {
             const tierPrice = perfumeCategoryService.getTierPrice(remote.perfumeCategoryId);
             if (tierPrice && tierPrice > 0) {
               remote.price = tierPrice;
+              basePrice = tierPrice;
             }
             const tier = perfumeCategoryService.getTierById(remote.perfumeCategoryId);
             if (tier?.name) {
@@ -376,6 +342,25 @@ export const productService = {
               remote.perfumeCategoryName = tier.name;
             }
           }
+          try {
+            const activePromos = await promotionService.getActivePromotions().catch(() => []);
+            if (activePromos.length > 0) {
+              const promoCalc = promotionService.calculateProductPromotion({ ...remote, price: basePrice, originalPrice: basePrice }, activePromos);
+              if (promoCalc?.hasPromotion) {
+                remote.hasDiscount = true;
+                remote.isOffer = true;
+                remote.discountPercent = promoCalc.discountPercent;
+                remote.originalPrice = promoCalc.originalPrice || basePrice;
+                remote.price = promoCalc.price;
+              } else {
+                remote.hasDiscount = false;
+                remote.isOffer = false;
+                remote.discountPercent = 0;
+                remote.originalPrice = null;
+                remote.price = basePrice;
+              }
+            }
+          } catch {}
           return remote;
         }
       } catch (err) {
@@ -575,147 +560,15 @@ export const productService = {
   },
 
   async applyProductDiscount(id, discountPercent) {
-    const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    const targetId = this.resolveTargetId(id) || id;
-    const targetKey = String(targetId);
-
-    // Determine genuine un-discounted base price
-    const prod = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id);
-    const unDiscountedBase = prod?.originalPrice || prod?.tierPrice || (prod?.perfumeCategoryId ? perfumeCategoryService.getTierPrice(prod.perfumeCategoryId) : null) || prod?.price;
-
-    // 1. Save to persistent storage immediately with explicit base price
-    const stored = getStoredDiscounts();
-    stored[targetKey] = {
-      discountPercent: pct,
-      hasDiscount: true,
-      isOffer: true,
-      originalPrice: unDiscountedBase,
-      removed: false,
-      updatedAt: Date.now()
-    };
-    if (String(id) !== targetKey) {
-      stored[String(id)] = stored[targetKey];
-    }
-    saveStoredDiscounts(stored);
-
-    // Invalidate promotions cache so stale promotions don't interfere
+    console.warn('applyProductDiscount is deprecated. Control all discounts via backend Promotions page.');
     promotionService.clearCache();
-
-    // 2. Also create/activate backend promotion in database via promotionApi
-    try {
-      const prodName = prod?.name || `Product #${targetId}`;
-      const promosRes = await promotionApi.adminGetPromotions({ pageSize: 100 }).catch(() => null);
-      const items = promosRes?.items || (Array.isArray(promosRes) ? promosRes : []);
-      const existingPromo = items.find(p => {
-        const rules = p.applicability || p.applicabilities || [];
-        return rules.some(r => r.targetType === 'Product' && Number(r.targetId) === Number(targetId));
-      });
-
-      if (existingPromo?.id) {
-        await promotionApi.adminUpdatePromotion(existingPromo.id, {
-          name: existingPromo.name || `Special Offer - ${prodName}`,
-          type: 'Discount',
-          discountType: 'Percentage',
-          discountValue: pct,
-          startDate: existingPromo.startDate || new Date().toISOString(),
-          endDate: existingPromo.endDate || '2028-12-31T23:59:59Z',
-          isActive: true,
-          applicability: [{ targetType: 'Product', targetId: Number(targetId), isExcluded: false }]
-        }).catch(() => {});
-        await promotionApi.adminActivatePromotion(existingPromo.id).catch(() => {});
-      } else {
-        await promotionApi.adminCreatePromotion({
-          name: `Special Offer - ${prodName}`,
-          type: 'Discount',
-          discountType: 'Percentage',
-          discountValue: pct,
-          startDate: new Date().toISOString(),
-          endDate: '2028-12-31T23:59:59Z',
-          isActive: true,
-          applicability: [{ targetType: 'Product', targetId: Number(targetId), isExcluded: false }]
-        }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Backend promotion sync warning:', e.message);
-    }
-
-    // 3. Update memory catalog
-    memoryCatalog = memoryCatalog.map(p => {
-      if (String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id) {
-        return {
-          ...p,
-          hasDiscount: true,
-          isOffer: true,
-          discountPercent: pct,
-          originalPrice: unDiscountedBase,
-          price: Math.round(unDiscountedBase * (1 - pct / 100))
-        };
-      }
-      return p;
-    });
-
-    return { id: targetId, discountPercent: pct, hasDiscount: true };
+    return { id, discountPercent, hasDiscount: true };
   },
 
   async removeProductDiscount(id) {
-    const targetId = this.resolveTargetId(id) || id;
-    const targetKey = String(targetId);
-
-    // Determine genuine un-discounted base price
-    const prod = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id);
-    const unDiscountedBase = prod?.originalPrice || prod?.tierPrice || (prod?.perfumeCategoryId ? perfumeCategoryService.getTierPrice(prod.perfumeCategoryId) : null) || prod?.price;
-
-    // 1. Explicitly record discount removal in persistent storage so it is never resurrected
-    const stored = getStoredDiscounts();
-    stored[targetKey] = {
-      discountPercent: 0,
-      hasDiscount: false,
-      isOffer: false,
-      originalPrice: unDiscountedBase,
-      removed: true,
-      updatedAt: Date.now()
-    };
-    if (String(id) !== targetKey) {
-      stored[String(id)] = stored[targetKey];
-    }
-    saveStoredDiscounts(stored);
-
-    // Invalidate promotions cache so stale promotions don't resurrect the discount
+    console.warn('removeProductDiscount is deprecated. Control all discounts via backend Promotions page.');
     promotionService.clearCache();
-
-    // 2. Deactivate backend promotion if exists
-    try {
-      const promosRes = await promotionApi.adminGetPromotions({ pageSize: 100 }).catch(() => null);
-      const items = promosRes?.items || (Array.isArray(promosRes) ? promosRes : []);
-      const existingPromos = items.filter(p => {
-        const rules = p.applicability || p.applicabilities || [];
-        return rules.some(r => r.targetType === 'Product' && Number(r.targetId) === Number(targetId));
-      });
-      for (const promo of existingPromos) {
-        if (promo?.id) {
-          await promotionApi.adminDeactivatePromotion(promo.id, 'Discount removed from dashboard').catch(() => {});
-        }
-      }
-    } catch (e) {
-      console.warn('Backend promotion removal warning:', e.message);
-    }
-
-    // 3. Update memory catalog to restored un-discounted base price
-    memoryCatalog = memoryCatalog.map(p => {
-      if (String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id) {
-        return {
-          ...p,
-          hasDiscount: false,
-          isOffer: false,
-          discountPercent: 0,
-          originalPrice: null,
-          price: unDiscountedBase
-        };
-      }
-      return p;
-    });
-
-    return { id: targetId, discountPercent: 0, hasDiscount: false };
+    return { id, discountPercent: 0, hasDiscount: false };
   },
 
   getDiscountedProductsSync() {

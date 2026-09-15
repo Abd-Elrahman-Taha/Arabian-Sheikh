@@ -14,7 +14,6 @@ import {
   Trash2,
   ExternalLink,
   Crown,
-  Percent,
   Tag,
   RefreshCw,
   Layers
@@ -90,69 +89,7 @@ export default function AdminProducts() {
     }
   };
 
-  const handleToggleDiscount = async (product, isEnabling, percent = 20) => {
-    try {
-      const pct = Number(percent) || 20;
-      const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(product.perfumeCategoryId))
-        || perfumeCategories.find(t => t.name?.toLowerCase() === (product.tier || product.perfumeCategoryName)?.toLowerCase());
-      const basePrice = product.originalPrice || (matchedTier && matchedTier.price ? Number(matchedTier.price) : product.price);
 
-      setProducts(prev => prev.map(p => {
-        if (p.id === product.id || String(p.id) === String(product.id)) {
-          return {
-            ...p,
-            hasDiscount: isEnabling,
-            isOffer: isEnabling,
-            discountPercent: isEnabling ? pct : 0,
-            originalPrice: isEnabling ? basePrice : null,
-            price: isEnabling ? Math.round(basePrice * (1 - pct / 100)) : basePrice
-          };
-        }
-        return p;
-      }));
-
-      if (isEnabling) {
-        await productService.applyProductDiscount(product.id, pct);
-        success(`Discount of ${pct}% applied to '${product.name}'.`);
-      } else {
-        await productService.removeProductDiscount(product.id);
-        success(`Discount removed from '${product.name}'.`);
-      }
-      await fetchProducts();
-    } catch (err) {
-      error(err.message || 'Failed to update discount');
-      fetchProducts();
-    }
-  };
-
-  const handleUpdateDiscountPercent = async (product, newPercent) => {
-    try {
-      const pct = Number(newPercent) || 10;
-      const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(product.perfumeCategoryId))
-        || perfumeCategories.find(t => t.name?.toLowerCase() === (product.tier || product.perfumeCategoryName)?.toLowerCase());
-      const basePrice = product.originalPrice || (matchedTier && matchedTier.price ? Number(matchedTier.price) : product.price);
-
-      setProducts(prev => prev.map(p => {
-        if (p.id === product.id || String(p.id) === String(product.id)) {
-          return {
-            ...p,
-            hasDiscount: true,
-            isOffer: true,
-            discountPercent: pct,
-            originalPrice: basePrice,
-            price: Math.round(basePrice * (1 - pct / 100))
-          };
-        }
-        return p;
-      }));
-      await productService.applyProductDiscount(product.id, pct);
-      success(`Discount updated to ${pct}% for '${product.name}'.`);
-      await fetchProducts();
-    } catch (err) {
-      error(err.message || 'Failed to update discount');
-      fetchProducts();
-    }
-  };
 
   return (
     <div className="space-y-6 text-[#F3E6D0]">
@@ -236,7 +173,6 @@ export default function AdminProducts() {
               <th className="py-4 px-4">Product Name</th>
               <th className="py-4 px-4">Tier / Category</th>
               <th className="py-4 px-4">Price</th>
-              <th className="py-4 px-4">Discount Offer</th>
               <th className="py-4 px-4">Stock</th>
               <th className="py-4 px-4">Status</th>
               <th className="py-4 px-4 text-right rtl:text-left">Actions</th>
@@ -245,11 +181,11 @@ export default function AdminProducts() {
           <tbody className="divide-y divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan="8" className="p-8 text-center text-sm text-neutral-400">Loading catalog...</td>
+                <td colSpan="7" className="p-8 text-center text-sm text-neutral-400">Loading catalog...</td>
               </tr>
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan="8" className="p-8 text-center text-sm text-neutral-400">No products found.</td>
+                <td colSpan="7" className="p-8 text-center text-sm text-neutral-400">No products found.</td>
               </tr>
             ) : (
               products.map((p) => {
@@ -297,51 +233,6 @@ export default function AdminProducts() {
                         </div>
                       ) : (
                         <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</span>
-                      )}
-                    </td>
-                    {/* Discount Controls Column */}
-                    <td className="py-4 px-4">
-                      {p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > effectivePrice) ? (
-                        <div className="flex flex-col gap-1.5 min-w-[160px]">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-full bg-red-900/90 border border-red-500 text-white font-bold font-mono text-xs flex items-center gap-1 shadow-sm">
-                              <Percent className="w-3 h-3" />
-                              <span>{p.discountPercent || Math.round((1 - effectivePrice / p.originalPrice) * 100)}% OFF</span>
-                            </span>
-                            <button
-                              onClick={() => handleToggleDiscount(p, false)}
-                              className="text-xs text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
-                              title="Remove Discount"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-[#D8BE99]">Rate:</span>
-                            <select
-                              value={p.discountPercent || 20}
-                              onChange={(e) => handleUpdateDiscountPercent(p, e.target.value)}
-                              className="bg-black/90 border border-[#D4AF37]/50 text-[#F2D675] text-xs rounded px-2 py-1 focus:outline-none cursor-pointer font-medium"
-                            >
-                              <option value="10">10%</option>
-                              <option value="15">15%</option>
-                              <option value="20">20%</option>
-                              <option value="25">25%</option>
-                              <option value="30">30%</option>
-                              <option value="40">40%</option>
-                              <option value="50">50%</option>
-                              <option value="70">70%</option>
-                            </select>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleToggleDiscount(p, true, 20)}
-                          className="px-3 py-1.5 bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-lg text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Percent className="w-3.5 h-3.5" />
-                          <span>Add Discount</span>
-                        </button>
                       )}
                     </td>
                   <td className="py-4 px-4 font-mono text-sm sm:text-base">
