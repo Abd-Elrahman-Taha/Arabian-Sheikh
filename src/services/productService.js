@@ -1,5 +1,26 @@
 import { productApi } from '../api/product.api';
 import { perfumeCategoryService } from './perfumeCategoryService';
+import { promotionApi } from '../api/promotion.api';
+import { promotionService } from './promotionService';
+
+const DISCOUNT_STORAGE_KEY = 'arabian_sheikh_product_discounts';
+
+function getStoredDiscounts() {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(DISCOUNT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStoredDiscounts(map) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(DISCOUNT_STORAGE_KEY, JSON.stringify(map));
+  } catch {}
+}
 
 let memoryCatalog = [];
 
@@ -222,6 +243,52 @@ export const productService = {
         }
       } catch (e) {
         // Continue with raw backend items if tier enrichment fails
+      }
+
+      // Enrich products with active discounts (Persistent Storage + Backend Promotions)
+      try {
+        const storedDiscounts = getStoredDiscounts();
+        let activePromos = [];
+        try {
+          activePromos = await promotionService.getActivePromotions().catch(() => []);
+        } catch {}
+
+        items = items.map(p => {
+          const pIdStr = String(p.id);
+          const pNumStr = p.numericId ? String(p.numericId) : null;
+          const discountOverride = storedDiscounts[pIdStr] || (pNumStr && storedDiscounts[pNumStr]);
+
+          if (discountOverride && discountOverride.hasDiscount) {
+            const pct = Number(discountOverride.discountPercent) || 10;
+            const basePrice = p.originalPrice || p.price;
+            return {
+              ...p,
+              hasDiscount: true,
+              isOffer: true,
+              discountPercent: pct,
+              originalPrice: basePrice,
+              price: Math.round(basePrice * (1 - pct / 100))
+            };
+          }
+
+          if (Array.isArray(activePromos) && activePromos.length > 0) {
+            const promoCalc = promotionService.calculateProductPromotion(p, activePromos);
+            if (promoCalc?.hasPromotion) {
+              return {
+                ...p,
+                hasDiscount: true,
+                isOffer: true,
+                discountPercent: promoCalc.discountPercent,
+                originalPrice: promoCalc.originalPrice || p.price,
+                price: promoCalc.price
+              };
+            }
+          }
+
+          return p;
+        });
+      } catch (e) {
+        console.warn('Discount enrichment error:', e.message);
       }
 
       if (items.length > 0) {
@@ -458,19 +525,123 @@ export const productService = {
 
   async applyProductDiscount(id, discountPercent) {
     const pct = Math.max(1, Math.min(99, Number(discountPercent) || 10));
-    return await this.updateProduct(id, {
+    const targetId = this.resolveTargetId(id) || id;
+    const targetKey = String(targetId);
+
+    // 1. Save to persistent storage immediately so refresh never loses the discount
+    const stored = getStoredDiscounts();
+    stored[targetKey] = {
       discountPercent: pct,
       hasDiscount: true,
-      isOffer: true
+      isOffer: true,
+      updatedAt: Date.now()
+    };
+    if (String(id) !== targetKey) {
+      stored[String(id)] = stored[targetKey];
+    }
+    saveStoredDiscounts(stored);
+
+    // 2. Also create/activate backend promotion in database via promotionApi
+    try {
+      const prod = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(targetId));
+      const prodName = prod?.name || `Product #${targetId}`;
+
+      const promosRes = await promotionApi.adminGetPromotions({ pageSize: 100 }).catch(() => null);
+      const items = promosRes?.items || (Array.isArray(promosRes) ? promosRes : []);
+      const existingPromo = items.find(p => {
+        const rules = p.applicability || p.applicabilities || [];
+        return rules.some(r => r.targetType === 'Product' && Number(r.targetId) === Number(targetId));
+      });
+
+      if (existingPromo?.id) {
+        await promotionApi.adminUpdatePromotion(existingPromo.id, {
+          name: existingPromo.name || `Special Offer - ${prodName}`,
+          type: 'Discount',
+          discountType: 'Percentage',
+          discountValue: pct,
+          startDate: existingPromo.startDate || new Date().toISOString(),
+          endDate: existingPromo.endDate || '2028-12-31T23:59:59Z',
+          isActive: true,
+          applicability: [{ targetType: 'Product', targetId: Number(targetId), isExcluded: false }]
+        }).catch(() => {});
+        await promotionApi.adminActivatePromotion(existingPromo.id).catch(() => {});
+      } else {
+        await promotionApi.adminCreatePromotion({
+          name: `Special Offer - ${prodName}`,
+          type: 'Discount',
+          discountType: 'Percentage',
+          discountValue: pct,
+          startDate: new Date().toISOString(),
+          endDate: '2028-12-31T23:59:59Z',
+          isActive: true,
+          applicability: [{ targetType: 'Product', targetId: Number(targetId), isExcluded: false }]
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Backend promotion sync warning:', e.message);
+    }
+
+    // 3. Update memory catalog
+    memoryCatalog = memoryCatalog.map(p => {
+      if (String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id) {
+        const base = p.originalPrice || p.price;
+        return {
+          ...p,
+          hasDiscount: true,
+          isOffer: true,
+          discountPercent: pct,
+          originalPrice: base,
+          price: Math.round(base * (1 - pct / 100))
+        };
+      }
+      return p;
     });
+
+    return { id: targetId, discountPercent: pct, hasDiscount: true };
   },
 
   async removeProductDiscount(id) {
-    return await this.updateProduct(id, {
-      discountPercent: 0,
-      hasDiscount: false,
-      isOffer: false
+    const targetId = this.resolveTargetId(id) || id;
+    const targetKey = String(targetId);
+
+    // 1. Remove from persistent storage
+    const stored = getStoredDiscounts();
+    delete stored[targetKey];
+    delete stored[String(id)];
+    saveStoredDiscounts(stored);
+
+    // 2. Deactivate backend promotion if exists
+    try {
+      const promosRes = await promotionApi.adminGetPromotions({ pageSize: 100 }).catch(() => null);
+      const items = promosRes?.items || (Array.isArray(promosRes) ? promosRes : []);
+      const existingPromo = items.find(p => {
+        const rules = p.applicability || p.applicabilities || [];
+        return rules.some(r => r.targetType === 'Product' && Number(r.targetId) === Number(targetId));
+      });
+      if (existingPromo?.id) {
+        await promotionApi.adminDeactivatePromotion(existingPromo.id, 'Discount removed from dashboard').catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Backend promotion removal warning:', e.message);
+    }
+
+    // 3. Update memory catalog
+    memoryCatalog = memoryCatalog.map(p => {
+      if (String(p.id) === String(id) || String(p.numericId) === String(targetId) || p.slug === id) {
+        const orig = p.originalPrice || p.price;
+        return {
+          ...p,
+          hasDiscount: false,
+          isOffer: false,
+          discountPercent: 0,
+          originalPrice: null,
+          price: orig
+        };
+      }
+      return p;
     });
+
+    return { id: targetId, discountPercent: 0, hasDiscount: false };
   },
 
   getDiscountedProductsSync() {

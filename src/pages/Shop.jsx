@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { brandService } from '../services/brandService';
+import { perfumeCategoryService } from '../services/perfumeCategoryService';
 import ProductCard from '../components/common/ProductCard';
 import { ProductSkeleton } from '../components/common/SkeletonLoader';
 import {
@@ -30,6 +31,7 @@ export default function Shop() {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [perfumeCategories, setPerfumeCategories] = useState([]);
 
   // Catalog Products & Loading States
   const [products, setProducts] = useState([]);
@@ -77,21 +79,25 @@ export default function Shop() {
     return found ? Number(found.id) : null;
   }, [selectedCategory, categories]);
 
-  // 1. Fetch Dynamic Categories and Brands on Mount / Language Change
+  // 1. Fetch Dynamic Categories, Brands, and Perfume Tiers on Mount / Language Change
   useEffect(() => {
     let isMounted = true;
 
     async function loadCatalogTaxonomy() {
       try {
-        const [catsData, brandsData] = await Promise.all([
+        const [catsData, brandsData, tiersData] = await Promise.all([
           categoryService.getStoreCategories(language).catch(() => []),
-          brandService.getStoreBrands(language).catch(() => [])
+          brandService.getStoreBrands(language).catch(() => []),
+          perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 }).catch(() => ({ items: [] }))
         ]);
 
         if (isMounted) {
           const apiCats = Array.isArray(catsData) ? catsData.filter(c => c.isActive !== false) : [];
           setCategories(apiCats);
           setBrands(Array.isArray(brandsData) ? brandsData : []);
+          if (tiersData?.items && tiersData.items.length > 0) {
+            setPerfumeCategories(tiersData.items);
+          }
         }
       } catch (err) {
         console.warn('Failed to load store taxonomy:', err.message);
@@ -433,13 +439,15 @@ export default function Shop() {
     }))
   ], [categories, t]);
 
-  // Perfume Tiers
-  const tiersList = [
+  // Perfume Tiers - Dynamically populated from backend API
+  const tiersList = useMemo(() => [
     { id: 'all', label: t('catalog.allTiers') || 'All Tiers' },
-    { id: 'Luxury', label: t('tiers.luxury') || 'Luxury Tier (€50)' },
-    { id: 'Royal', label: t('tiers.royal') || 'Royal Tier (€40)' },
-    { id: 'Classic', label: t('tiers.classic') || 'Classic Tier (€30)' }
-  ];
+    ...perfumeCategories.map(tier => ({
+      id: tier.name,
+      rawId: tier.id,
+      label: `${tier.name} Tier (€${Number(tier.price).toFixed(0)})`
+    }))
+  ], [perfumeCategories, t]);
 
   // Active Category Name for Header
   const activeCategoryTitle = useMemo(() => {

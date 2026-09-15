@@ -30,7 +30,13 @@
     "hairCare": "Грижа за косата",
     "discovery": "Открийте аромат",
     "thePalace": "Дворецът",
-    "faqsAndPolicies": "Въпроси и Политики"
+    "faqsAndPolicies": "Въпроси и Политики",
+    "questions": "Въпроси",
+    "policies": "Политики",
+    "shippingPolicy": "Политика за Доставка",
+    "termsConditions": "Общи Условия",
+    "privacyPolicy": "Политика за Поверителност",
+    "returnsPolicy": "Връщане и Възстановяване"
   },
   "home": {
     "heroSubtitle": "ВИСША АРАБСКА ПАРФЮМЕРИЯ",

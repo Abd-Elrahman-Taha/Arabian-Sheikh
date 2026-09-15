@@ -97,8 +97,8 @@ export default function ProductCard({ product, onCompare }) {
           </span>
         ) : null}
         {product.tier && (
-          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || 'bg-[#D4AF37] text-black'}`}>
-            {t('tiers.' + product.tier.toLowerCase()) || product.tier}
+          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
+            {product.tier.toLowerCase().includes('tier') ? product.tier : `${product.tier} Tier`}
           </span>
         )}
         {product.featured && !product.tier && (

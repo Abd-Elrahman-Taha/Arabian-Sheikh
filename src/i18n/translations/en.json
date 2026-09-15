@@ -30,7 +30,13 @@
     "hairCare": "Hair Care",
     "discovery": "Fragrance Finder",
     "thePalace": "The Palace",
-    "faqsAndPolicies": "Questions & Policies"
+    "faqsAndPolicies": "Questions & Policies",
+    "questions": "Questions",
+    "policies": "Policies",
+    "shippingPolicy": "Shipping Policy",
+    "termsConditions": "Terms & Conditions",
+    "privacyPolicy": "Privacy Policy",
+    "returnsPolicy": "Returns & Refunds"
   },
   "home": {
     "heroSubtitle": "HAUTE PARFUMERIE ARABE",

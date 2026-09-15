@@ -191,6 +191,7 @@ function MainRouter() {
         return <PolicyPage policySlug="privacy-policy" />;
       case currentPath === '/terms-and-conditions':
         return <PolicyPage policySlug="terms-and-conditions" />;
+      case currentPath === '/policies':
       case currentPath === '/shipping-policy':
         return <PolicyPage policySlug="shipping-policy" />;
       case currentPath === '/returns-policy':

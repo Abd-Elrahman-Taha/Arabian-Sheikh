@@ -30,7 +30,13 @@
     "hairCare": "Cuidado del Cabello",
     "discovery": "Buscador de Fragancias",
     "thePalace": "El Palacio",
-    "faqsAndPolicies": "Preguntas y Políticas"
+    "faqsAndPolicies": "Preguntas y Políticas",
+    "questions": "Preguntas",
+    "policies": "Políticas",
+    "shippingPolicy": "Política de Envíos",
+    "termsConditions": "Términos y Condiciones",
+    "privacyPolicy": "Política de Privacidad",
+    "returnsPolicy": "Devoluciones y Reembolsos"
   },
   "home": {
     "heroSubtitle": "ALTA PERFUMERÍA ÁRABE",

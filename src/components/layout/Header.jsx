@@ -60,50 +60,49 @@ export default function Header({ onOpenSearch }) {
   }, [currentPath]);
 
   const navCategories = [
+    { name: t('nav.shop') || 'Shop', path: '/shop' },
+    { name: t('nav.thePalace') || 'The Palace', path: '/the-palace' },
+    { name: t('nav.questions') || 'Questions', path: '/faqs' },
     {
-      name: t('nav.perfumes') || 'Perfumes',
-      path: '/shop?category=perfumes',
+      name: t('nav.policies') || 'Policies',
+      path: '/shipping-policy',
       subcategories: [
-        { name: t('nav.allPerfumes') || 'All Perfumes', path: '/shop?category=perfumes' },
-        { name: t('nav.oriental') || 'Oriental', path: '/shop?category=perfumes&subcategory=oriental' },
-        { name: t('nav.nicheAndRare') || 'Niche & Rare', path: '/shop?category=perfumes&subcategory=niche-rare' }
+        { name: t('nav.shippingPolicy') || 'Shipping Policy', path: '/shipping-policy' },
+        { name: t('nav.termsConditions') || 'Terms & Conditions', path: '/terms-and-conditions' },
+        { name: t('nav.privacyPolicy') || 'Privacy Policy', path: '/privacy-policy' },
+        { name: t('nav.returnsPolicy') || 'Returns & Refunds', path: '/returns-policy' }
       ]
-    },
-    { name: t('nav.bodyAndBathCare') || 'Body & Bath Care', path: '/shop?category=body-bath-care' },
-    { name: t('nav.cosmetics') || 'Cosmetics', path: '/shop?category=cosmetics' },
-    { name: t('nav.hairCare') || 'Hair Care', path: '/shop?category=hair-care' },
-    { name: t('nav.thePalace') || t('nav.about') || 'The Palace', path: '/the-palace' },
-    { name: t('nav.faqsAndPolicies') || 'Questions & Policies', path: '/faqs' }
+    }
   ];
 
   const isItemActive = (itemPath) => {
     if (!itemPath) return false;
-    const [basePath, queryString] = itemPath.split('?');
+    const [basePath] = itemPath.split('?');
+
+    if (itemPath === '/shop') {
+      return currentPath === '/shop' || currentPath.startsWith('/shop');
+    }
+
+    if (itemPath === '/the-palace') {
+      return currentPath === '/the-palace' || currentPath.startsWith('/the-palace') || currentPath.startsWith('/the-house');
+    }
 
     if (itemPath === '/faqs') {
       return (
         currentPath === '/faqs' ||
         currentPath === '/questions-and-policies' ||
-        currentPath === '/faqs-and-policies' ||
-        currentPath === '/privacy-policy' ||
-        currentPath === '/terms-and-conditions' ||
-        currentPath === '/shipping-policy' ||
-        currentPath === '/returns-policy'
+        currentPath === '/faqs-and-policies'
       );
     }
 
-    if (queryString) {
-      const targetParams = new URLSearchParams(queryString);
-      const targetCategory = targetParams.get('category');
-      const targetSub = targetParams.get('subcategory') || targetParams.get('subcategoryId');
-      const currentCategory = queryParams?.get('category');
-      const currentSub = queryParams?.get('subcategory') || queryParams?.get('subcategoryId');
-
-      if (currentPath === basePath && currentCategory === targetCategory) {
-        if (!targetSub) return !currentSub;
-        return currentSub === targetSub;
-      }
-      return false;
+    if (itemPath === '/shipping-policy' || itemPath === '/policies' || itemPath === '/privacy-policy' || itemPath === '/terms-and-conditions' || itemPath === '/returns-policy') {
+      return (
+        currentPath === '/policies' ||
+        currentPath === '/shipping-policy' ||
+        currentPath === '/terms-and-conditions' ||
+        currentPath === '/privacy-policy' ||
+        currentPath === '/returns-policy'
+      );
     }
 
     if (basePath === '/') {
@@ -493,25 +492,6 @@ export default function Header({ onOpenSearch }) {
                   </div>
                 );
               })}
-              <Link
-                to="/discovery"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block py-2.5 font-bold flex items-center justify-between relative group ${
-                  isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
-                }`}
-              >
-                <span className="relative inline-block">
-                  Fragrance Finder Quiz
-                  <span
-                    className={`absolute -bottom-1 left-0 right-0 h-[2px] bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full transition-all duration-300 ${
-                      isItemActive('/discovery')
-                        ? 'opacity-100 scale-x-100'
-                        : 'opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100'
-                    }`}
-                  />
-                </span>
-                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-              </Link>
             </div>
           </div>
 

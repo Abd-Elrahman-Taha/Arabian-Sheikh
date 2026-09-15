@@ -115,6 +115,7 @@ export default function AdminProducts() {
         await productService.removeProductDiscount(product.id);
         success(`Discount removed from '${product.name}'.`);
       }
+      fetchProducts();
     } catch (err) {
       error(err.message || 'Failed to update discount');
       fetchProducts();
@@ -140,6 +141,7 @@ export default function AdminProducts() {
       }));
       await productService.applyProductDiscount(product.id, pct);
       success(`Discount updated to ${pct}% for '${product.name}'.`);
+      fetchProducts();
     } catch (err) {
       error(err.message || 'Failed to update discount');
       fetchProducts();
