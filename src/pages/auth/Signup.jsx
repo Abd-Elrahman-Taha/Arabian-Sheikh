@@ -5,30 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck, Phone, Globe } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
-
-const COUNTRIES = [
-  { code: 'EG', dialCode: '+20', label: '🇪🇬 Egypt (EG)' },
-  { code: 'SA', dialCode: '+966', label: '🇸🇦 Saudi Arabia (SA)' },
-  { code: 'AE', dialCode: '+971', label: '🇦🇪 UAE (AE)' },
-  { code: 'KW', dialCode: '+965', label: '🇰🇼 Kuwait (KW)' },
-  { code: 'QA', dialCode: '+974', label: '🇶🇦 Qatar (QA)' },
-  { code: 'OM', dialCode: '+968', label: '🇴🇲 Oman (OM)' },
-  { code: 'BH', dialCode: '+973', label: '🇧🇭 Bahrain (BH)' },
-  { code: 'BG', dialCode: '+359', label: '🇧🇬 Bulgaria (BG)' },
-  { code: 'ES', dialCode: '+34', label: '🇪🇸 Spain (ES)' },
-  { code: 'FR', dialCode: '+33', label: '🇫🇷 France (FR)' },
-  { code: 'GB', dialCode: '+44', label: '🇬🇧 UK (GB)' },
-  { code: 'DE', dialCode: '+49', label: '🇩🇪 Germany (DE)' },
-  { code: 'IT', dialCode: '+39', label: '🇮🇹 Italy (IT)' },
-  { code: 'US', dialCode: '+1', label: '🇺🇸 USA (US)' },
-  { code: 'TR', dialCode: '+90', label: '🇹🇷 Turkey (TR)' },
-  { code: 'JO', dialCode: '+962', label: '🇯🇴 Jordan (JO)' },
-  { code: 'LB', dialCode: '+961', label: '🇱🇧 Lebanon (LB)' },
-  { code: 'MA', dialCode: '+212', label: '🇲🇦 Morocco (MA)' },
-  { code: 'DZ', dialCode: '+213', label: '🇩🇿 Algeria (DZ)' },
-  { code: 'TN', dialCode: '+216', label: '🇹🇳 Tunisia (TN)' },
-  { code: 'IQ', dialCode: '+964', label: '🇮🇶 Iraq (IQ)' }
-];
+import { WORLD_COUNTRIES, POPULAR_COUNTRIES, findCountryByCode } from '../../utils/countries';
 
 export default function Signup() {
   const { navigate } = useRouter();
@@ -47,6 +24,8 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const selectedCountry = findCountryByCode(countryCode);
+
   // ASP.NET Identity Live Criteria
   const hasLength = password.length >= 6;
   const hasUpper = /[A-Z]/.test(password);
@@ -56,7 +35,7 @@ export default function Signup() {
 
   const handleCountryChange = (newCode) => {
     setCountryCode(newCode);
-    const matched = COUNTRIES.find(c => c.code === newCode);
+    const matched = findCountryByCode(newCode);
     if (matched) {
       const dial = matched.dialCode;
       // If phone starts with an old dial code or is just a code, update the prefix
@@ -72,7 +51,7 @@ export default function Signup() {
   const handlePhoneChange = (val) => {
     let clean = val.trim();
     if (clean && !clean.startsWith('+')) {
-      const matched = COUNTRIES.find(c => c.code === countryCode);
+      const matched = findCountryByCode(countryCode);
       const prefix = matched ? matched.dialCode : '+20';
       clean = `${prefix}${clean}`;
     }
@@ -104,7 +83,7 @@ export default function Signup() {
     // Format phone with international code if provided
     let finalPhone = phone.trim();
     if (finalPhone && !finalPhone.startsWith('+')) {
-      const matched = COUNTRIES.find(c => c.code === countryCode);
+      const matched = findCountryByCode(countryCode);
       const prefix = matched ? matched.dialCode : '+20';
       finalPhone = `${prefix}${finalPhone}`;
     }
@@ -191,34 +170,52 @@ export default function Signup() {
             <label className="block uppercase tracking-wider text-[#D8BE99] font-semibold mb-1">
               Phone Number (رقم الهاتف)
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
               <select
                 value={countryCode}
                 onChange={(e) => handleCountryChange(e.target.value)}
-                className="bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 px-2 text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer text-xs font-medium"
+                className="sm:col-span-2 bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 px-2 text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer text-xs font-medium"
               >
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.label}
-                  </option>
-                ))}
+                <optgroup label="⭐ Frequent / Core Markets" className="bg-[#1A1108] text-[#F2D675] font-bold">
+                  {POPULAR_COUNTRIES.map((c) => (
+                    <option key={`pop-${c.code}`} value={c.code} className="bg-[#120B06] text-[#F3E6D0]">
+                      {c.flag} {c.name} ({c.dialCode})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🌍 All World Countries (A-Z)" className="bg-[#1A1108] text-[#F2D675] font-bold">
+                  {WORLD_COUNTRIES.map((c) => (
+                    <option key={`all-${c.code}`} value={c.code} className="bg-[#120B06] text-[#F3E6D0]">
+                      {c.flag} {c.name} ({c.dialCode})
+                    </option>
+                  ))}
+                </optgroup>
               </select>
 
-              <div className="relative sm:col-span-2">
+              <div className="relative sm:col-span-3">
                 <input
                   type="tel"
                   required
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder="+201000000000"
+                  placeholder={selectedCountry ? `${selectedCountry.dialCode}100000000` : '+201000000000'}
                   className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none font-mono"
                 />
                 <Phone className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
-            <p className="text-[10px] text-[#D8BE99]/70 mt-1">
-              Format: e.g. +201000000000 (Country Code: {countryCode})
-            </p>
+            <div className="flex flex-wrap items-center justify-between text-[10px] text-[#D8BE99]/70 mt-1 gap-1">
+              <span>
+                Format: e.g. {selectedCountry ? `${selectedCountry.dialCode}100000000` : '+201000000000'}
+              </span>
+              {selectedCountry && (
+                <span className="text-[#F2D675] font-medium flex items-center gap-1">
+                  <span>{selectedCountry.flag}</span>
+                  <span>{selectedCountry.name}</span>
+                  <span className="font-mono text-[#D4AF37]">({selectedCountry.code})</span>
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Preferred Language (لغة الحساب المفضلة) */}
