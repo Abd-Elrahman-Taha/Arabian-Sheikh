@@ -51,6 +51,7 @@ export default function AdminProducts() {
       const list = await productService.getAllProducts({
         includeDrafts: true,
         search,
+        categoryId: categoryFilter !== 'all' ? categoryFilter : undefined,
         category: categoryFilter !== 'all' ? categoryFilter : undefined,
         tier: tierFilter !== 'all' ? tierFilter : undefined
       });
@@ -194,14 +195,11 @@ export default function AdminProducts() {
           className="bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 text-sm text-[#F3E6D0] rounded-lg focus:border-[#D4AF37] focus:outline-none cursor-pointer font-medium"
         >
           <option value="all">All Categories</option>
-          {categories.map(c => {
-            const catKey = (c.slug || c.name || `category-${c.id}`).toLowerCase().trim();
-            return (
-              <option key={c.id} value={catKey}>
-                {c.name || `Category #${c.id}`}
-              </option>
-            );
-          })}
+          {categories.map(c => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </select>
 
         <select

@@ -9,18 +9,19 @@ import { brandService } from '../../services/brandService';
 import {
   ArrowLeft,
   Save,
-  Sparkles,
-  Crown,
   Building2,
   Layers,
   FolderTree,
+  Crown,
   Upload,
   Image as ImageIcon,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
   Euro,
-  X
+  X,
+  Scale,
+  Globe
 } from 'lucide-react';
 
 export default function AdminProductEdit() {
@@ -30,34 +31,32 @@ export default function AdminProductEdit() {
   const isNew = currentPath.endsWith('/new') || currentPath.includes('/admin/products/new') || currentPath === '/admin/products/add' || currentPath === '/admin/add-product';
   const editId = isNew ? null : currentPath.split('/admin/products/')[1]?.split('/edit')[0];
 
-  // Lookup Lists
+  // Lookup Lists from Backend APIs
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [perfumeCategories, setPerfumeCategories] = useState([]);
 
-  // Form State
+  // Base Product Classification & Logistics Form State
   const [formData, setFormData] = useState({
-    name: '',
-    arabicName: '',
-    bulgarianName: '',
-    tagline: '',
-    description: '',
-    ingredients: '',
     brandId: '',
-    categoryId: 1, // Default to Perfumes (ID 1)
+    categoryId: 1, // Default to Perfumes (Seeded Category Id: 1)
     subcategoryId: '',
     perfumeCategoryId: '',
-    gender: 'Unisex',
+    gender: 'Unisex', // 'Unisex' | 'Male' | 'Female'
     price: '',
-    stock: 50,
-    imageUrl: '/products/luxury_designs/07_arabian_gold.webp',
+    shippingWeight: 0.45,
+    nameIsTranslatable: true,
     isActive: true,
-    topNotes: '',
-    heartNotes: '',
-    baseNotes: '',
-    featured: false,
-    isBestSeller: false
+    imageUrl: ''
+  });
+
+  // Localized Content & Translations State (En, Bg, Es)
+  const [activeLangTab, setActiveLangTab] = useState('En'); // 'En' | 'Bg' | 'Es'
+  const [translations, setTranslations] = useState({
+    En: { name: '', description: '', ingredients: '' },
+    Bg: { name: '', description: '', ingredients: '' },
+    Es: { name: '', description: '', ingredients: '' }
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -68,7 +67,7 @@ export default function AdminProductEdit() {
 
   const isPerfumeCategory = Number(formData.categoryId) === 1;
 
-  // Find currently selected perfume tier to display its price
+  // Selected perfume tier price (Read-Only when categoryId === 1)
   const selectedTier = perfumeCategories.find(
     t => Number(t.id) === Number(formData.perfumeCategoryId)
   );
@@ -127,27 +126,35 @@ export default function AdminProductEdit() {
           const isPerfume = catId === 1;
 
           setFormData({
-            name: item.name || '',
-            arabicName: item.arabicName || '',
-            bulgarianName: item.bulgarianName || '',
-            tagline: item.tagline || '',
-            description: item.description || '',
-            ingredients: item.ingredients || '',
             brandId: Number(item.brandId || item.brand?.id || 1),
             categoryId: catId,
             subcategoryId: item.subcategoryId ? Number(item.subcategoryId) : '',
             perfumeCategoryId: isPerfume ? Number(item.perfumeCategoryId || item.perfumeCategory?.id || 1) : '',
-            gender: item.gender || 'Unisex',
+            gender: item.gender === 'Female' ? 'Female' : (item.gender === 'Male' ? 'Male' : 'Unisex'),
             price: isPerfume ? '' : (item.price !== undefined && item.price !== null ? String(item.price) : ''),
-            stock: item.stock !== undefined ? Number(item.stock) : 50,
-            imageUrl: item.imageUrl || item.image || (Array.isArray(item.images) ? item.images[0] : '/products/luxury_designs/07_arabian_gold.webp'),
+            shippingWeight: Number(item.shippingWeight) > 0 ? Number(item.shippingWeight) : 0.45,
+            nameIsTranslatable: item.nameIsTranslatable !== false,
             isActive: item.isActive !== false && item.status !== 'INACTIVE',
-            topNotes: Array.isArray(item.topNotes) ? item.topNotes.join(', ') : (item.notes?.top?.join(', ') || ''),
-            heartNotes: Array.isArray(item.heartNotes) ? item.heartNotes.join(', ') : (item.notes?.heart?.join(', ') || ''),
-            baseNotes: Array.isArray(item.baseNotes) ? item.baseNotes.join(', ') : (item.notes?.base?.join(', ') || ''),
-            featured: Boolean(item.featured),
-            isBestSeller: Boolean(item.isBestSeller)
+            imageUrl: item.imageUrl || item.image || ''
           });
+
+          // Populate translations
+          const transMap = {
+            En: { name: item.name || '', description: item.description || '', ingredients: item.ingredients || '' },
+            Bg: { name: item.bulgarianName || '', description: item.bulgarianDescription || '', ingredients: '' },
+            Es: { name: item.spanishName || '', description: item.spanishDescription || '', ingredients: '' }
+          };
+
+          if (Array.isArray(item.translations)) {
+            item.translations.forEach(t => {
+              const code = (t.languageCode || t.language || '').toUpperCase();
+              if (code === 'EN') transMap.En = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
+              if (code === 'BG') transMap.Bg = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
+              if (code === 'ES') transMap.Es = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
+            });
+          }
+
+          setTranslations(transMap);
         }
       } catch (err) {
         error('Failed to load product details.');
@@ -184,7 +191,7 @@ export default function AdminProductEdit() {
     }
   }, [formData.categoryId, fetchSubcategoriesForCategory]);
 
-  // Handle Category Change (Cascading)
+  // Handle Category Change (Cascading: resets subcategory to prevent mismatch)
   const handleCategoryChange = (newCatId) => {
     const numId = Number(newCatId);
     const isPerfume = numId === 1;
@@ -192,16 +199,32 @@ export default function AdminProductEdit() {
     setFormData(prev => ({
       ...prev,
       categoryId: numId,
-      subcategoryId: '', // Reset subcategory selection
+      subcategoryId: '', // Reset subcategory selection so unrelated subcategory cannot remain selected
       perfumeCategoryId: isPerfume ? (prev.perfumeCategoryId || perfumeCategories[0]?.id || 1) : '',
       price: isPerfume ? '' : (prev.price || '50')
     }));
   };
 
-  // Image Upload Handler
+  // 2-Step Decoupled Image Upload (POST /api/admin/products/images)
   const handleImageFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Client-side MIME validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      error('Unsupported image format. Allowed: JPG, PNG, WEBP, GIF.');
+      e.target.value = '';
+      return;
+    }
+
+    // Client-side Max 20MB validation
+    const maxBytes = 20 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      error('File exceeds maximum size of 20MB.');
+      e.target.value = '';
+      return;
+    }
 
     setUploadingImage(true);
     try {
@@ -220,12 +243,19 @@ export default function AdminProductEdit() {
     }
   };
 
-  // Form Validation
+  const handleTranslationChange = (field, value) => {
+    setTranslations(prev => ({
+      ...prev,
+      [activeLangTab]: {
+        ...prev[activeLangTab],
+        [field]: value
+      }
+    }));
+  };
+
+  // Form Validation per Backend Business Rules
   const validateForm = () => {
     const errs = {};
-    if (!formData.name || !formData.name.trim()) {
-      errs.name = 'Product name is required.';
-    }
     if (!formData.brandId) {
       errs.brandId = 'Please select a brand.';
     }
@@ -239,9 +269,25 @@ export default function AdminProductEdit() {
       }
     } else {
       const priceNum = Number(formData.price);
-      if (formData.price === '' || isNaN(priceNum) || priceNum < 0) {
-        errs.price = 'Please enter a valid non-negative selling price.';
+      if (formData.price === '' || isNaN(priceNum) || priceNum <= 0) {
+        errs.price = 'Selling price must be greater than 0.';
       }
+    }
+
+    const weightNum = Number(formData.shippingWeight);
+    if (isNaN(weightNum) || weightNum <= 0) {
+      errs.shippingWeight = 'Shipping weight must be greater than 0 kg.';
+    }
+
+    // Translations validation: At least one language must have a non-empty name
+    const hasName = Boolean(
+      translations.En.name?.trim() ||
+      translations.Bg.name?.trim() ||
+      translations.Es.name?.trim()
+    );
+
+    if (!hasName) {
+      errs.translations = 'Product name is required (in at least one language).';
     }
 
     setFormErrors(errs);
@@ -255,51 +301,54 @@ export default function AdminProductEdit() {
 
     setSaveLoading(true);
     try {
-      const topArr = formData.topNotes.split(',').map(n => n.trim()).filter(Boolean);
-      const heartArr = formData.heartNotes.split(',').map(n => n.trim()).filter(Boolean);
-      const baseArr = formData.baseNotes.split(',').map(n => n.trim()).filter(Boolean);
+      // Build translations array adhering to backend schema
+      const translationsPayload = [
+        translations.En.name?.trim() ? {
+          languageCode: 'En',
+          name: translations.En.name.trim(),
+          description: translations.En.description?.trim() || null,
+          ingredients: translations.En.ingredients?.trim() || null
+        } : null,
+        translations.Bg.name?.trim() ? {
+          languageCode: 'Bg',
+          name: translations.Bg.name.trim(),
+          description: translations.Bg.description?.trim() || null,
+          ingredients: translations.Bg.ingredients?.trim() || null
+        } : null,
+        translations.Es.name?.trim() ? {
+          languageCode: 'Es',
+          name: translations.Es.name.trim(),
+          description: translations.Es.description?.trim() || null,
+          ingredients: translations.Es.ingredients?.trim() || null
+        } : null
+      ].filter(Boolean);
 
-      const ingredientsString = formData.ingredients.trim() ||
-        [topArr.join(', '), heartArr.join(', '), baseArr.join(', ')].filter(Boolean).join(' • ') ||
-        'Rare Oud, Amber, Taif Rose';
+      if (translationsPayload.length === 0) {
+        translationsPayload.push({
+          languageCode: 'En',
+          name: 'Untitled Product',
+          description: null,
+          ingredients: null
+        });
+      }
 
-      const selectedBrand = brands.find(b => Number(b.id) === Number(formData.brandId));
-      const selectedCat = categories.find(c => Number(c.id) === Number(formData.categoryId));
-
-      // Build payload strictly adhering to pricing rules:
-      // Category 1 (Perfumes): perfumeCategoryId required, price: null
-      // Non-perfumes: perfumeCategoryId: null, price: Number(price)
+      // Exact backend payload (CreateAdminProductRequest / UpdateAdminProductRequest)
       const payload = {
-        name: formData.name.trim(),
-        arabicName: formData.arabicName.trim() || formData.name.trim(),
-        bulgarianName: formData.bulgarianName.trim() || formData.name.trim(),
-        tagline: formData.tagline.trim(),
-        description: formData.description.trim(),
-        ingredients: ingredientsString,
         brandId: Number(formData.brandId),
-        brandName: selectedBrand?.name || '',
         categoryId: Number(formData.categoryId),
-        categoryName: selectedCat?.name || '',
         subcategoryId: formData.subcategoryId ? Number(formData.subcategoryId) : null,
         perfumeCategoryId: isPerfumeCategory ? Number(formData.perfumeCategoryId) : null,
-        tier: isPerfumeCategory ? (selectedTier?.name || 'Luxury') : null,
-        perfumeCategoryName: isPerfumeCategory ? (selectedTier?.name || 'Luxury') : null,
+        gender: formData.gender,
         price: isPerfumeCategory ? null : Number(formData.price),
-        gender: formData.gender || 'Unisex',
-        stock: Number(formData.stock) || 0,
-        imageUrl: formData.imageUrl?.trim() || '/products/luxury_designs/07_arabian_gold.webp',
-        image: formData.imageUrl?.trim() || '/products/luxury_designs/07_arabian_gold.webp',
+        shippingWeight: Number(formData.shippingWeight) || 0.45,
+        nameIsTranslatable: Boolean(formData.nameIsTranslatable),
         isActive: Boolean(formData.isActive),
-        topNotes: topArr,
-        heartNotes: heartArr,
-        baseNotes: baseArr,
-        notes: {
-          top: topArr,
-          heart: heartArr,
-          base: baseArr
-        },
-        featured: Boolean(formData.featured),
-        isBestSeller: Boolean(formData.isBestSeller)
+        imageUrl: formData.imageUrl?.trim() || null,
+        translations: translationsPayload,
+        // Top-level localized convenience fallbacks
+        name: translations.En.name?.trim() || translationsPayload[0]?.name || '',
+        description: translations.En.description?.trim() || translationsPayload[0]?.description || '',
+        ingredients: translations.En.ingredients?.trim() || translationsPayload[0]?.ingredients || ''
       };
 
       if (isNew) {
@@ -343,10 +392,10 @@ export default function AdminProductEdit() {
           </button>
           <div>
             <h1 className="font-cinzel text-2xl font-bold uppercase tracking-wider text-[#F3E6D0]">
-              {isNew ? 'Create New Product' : `Edit Product: ${formData.name || `#${editId}`}`}
+              {isNew ? 'Create New Product' : `Edit Product #${editId}`}
             </h1>
             <p className="text-xs text-[#D8BE99] mt-0.5">
-              Configure taxonomy, olfactory pyramid, pricing tier, and inventory.
+              Backend-integrated product catalog creation and updates.
             </p>
           </div>
         </div>
@@ -358,24 +407,54 @@ export default function AdminProductEdit() {
           className="px-6 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-xl transition-all hover:brightness-110 shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
         >
           {saveLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span>{saveLoading ? 'Saving...' : 'Save Product'}</span>
+          <span>{saveLoading ? 'Saving...' : (isNew ? 'Create Product' : 'Save Changes')}</span>
         </button>
       </div>
+
+      {formErrors.translations && (
+        <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{formErrors.translations}</span>
+        </div>
+      )}
 
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* SECTION 1: Product Classification & Pricing (Crucial Catalog API Section) */}
+        {/* 1. BASIC CLASSIFICATION */}
         <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-5">
           <div className="flex items-center gap-2 border-b border-[#D4AF37]/20 pb-3">
             <Layers className="w-4 h-4 text-[#F2D675]" />
             <h2 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#F2D675]">
-              Catalog Classification & Pricing
+              1. Basic Classification
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            {/* 1. Category Selector */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            {/* Brand */}
+            <div className="space-y-1.5">
+              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Brand <span className="text-rose-400">*</span></span>
+              </label>
+              <select
+                value={formData.brandId}
+                onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
+                className={`w-full bg-black/60 border ${formErrors.brandId ? 'border-rose-500' : 'border-[#D4AF37]/30'} rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer`}
+              >
+                <option value="" disabled className="bg-[#120B06]">Select Brand...</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id} className="bg-[#120B06]">
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.brandId && (
+                <p className="text-[11px] text-rose-400">{formErrors.brandId}</p>
+              )}
+            </div>
+
+            {/* Category */}
             <div className="space-y-1.5">
               <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -388,7 +467,7 @@ export default function AdminProductEdit() {
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id} className="bg-[#120B06]">
-                    {c.name} {Number(c.id) === 1 ? '(Perfumes Tiered)' : ''}
+                    {c.name} {Number(c.id) === 1 ? '(Perfumes - Seeded Id: 1)' : ''}
                   </option>
                 ))}
               </select>
@@ -397,11 +476,11 @@ export default function AdminProductEdit() {
               )}
             </div>
 
-            {/* 2. Cascading Subcategory Selector */}
+            {/* Subcategory (Cascading to Selected Category) */}
             <div className="space-y-1.5">
               <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <FolderTree className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Subcategory</span>
+                <span>Subcategory (Optional)</span>
                 {subcategoriesLoading && <RefreshCw className="w-3 h-3 animate-spin text-[#D4AF37]" />}
               </label>
               <select
@@ -411,7 +490,7 @@ export default function AdminProductEdit() {
                 className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer disabled:opacity-50"
               >
                 <option value="" className="bg-[#120B06]">
-                  {subcategories.length === 0 ? 'No Subcategories Available' : 'None / General'}
+                  {subcategories.length === 0 ? 'No Subcategories for this Category' : 'None / General'}
                 </option>
                 {subcategories.map((sub) => (
                   <option key={sub.id} value={sub.id} className="bg-[#120B06]">
@@ -421,50 +500,43 @@ export default function AdminProductEdit() {
               </select>
             </div>
 
-            {/* 3. Brand Selector */}
+            {/* Gender Radio Group */}
             <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Brand <span className="text-rose-400">*</span></span>
+              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider block">
+                Gender <span className="text-rose-400">*</span>
               </label>
-              <select
-                value={formData.brandId}
-                onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
-                className={`w-full bg-black/60 border ${formErrors.brandId ? 'border-rose-500' : 'border-[#D4AF37]/30'} rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer`}
-              >
-                <option value="" disabled className="bg-[#120B06]">Select a Brand...</option>
-                {brands.map((b) => (
-                  <option key={b.id} value={b.id} className="bg-[#120B06]">
-                    {b.name}
-                  </option>
+              <div className="flex items-center gap-4 pt-1.5">
+                {['Unisex', 'Male', 'Female'].map((g) => (
+                  <label key={g} className="flex items-center gap-2 cursor-pointer text-xs text-[#F3E6D0]">
+                    <input
+                      type="radio"
+                      name="gender-choice"
+                      value={g}
+                      checked={formData.gender === g}
+                      onChange={() => setFormData({ ...formData, gender: g })}
+                      className="accent-[#D4AF37] w-4 h-4 cursor-pointer"
+                    />
+                    <span>{g}</span>
+                  </label>
                 ))}
-              </select>
-              {formErrors.brandId && (
-                <p className="text-[11px] text-rose-400">{formErrors.brandId}</p>
-              )}
-            </div>
-
-            {/* 4. Gender */}
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Gender Target
-              </label>
-              <select
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer"
-              >
-                <option value="Unisex" className="bg-[#120B06]">Unisex (Shared)</option>
-                <option value="Male" className="bg-[#120B06]">Pour Homme (Male)</option>
-                <option value="Female" className="bg-[#120B06]">Pour Femme (Female)</option>
-              </select>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Pricing Row: Strict Perfume Pricing Tier vs Non-Perfume Custom Price */}
-          <div className="pt-3 border-t border-[#D4AF37]/15">
+        {/* 2. PRICING & LOGISTICS (Dynamic based on Category) */}
+        <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#D4AF37]/20 pb-3">
+            <Euro className="w-4 h-4 text-[#F2D675]" />
+            <h2 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#F2D675]">
+              2. Pricing & Logistics
+            </h2>
+          </div>
+
+          {/* Dynamic Pricing Engine: Perfumes (Id: 1) vs Standard Merchandise */}
+          <div>
             {isPerfumeCategory ? (
-              /* PERFUME PRICING MODE: Tier dropdown + READ-ONLY price display */
+              /* CATEGORY === 1: Perfume Category / Pricing Tier */
               <div className="p-4 rounded-xl bg-gradient-to-br from-[#D4AF37]/15 via-black/60 to-black/80 border border-[#D4AF37]/40 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div className="space-y-1.5">
                   <label className="text-[#F2D675] font-semibold uppercase tracking-wider flex items-center gap-1.5 text-xs">
@@ -486,28 +558,27 @@ export default function AdminProductEdit() {
                   {formErrors.perfumeCategoryId && (
                     <p className="text-[11px] text-rose-400">{formErrors.perfumeCategoryId}</p>
                   )}
+                  <p className="text-[10px] text-[#D8BE99]/70 pt-0.5">
+                    Price is fixed by the selected tier. Direct price entry is disabled for perfume products.
+                  </p>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[#D8BE99] font-semibold uppercase tracking-wider text-xs">
                     Effective Selling Price (€ EUR)
                   </label>
-                  <div className="w-full bg-black/80 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-[#F2D675] font-mono font-bold text-sm flex items-center justify-between">
+                  <div className="w-full bg-black/80 border border-[#D4AF37]/30 rounded-xl py-2.5 px-4 text-[#F2D675] font-mono font-bold text-sm flex items-center justify-between">
                     <span className="flex items-center gap-1">
-                      <Euro className="w-4 h-4" />
-                      {tierPrice > 0 ? tierPrice.toFixed(2) : '—'}
+                      € {tierPrice > 0 ? tierPrice.toFixed(2) : '—'}
                     </span>
                     <span className="text-[10px] text-[#D8BE99]/80 font-sans uppercase font-medium tracking-wide bg-[#D4AF37]/20 px-2.5 py-0.5 rounded-full">
-                      Inherited From Tier (Read-Only)
+                      Tier Inherited (Read-Only)
                     </span>
                   </div>
-                  <p className="text-[10px] text-[#D8BE99]/60">
-                    Perfumes automatically inherit price from their assigned pricing tier.
-                  </p>
                 </div>
               </div>
             ) : (
-              /* NON-PERFUME PRICING MODE: Editable Price Input */
+              /* CATEGORY !== 1: Standard Direct Selling Price */
               <div className="p-4 rounded-xl bg-black/40 border border-[#D4AF37]/20 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div className="space-y-1.5">
                   <label className="text-[#D8BE99] font-semibold uppercase tracking-wider text-xs">
@@ -518,8 +589,8 @@ export default function AdminProductEdit() {
                     <input
                       type="number"
                       step="0.01"
-                      min="0"
-                      placeholder="e.g. 35.00"
+                      min="0.01"
+                      placeholder="e.g. 24.50"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       className={`w-full bg-black/60 border ${formErrors.price ? 'border-rose-500' : 'border-[#D4AF37]/30'} rounded-xl py-2.5 pl-8 pr-3 text-xs font-mono font-bold text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none`}
@@ -529,194 +600,79 @@ export default function AdminProductEdit() {
                     <p className="text-[11px] text-rose-400">{formErrors.price}</p>
                   )}
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[#D8BE99] font-semibold uppercase tracking-wider text-xs">
-                    Stock Quantity
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs font-mono text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-                  />
-                </div>
               </div>
             )}
           </div>
-        </div>
 
-        {/* SECTION 2: General Information & Multilingual Content */}
-        <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#D4AF37]/20 pb-3">
-            <Sparkles className="w-4 h-4 text-[#F2D675]" />
-            <h2 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#F2D675]">
-              Product Names & Descriptions
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            {/* English Name */}
+          {/* Shipping Weight & Toggles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 items-center text-xs">
+            {/* Shipping Weight (kg) */}
             <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                English Name <span className="text-rose-400">*</span>
+              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <Scale className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Shipping Weight (kg) <span className="text-rose-400">*</span></span>
               </label>
               <input
-                type="text"
-                placeholder="e.g. Imperial Oud Extrait"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={`w-full bg-black/60 border ${formErrors.name ? 'border-rose-500' : 'border-[#D4AF37]/30'} rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none`}
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="e.g. 0.450"
+                value={formData.shippingWeight}
+                onChange={(e) => setFormData({ ...formData, shippingWeight: e.target.value })}
+                className={`w-full bg-black/60 border ${formErrors.shippingWeight ? 'border-rose-500' : 'border-[#D4AF37]/30'} rounded-xl py-2.5 px-3 text-xs font-mono text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none`}
               />
-              {formErrors.name && (
-                <p className="text-[11px] text-rose-400">{formErrors.name}</p>
+              {formErrors.shippingWeight && (
+                <p className="text-[11px] text-rose-400">{formErrors.shippingWeight}</p>
               )}
             </div>
 
-            {/* Arabic Name */}
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Arabic Name (الاسم العربي)
-              </label>
+            {/* Active Checkbox */}
+            <div className="flex items-center gap-3 pt-4 sm:pt-6">
               <input
-                type="text"
-                dir="rtl"
-                placeholder="عطر العود الإمبراطوري"
-                value={formData.arabicName}
-                onChange={(e) => setFormData({ ...formData, arabicName: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs font-arabic text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                type="checkbox"
+                id="field-is-active"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
               />
+              <label htmlFor="field-is-active" className="text-xs text-[#F3E6D0] cursor-pointer">
+                <strong className="text-[#F2D675]">Active</strong> (Published in Store)
+              </label>
             </div>
 
-            {/* Bulgarian Name */}
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Bulgarian Name (Име на Български)
-              </label>
+            {/* Name is Translatable Checkbox */}
+            <div className="flex items-center gap-3 pt-4 sm:pt-6">
               <input
-                type="text"
-                placeholder="Имперски уд екстракт"
-                value={formData.bulgarianName}
-                onChange={(e) => setFormData({ ...formData, bulgarianName: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                type="checkbox"
+                id="field-name-translatable"
+                checked={formData.nameIsTranslatable}
+                onChange={(e) => setFormData({ ...formData, nameIsTranslatable: e.target.checked })}
+                className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
-            {/* Tagline */}
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Subtitle / Tagline
+              <label htmlFor="field-name-translatable" className="text-xs text-[#D8BE99] cursor-pointer">
+                Name is Translatable
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Pure Cambodian Oud & Taif Rose"
-                value={formData.tagline}
-                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-              />
-            </div>
-
-            {/* Ingredients */}
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Ingredients Key Summary
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Rare Oud, Amber Crystals, Taif Rose, Musk"
-                value={formData.ingredients}
-                onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1.5 pt-2 text-xs">
-            <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-              Comprehensive Story & Description
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Describe the inspiration, aroma profile, and wearing experience..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* SECTION 3: Olfactory Pyramid */}
-        <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#D4AF37]/20 pb-3">
-            <Crown className="w-4 h-4 text-[#F2D675]" />
-            <h2 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#F2D675]">
-              Olfactory Notes Pyramid
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Top Notes (Comma separated)
-              </label>
-              <input
-                type="text"
-                placeholder="Ambergris, Smoked Saffron, Bergamot"
-                value={formData.topNotes}
-                onChange={(e) => setFormData({ ...formData, topNotes: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Heart Notes (Comma separated)
-              </label>
-              <input
-                type="text"
-                placeholder="Royal Cambodian Agarwood, Midnight Rose"
-                value={formData.heartNotes}
-                onChange={(e) => setFormData({ ...formData, heartNotes: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                Base Notes (Comma separated)
-              </label>
-              <input
-                type="text"
-                placeholder="Dark Fossilized Amber, Smoky Cedar, White Musk"
-                value={formData.baseNotes}
-                onChange={(e) => setFormData({ ...formData, baseNotes: e.target.value })}
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-              />
             </div>
           </div>
         </div>
 
-        {/* SECTION 4: Media & Status */}
+        {/* 3. MEDIA & PRODUCT IMAGE (2-Step Image Upload) */}
         <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-4">
           <div className="flex items-center gap-2 border-b border-[#D4AF37]/20 pb-3">
             <ImageIcon className="w-4 h-4 text-[#F2D675]" />
             <h2 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#F2D675]">
-              Product Imagery & Visibility
+              3. Media & Product Image
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-            {/* Image Preview */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            {/* Image Preview / Drop Area */}
             <div className="md:col-span-4 flex flex-col items-center">
               <div className="w-36 h-44 rounded-2xl bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center overflow-hidden p-2 shadow-inner relative group">
                 {formData.imageUrl ? (
                   <img
                     src={formData.imageUrl}
-                    alt={formData.name}
+                    alt="Product preview"
                     className="max-h-full max-w-full object-contain drop-shadow"
                     onError={(e) => {
                       e.target.src = '/products/luxury_designs/07_arabian_gold.webp';
@@ -727,89 +683,166 @@ export default function AdminProductEdit() {
                 )}
               </div>
 
-              {/* Direct File Upload Button */}
-              <div className="mt-3 w-full max-w-xs">
-                <label className="w-full px-4 py-2 bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 rounded-xl text-xs text-[#F2D675] font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all">
-                  {uploadingImage ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Upload className="w-3.5 h-3.5" />
-                  )}
-                  <span>{uploadingImage ? 'Uploading Image...' : 'Upload New Image'}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileChange}
-                    disabled={uploadingImage}
-                    className="hidden"
-                  />
-                </label>
-              </div>
+              {formData.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                  className="mt-2 text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Remove Image</span>
+                </button>
+              )}
             </div>
 
-            {/* Image URL & Status Toggles */}
-            <div className="md:col-span-8 space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="text-[#D8BE99] font-semibold uppercase tracking-wider">
-                  Image URL / Asset Path
+            {/* Upload Control */}
+            <div className="md:col-span-8 space-y-3 text-xs">
+              <label className="block w-full px-5 py-4 border border-dashed border-[#D4AF37]/40 rounded-xl bg-black/40 hover:bg-[#1A1108]/50 text-center cursor-pointer transition-all">
+                {uploadingImage ? (
+                  <div className="flex items-center justify-center gap-2 text-[#F2D675]">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Uploading 100% — Validating on server...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <Upload className="w-5 h-5 text-[#F2D675] mx-auto" />
+                    <p className="text-xs text-[#F3E6D0] font-medium">
+                      Click to Browse or Drag & Drop image here
+                    </p>
+                    <p className="text-[10px] text-[#D8BE99]/60">
+                      Max file size: 20MB. Allowed formats: WEBP, PNG, JPG, GIF
+                    </p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleImageFileChange}
+                  disabled={uploadingImage}
+                  className="hidden"
+                />
+              </label>
+
+              <div className="space-y-1">
+                <label className="text-[#D8BE99] font-medium text-[11px]">
+                  Or direct CDN Image URL
                 </label>
                 <input
                   type="text"
+                  placeholder="https://cdn.perfumestore.com/products/..."
                   value={formData.imageUrl}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  placeholder="/products/luxury_designs/07_arabian_gold.webp"
-                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs font-mono text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                  className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs font-mono text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                 />
-              </div>
-
-              <div className="pt-3 border-t border-[#D4AF37]/15 space-y-3">
-                {/* Active Checkbox */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="prod-active"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
-                  />
-                  <label htmlFor="prod-active" className="text-xs text-[#F3E6D0] cursor-pointer">
-                    <strong className="text-[#F2D675]">Active in Store:</strong> Publish this product immediately to the storefront catalog.
-                  </label>
-                </div>
-
-                {/* Featured Checkbox */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="prod-featured"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
-                  />
-                  <label htmlFor="prod-featured" className="text-xs text-[#F3E6D0] cursor-pointer">
-                    Featured Collection (highlighted on homepage showcase)
-                  </label>
-                </div>
-
-                {/* Best Seller */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="prod-bestseller"
-                    checked={formData.isBestSeller}
-                    onChange={(e) => setFormData({ ...formData, isBestSeller: e.target.checked })}
-                    className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
-                  />
-                  <label htmlFor="prod-bestseller" className="text-xs text-[#F3E6D0] cursor-pointer">
-                    Best Seller Badge
-                  </label>
-                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Form Actions Bottom Bar */}
+        {/* 4. LOCALIZED CONTENT & TRANSLATIONS (En, Bg, Es Tabs) */}
+        <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-3 gap-3">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-[#F2D675]" />
+              <h2 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#F2D675]">
+                4. Localized Content & Translations
+              </h2>
+            </div>
+
+            {/* Language Tabs */}
+            <div className="flex items-center gap-2">
+              {[
+                { code: 'En', label: 'English (en) *' },
+                { code: 'Bg', label: 'Bulgarian (bg)' },
+                { code: 'Es', label: 'Spanish (es)' }
+              ].map((tab) => (
+                <button
+                  key={tab.code}
+                  type="button"
+                  onClick={() => setActiveLangTab(tab.code)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-cinzel uppercase tracking-wider font-bold transition-all cursor-pointer ${
+                    activeLangTab === tab.code
+                      ? 'bg-[#D4AF37] text-black shadow-md'
+                      : 'bg-black/60 text-[#D8BE99] hover:text-[#F3E6D0] border border-[#D4AF37]/25'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Tab Translation Fields */}
+          <div className="space-y-4 text-xs pt-1">
+            {/* Product Name */}
+            <div className="space-y-1.5">
+              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center justify-between">
+                <span>Product Name ({activeLangTab}) {activeLangTab === 'En' ? <span className="text-rose-400">*</span> : ''}</span>
+                <span className="text-[10px] text-neutral-500 font-mono">
+                  {translations[activeLangTab]?.name?.length || 0}/200
+                </span>
+              </label>
+              <input
+                type="text"
+                placeholder={
+                  activeLangTab === 'En'
+                    ? 'e.g. Sauvage Elixir 60ml'
+                    : activeLangTab === 'Bg'
+                    ? 'напр. Соваж Еликсир 60мл'
+                    : 'p. ej. Sauvage Elixir 60ml'
+                }
+                value={translations[activeLangTab]?.name || ''}
+                onChange={(e) => handleTranslationChange('name', e.target.value)}
+                maxLength={200}
+                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+              />
+            </div>
+
+            {/* Product Description */}
+            <div className="space-y-1.5">
+              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center justify-between">
+                <span>Product Description ({activeLangTab})</span>
+                <span className="text-[10px] text-neutral-500 font-mono">
+                  {translations[activeLangTab]?.description?.length || 0}/5000
+                </span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder={
+                  activeLangTab === 'En'
+                    ? 'Rich, captivating nocturnal scent with notes of licorice, nutmeg and lavender...'
+                    : activeLangTab === 'Bg'
+                    ? 'Богат, завладяващ нощен аромат с нотки на лакриц, индийско орехче и лавандула...'
+                    : 'Fragancia nocturna rica y cautivadora con notas de regaliz, nuez moscada y lavanda...'
+                }
+                value={translations[activeLangTab]?.description || ''}
+                onChange={(e) => handleTranslationChange('description', e.target.value)}
+                maxLength={5000}
+                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+              />
+            </div>
+
+            {/* Ingredients */}
+            <div className="space-y-1.5">
+              <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center justify-between">
+                <span>Ingredients ({activeLangTab})</span>
+                <span className="text-[10px] text-neutral-500 font-mono">
+                  {translations[activeLangTab]?.ingredients?.length || 0}/3000
+                </span>
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Alcohol Denat., Fragrance (Parfum), Aqua/Water/Eau, Linalool, Coumarin..."
+                value={translations[activeLangTab]?.ingredients || ''}
+                onChange={(e) => handleTranslationChange('ingredients', e.target.value)}
+                maxLength={3000}
+                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-[#D4AF37]/20">
           <button
             type="button"

@@ -173,6 +173,13 @@ export function normalizeProduct(raw) {
     fragranceFamily: p.fragranceFamily || p.scentFamily || 'Oriental Woody',
     scentFamily: p.scentFamily || p.fragranceFamily || 'Oriental Woody',
     tagline: p.tagline || '',
+    brandId: p.brandId || (typeof p.brand === 'object' ? p.brand?.id : null),
+    categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
+    subcategoryId: p.subcategoryId || (typeof p.subcategory === 'object' ? p.subcategory?.id : null),
+    perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
+    shippingWeight: Number(p.shippingWeight || 0.45),
+    nameIsTranslatable: p.nameIsTranslatable !== false,
+    translations: Array.isArray(p.translations) ? p.translations : [],
     images: Array.isArray(p.images) && p.images.length > 0 
       ? p.images.map(cleanImageUrl)
       : [cleanImageUrl(p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp')],

@@ -356,6 +356,9 @@ export const productService = {
         price: Number(productData.price !== undefined ? productData.price : (existing?.price || 0)),
         isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (existing?.isActive !== false),
         imageUrl: productData.imageUrl || productData.image || existing?.imageUrl || existing?.image || (existing?.images?.[0]),
+        shippingWeight: productData.shippingWeight !== undefined ? Number(productData.shippingWeight) : (Number(existing?.shippingWeight) || 0.45),
+        nameIsTranslatable: productData.nameIsTranslatable !== undefined ? Boolean(productData.nameIsTranslatable) : true,
+        translations: Array.isArray(productData.translations) ? productData.translations : undefined,
         name: productData.name || existing?.name,
         description: productData.description || existing?.description,
         ingredients: productData.ingredients || existing?.ingredients
