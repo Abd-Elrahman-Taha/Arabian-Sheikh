@@ -60,9 +60,18 @@ export default function Header({ onOpenSearch }) {
   }, [currentPath]);
 
   const navCategories = [
-    { name: t('nav.perfumes') || 'Perfumes', path: '/shop?category=perfumes' },
-    { name: t('nav.bakhoor') || 'Bakhoor', path: '/shop?category=bakhoor' },
-    { name: t('nav.bundles') || 'Bundles', path: '/shop?category=bundles' },
+    {
+      name: t('nav.perfumes') || 'Perfumes',
+      path: '/shop?category=perfumes',
+      subcategories: [
+        { name: t('nav.allPerfumes') || 'All Perfumes', path: '/shop?category=perfumes' },
+        { name: t('nav.oriental') || 'Oriental', path: '/shop?category=perfumes&subcategory=oriental' },
+        { name: t('nav.nicheAndRare') || 'Niche & Rare', path: '/shop?category=perfumes&subcategory=niche-rare' }
+      ]
+    },
+    { name: t('nav.bodyAndBathCare') || 'Body & Bath Care', path: '/shop?category=body-bath-care' },
+    { name: t('nav.cosmetics') || 'Cosmetics', path: '/shop?category=cosmetics' },
+    { name: t('nav.hairCare') || 'Hair Care', path: '/shop?category=hair-care' },
     { name: t('nav.thePalace') || t('nav.about') || 'The Palace', path: '/the-palace' },
     { name: t('nav.faqsAndPolicies') || 'Questions & Policies', path: '/faqs' }
   ];
@@ -86,10 +95,13 @@ export default function Header({ onOpenSearch }) {
     if (queryString) {
       const targetParams = new URLSearchParams(queryString);
       const targetCategory = targetParams.get('category');
+      const targetSub = targetParams.get('subcategory') || targetParams.get('subcategoryId');
       const currentCategory = queryParams?.get('category');
+      const currentSub = queryParams?.get('subcategory') || queryParams?.get('subcategoryId');
 
       if (currentPath === basePath && currentCategory === targetCategory) {
-        return true;
+        if (!targetSub) return !currentSub;
+        return currentSub === targetSub;
       }
       return false;
     }
@@ -204,30 +216,54 @@ export default function Header({ onOpenSearch }) {
             }`}>
               {navCategories.map((item) => {
                 const active = isItemActive(item.path);
+                const hasSubs = Array.isArray(item.subcategories) && item.subcategories.length > 0;
                 return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`transition-colors duration-300 relative py-2 group cursor-pointer whitespace-nowrap ${
-                      active
-                        ? isDark
-                          ? 'text-[#D4AF37] font-bold'
-                          : 'text-[#5A3517] font-bold'
-                        : isDark
-                          ? 'text-[#F3E6D0] hover:text-[#D4AF37]'
-                          : 'text-[#120B06] hover:text-[#5A3517]'
-                    }`}
-                  >
-                    <span>{item.name}</span>
-                    {/* Golden Line under item when HOVER or ACTIVE */}
-                    <span
-                      className={`absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_0_10px_rgba(212,175,55,0.9)] rounded-full transition-all duration-300 ${
+                  <div key={item.path} className="relative group py-2">
+                    <Link
+                      to={item.path}
+                      className={`transition-colors duration-300 relative py-1 cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                         active
-                          ? 'opacity-100 scale-x-100'
-                          : 'opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100'
+                          ? isDark
+                            ? 'text-[#D4AF37] font-bold'
+                            : 'text-[#5A3517] font-bold'
+                          : isDark
+                            ? 'text-[#F3E6D0] hover:text-[#D4AF37]'
+                            : 'text-[#120B06] hover:text-[#5A3517]'
                       }`}
-                    />
-                  </Link>
+                    >
+                      <span>{item.name}</span>
+                      {hasSubs && <ChevronDown className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />}
+                      {/* Golden Line under item when HOVER or ACTIVE */}
+                      <span
+                        className={`absolute -bottom-1 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_0_10px_rgba(212,175,55,0.9)] rounded-full transition-all duration-300 ${
+                          active
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100'
+                        }`}
+                      />
+                    </Link>
+
+                    {/* Subcategories Dropdown */}
+                    {hasSubs && (
+                      <div className={`absolute top-full left-0 mt-0.5 min-w-[190px] rounded-xl shadow-2xl py-2 border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 backdrop-blur-xl ${
+                        isDark ? 'bg-[#0B0A08]/95 border-[#D4AF37]/30 text-[#F3E6D0]' : 'bg-white/95 border-[#5A3517]/30 text-[#120B06]'
+                      }`}>
+                        {item.subcategories.map((sub) => (
+                          <Link
+                            key={sub.path}
+                            to={sub.path}
+                            className={`block px-4 py-2 text-xs font-cinzel uppercase tracking-wider transition-colors ${
+                              isItemActive(sub.path)
+                                ? isDark ? 'text-[#D4AF37] bg-[#D4AF37]/15 font-bold' : 'text-[#5A3517] bg-[#5A3517]/15 font-bold'
+                                : isDark ? 'text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-white/5' : 'text-[#5A3517] hover:text-[#120B06] hover:bg-black/5'
+                            }`}
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
@@ -403,37 +439,58 @@ export default function Header({ onOpenSearch }) {
             <div className="space-y-4 font-cinzel text-lg tracking-[0.2em] uppercase font-semibold">
               {navCategories.map((item) => {
                 const active = isItemActive(item.path);
+                const hasSubs = Array.isArray(item.subcategories) && item.subcategories.length > 0;
                 return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-2.5 transition-colors border-b border-black/5 dark:border-white/5 flex items-center justify-between relative group ${
-                      active
-                        ? isDark
-                          ? 'text-[#D4AF37] font-bold'
-                          : 'text-[#5A3517] font-bold'
-                        : isDark
-                          ? 'text-[#F3E6D0] hover:text-[#D4AF37]'
-                          : 'text-[#120B06] hover:text-[#5A3517]'
-                    }`}
-                  >
-                    <span className="relative inline-block">
-                      {item.name}
-                      <span
-                        className={`absolute -bottom-1 left-0 right-0 h-[2px] bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full transition-all duration-300 ${
-                          active
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100'
-                        }`}
-                      />
-                    </span>
-                    <ArrowRight className={`w-4 h-4 transition-colors ${
-                      active
-                        ? isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
-                        : isDark ? 'text-[#D4AF37]/60 group-hover:text-[#D4AF37]' : 'text-[#5A3517]/60 group-hover:text-[#5A3517]'
-                    }`} />
-                  </Link>
+                  <div key={item.path} className="border-b border-black/5 dark:border-white/5 pb-2">
+                    <Link
+                      to={item.path}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block py-2 transition-colors flex items-center justify-between relative group ${
+                        active
+                          ? isDark
+                            ? 'text-[#D4AF37] font-bold'
+                            : 'text-[#5A3517] font-bold'
+                          : isDark
+                            ? 'text-[#F3E6D0] hover:text-[#D4AF37]'
+                            : 'text-[#120B06] hover:text-[#5A3517]'
+                      }`}
+                    >
+                      <span className="relative inline-block">
+                        {item.name}
+                        <span
+                          className={`absolute -bottom-1 left-0 right-0 h-[2px] bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.85)] rounded-full transition-all duration-300 ${
+                            active
+                              ? 'opacity-100 scale-x-100'
+                              : 'opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100'
+                          }`}
+                        />
+                      </span>
+                      <ArrowRight className={`w-4 h-4 transition-colors ${
+                        active
+                          ? isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
+                          : isDark ? 'text-[#D4AF37]/60 group-hover:text-[#D4AF37]' : 'text-[#5A3517]/60 group-hover:text-[#5A3517]'
+                      }`} />
+                    </Link>
+
+                    {hasSubs && (
+                      <div className="pl-3 space-y-1.5 pt-1">
+                        {item.subcategories.map((sub) => (
+                          <Link
+                            key={sub.path}
+                            to={sub.path}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`block py-1 text-xs font-cinzel uppercase tracking-wider transition-colors ${
+                              isItemActive(sub.path)
+                                ? isDark ? 'text-[#D4AF37] font-bold' : 'text-[#5A3517] font-bold'
+                                : isDark ? 'text-[#D8BE99] hover:text-[#F3E6D0]' : 'text-[#5A3517]/80 hover:text-[#120B06]'
+                            }`}
+                          >
+                            • {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
               <Link

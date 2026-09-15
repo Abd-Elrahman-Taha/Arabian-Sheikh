@@ -63,11 +63,10 @@ export const productService = {
           const catId = p.categoryId ? String(p.categoryId) : (p.category?.id ? String(p.category.id) : '');
           if (!c && !catId) return true;
           return c === cat || c.includes(cat) || cat.includes(c) || catId === cat ||
-            (cat === 'perfumes' && (c === 'perfume' || catId === '1' || !c)) ||
-            (cat === 'oils' && (c.includes('oil') || catId === '2')) ||
-            (cat === 'bakhoor' && (c.includes('bakhoor') || c.includes('incense') || catId === '3')) ||
-            (cat === 'cosmetics' && (c.includes('cosmetic') || catId === '4')) ||
-            (cat === 'bundles' && (c.includes('bundle') || catId === '5'));
+            (cat === 'perfumes' && (c === 'perfume' || c === 'perfumes' || catId === '1' || !c)) ||
+            ((cat === 'body-bath-care' || cat === 'body care' || cat === 'body & bath care') && (c.includes('body') || c.includes('bath') || catId === '3')) ||
+            (cat === 'cosmetics' && (c.includes('cosmetic') || catId === '7' || catId === '4')) ||
+            ((cat === 'hair-care' || cat === 'hair care') && (c.includes('hair') || catId === '8'));
         });
       }
     }
@@ -75,7 +74,23 @@ export const productService = {
     // Filter by subcategory
     if (filters.subcategoryId && filters.subcategoryId !== 'all') {
       const sId = Number(filters.subcategoryId);
-      result = result.filter(p => Number(p.subcategoryId || p.subcategory?.id) === sId);
+      if (!isNaN(sId) && sId > 0) {
+        result = result.filter(p => Number(p.subcategoryId || p.subcategory?.id) === sId);
+      } else {
+        const subStr = String(filters.subcategoryId).toLowerCase();
+        result = result.filter(p => {
+          const subName = (p.subcategory?.name || p.subcategoryName || '').toLowerCase();
+          return subName.includes(subStr);
+        });
+      }
+    } else if (filters.subcategory && filters.subcategory !== 'all') {
+      const subStr = String(filters.subcategory).toLowerCase();
+      result = result.filter(p => {
+        const subName = (p.subcategory?.name || p.subcategoryName || '').toLowerCase();
+        if (subStr === 'oriental') return subName.includes('oriental') || Number(p.subcategoryId) === 6;
+        if (subStr === 'niche' || subStr === 'niche-rare') return subName.includes('niche') || Number(p.subcategoryId) === 7;
+        return subName.includes(subStr);
+      });
     }
 
     // Filter by perfume tier

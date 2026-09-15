@@ -3358,27 +3358,26 @@ export const CATEGORIES = [
   {
     "id": "perfumes",
     "name": "Perfumes",
-    "icon": "Sparkles"
+    "icon": "Sparkles",
+    "subcategories": [
+      { "id": "oriental", "name": "Oriental" },
+      { "id": "niche-rare", "name": "Niche & Rare" }
+    ]
   },
   {
-    "id": "oils",
-    "name": "Concentrated Oils",
-    "icon": "Droplet"
-  },
-  {
-    "id": "bakhoor",
-    "name": "Bakhoor & Incense",
-    "icon": "Flame"
+    "id": "body-bath-care",
+    "name": "Body & Bath Care",
+    "icon": "Heart"
   },
   {
     "id": "cosmetics",
     "name": "Cosmetics",
-    "icon": "Heart"
+    "icon": "Sparkles"
   },
   {
-    "id": "bundles",
-    "name": "Gift Sets & Bundles",
-    "icon": "Gift"
+    "id": "hair-care",
+    "name": "Hair Care",
+    "icon": "Droplet"
   }
 ];
 

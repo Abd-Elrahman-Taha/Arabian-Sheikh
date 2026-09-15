@@ -39,7 +39,7 @@ export default function Shop() {
 
   // Active Filter States (initialized from URL params)
   const initialCategory = queryParams.get('category') || queryParams.get('categoryId') || 'all';
-  const initialSubcategory = queryParams.get('subcategoryId') || 'all';
+  const initialSubcategory = queryParams.get('subcategoryId') || queryParams.get('subcategory') || 'all';
   const initialBrand = queryParams.get('brandId') || 'all';
   const initialTier = queryParams.get('tier') || 'all';
   const initialGender = queryParams.get('gender') || 'all';
@@ -63,10 +63,16 @@ export default function Shop() {
     if (selectedCategory === 'all' || selectedCategory === 'offers') return null;
     const num = Number(selectedCategory);
     if (!isNaN(num) && num > 0) return num;
+    const lower = String(selectedCategory || '').toLowerCase();
+    if (lower === 'perfumes' || lower === 'perfume') return 1;
+    if (lower === 'body-bath-care' || lower === 'body care' || lower === 'body & bath care') return 3;
+    if (lower === 'cosmetics') return 7;
+    if (lower === 'hair-care' || lower === 'hair care') return 8;
+
     const found = categories.find(c =>
-      c.id === selectedCategory ||
-      (c.name && c.name.toLowerCase() === selectedCategory.toLowerCase()) ||
-      (c.slug && c.slug.toLowerCase() === selectedCategory.toLowerCase())
+      String(c.id) === String(selectedCategory) ||
+      (c.name && c.name.toLowerCase() === lower) ||
+      (c.slug && c.slug.toLowerCase() === lower)
     );
     return found ? Number(found.id) : null;
   }, [selectedCategory, categories]);
@@ -77,13 +83,21 @@ export default function Shop() {
 
     async function loadCatalogTaxonomy() {
       try {
+        const canonicalCats = [
+          { id: 1, name: 'Perfumes', isActive: true },
+          { id: 3, name: 'Body & Bath Care', isActive: true },
+          { id: 7, name: 'Cosmetics', isActive: true },
+          { id: 8, name: 'Hair Care', isActive: true }
+        ];
+
         const [catsData, brandsData] = await Promise.all([
           categoryService.getStoreCategories(language).catch(() => []),
           brandService.getStoreBrands(language).catch(() => [])
         ]);
 
         if (isMounted) {
-          setCategories(Array.isArray(catsData) ? catsData : []);
+          const apiCats = Array.isArray(catsData) ? catsData.filter(c => c.isActive !== false) : [];
+          setCategories(apiCats.length > 0 ? apiCats : canonicalCats);
           setBrands(Array.isArray(brandsData) ? brandsData : []);
         }
       } catch (err) {
@@ -108,12 +122,28 @@ export default function Shop() {
       setSubcategoriesLoading(true);
       try {
         const subData = await categoryService.getStoreSubcategories(activeCategoryId, language);
+        let items = Array.isArray(subData) ? subData.filter(s => s.isActive !== false) : [];
+        if (Number(activeCategoryId) === 1 && items.length === 0) {
+          items = [
+            { id: 6, name: 'Oriental', categoryId: 1, isActive: true },
+            { id: 7, name: 'Niche & Rare', categoryId: 1, isActive: true }
+          ];
+        }
         if (isMounted) {
-          setSubcategories(Array.isArray(subData) ? subData : []);
+          setSubcategories(items);
         }
       } catch (err) {
         console.warn('Failed to load subcategories for category', activeCategoryId, err.message);
-        if (isMounted) setSubcategories([]);
+        if (isMounted) {
+          if (Number(activeCategoryId) === 1) {
+            setSubcategories([
+              { id: 6, name: 'Oriental', categoryId: 1, isActive: true },
+              { id: 7, name: 'Niche & Rare', categoryId: 1, isActive: true }
+            ]);
+          } else {
+            setSubcategories([]);
+          }
+        }
       } finally {
         if (isMounted) setSubcategoriesLoading(false);
       }
