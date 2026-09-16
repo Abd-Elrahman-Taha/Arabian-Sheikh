@@ -59,31 +59,58 @@ export const promotionApi = {
    * POST /api/admin/promotions
    */
   async adminCreatePromotion(payload) {
-    const isDiscount = (payload.type || 'Discount').toLowerCase() === 'discount';
+    const isBundle = payload.type === 1 || String(payload.type || '').toLowerCase() === 'bundle';
+
+    const toTargetTypeNum = (tt) => {
+      if (typeof tt === 'number') return tt;
+      const s = String(tt || '').toLowerCase();
+      if (s === 'product') return 0;
+      if (s === 'category') return 1;
+      if (s === 'subcategory') return 2;
+      if (s === 'brand') return 3;
+      return 0;
+    };
+
+    let bundlesPayload = null;
+    if (isBundle && Array.isArray(payload.bundles) && payload.bundles.length > 0) {
+      bundlesPayload = payload.bundles.map(b => ({
+        name: String(b.name || payload.name || '').trim(),
+        bundlePrice: Number(b.bundlePrice) || 0,
+        items: (b.items || []).map(item => ({
+          productId: Number(item.productId),
+          quantity: Math.max(1, Number(item.quantity) || 1)
+        }))
+      }));
+    }
 
     const body = {
       name: String(payload.name || '').trim(),
-      type: isDiscount ? 'Discount' : 'Bundle',
-      discountType: isDiscount ? (payload.discountType === 'Fixed' ? 'Fixed' : 'Percentage') : null,
-      discountValue: isDiscount ? (Number(payload.discountValue) || 0) : null,
+      type: isBundle ? 1 : 0,
       startDate: payload.startDate ? new Date(payload.startDate).toISOString() : new Date().toISOString(),
       endDate: payload.endDate ? new Date(payload.endDate).toISOString() : '2027-12-31T23:59:59Z',
-      minOrderAmount: payload.minOrderAmount !== null && payload.minOrderAmount !== undefined && payload.minOrderAmount !== ''
+      discountType: isBundle
+        ? null
+        : (payload.discountType === 1 || String(payload.discountType).toLowerCase() === 'fixed' ? 1 : 0),
+      discountValue: isBundle ? null : (Number(payload.discountValue) || 0),
+      minOrderAmount: (!isBundle && payload.minOrderAmount !== null && payload.minOrderAmount !== undefined && payload.minOrderAmount !== '')
         ? Number(payload.minOrderAmount)
         : null,
-      maxDiscountAmount: payload.maxDiscountAmount !== null && payload.maxDiscountAmount !== undefined && payload.maxDiscountAmount !== ''
+      maxDiscountAmount: (!isBundle && payload.maxDiscountAmount !== null && payload.maxDiscountAmount !== undefined && payload.maxDiscountAmount !== '')
         ? Number(payload.maxDiscountAmount)
         : null,
-      usageLimit: payload.usageLimit !== null && payload.usageLimit !== undefined && payload.usageLimit !== ''
+      usageLimit: (!isBundle && payload.usageLimit !== null && payload.usageLimit !== undefined && payload.usageLimit !== '')
         ? Number(payload.usageLimit)
         : null,
-      applicability: Array.isArray(payload.applicability)
-        ? payload.applicability.map(rule => ({
-            targetType: rule.targetType,
-            targetId: Number(rule.targetId),
-            isExcluded: Boolean(rule.isExcluded)
-          }))
-        : []
+      applicability: isBundle
+        ? []
+        : (Array.isArray(payload.applicability)
+            ? payload.applicability.map(rule => ({
+                targetType: toTargetTypeNum(rule.targetType),
+                targetId: Number(rule.targetId),
+                isExcluded: Boolean(rule.isExcluded)
+              }))
+            : []),
+      bundles: bundlesPayload
     };
 
     const response = await apiClient.post(ENDPOINTS.ADMIN.PROMOTIONS.CREATE, body);
@@ -97,31 +124,58 @@ export const promotionApi = {
   async adminUpdatePromotion(id, payload) {
     const targetId = Number(id);
     if (!targetId || isNaN(targetId)) throw new Error('Valid promotion ID is required.');
-    const isDiscount = (payload.type || 'Discount').toLowerCase() === 'discount';
+    const isBundle = payload.type === 1 || String(payload.type || '').toLowerCase() === 'bundle';
+
+    const toTargetTypeNum = (tt) => {
+      if (typeof tt === 'number') return tt;
+      const s = String(tt || '').toLowerCase();
+      if (s === 'product') return 0;
+      if (s === 'category') return 1;
+      if (s === 'subcategory') return 2;
+      if (s === 'brand') return 3;
+      return 0;
+    };
+
+    let bundlesPayload = null;
+    if (isBundle && Array.isArray(payload.bundles) && payload.bundles.length > 0) {
+      bundlesPayload = payload.bundles.map(b => ({
+        name: String(b.name || payload.name || '').trim(),
+        bundlePrice: Number(b.bundlePrice) || 0,
+        items: (b.items || []).map(item => ({
+          productId: Number(item.productId),
+          quantity: Math.max(1, Number(item.quantity) || 1)
+        }))
+      }));
+    }
 
     const body = {
       name: String(payload.name || '').trim(),
-      type: isDiscount ? 'Discount' : 'Bundle',
-      discountType: isDiscount ? (payload.discountType === 'Fixed' ? 'Fixed' : 'Percentage') : null,
-      discountValue: isDiscount ? (Number(payload.discountValue) || 0) : null,
+      type: isBundle ? 1 : 0,
       startDate: payload.startDate ? new Date(payload.startDate).toISOString() : new Date().toISOString(),
       endDate: payload.endDate ? new Date(payload.endDate).toISOString() : '2027-12-31T23:59:59Z',
-      minOrderAmount: payload.minOrderAmount !== null && payload.minOrderAmount !== undefined && payload.minOrderAmount !== ''
+      discountType: isBundle
+        ? null
+        : (payload.discountType === 1 || String(payload.discountType).toLowerCase() === 'fixed' ? 1 : 0),
+      discountValue: isBundle ? null : (Number(payload.discountValue) || 0),
+      minOrderAmount: (!isBundle && payload.minOrderAmount !== null && payload.minOrderAmount !== undefined && payload.minOrderAmount !== '')
         ? Number(payload.minOrderAmount)
         : null,
-      maxDiscountAmount: payload.maxDiscountAmount !== null && payload.maxDiscountAmount !== undefined && payload.maxDiscountAmount !== ''
+      maxDiscountAmount: (!isBundle && payload.maxDiscountAmount !== null && payload.maxDiscountAmount !== undefined && payload.maxDiscountAmount !== '')
         ? Number(payload.maxDiscountAmount)
         : null,
-      usageLimit: payload.usageLimit !== null && payload.usageLimit !== undefined && payload.usageLimit !== ''
+      usageLimit: (!isBundle && payload.usageLimit !== null && payload.usageLimit !== undefined && payload.usageLimit !== '')
         ? Number(payload.usageLimit)
         : null,
-      applicability: Array.isArray(payload.applicability)
-        ? payload.applicability.map(rule => ({
-            targetType: rule.targetType,
-            targetId: Number(rule.targetId),
-            isExcluded: Boolean(rule.isExcluded)
-          }))
-        : []
+      applicability: isBundle
+        ? []
+        : (Array.isArray(payload.applicability)
+            ? payload.applicability.map(rule => ({
+                targetType: toTargetTypeNum(rule.targetType),
+                targetId: Number(rule.targetId),
+                isExcluded: Boolean(rule.isExcluded)
+              }))
+            : []),
+      bundles: bundlesPayload
     };
 
     const response = await apiClient.put(ENDPOINTS.ADMIN.PROMOTIONS.UPDATE(targetId), body);

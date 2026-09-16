@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { promotionService } from '../../services/promotionService';
 import { productApi } from '../../api/product.api';
@@ -7,6 +7,7 @@ import { productService } from '../../services/productService';
 import { useToast } from '../../context/ToastContext';
 import {
   Plus,
+  Minus,
   Search,
   X,
   Tag,
@@ -168,8 +169,14 @@ export default function AdminPromotions() {
     minOrderAmount: '',
     maxDiscountAmount: '',
     usageLimit: '',
-    applicability: []
+    applicability: [],
+    bundleName: '',
+    bundlePrice: 60,
+    bundleItems: []
   });
+
+  // Selected product to add to atomic bundle suite
+  const [selectedAddProductId, setSelectedAddProductId] = useState('');
 
   // Scope Quick-Mode (All shop, Single product, Single category, Single brand, Custom)
   const [scopeMode, setScopeMode] = useState('ALL_SHOP');
@@ -177,7 +184,7 @@ export default function AdminPromotions() {
   const [scopeCategoryId, setScopeCategoryId] = useState('');
   const [scopeBrandId, setScopeBrandId] = useState('');
 
-  // Bundle Form State
+  // Bundle Form State (for separate modal)
   const [bundleFormData, setBundleFormData] = useState({
     name: '',
     bundlePrice: 50,
@@ -220,7 +227,10 @@ export default function AdminPromotions() {
           if (perfCats.status === 'fulfilled' && Array.isArray(perfCats.value)) setCatalogPerfumeCats(perfCats.value);
           if (prods.status === 'fulfilled' && Array.isArray(prods.value)) {
             setCatalogProducts(prods.value);
-            if (prods.value.length > 0) setScopeProductId(prods.value[0].id);
+            if (prods.value.length > 0) {
+              setScopeProductId(prods.value[0].id);
+              setSelectedAddProductId(prods.value[0].id);
+            }
           }
         }
       } catch (err) {
@@ -322,6 +332,13 @@ export default function AdminPromotions() {
     const future = new Date();
     future.setMonth(future.getMonth() + 2);
 
+    const initialBundleItems = catalogProducts.length >= 2
+      ? [
+          { productId: catalogProducts[0].id, quantity: 1 },
+          { productId: catalogProducts[1].id, quantity: 1 }
+        ]
+      : (catalogProducts.length === 1 ? [{ productId: catalogProducts[0].id, quantity: 1 }] : []);
+
     setEditingPromotion(null);
     setScopeMode('ALL_SHOP');
     setFormData({
@@ -334,8 +351,14 @@ export default function AdminPromotions() {
       minOrderAmount: '',
       maxDiscountAmount: '',
       usageLimit: '',
-      applicability: []
+      applicability: [],
+      bundleName: '',
+      bundlePrice: 60,
+      bundleItems: initialBundleItems
     });
+    if (catalogProducts[0]?.id) {
+      setSelectedAddProductId(catalogProducts[0].id);
+    }
     setFormModalOpen(true);
   };
 
@@ -362,6 +385,8 @@ export default function AdminPromotions() {
         setScopeMode('CUSTOM');
       }
 
+      const primaryBundle = full.bundles?.[0] || null;
+
       setFormData({
         name: full.name || '',
         type: full.type || 'Discount',
@@ -372,8 +397,16 @@ export default function AdminPromotions() {
         minOrderAmount: full.minOrderAmount ?? '',
         maxDiscountAmount: full.maxDiscountAmount ?? '',
         usageLimit: full.usageLimit ?? '',
-        applicability: Array.isArray(full.applicability) ? [...full.applicability] : []
+        applicability: Array.isArray(full.applicability) ? [...full.applicability] : [],
+        bundleName: primaryBundle?.name || (full.name ? `${full.name} - Bundle Suite` : ''),
+        bundlePrice: primaryBundle?.bundlePrice ?? 60,
+        bundleItems: Array.isArray(primaryBundle?.items)
+          ? primaryBundle.items.map(i => ({ productId: i.productId, quantity: i.quantity || 1 }))
+          : []
       });
+      if (catalogProducts[0]?.id) {
+        setSelectedAddProductId(catalogProducts[0].id);
+      }
       setFormModalOpen(true);
     } catch (err) {
       error(err.message || 'Failed to load promotion details for editing.');
@@ -387,11 +420,48 @@ export default function AdminPromotions() {
     e.preventDefault();
     setSubmittingForm(true);
     try {
+      const isBundle = formData.type === 'Bundle';
+
+      if (isBundle) {
+        if (!formData.bundleItems || formData.bundleItems.length === 0) {
+          throw new Error('Please add at least one perfume flacon to the bundle suite.');
+        }
+        const price = Number(formData.bundlePrice);
+        if (isNaN(price) || price < 0) {
+          throw new Error('Please specify a valid bundle price.');
+        }
+      }
+
+      const payload = {
+        name: formData.name,
+        type: formData.type,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        discountType: isBundle ? null : formData.discountType,
+        discountValue: isBundle ? null : formData.discountValue,
+        minOrderAmount: isBundle ? null : formData.minOrderAmount,
+        maxDiscountAmount: isBundle ? null : formData.maxDiscountAmount,
+        usageLimit: isBundle ? null : formData.usageLimit,
+        applicability: isBundle ? [] : formData.applicability,
+        bundles: isBundle
+          ? [
+              {
+                name: (formData.bundleName && formData.bundleName.trim()) || formData.name.trim(),
+                bundlePrice: Number(formData.bundlePrice) || 0,
+                items: formData.bundleItems.map(item => ({
+                  productId: Number(item.productId),
+                  quantity: Math.max(1, Number(item.quantity) || 1)
+                }))
+              }
+            ]
+          : null
+      };
+
       if (editingPromotion) {
-        await promotionService.updatePromotion(editingPromotion.id, formData);
+        await promotionService.updatePromotion(editingPromotion.id, payload);
         success(`Promotion '${formData.name}' updated successfully.`);
       } else {
-        await promotionService.createPromotion(formData);
+        await promotionService.createPromotion(payload);
         success(`Promotion '${formData.name}' created successfully.`);
       }
       setFormModalOpen(false);
@@ -651,6 +721,62 @@ export default function AdminPromotions() {
   const bundleSavingsPercent = bundleOriginalTotal > 0
     ? Math.round(((bundleSavings / bundleOriginalTotal) * 100) * 10) / 10
     : 0;
+
+  // Atomic Bundle Helpers for Modal 1
+  const handleAddProductToAtomicBundle = (productId) => {
+    const targetId = Number(productId || selectedAddProductId);
+    if (!targetId) return;
+    setFormData(prev => {
+      const existingIdx = (prev.bundleItems || []).findIndex(i => Number(i.productId) === targetId);
+      if (existingIdx >= 0) {
+        const next = [...prev.bundleItems];
+        next[existingIdx] = {
+          ...next[existingIdx],
+          quantity: (Number(next[existingIdx].quantity) || 1) + 1
+        };
+        return { ...prev, bundleItems: next };
+      }
+      return {
+        ...prev,
+        bundleItems: [...(prev.bundleItems || []), { productId: targetId, quantity: 1 }]
+      };
+    });
+  };
+
+  const handleUpdateAtomicBundleItemQty = (index, qty) => {
+    const validQty = Math.max(1, Number(qty) || 1);
+    setFormData(prev => {
+      const next = [...(prev.bundleItems || [])];
+      next[index] = { ...next[index], quantity: validQty };
+      return { ...prev, bundleItems: next };
+    });
+  };
+
+  const handleRemoveAtomicBundleItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      bundleItems: (prev.bundleItems || []).filter((_, idx) => idx !== index)
+    }));
+  };
+
+  // Calculate dynamic atomic bundle savings for Modal 1
+  const atomicBundleOriginalTotal = useMemo(() => {
+    return (formData.bundleItems || []).reduce((sum, item) => {
+      const product = catalogProducts.find(p => Number(p.id) === Number(item.productId));
+      const price = product?.price ? Number(product.price) : 0;
+      return sum + (price * (Number(item.quantity) || 1));
+    }, 0);
+  }, [formData.bundleItems, catalogProducts]);
+
+  const atomicBundleSavings = useMemo(() => {
+    const price = Number(formData.bundlePrice) || 0;
+    return Math.max(0, atomicBundleOriginalTotal - price);
+  }, [atomicBundleOriginalTotal, formData.bundlePrice]);
+
+  const atomicBundleSavingsPercent = useMemo(() => {
+    if (atomicBundleOriginalTotal <= 0) return 0;
+    return Math.round((atomicBundleSavings / atomicBundleOriginalTotal) * 100);
+  }, [atomicBundleSavings, atomicBundleOriginalTotal]);
 
   return (
     <div className="space-y-6 text-[#F3E6D0] animate-fade-in pb-12">
@@ -992,12 +1118,18 @@ export default function AdminPromotions() {
       {/* ========================================================================= */}
       {formModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto my-auto text-[#F3E6D0]">
+          <div className="bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto my-auto text-[#F3E6D0]">
             <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-4">
               <div className="flex items-center gap-2.5">
-                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                {formData.type === 'Bundle' ? (
+                  <Package className="w-5 h-5 text-purple-400" />
+                ) : (
+                  <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                )}
                 <h3 className="font-cinzel text-lg sm:text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
-                  {editingPromotion ? 'Edit Campaign' : 'Create Promotion Campaign'}
+                  {editingPromotion
+                    ? 'Edit Campaign'
+                    : (formData.type === 'Bundle' ? 'Create Bundle Suite' : 'Create Promotion Campaign')}
                 </h3>
               </div>
               <button
@@ -1045,7 +1177,7 @@ export default function AdminPromotions() {
                         onClick={() => setFormData(p => ({ ...p, type: typeItem.id }))}
                         className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
                           isSel
-                            ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#F2D675] shadow-md'
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#F2D675] shadow-md ring-1 ring-[#D4AF37]'
                             : 'border-[#D4AF37]/20 bg-black/40 text-[#D8BE99] hover:border-[#D4AF37]/40'
                         }`}
                       >
@@ -1060,46 +1192,7 @@ export default function AdminPromotions() {
                 </div>
               </div>
 
-              {/* Discount Type & Value (If Discount) */}
-              {formData.type === 'Discount' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-black/40 p-4 rounded-xl border border-[#D4AF37]/20 animate-fade-in">
-                  <div>
-                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
-                      Discount Type *
-                    </label>
-                    <select
-                      value={formData.discountType}
-                      onChange={(e) => setFormData(p => ({ ...p, discountType: e.target.value }))}
-                      className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs text-[#F3E6D0] focus:outline-none cursor-pointer"
-                    >
-                      <option value="Percentage">Percentage (%)</option>
-                      <option value="Fixed">Fixed Amount ($)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
-                      Discount Value *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="1"
-                        max={formData.discountType === 'Percentage' ? '100' : '99999'}
-                        required
-                        value={formData.discountValue}
-                        onChange={(e) => setFormData(p => ({ ...p, discountValue: e.target.value }))}
-                        className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl pl-4 pr-10 py-2.5 font-mono text-xs sm:text-sm text-[#F3E6D0] focus:outline-none"
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-xs text-[#D4AF37]">
-                        {formData.discountType === 'Percentage' ? '%' : '$'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Start & End Dates */}
+              {/* Start & End Dates (Applies to both Discount and Bundle) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
@@ -1128,251 +1221,504 @@ export default function AdminPromotions() {
                 </div>
               </div>
 
-              {/* Limits & Constraints */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <div>
-                  <label className="block text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5 font-bold">
-                    Min Order Spend ($)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="None"
-                    value={formData.minOrderAmount}
-                    onChange={(e) => setFormData(p => ({ ...p, minOrderAmount: e.target.value }))}
-                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3.5 py-2 font-mono text-xs text-[#F3E6D0] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5 font-bold">
-                    Max Discount Cap ($)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="None"
-                    value={formData.maxDiscountAmount}
-                    onChange={(e) => setFormData(p => ({ ...p, maxDiscountAmount: e.target.value }))}
-                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3.5 py-2 font-mono text-xs text-[#F3E6D0] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5 font-bold">
-                    Usage Limit (Count)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Unlimited"
-                    value={formData.usageLimit}
-                    onChange={(e) => setFormData(p => ({ ...p, usageLimit: e.target.value }))}
-                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3.5 py-2 font-mono text-xs text-[#F3E6D0] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Applicability / Offer Scope Selector */}
-              <div className="border-t border-[#D4AF37]/20 pt-4 space-y-4">
-                <div>
-                  <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#F2D675]">
-                    Offer Scope & Targeting
-                  </h4>
-                  <p className="text-[11px] text-[#D8BE99]">
-                    Choose whether this offer applies to the entire store, a single product, a single category, or a single brand.
-                  </p>
-                </div>
-
-                {/* Scope Selection Pills */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {[
-                    { id: 'ALL_SHOP', label: 'All the Shop', icon: Sparkles, desc: 'Entire store' },
-                    { id: 'SINGLE_PRODUCT', label: 'One Product', icon: Package, desc: 'Single flacon' },
-                    { id: 'SINGLE_CATEGORY', label: 'One Category', icon: Layers, desc: 'Specific category' },
-                    { id: 'SINGLE_BRAND', label: 'One Brand', icon: Crown, desc: 'Specific maison' },
-                    { id: 'CUSTOM', label: 'Custom Rules', icon: Tag, desc: 'Multi-target' }
-                  ].map(sc => {
-                    const Icon = sc.icon;
-                    const isSel = scopeMode === sc.id;
-                    return (
-                      <button
-                        key={sc.id}
-                        type="button"
-                        onClick={() => handleScopeModeChange(sc.id)}
-                        className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                          isSel
-                            ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] shadow-[0_0_12px_rgba(212,175,55,0.3)] ring-1 ring-[#D4AF37]'
-                            : 'border-[#D4AF37]/20 bg-black/40 text-[#D8BE99] hover:border-[#D4AF37]/50'
-                        }`}
+              {/* ======================================================== */}
+              {/* CONDITIONAL: DISCOUNT OFFER FIELDS                       */}
+              {/* ======================================================== */}
+              {formData.type === 'Discount' && (
+                <>
+                  {/* Discount Type & Value */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-black/40 p-4 rounded-xl border border-[#D4AF37]/20 animate-fade-in">
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
+                        Discount Type *
+                      </label>
+                      <select
+                        value={formData.discountType}
+                        onChange={(e) => setFormData(p => ({ ...p, discountType: e.target.value }))}
+                        className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs text-[#F3E6D0] focus:outline-none cursor-pointer"
                       >
-                        <Icon className="w-4 h-4 text-[#D4AF37]" />
-                        <span className="font-cinzel font-bold text-[11px] uppercase whitespace-nowrap">{sc.label}</span>
-                        <span className="text-[9px] text-[#D8BE99]/60">{sc.desc}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* 1. All Shop Scope */}
-                {scopeMode === 'ALL_SHOP' && (
-                  <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300 animate-fade-in">
-                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>This promotion will apply automatically across <strong>all creations and flacons</strong> in the entire shop.</span>
-                  </div>
-                )}
-
-                {/* 2. Single Product Scope */}
-                {scopeMode === 'SINGLE_PRODUCT' && (
-                  <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
-                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
-                      Select Target Product *
-                    </label>
-                    <select
-                      value={scopeProductId}
-                      onChange={(e) => handleSelectScopeProduct(e.target.value)}
-                      className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
-                    >
-                      {catalogProducts.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} — €{p.price} (ID #{p.id})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-[10px] text-[#D8BE99]/70">
-                      Only this specific perfume flacon will receive the offer.
-                    </p>
-                  </div>
-                )}
-
-                {/* 3. Single Category Scope */}
-                {scopeMode === 'SINGLE_CATEGORY' && (
-                  <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
-                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
-                      Select Target Category *
-                    </label>
-                    <select
-                      value={scopeCategoryId}
-                      onChange={(e) => handleSelectScopeCategory(e.target.value)}
-                      className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
-                    >
-                      {catalogCategories.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} (ID #{c.id})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-[10px] text-[#D8BE99]/70">
-                      All products under this category will automatically qualify for the promotion.
-                    </p>
-                  </div>
-                )}
-
-                {/* 4. Single Brand Scope */}
-                {scopeMode === 'SINGLE_BRAND' && (
-                  <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
-                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
-                      Select Target Brand / Maison *
-                    </label>
-                    <select
-                      value={scopeBrandId}
-                      onChange={(e) => handleSelectScopeBrand(e.target.value)}
-                      className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
-                    >
-                      {catalogBrands.map(b => (
-                        <option key={b.id} value={b.id}>
-                          {b.name} (ID #{b.id})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-[10px] text-[#D8BE99]/70">
-                      All creations from this perfume house will automatically qualify.
-                    </p>
-                  </div>
-                )}
-
-                {/* 5. Custom Multi-Rule Scope */}
-                {scopeMode === 'CUSTOM' && (
-                  <div className="space-y-2.5 animate-fade-in">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider">
-                        Custom Rule Items ({formData.applicability.length})
-                      </span>
-                      <button
-                        type="button"
-                        onClick={addApplicabilityRule}
-                        className="px-3 py-1 rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#F2D675] font-cinzel text-[11px] uppercase font-bold tracking-wider flex items-center gap-1 cursor-pointer transition-all"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add Rule</span>
-                      </button>
+                        <option value="Percentage">Percentage (%)</option>
+                        <option value="Fixed">Fixed Amount ($)</option>
+                      </select>
                     </div>
 
-                    {formData.applicability.length === 0 ? (
-                      <p className="text-xs text-[#D8BE99]/60 italic py-2">
-                        No custom rules configured yet. Click "Add Rule" to target specific items.
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
+                        Discount Value *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="1"
+                          max={formData.discountType === 'Percentage' ? '100' : '99999'}
+                          required
+                          value={formData.discountValue}
+                          onChange={(e) => setFormData(p => ({ ...p, discountValue: e.target.value }))}
+                          className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl pl-4 pr-10 py-2.5 font-mono text-xs sm:text-sm text-[#F3E6D0] focus:outline-none"
+                        />
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-xs text-[#D4AF37]">
+                          {formData.discountType === 'Percentage' ? '%' : '$'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Limits & Constraints */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 animate-fade-in">
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5 font-bold">
+                        Min Order Spend ($)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="None"
+                        value={formData.minOrderAmount}
+                        onChange={(e) => setFormData(p => ({ ...p, minOrderAmount: e.target.value }))}
+                        className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3.5 py-2 font-mono text-xs text-[#F3E6D0] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5 font-bold">
+                        Max Discount Cap ($)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="None"
+                        value={formData.maxDiscountAmount}
+                        onChange={(e) => setFormData(p => ({ ...p, maxDiscountAmount: e.target.value }))}
+                        className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3.5 py-2 font-mono text-xs text-[#F3E6D0] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5 font-bold">
+                        Usage Limit (Count)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Unlimited"
+                        value={formData.usageLimit}
+                        onChange={(e) => setFormData(p => ({ ...p, usageLimit: e.target.value }))}
+                        className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3.5 py-2 font-mono text-xs text-[#F3E6D0] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Applicability / Offer Scope Selector */}
+                  <div className="border-t border-[#D4AF37]/20 pt-4 space-y-4 animate-fade-in">
+                    <div>
+                      <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#F2D675]">
+                        Offer Scope & Targeting
+                      </h4>
+                      <p className="text-[11px] text-[#D8BE99]">
+                        Choose whether this offer applies to the entire store, a single product, a single category, or a single brand.
                       </p>
-                    ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {formData.applicability.map((rule, idx) => (
-                          <div key={idx} className="flex items-center gap-2 bg-black/60 p-2.5 rounded-xl border border-white/10">
-                            {/* Target Type */}
-                            <select
-                              value={rule.targetType}
-                              onChange={(e) => updateApplicabilityRule(idx, 'targetType', e.target.value)}
-                              className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
-                            >
-                              {TARGET_TYPES.map(tt => (
-                                <option key={tt.id} value={tt.id}>{tt.label}</option>
-                              ))}
-                            </select>
+                    </div>
 
-                            {/* Target Item Selector */}
-                            <select
-                              value={rule.targetId}
-                              onChange={(e) => updateApplicabilityRule(idx, 'targetId', Number(e.target.value))}
-                              className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none flex-1 cursor-pointer"
-                            >
-                              {rule.targetType === 'Category' && catalogCategories.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                              ))}
-                              {rule.targetType === 'Brand' && catalogBrands.map(b => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                              ))}
-                              {rule.targetType === 'PerfumeCategory' && catalogPerfumeCats.map(pc => (
-                                <option key={pc.id} value={pc.id}>{pc.name}</option>
-                              ))}
-                              {rule.targetType === 'Product' && catalogProducts.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} (€{p.price})</option>
-                              ))}
-                            </select>
+                    {/* Scope Selection Pills */}
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {[
+                        { id: 'ALL_SHOP', label: 'All the Shop', icon: Sparkles, desc: 'Entire store' },
+                        { id: 'SINGLE_PRODUCT', label: 'One Product', icon: Package, desc: 'Single flacon' },
+                        { id: 'SINGLE_CATEGORY', label: 'One Category', icon: Layers, desc: 'Specific category' },
+                        { id: 'SINGLE_BRAND', label: 'One Brand', icon: Crown, desc: 'Specific maison' },
+                        { id: 'CUSTOM', label: 'Custom Rules', icon: Tag, desc: 'Multi-target' }
+                      ].map(sc => {
+                        const Icon = sc.icon;
+                        const isSel = scopeMode === sc.id;
+                        return (
+                          <button
+                            key={sc.id}
+                            type="button"
+                            onClick={() => handleScopeModeChange(sc.id)}
+                            className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                              isSel
+                                ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675] shadow-[0_0_12px_rgba(212,175,55,0.3)] ring-1 ring-[#D4AF37]'
+                                : 'border-[#D4AF37]/20 bg-black/40 text-[#D8BE99] hover:border-[#D4AF37]/50'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 text-[#D4AF37]" />
+                            <span className="font-cinzel font-bold text-[11px] uppercase whitespace-nowrap">{sc.label}</span>
+                            <span className="text-[9px] text-[#D8BE99]/60">{sc.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                            {/* Excluded Toggle */}
-                            <label className="flex items-center gap-1.5 text-[11px] text-[#D8BE99] cursor-pointer whitespace-nowrap px-1">
-                              <input
-                                type="checkbox"
-                                checked={rule.isExcluded}
-                                onChange={(e) => updateApplicabilityRule(idx, 'isExcluded', e.target.checked)}
-                                className="rounded accent-[#D4AF37]"
-                              />
-                              <span>Exclude</span>
-                            </label>
+                    {/* 1. All Shop Scope */}
+                    {scopeMode === 'ALL_SHOP' && (
+                      <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300 animate-fade-in">
+                        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>This promotion will apply automatically across <strong>all creations and flacons</strong> in the entire shop.</span>
+                      </div>
+                    )}
 
-                            {/* Remove */}
-                            <button
-                              type="button"
-                              onClick={() => removeApplicabilityRule(idx)}
-                              className="text-neutral-400 hover:text-rose-400 p-1 cursor-pointer transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
+                    {/* 2. Single Product Scope */}
+                    {scopeMode === 'SINGLE_PRODUCT' && (
+                      <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
+                        <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                          Select Target Product *
+                        </label>
+                        <select
+                          value={scopeProductId}
+                          onChange={(e) => handleSelectScopeProduct(e.target.value)}
+                          className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
+                        >
+                          {catalogProducts.map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} — €{p.price} (ID #{p.id})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-[#D8BE99]/70">
+                          Only this specific perfume flacon will receive the offer.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 3. Single Category Scope */}
+                    {scopeMode === 'SINGLE_CATEGORY' && (
+                      <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
+                        <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                          Select Target Category *
+                        </label>
+                        <select
+                          value={scopeCategoryId}
+                          onChange={(e) => handleSelectScopeCategory(e.target.value)}
+                          className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
+                        >
+                          {catalogCategories.map(c => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} (ID #{c.id})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-[#D8BE99]/70">
+                          All products under this category will automatically qualify for the promotion.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 4. Single Brand Scope */}
+                    {scopeMode === 'SINGLE_BRAND' && (
+                      <div className="p-3.5 bg-black/50 border border-[#D4AF37]/30 rounded-xl space-y-2 animate-fade-in">
+                        <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                          Select Target Brand / Maison *
+                        </label>
+                        <select
+                          value={scopeBrandId}
+                          onChange={(e) => handleSelectScopeBrand(e.target.value)}
+                          className="w-full bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer"
+                        >
+                          {catalogBrands.map(b => (
+                            <option key={b.id} value={b.id}>
+                              {b.name} (ID #{b.id})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-[#D8BE99]/70">
+                          All creations from this perfume house will automatically qualify.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 5. Custom Multi-Rule Scope */}
+                    {scopeMode === 'CUSTOM' && (
+                      <div className="space-y-2.5 animate-fade-in">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider">
+                            Custom Rule Items ({formData.applicability.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={addApplicabilityRule}
+                            className="px-3 py-1 rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#F2D675] font-cinzel text-[11px] uppercase font-bold tracking-wider flex items-center gap-1 cursor-pointer transition-all"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add Rule</span>
+                          </button>
+                        </div>
+
+                        {formData.applicability.length === 0 ? (
+                          <p className="text-xs text-[#D8BE99]/60 italic py-2">
+                            No custom rules configured yet. Click "Add Rule" to target specific items.
+                          </p>
+                        ) : (
+                          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            {formData.applicability.map((rule, idx) => (
+                              <div key={idx} className="flex items-center gap-2 bg-black/60 p-2.5 rounded-xl border border-white/10">
+                                <select
+                                  value={rule.targetType}
+                                  onChange={(e) => updateApplicabilityRule(idx, 'targetType', e.target.value)}
+                                  className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
+                                >
+                                  {TARGET_TYPES.map(tt => (
+                                    <option key={tt.id} value={tt.id}>{tt.label}</option>
+                                  ))}
+                                </select>
+
+                                <select
+                                  value={rule.targetId}
+                                  onChange={(e) => updateApplicabilityRule(idx, 'targetId', Number(e.target.value))}
+                                  className="bg-[#0B0A08] border border-white/20 text-[#F3E6D0] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none flex-1 cursor-pointer"
+                                >
+                                  {rule.targetType === 'Category' && catalogCategories.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                  ))}
+                                  {rule.targetType === 'Brand' && catalogBrands.map(b => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                  ))}
+                                  {rule.targetType === 'PerfumeCategory' && catalogPerfumeCats.map(pc => (
+                                    <option key={pc.id} value={pc.id}>{pc.name}</option>
+                                  ))}
+                                  {rule.targetType === 'Product' && catalogProducts.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name} (€{p.price})</option>
+                                  ))}
+                                </select>
+
+                                <label className="flex items-center gap-1.5 text-[11px] text-[#D8BE99] cursor-pointer whitespace-nowrap px-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={rule.isExcluded}
+                                    onChange={(e) => updateApplicabilityRule(idx, 'isExcluded', e.target.checked)}
+                                    className="rounded accent-[#D4AF37]"
+                                  />
+                                  <span>Exclude</span>
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeApplicabilityRule(idx)}
+                                  className="text-neutral-400 hover:text-rose-400 p-1 cursor-pointer transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
+
+              {/* ======================================================== */}
+              {/* CONDITIONAL: BUNDLE SUITE CONFIGURATION (ATOMIC)          */}
+              {/* ======================================================== */}
+              {formData.type === 'Bundle' && (
+                <div className="border-t border-[#D4AF37]/20 pt-4 space-y-4 animate-fade-in">
+                  <div>
+                    <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#F2D675] flex items-center gap-2">
+                      <Package className="w-4 h-4 text-purple-400" />
+                      <span>Curated Bundle Suite Configuration</span>
+                    </h4>
+                    <p className="text-[11px] text-[#D8BE99]">
+                      Combine multiple perfume flacons into a single luxury package with exclusive bundled pricing.
+                    </p>
+                  </div>
+
+                  {/* Bundle Pack Name & Price */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-black/40 p-4 rounded-xl border border-purple-500/30">
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
+                        Bundle Suite Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.bundleName}
+                        onChange={(e) => setFormData(p => ({ ...p, bundleName: e.target.value }))}
+                        placeholder={formData.name || 'e.g. Amber & Oud Royalty Suite'}
+                        className="w-full bg-black/60 border border-purple-500/40 rounded-xl px-4 py-2.5 text-xs text-[#F3E6D0] focus:outline-none"
+                      />
+                      <p className="text-[10px] text-[#D8BE99]/60 mt-1">Leave blank to use the campaign name.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
+                        Special Bundle Price (€) *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          required
+                          value={formData.bundlePrice}
+                          onChange={(e) => setFormData(p => ({ ...p, bundlePrice: e.target.value }))}
+                          className="w-full bg-black/60 border border-purple-500/40 rounded-xl pl-4 pr-10 py-2.5 font-mono text-xs sm:text-sm text-[#F3E6D0] focus:outline-none"
+                        />
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-xs text-purple-300">
+                          €
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-[#D8BE99]/60 mt-1">Single total price charged for the entire suite.</p>
+                    </div>
+                  </div>
+
+                  {/* Add Flacon Selector */}
+                  <div className="bg-black/50 p-3.5 rounded-xl border border-[#D4AF37]/25 space-y-2">
+                    <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider font-bold">
+                      Select Flacon to Add to Suite
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedAddProductId}
+                        onChange={(e) => setSelectedAddProductId(e.target.value)}
+                        className="flex-1 bg-[#0B0A08] border border-[#D4AF37]/40 text-[#F3E6D0] rounded-xl px-3.5 py-2 text-xs focus:outline-none cursor-pointer"
+                      >
+                        {catalogProducts.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} — €{p.price}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleAddProductToAtomicBundle(selectedAddProductId)}
+                        className="px-4 py-2 bg-gradient-to-r from-purple-800 to-purple-600 hover:from-purple-700 hover:to-purple-500 text-white rounded-xl text-xs font-cinzel uppercase font-bold tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md transition-all shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Flacon</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Selected Bundle Items List */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-cinzel text-[#D8BE99] uppercase tracking-wider font-bold">
+                        Included Flacons ({formData.bundleItems.length})
+                      </span>
+                    </div>
+
+                    {formData.bundleItems.length === 0 ? (
+                      <div className="p-4 bg-purple-950/20 border border-purple-500/20 rounded-xl text-center text-xs text-[#D8BE99]/70 italic">
+                        No flacons added yet. Select a perfume above and click "Add Flacon".
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                        {formData.bundleItems.map((item, idx) => {
+                          const product = catalogProducts.find(p => Number(p.id) === Number(item.productId));
+                          const lineTotal = ((product?.price || 0) * (item.quantity || 1)).toFixed(2);
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-3 bg-black/60 p-3 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all"
+                            >
+                              <div className="w-9 h-9 rounded-lg bg-black/80 border border-purple-500/30 overflow-hidden shrink-0 flex items-center justify-center">
+                                {product?.imageUrl ? (
+                                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Package className="w-4 h-4 text-purple-400" />
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <p className="font-cinzel text-xs font-bold text-[#F3E6D0] truncate">
+                                  {product?.name || `Product #${item.productId}`}
+                                </p>
+                                <p className="text-[10px] text-[#D8BE99]/70 font-mono">
+                                  €{(product?.price || 0).toFixed(2)} each
+                                </p>
+                              </div>
+
+                              {/* Quantity Controls */}
+                              <div className="flex items-center gap-1 bg-black/80 border border-white/15 rounded-lg px-2 py-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateAtomicBundleItemQty(idx, Math.max(1, (item.quantity || 1) - 1))}
+                                  className="text-neutral-400 hover:text-white p-0.5 cursor-pointer"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="font-mono text-xs w-6 text-center text-[#F3E6D0]">
+                                  {item.quantity || 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateAtomicBundleItemQty(idx, (item.quantity || 1) + 1)}
+                                  className="text-neutral-400 hover:text-white p-0.5 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              {/* Line Total */}
+                              <div className="font-mono text-xs text-[#F2D675] w-20 text-right shrink-0">
+                                €{lineTotal}
+                              </div>
+
+                              {/* Remove */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAtomicBundleItem(idx)}
+                                className="text-neutral-400 hover:text-rose-400 p-1 cursor-pointer transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Live Savings Preview Badge & Summary Card */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 via-black/60 to-purple-950/20 border border-purple-500/40 space-y-3">
+                    <div className="flex items-center justify-between border-b border-purple-500/20 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-purple-400" />
+                        <span className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#F2D675]">
+                          Live Suite Economics
+                        </span>
+                      </div>
+                      {atomicBundleSavingsPercent > 0 ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-mono text-xs font-bold">
+                          {atomicBundleSavingsPercent}% SAVINGS
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/50 text-amber-300 font-mono text-[11px]">
+                          No Discount
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="p-2 bg-black/40 rounded-lg border border-white/5">
+                        <p className="text-[10px] uppercase font-cinzel text-[#D8BE99]">Retail Value</p>
+                        <p className="font-mono text-xs sm:text-sm text-[#D8BE99] line-through mt-0.5">
+                          €{atomicBundleOriginalTotal.toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div className="p-2 bg-black/40 rounded-lg border border-purple-500/30">
+                        <p className="text-[10px] uppercase font-cinzel text-purple-300">Bundle Price</p>
+                        <p className="font-mono text-xs sm:text-sm font-bold text-[#F2D675] mt-0.5">
+                          €{Number(formData.bundlePrice || 0).toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div className="p-2 bg-black/40 rounded-lg border border-emerald-500/30">
+                        <p className="text-[10px] uppercase font-cinzel text-emerald-300">Patron Saves</p>
+                        <p className="font-mono text-xs sm:text-sm font-bold text-emerald-400 mt-0.5">
+                          €{atomicBundleSavings.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {atomicBundleSavings <= 0 && formData.bundleItems.length > 0 && (
+                      <p className="text-[11px] text-amber-300/90 text-center italic">
+                        Tip: Set bundle price below €{atomicBundleOriginalTotal.toFixed(2)} to offer real patron savings.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Submit Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#D4AF37]/20">
@@ -1397,8 +1743,16 @@ export default function AdminPromotions() {
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{editingPromotion ? 'Update Campaign' : 'Create Campaign'}</span>
+                      {formData.type === 'Bundle' ? (
+                        <Package className="w-3.5 h-3.5" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {editingPromotion
+                          ? 'Update Campaign'
+                          : (formData.type === 'Bundle' ? 'Create Bundle Suite' : 'Create Campaign')}
+                      </span>
                     </>
                   )}
                 </button>

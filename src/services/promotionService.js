@@ -178,21 +178,39 @@ export const promotionService = {
     const errors = {};
 
     if (!data.name || !data.name.trim()) {
-      errors.name = 'Promotion campaign name is required.';
+      errors.name = 'Promotion name is required.';
     }
 
-    if (!data.type || !['Discount', 'Bundle'].includes(data.type)) {
-      errors.type = 'Promotion type must be Discount or Bundle.';
-    }
+    const isBundle = data.type === 1 || String(data.type || '').toLowerCase() === 'bundle';
 
-    if (data.type === 'Discount') {
-      if (!data.discountType || !['Percentage', 'Fixed'].includes(data.discountType)) {
-        errors.discountType = 'Discount type must be Percentage or Fixed.';
+    if (isBundle) {
+      if (Array.isArray(data.bundles) && data.bundles.length > 0) {
+        const b = data.bundles[0];
+        const price = Number(b.bundlePrice);
+        if (isNaN(price) || price < 0) {
+          errors.bundlePrice = 'Bundle price must be greater than or equal to 0.';
+        }
+        if (!Array.isArray(b.items) || b.items.length === 0) {
+          errors.items = 'Bundle must contain at least one item.';
+        } else {
+          for (const item of b.items) {
+            if (!item.productId || Number(item.productId) <= 0) {
+              errors.items = 'Product ID must be greater than 0.';
+              break;
+            }
+            if (!item.quantity || Number(item.quantity) <= 0) {
+              errors.items = 'Quantity must be greater than 0.';
+              break;
+            }
+          }
+        }
       }
+    } else {
+      const isFixed = data.discountType === 1 || String(data.discountType || '').toLowerCase() === 'fixed';
       const val = Number(data.discountValue);
       if (isNaN(val) || val <= 0) {
         errors.discountValue = 'Discount value must be greater than 0.';
-      } else if (data.discountType === 'Percentage' && val > 100) {
+      } else if (!isFixed && val > 100) {
         errors.discountValue = 'Percentage discount cannot exceed 100%.';
       }
     }
@@ -204,7 +222,7 @@ export const promotionService = {
     if (!data.endDate) {
       errors.endDate = 'End date is required.';
     } else if (data.startDate && new Date(data.endDate) <= new Date(data.startDate)) {
-      errors.endDate = 'End date must be after the start date.';
+      errors.endDate = 'Start date must be earlier than end date.';
     }
 
     if (Object.keys(errors).length > 0) {
