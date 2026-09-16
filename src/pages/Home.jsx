@@ -780,7 +780,12 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          2. TOP SELLING / BEST SELLERS SHOWCASE
+          2. EXCLUSIVE PALACE OFFERS & CURATED BUNDLES AD SHOWCASE (TOP POSITION)
+          ========================================================================= */}
+      <OffersDiscountSection products={allProducts} />
+
+      {/* =========================================================================
+          3. TOP SELLING / BEST SELLERS SHOWCASE
           ========================================================================= */}
       <TopSellingShowcase products={allProducts} />
 
@@ -806,10 +811,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* =========================================================================
-              4. EXCLUSIVE PALACE OFFERS & CURATED BUNDLES AD SECTION
-              ========================================================================= */}
-          <OffersDiscountSection products={allProducts} />
 
           {/* =========================================================================
               5. CINEMATIC VIDEO: SCENT AS LIVING MEMORY
