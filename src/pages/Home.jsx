@@ -326,6 +326,13 @@ export default function Home() {
     }
   };
 
+  const scrollToOffers = () => {
+    const el = document.getElementById('palace-offers');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className={`w-full bg-transparent overflow-x-hidden transition-colors duration-500 ${
       isDark ? 'text-[#F3E6D0]' : 'text-[#21130D]'
@@ -423,6 +430,20 @@ export default function Home() {
               <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 rtl:rotate-180 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
+
+          {/* Active Royal Campaign / Bundles Announcement Ad Pill */}
+          <button
+            onClick={scrollToOffers}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-black/85 via-[#D4AF37]/30 to-black/85 border border-[#F2D675]/70 shadow-[0_0_20px_rgba(212,175,55,0.4)] backdrop-blur-md hover:border-[#F2D675] hover:scale-105 transition-all cursor-pointer group mt-2"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="font-cinzel text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFFDF8] group-hover:text-[#F2D675] transition-colors">
+              {language === 'ar'
+                ? '🎁 عروض وباقات القصر الملكية متاحة الآن — وفر حتى 35%'
+                : '🎁 PALACE OFFERS & CURATED BUNDLES LIVE — SAVE UP TO 35%'}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 text-[#F2D675] rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
         </div>
 
@@ -786,11 +807,9 @@ export default function Home() {
           )}
 
           {/* =========================================================================
-              4. EXCLUSIVE PALACE OFFERS & DISCOUNTS SECTION
+              4. EXCLUSIVE PALACE OFFERS & CURATED BUNDLES AD SECTION
               ========================================================================= */}
-          {allProducts.some(p => p.hasDiscount || (p.discountPercent && p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer) && (
-            <OffersDiscountSection products={allProducts} />
-          )}
+          <OffersDiscountSection products={allProducts} />
 
           {/* =========================================================================
               5. CINEMATIC VIDEO: SCENT AS LIVING MEMORY

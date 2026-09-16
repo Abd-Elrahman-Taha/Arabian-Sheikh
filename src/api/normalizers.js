@@ -539,11 +539,12 @@ export function normalizeBundleItem(raw) {
   return {
     productId: Number(item.productId || 0),
     productName: item.productName || item.name || '',
+    name: item.productName || item.name || '',
     brandName: item.brandName || item.brand || '',
-    imageUrl: cleanImageUrl(item.imageUrl || item.image),
+    imageUrl: cleanImageUrl(item.imageUrl || item.image || item.productImageUrl),
     unitPrice: Number(item.unitPrice || item.price || 0),
     quantity: Number(item.quantity || 1),
-    lineTotal: Number(item.lineTotal || (Number(item.unitPrice || 0) * Number(item.quantity || 1)) || 0)
+    lineTotal: Number(item.lineTotal || (Number(item.unitPrice || item.price || 0) * Number(item.quantity || 1)) || 0)
   };
 }
 
@@ -557,15 +558,17 @@ export function normalizeBundle(raw) {
   
   const computedOriginalTotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
   const bundlePrice = Number(b.bundlePrice ?? 0);
-  const individualItemsTotal = Number(b.individualItemsTotal || computedOriginalTotal);
-  const savingsAmount = Number(b.savingsAmount || Math.max(0, individualItemsTotal - bundlePrice));
-  const savingsPercentage = Number(b.savingsPercentage || (individualItemsTotal > 0 ? ((savingsAmount / individualItemsTotal) * 100) : 0));
+  const individualItemsTotal = Number(b.originalItemsPrice || b.individualItemsTotal || computedOriginalTotal);
+  const savingsAmount = Number(b.savingsAmount ?? Math.max(0, individualItemsTotal - bundlePrice));
+  const savingsPercentage = Number(b.savingsPercentage ?? (individualItemsTotal > 0 ? ((savingsAmount / individualItemsTotal) * 100) : 0));
 
   return {
     id: Number(b.id || 0),
     promotionId: Number(b.promotionId || 0),
+    promotionName: b.promotionName || '',
     name: String(b.name || '').trim(),
     bundlePrice,
+    originalItemsPrice: individualItemsTotal,
     individualItemsTotal,
     savingsAmount,
     savingsPercentage: Math.round(savingsPercentage * 10) / 10,

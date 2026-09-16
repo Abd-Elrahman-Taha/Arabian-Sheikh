@@ -452,6 +452,48 @@ export const promotionService = {
       price: product.price,
       originalPrice: product.originalPrice || null
     };
+  },
+
+  // ==========================================
+  // 5. PUBLIC STOREFRONT PROMOTIONS & BUNDLES
+  // ==========================================
+
+  /**
+   * Get active public promotions (GET /api/promotions)
+   */
+  async getPublicPromotions(params = {}) {
+    try {
+      const res = await promotionApi.getPromotions(params);
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch (err) {
+      console.warn('[promotionService] Error fetching public promotions:', err.message);
+      return [];
+    }
+  },
+
+  /**
+   * Get active public bundles with items and savings (GET /api/promotions/bundles)
+   */
+  async getPublicBundles(params = {}) {
+    try {
+      const res = await promotionApi.getBundles(params);
+      return Array.isArray(res) ? res : [];
+    } catch (err) {
+      console.warn('[promotionService] Error fetching public bundles:', err.message);
+      return [];
+    }
+  },
+
+  /**
+   * Get public promotion details by ID (GET /api/promotions/{id})
+   */
+  async getPublicPromotionById(id) {
+    try {
+      return await promotionApi.getPromotionById(id);
+    } catch (err) {
+      console.warn(`[promotionService] Error fetching public promotion #${id}:`, err.message);
+      return null;
+    }
   }
 };
 
