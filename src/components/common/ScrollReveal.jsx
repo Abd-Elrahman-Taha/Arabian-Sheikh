@@ -78,8 +78,8 @@ export default function ScrollReveal({
   return (
     <MotionTag
       ref={elementRef}
-      initial={hasAnimated ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: offset.x, y: offset.y }}
-      animate={hasAnimated ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: offset.x, y: offset.y }}
+      initial={hasAnimated ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: offset?.x ?? 0, y: offset?.y ?? 0 }}
+      animate={hasAnimated ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: offset?.x ?? 0, y: offset?.y ?? 0 }}
       transition={{
         duration,
         delay: hasAnimated ? delay : 0,

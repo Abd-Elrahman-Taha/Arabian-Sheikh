@@ -335,22 +335,27 @@ export default function Hero3DFlaconScene({
     const currentTexture = texturesRef.current[activeProductIndex];
     if (!currentTexture) return;
 
+    if (!bottleMeshRef.current?.scale) return;
+
     gsap.to(bottleMeshRef.current.scale, {
       x: 0.88,
       y: 0.88,
       duration: 0.22,
       ease: 'power2.in',
       onComplete: () => {
-        if (bottleMeshRef.current) {
+        if (!bottleMeshRef.current?.scale) return;
+        if (bottleMeshRef.current.material) {
           bottleMeshRef.current.material.map = currentTexture;
           bottleMeshRef.current.material.needsUpdate = true;
         }
 
-        gsap.fromTo(
-          bottleMeshRef.current.scale,
-          { x: 0.88, y: 0.88 },
-          { x: 1, y: 1, duration: 0.4, ease: 'back.out(1.4)' }
-        );
+        if (bottleMeshRef.current?.scale) {
+          gsap.fromTo(
+            bottleMeshRef.current.scale,
+            { x: 0.88, y: 0.88 },
+            { x: 1, y: 1, duration: 0.4, ease: 'back.out(1.4)' }
+          );
+        }
       }
     });
 

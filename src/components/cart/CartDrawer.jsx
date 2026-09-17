@@ -19,7 +19,7 @@ import {
 
 export default function CartDrawer() {
   const { navigate } = useRouter();
-  const { t, isRtl } = useTranslation();
+  const { t, language, isRtl } = useTranslation();
   const { isDark } = useTheme();
   const {
     items,
