@@ -8,6 +8,7 @@ import { paymentService } from '../../services/paymentService';
 import { productService } from '../../services/productService';
 import { shippingService } from '../../services/shippingService';
 import { checkoutApi } from '../../api/checkout.api';
+import { addressApi } from '../../api/address.api';
 import { useToast } from '../../context/ToastContext';
 import {
   ShieldCheck,
@@ -69,6 +70,32 @@ export default function CheckoutPage() {
   const [shippingQuotes, setShippingQuotes] = useState([]);
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
+  const [addressId, setAddressId] = useState(null);
+
+  // Load authenticated patron saved addresses if available
+  useEffect(() => {
+    async function loadSavedAddresses() {
+      try {
+        const list = await addressApi.getAddresses();
+        if (Array.isArray(list) && list.length > 0) {
+          const defaultAddr = list.find(a => a.isDefaultShipping || a.isDefault) || list[0];
+          setAddressId(defaultAddr.id);
+          setFormData(prev => ({
+            ...prev,
+            fullName: defaultAddr.fullName || prev.fullName,
+            phone: defaultAddr.phone || prev.phone,
+            country: defaultAddr.countryCode === 'BG' ? 'Bulgaria' : (defaultAddr.country || prev.country),
+            city: defaultAddr.city || prev.city,
+            address: defaultAddr.addressLine1 || defaultAddr.address || prev.address,
+            postalCode: defaultAddr.postalCode || prev.postalCode
+          }));
+        }
+      } catch (e) {
+        // guest or unauthenticated
+      }
+    }
+    loadSavedAddresses();
+  }, [user]);
 
   useEffect(() => {
     let active = true;
@@ -76,7 +103,7 @@ export default function CheckoutPage() {
       setLoadingQuotes(true);
       try {
         const res = await shippingService.getQuotes({
-          addressId: 1,
+          addressId: addressId || 1,
           countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
           postalCode: formData.postalCode,
           items
@@ -96,7 +123,7 @@ export default function CheckoutPage() {
     }
     fetchQuotes();
     return () => { active = false; };
-  }, [formData.country, formData.postalCode, items.length]);
+  }, [formData.country, formData.postalCode, items.length, addressId]);
 
   // Sync with authenticated user whenever auth state changes/finishes loading
   useEffect(() => {
@@ -126,22 +153,48 @@ export default function CheckoutPage() {
   const shippingCost = dynamicShippingCost;
   const grandTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0) + dynamicShippingCost);
 
-  const handleNextStep = (e) => {
+  const handleNextStep = async (e) => {
     e.preventDefault();
     if (step === 1) {
-      checkoutApi.setCheckoutAddress({
-        fullName: formData.fullName,
-        address: formData.address,
-        city: formData.city,
-        country: formData.country,
-        postalCode: formData.postalCode,
-        phone: formData.phone
-      }).catch(() => {});
+      // Step 1 -> 2: Resolve addressId and notify backend via PUT /api/checkout/address
+      let currentAddrId = addressId;
+      try {
+        if (!currentAddrId) {
+          const createdAddr = await addressApi.createAddress({
+            fullName: formData.fullName,
+            phone: formData.phone,
+            countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
+            region: formData.city || 'Dubai',
+            city: formData.city,
+            addressLine1: formData.address,
+            postalCode: formData.postalCode || '00000'
+          }).catch(() => null);
+          if (createdAddr?.id) {
+            currentAddrId = createdAddr.id;
+            setAddressId(createdAddr.id);
+          }
+        }
+        if (currentAddrId) {
+          await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch((err) => {
+            console.warn('Checkout address sync notice:', err.message);
+          });
+        }
+      } catch (err) {
+        console.warn('Address sync error:', err.message);
+      }
     } else if (step === 2) {
-      checkoutApi.setCheckoutShipping({
-        shippingMethod: selectedQuote?.shippingMethod || formData.shippingMethod,
-        shippingMethodId: selectedQuote?.shippingMethodId || 1
-      }).catch(() => {});
+      // Step 2 -> 3: Notify backend of selected shipping carrier via PUT /api/checkout/shipping
+      if (selectedQuote?.shippingMethodId) {
+        await checkoutApi.setCheckoutShipping({
+          shippingMethodId: selectedQuote.shippingMethodId,
+          quoteId: selectedQuote.quoteId
+        }, {
+          addressId: addressId || undefined,
+          couponCode: cart?.discountCode || undefined
+        }).catch((err) => {
+          console.warn('Checkout shipping sync notice:', err.message);
+        });
+      }
     }
     if (step < 3) {
       setStep(step + 1);
@@ -166,6 +219,7 @@ export default function CheckoutPage() {
 
       // 3. Create official order record
       const newOrder = await orderService.createOrder({
+        addressId: addressId || undefined,
         userId: user?.id || null,
         customerEmail: finalEmail,
         customerName: finalName,

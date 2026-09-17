@@ -14,40 +14,56 @@ import { normalizeObjectKeys } from './normalizers';
 export const checkoutApi = {
   /**
    * 1. GET /api/checkout
-   * Retrieve active checkout state
+   * Parameters (query): addressId?: number, shippingMethodId?: number, couponCode?: string
    */
-  async getCheckout() {
-    const response = await apiClient.get(ENDPOINTS.CHECKOUT.GET);
+  async getCheckout(params = {}) {
+    const query = {};
+    if (params.addressId) query.addressId = Number(params.addressId);
+    if (params.shippingMethodId) query.shippingMethodId = Number(params.shippingMethodId);
+    if (params.couponCode) query.couponCode = String(params.couponCode);
+    const response = await apiClient.get(ENDPOINTS.CHECKOUT.GET, { params: query });
     return normalizeObjectKeys(response);
   },
 
   /**
    * 2. PUT /api/checkout/address
-   * Set shipping destination address for the active checkout session
-   * @param {Object} payload - { addressId: number, useAsBilling?: boolean } or full address object
+   * Request body: { addressId: number }
    */
   async setCheckoutAddress(payload) {
-    const body = typeof payload === 'number'
-      ? { addressId: payload }
-      : payload?.addressId
-      ? { addressId: Number(payload.addressId), useAsBilling: payload.useAsBilling !== false }
-      : payload;
+    const addressId = typeof payload === 'number'
+      ? payload
+      : Number(payload?.addressId ?? payload?.id);
 
-    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_ADDRESS, body);
+    if (!addressId || isNaN(addressId)) {
+      console.warn('setCheckoutAddress: addressId must be a valid integer', payload);
+      return null;
+    }
+
+    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_ADDRESS, { addressId });
     return normalizeObjectKeys(response);
   },
 
   /**
    * 3. PUT /api/checkout/shipping
-   * Set shipping carrier / delivery method
-   * @param {Object} payload - { shippingMethodId?: number, shippingCarrier?: string, shippingMethod?: string }
+   * Query params: addressId?: number, couponCode?: string
+   * Request body: { shippingMethodId: number, quoteId: string }
    */
-  async setCheckoutShipping(payload) {
-    const body = typeof payload === 'string'
-      ? { shippingMethod: payload }
-      : payload;
+  async setCheckoutShipping(payload, queryParams = {}) {
+    const shippingMethodId = Number(payload?.shippingMethodId || (typeof payload === 'number' ? payload : 1));
+    const quoteId = payload?.quoteId || (typeof payload === 'string' ? payload : undefined);
 
-    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_SHIPPING, body);
+    const body = {
+      shippingMethodId: isNaN(shippingMethodId) ? 1 : shippingMethodId,
+      ...(quoteId ? { quoteId } : {})
+    };
+
+    const params = {};
+    const addrId = queryParams.addressId || payload?.addressId;
+    if (addrId) params.addressId = Number(addrId);
+    const coupon = queryParams.couponCode || payload?.couponCode;
+    if (coupon) params.couponCode = String(coupon);
+
+    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_SHIPPING, body, { params });
     return normalizeObjectKeys(response);
   },
 
