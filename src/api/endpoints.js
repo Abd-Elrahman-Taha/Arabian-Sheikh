@@ -287,7 +287,9 @@ export const ENDPOINTS = {
       DETAILS: (id) => `/admin/orders/${id}`,
       UPDATE_STATUS: (id) => `/admin/orders/${id}/status`,
       CANCEL: (id) => `/admin/orders/${id}/cancel`,
-      STATUS_HISTORY: (id) => `/admin/orders/${id}/status-history`
+      STATUS_HISTORY: (id) => `/admin/orders/${id}/status-history`,
+      TRACKING: (id) => `/admin/orders/${id}/tracking`,
+      COMPENSATION_RETRY: (id) => `/admin/orders/${id}/compensation/retry`
     },
 
     // Payments

@@ -69,6 +69,24 @@ export const ORDER_STATUSES = [
   'CANCELLED'
 ];
 
+export const ADMIN_ORDER_STATUSES = [
+  'Pending',
+  'Processing',
+  'Shipped',
+  'OutForDelivery',
+  'Delivered',
+  'CancelPending',
+  'Cancelled'
+];
+
+export const ADMIN_PAYMENT_STATUSES = [
+  'Pending',
+  'Paid',
+  'Failed',
+  'Cancelled',
+  'Refunded'
+];
+
 export const orderService = {
   recordPlacedOrderId(id) {
     recordPlacedOrderId(id);
@@ -164,6 +182,16 @@ export const orderService = {
           for (const item of remoteItems) {
             await liveCloudSync.addOrder(item);
           }
+          const current = loadOrders();
+          const orderMap = new Map();
+          (current || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+          (cloudOrders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+          (remoteItems || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+          saveOrders(Array.from(orderMap.values()));
+        }
+
+        if (response && Array.isArray(response.items)) {
+          return response;
         }
       } catch (e) {
         console.warn('Real API adminGetOrders fallback:', e.message);
@@ -177,11 +205,53 @@ export const orderService = {
     const merged = Array.from(orderMap.values());
     saveOrders(merged);
 
-    return this.getAllOrdersSync(filters);
+    const localItems = this.getAllOrdersSync(filters);
+    const page = Number(filters.page || filters.Page || 1);
+    const pageSize = Number(filters.pageSize || filters.PageSize || 20);
+    const totalCount = localItems.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const startIdx = (page - 1) * pageSize;
+    const paginatedItems = localItems.slice(startIdx, startIdx + pageSize);
+
+    return {
+      items: paginatedItems,
+      page,
+      pageSize,
+      totalCount,
+      totalPages,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < totalPages
+    };
   },
 
   async getAllOrders(filters = {}) {
     return this.getAdminOrders(filters);
+  },
+
+  /**
+   * Admin: Get order details by ID
+   */
+  async getAdminOrderDetails(id) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const remote = await orderApi.adminGetOrderDetails(id);
+        if (remote) {
+          const orders = loadOrders();
+          const idx = orders.findIndex(o => String(o.id) === String(id) || o.orderNumber === id);
+          if (idx > -1) {
+            orders[idx] = { ...orders[idx], ...remote };
+          } else {
+            orders.unshift(remote);
+          }
+          saveOrders(orders);
+          return remote;
+        }
+      } catch (e) {
+        console.warn('Real API adminGetOrderDetails fallback:', e.message);
+      }
+    }
+
+    return this.getOrderByIdSync(id);
   },
 
   getOrdersByUserSync(userId) {
@@ -279,14 +349,14 @@ export const orderService = {
     return newOrder;
   },
 
-  async updateOrderStatus(orderId, newStatus) {
+  async updateOrderStatus(orderId, newStatus, note = '') {
     // 1. Update in live cloud sync
     await liveCloudSync.updateOrderStatus(orderId, newStatus);
 
     // 2. Update remote API
     if (!apiClient.isMockEnabled()) {
       try {
-        await orderApi.adminUpdateOrderStatus(orderId, newStatus);
+        await orderApi.adminUpdateOrderStatus(orderId, newStatus, note);
       } catch (e) {
         console.warn('Real API update order status fallback:', e.message);
       }
@@ -301,13 +371,92 @@ export const orderService = {
       if (!orders[index].timeline) orders[index].timeline = [];
       orders[index].timeline.push({
         status: newStatus,
-        title: `Status: ${newStatus}`,
+        title: `Status: ${newStatus}${note ? ` (${note})` : ''}`,
         timestamp: new Date().toISOString()
+      });
+      if (!orders[index].statusHistory) orders[index].statusHistory = [];
+      orders[index].statusHistory.push({
+        status: newStatus,
+        fromStatus: orders[index].orderStatus || orders[index].status,
+        toStatus: newStatus,
+        note: note || '',
+        changedBy: 'Admin',
+        createdAt: new Date().toISOString()
       });
       saveOrders(orders);
       return orders[index];
     }
     return { id: orderId, status: newStatus };
+  },
+
+  async cancelOrder(orderId, reason = '') {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        await orderApi.adminCancelOrder(orderId, reason);
+      } catch (e) {
+        console.warn('Real API cancel order fallback:', e.message);
+      }
+    }
+    return this.updateOrderStatus(orderId, 'Cancelled', reason ? `Cancellation reason: ${reason}` : 'Cancelled by administrator');
+  },
+
+  async getOrderStatusHistory(orderId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const history = await orderApi.adminGetOrderStatusHistory(orderId);
+        if (Array.isArray(history) && history.length > 0) return history;
+      } catch (e) {
+        console.warn('Real API getOrderStatusHistory fallback:', e.message);
+      }
+    }
+    const order = this.getOrderByIdSync(orderId);
+    return order?.statusHistory || order?.timeline || [];
+  },
+
+  async getOrderTracking(orderId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        const tracking = await orderApi.adminGetOrderTracking(orderId);
+        if (tracking) return tracking;
+      } catch (e) {
+        console.warn('Real API getOrderTracking fallback:', e.message);
+      }
+    }
+    const order = this.getOrderByIdSync(orderId);
+    return {
+      orderId,
+      carrier: order?.shippingSnapshot?.carrier || 'DHL Express',
+      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || 'TRK-EXP-001',
+      status: order?.orderStatus || order?.status || 'InTransit',
+      events: (order?.timeline || []).map(t => ({
+        timestamp: t.timestamp,
+        status: t.status,
+        description: t.title || t.status,
+        location: 'Logistics Center'
+      }))
+    };
+  },
+
+  async retryCompensation(orderId) {
+    if (!apiClient.isMockEnabled()) {
+      try {
+        return await orderApi.adminRetryCompensation(orderId);
+      } catch (e) {
+        console.warn('Real API retryCompensation fallback:', e.message);
+        throw e;
+      }
+    }
+    const orders = loadOrders();
+    const idx = orders.findIndex(o => String(o.id) === String(orderId) || o.orderNumber === orderId);
+    if (idx > -1) {
+      orders[idx].compensationFailure = false;
+      if (orders[idx].compensation) {
+        orders[idx].compensation.status = 'Resolved';
+      }
+      saveOrders(orders);
+      return { success: true, message: 'Compensation workflow retried successfully' };
+    }
+    return { success: true };
   },
 
   async trackOrder(trackingCode) {

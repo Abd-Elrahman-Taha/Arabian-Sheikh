@@ -282,44 +282,125 @@ export function normalizeCart(raw) {
 export function normalizeOrder(raw) {
   if (!raw) return null;
   const o = normalizeObjectKeys(raw);
-  const orderId = o.id || `ORD-${o.orderNumber || Date.now()}`;
-  const trackingNumber = o.trackingNumber || o.trackingCode || o.shipping?.trackingNumber || o.dhlTrackingNumber || '';
+  const orderId = o.id !== undefined && o.id !== null ? o.id : `ORD-${o.orderNumber || Date.now()}`;
+  
+  // Extract customer info from nested customer or flat properties
+  const customerObj = o.customer ? normalizeObjectKeys(o.customer) : null;
+  const resolvedCustomerName = customerObj?.name 
+    || (customerObj?.firstName ? `${customerObj.firstName} ${customerObj.lastName || ''}`.trim() : '')
+    || o.customerName || o.patronName || o.userName || o.shippingAddress?.fullName || o.shippingAddress?.recipientName || 'Valued Patron';
+  const resolvedCustomerEmail = customerObj?.email || o.customerEmail || o.email || o.userEmail || '';
+  const resolvedCustomerPhone = customerObj?.phone || o.customerPhone || o.phone || o.shippingAddress?.phone || '';
+  const resolvedUserId = customerObj?.id || o.userId || o.customerId || null;
+
+  // Extract totals from nested totals or flat properties
+  const totalsObj = o.totals ? normalizeObjectKeys(o.totals) : null;
+  const subtotal = Number(totalsObj?.subtotal !== undefined ? totalsObj.subtotal : (o.subtotal || 0));
+  const discountTotal = Number(totalsObj?.discountTotal !== undefined ? totalsObj.discountTotal : (o.discountTotal || o.discount || 0));
+  const shippingCost = Number(totalsObj?.shippingCost !== undefined ? totalsObj.shippingCost : (o.shippingCost || o.shipping || 0));
+  const total = Number(totalsObj?.total !== undefined ? totalsObj.total : (o.total || 0));
+  const currency = totalsObj?.currency || o.currency || 'EUR';
+
+  // Tracking & Shipments
+  const shipments = Array.isArray(o.shipments) ? o.shipments.map(normalizeObjectKeys) : [];
+  const trackingNumber = shipments[0]?.trackingNumber || o.trackingNumber || o.trackingCode || o.shipping?.trackingNumber || o.dhlTrackingNumber || '';
+
   return {
     id: orderId,
+    numericId: typeof orderId === 'number' ? orderId : (!isNaN(Number(orderId)) && Number(orderId) > 0 ? Number(orderId) : null),
     orderNumber: o.orderNumber || (typeof orderId === 'string' && orderId.startsWith('ORD-') ? orderId : `ORD-${orderId}`),
     createdAt: o.createdAt || o.date || new Date().toISOString(),
     date: o.date || o.createdAt || new Date().toISOString(),
     deliveredAt: o.deliveredAt || null,
-    subtotal: Number(o.subtotal || 0),
-    discountTotal: Number(o.discountTotal || o.discount || 0),
-    shippingCost: Number(o.shippingCost || o.shipping || 0),
-    total: Number(o.total || 0),
-    currency: o.currency || 'EUR',
+    subtotal,
+    discountTotal,
+    shippingCost,
+    total,
+    currency,
     orderStatus: o.orderStatus || o.status || 'Pending',
-    status: o.status || o.orderStatus || 'CONFIRMED',
-    paymentStatus: o.paymentStatus || 'Paid',
-    customerName: o.customerName || o.patronName || o.userName || o.shippingAddress?.fullName || 'Valued Patron',
-    customerEmail: o.customerEmail || o.email || o.userEmail || '',
-    customerPhone: o.customerPhone || o.phone || '',
-    userId: o.userId || o.customerId || null,
+    status: o.orderStatus || o.status || 'Pending',
+    paymentStatus: o.paymentStatus || 'Pending',
+    paymentMethodCode: o.paymentMethodCode || '',
+    compensationFailure: Boolean(o.compensationFailure),
+    
+    // Customer
+    customer: customerObj || {
+      id: resolvedUserId,
+      name: resolvedCustomerName,
+      email: resolvedCustomerEmail,
+      phone: resolvedCustomerPhone
+    },
+    customerName: resolvedCustomerName,
+    customerEmail: resolvedCustomerEmail,
+    customerPhone: resolvedCustomerPhone,
+    userId: resolvedUserId,
+    
+    // Totals snapshot
+    totals: totalsObj || {
+      subtotal,
+      discountTotal,
+      shippingCost,
+      total,
+      currency
+    },
+
+    // Line Items
     items: Array.isArray(o.items) ? o.items.map(item => {
       const norm = normalizeObjectKeys(item);
+      const name = norm.productName || norm.name || 'Imperial Flacon';
+      const unitPrice = Number(norm.unitPrice !== undefined ? norm.unitPrice : (norm.price || 0));
+      const originalUnitPrice = Number(norm.originalUnitPrice !== undefined ? norm.originalUnitPrice : unitPrice);
+      const effectiveUnitPrice = Number(norm.effectiveUnitPrice !== undefined ? norm.effectiveUnitPrice : unitPrice);
+      const quantity = Number(norm.quantity ?? norm.qty ?? 1);
       return {
         ...norm,
-        name: norm.name || norm.productName || 'Imperial Flacon',
-        quantity: Number(norm.quantity ?? norm.qty ?? 1),
-        price: Number(norm.price ?? norm.unitPriceSnapshot ?? 0)
+        id: norm.id,
+        productId: norm.productId || norm.id,
+        name,
+        productName: name,
+        productDescription: norm.productDescription || norm.description || '',
+        skuCode: norm.skuCode || norm.sku || '',
+        brandName: norm.brandName || norm.brand || 'Arabian Sheikh',
+        categoryName: norm.categoryName || norm.category || 'Perfumes',
+        unitPrice,
+        originalUnitPrice,
+        effectiveUnitPrice,
+        price: effectiveUnitPrice,
+        quantity,
+        discountAmount: Number(norm.discountAmount || 0),
+        promotionDiscountAmount: Number(norm.promotionDiscountAmount || 0),
+        couponDiscountAmount: Number(norm.couponDiscountAmount || 0)
       };
     }) : [],
+
+    // Shipping & Address Snapshots
+    shippingAddress: o.shippingAddress ? normalizeObjectKeys(o.shippingAddress) : null,
+    shippingSnapshot: o.shippingSnapshot ? normalizeObjectKeys(o.shippingSnapshot) : null,
+    couponSnapshot: o.couponSnapshot ? normalizeObjectKeys(o.couponSnapshot) : null,
+    promotionSnapshot: o.promotionSnapshot ? normalizeObjectKeys(o.promotionSnapshot) : null,
+
+    // Logistics & Tracking
     shipping: o.shipping || {
-      shippingCompanyName: o.carrier || 'DHL Express',
+      shippingCompanyName: o.shippingSnapshot?.shippingCompanyName || o.carrier || 'DHL Express',
       trackingNumber,
       trackingUrl: o.trackingUrl || ''
     },
+    shipments,
     trackingCode: trackingNumber,
     dhlTrackingNumber: trackingNumber,
-    returns: Array.isArray(o.returns) ? o.returns.map(r => normalizeObjectKeys(r)) : [],
-    refunds: Array.isArray(o.refunds) ? o.refunds.map(r => normalizeObjectKeys(r)) : []
+
+    // Audit & Purchase Cycle Sub-resources
+    payments: Array.isArray(o.payments) ? o.payments.map(p => {
+      const np = normalizeObjectKeys(p);
+      return {
+        ...np,
+        attempts: Array.isArray(np.attempts) ? np.attempts.map(normalizeObjectKeys) : []
+      };
+    }) : [],
+    returns: Array.isArray(o.returns) ? o.returns.map(r => normalizeReturn(r)) : [],
+    refunds: Array.isArray(o.refunds) ? o.refunds.map(normalizeObjectKeys) : [],
+    statusHistory: Array.isArray(o.statusHistory) ? o.statusHistory.map(normalizeObjectKeys) : [],
+    compensation: o.compensation ? normalizeObjectKeys(o.compensation) : null
   };
 }
 
