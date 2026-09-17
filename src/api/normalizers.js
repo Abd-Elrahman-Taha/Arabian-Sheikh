@@ -942,5 +942,67 @@ export function normalizeContactList(raw) {
   return items.map(normalizeContact).filter(Boolean);
 }
 
+// ==========================================
+// 15. SALES REPORTS NORMALIZERS
+// ==========================================
 
+export function normalizeSalesReport(raw) {
+  if (!raw) return null;
+  const r = normalizeObjectKeys(raw);
+  const p = r.period || {};
 
+  return {
+    period: {
+      type: p.type || 'monthly',
+      from: p.from || '',
+      to: p.to || ''
+    },
+    currency: r.currency || 'EUR',
+    orders: Number(r.orders || 0),
+    grossSales: Number(r.grossSales || 0),
+    discounts: Number(r.discounts || 0),
+    shipping: Number(r.shipping || 0),
+    refunds: Number(r.refunds || 0),
+    netSales: Number(r.netSales || 0),
+    averageOrderValue: Number(r.averageOrderValue || 0),
+    customers: Number(r.customers || 0),
+    message: r.message || null
+  };
+}
+
+export function normalizeSalesProductItem(raw) {
+  if (!raw) return null;
+  const r = normalizeObjectKeys(raw);
+  return {
+    productId: Number(r.productId || 0),
+    productName: r.productName || '',
+    quantitySold: Number(r.quantitySold || 0),
+    grossRevenue: Number(r.grossRevenue || 0),
+    discountGiven: Number(r.discountGiven || 0),
+    netRevenue: Number(r.netRevenue || 0)
+  };
+}
+
+export function normalizeSalesCategoryItem(raw) {
+  if (!raw) return null;
+  const r = normalizeObjectKeys(raw);
+  return {
+    categoryId: Number(r.categoryId || 0),
+    categoryName: r.categoryName || '',
+    quantitySold: Number(r.quantitySold || 0),
+    revenue: Number(r.revenue || 0)
+  };
+}
+
+export function normalizeSalesCountryItem(raw) {
+  if (!raw) return null;
+  const r = normalizeObjectKeys(raw);
+  return {
+    countryCode: String(r.countryCode || '').trim().toUpperCase(),
+    orders: Number(r.orders || 0),
+    revenue: Number(r.revenue || 0),
+    averageOrderValue: Number(r.averageOrderValue || 0),
+    customers: Number(r.customers || 0),
+    currency: r.currency || 'EUR'
+  };
+}

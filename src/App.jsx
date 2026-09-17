@@ -75,6 +75,7 @@ import AdminSubcategories from './pages/admin/AdminSubcategories';
 import AdminBrands from './pages/admin/AdminBrands';
 import AdminPerfumeCategories from './pages/admin/AdminPerfumeCategories';
 import AdminReviews from './pages/admin/AdminReviews';
+import AdminReports from './pages/admin/AdminReports';
 
 // Public Content Pages
 import FaqPage from './pages/FaqPage';
@@ -119,6 +120,7 @@ function MainRouter() {
           )}
           {currentPath === '/admin/inventory' && <AdminInventory />}
           {currentPath === '/admin/analytics' && <AdminAnalytics />}
+          {(currentPath === '/admin/reports' || currentPath === '/admin/reports/sales' || currentPath === '/admin/sales-reports') && <AdminReports />}
           {currentPath === '/admin/promotions' && <AdminPromotions />}
           {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
           {(currentPath === '/admin/content/faqs' || currentPath === '/dashboard/content/faqs') && <AdminFaqs />}

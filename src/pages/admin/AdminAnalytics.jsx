@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { Link } from '../../router/RouterContext';
 import { adminService } from '../../services/adminService';
-import { DollarSign, Sparkles, TrendingUp, Award } from 'lucide-react';
+import { DollarSign, Sparkles, TrendingUp, Award, ArrowRight } from 'lucide-react';
 
 export default function AdminAnalytics() {
   const { t } = useTranslation();
@@ -21,13 +22,23 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-8 animate-fade-in text-[#F3E6D0]">
-      <div className="border-b border-[#D4AF37]/20 pb-4">
-        <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
-          {t('admin.analytics')}
-        </h1>
-        <p className="text-xs text-[#D8BE99] font-medium mt-0.5">
-          Sales velocity, olfactory family preferences, and VIP customer retention.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#D4AF37]/20 pb-4">
+        <div>
+          <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
+            {t('admin.analytics')}
+          </h1>
+          <p className="text-xs text-[#D8BE99] font-medium mt-0.5">
+            Sales velocity, olfactory family preferences, and VIP customer retention.
+          </p>
+        </div>
+        <Link
+          to="/admin/reports"
+          className="px-5 py-2.5 rounded-full bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel text-xs font-bold uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-fit"
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span>Live Sales Reports & Export</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Top Conversion Metrics */}

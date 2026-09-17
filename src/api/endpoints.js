@@ -398,6 +398,15 @@ export const ENDPOINTS = {
     AUDIT_LOGS: {
       LIST: '/admin/audit-logs',
       DETAILS: (id) => `/admin/audit-logs/${id}`
+    },
+
+    // Sales Reports
+    REPORTS: {
+      SALES: '/admin/reports/sales',
+      SALES_PRODUCTS: '/admin/reports/sales/products',
+      SALES_CATEGORIES: '/admin/reports/sales/categories',
+      SALES_COUNTRIES: '/admin/reports/sales/countries',
+      SALES_EXPORT: '/admin/reports/sales/export'
     }
   }
 };
