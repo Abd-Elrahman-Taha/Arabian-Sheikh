@@ -780,61 +780,20 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          4. LOWER PALACE EXPERIENCE WITH LUXURY BACKDROP OVERLAY
-          (Offers, Best Sellers, Collections, Video, Quiz, Comparison, Reviews, Newsletter)
-          Sections 2 (Flacon Turntable) & 3 (Editorial Cards + Stats) are 100% preserved
+          2. EXCLUSIVE PALACE OFFERS & CURATED BUNDLES AD SHOWCASE (TOP POSITION)
           ========================================================================= */}
-      <div className="relative w-full overflow-hidden">
+      <OffersDiscountSection products={allProducts} />
 
-        {/* Background Image Layer with Parallax-Friendly Cover */}
-        <div
-          className="absolute inset-0 z-0 pointer-events-none select-none bg-cover bg-center bg-no-repeat md:bg-fixed"
-          style={{
-            backgroundImage: "url('/hero_arabian_palace.jpg')",
-          }}
-        />
+      {/* =========================================================================
+          3. TOP SELLING / BEST SELLERS SHOWCASE
+          ========================================================================= */}
+      <TopSellingShowcase products={allProducts} />
 
-        {/* Ambient Dark/Light Luxury Tone Overlay */}
-        <div
-          className={`absolute inset-0 z-0 pointer-events-none transition-colors duration-700 ${
-            isDark
-              ? 'bg-gradient-to-b from-[#0B0A08]/95 via-[#0B0A08]/84 via-50% to-[#0B0A08]/96'
-              : 'bg-gradient-to-b from-[#F3E6D0]/95 via-[#FAF6F0]/86 via-50% to-[#FAF6F0]/96'
-          }`}
-        />
-
-        {/* Top Vignette Fade (seamless transition from Section 3 Editorial Cards) */}
-        <div
-          className={`absolute top-0 inset-x-0 h-48 z-0 pointer-events-none transition-colors duration-700 ${
-            isDark
-              ? 'bg-gradient-to-b from-[#0B0A08] to-transparent'
-              : 'bg-gradient-to-b from-[#F3E6D0] to-transparent'
-          }`}
-        />
-
-        {/* Center Subtle Golden Radiant Bloom */}
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.07),transparent_70%)] pointer-events-none" />
-
-        {/* Bottom Vignette Fade */}
-        <div
-          className={`absolute bottom-0 inset-x-0 h-48 z-0 pointer-events-none transition-colors duration-700 ${
-            isDark
-              ? 'bg-gradient-to-t from-[#0B0A08] to-transparent'
-              : 'bg-gradient-to-t from-[#FAF6F0] to-transparent'
-          }`}
-        />
-
+      {/* =========================================================================
+          3. CURATED COLLECTIONS EXPERIENCE
+          ========================================================================= */}
+      <div className="relative overflow-hidden">
         <div className="relative z-10">
-
-          {/* =========================================================================
-              2. EXCLUSIVE PALACE OFFERS & CURATED BUNDLES AD SHOWCASE (TOP POSITION)
-              ========================================================================= */}
-          <OffersDiscountSection products={allProducts} />
-
-          {/* =========================================================================
-              3. TOP SELLING / BEST SELLERS SHOWCASE
-              ========================================================================= */}
-          <TopSellingShowcase products={allProducts} />
 
           {/* =========================================================================
               CURATED COLLECTIONS EXPERIENCE (VERTICAL STACK + HORIZONTAL PRODUCTS)
@@ -1190,7 +1149,7 @@ export default function Home() {
               7. TRUST & NEWSLETTER LAYER
               ========================================================================= */}
           <section className={`py-10 border-t border-[#D4AF37]/20 transition-colors duration-500 ${
-            isDark ? 'bg-[#0B0A08]/80 backdrop-blur-md' : 'bg-[#FAF6F0]/85 backdrop-blur-md'
+            isDark ? 'bg-[#0B0A08]' : 'bg-[#FAF6F0]'
           }`}>
             <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
               
