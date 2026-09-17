@@ -59,7 +59,8 @@ export default function CheckoutPage() {
     address: 'Downtown Dubai Boulevard, Royal Suite 40',
     postalCode: '00000',
     shippingMethod: 'dhl-express',
-    paymentType: 'card',
+    paymentType: 'COD',
+    paymentMethod: 'COD',
     cardNumber: '4242 •••• •••• 4242',
     cardholderName: user?.name || 'Tariq Al-Hashemi',
     expiry: '12/28',
@@ -242,7 +243,7 @@ export default function CheckoutPage() {
           postalCode: formData.postalCode,
           phone: formData.phone
         },
-        paymentMethod: 'CreditCard',
+        paymentMethod: formData.paymentMethod || 'COD',
         dhlTrackingNumber: `${selectedQuote?.carrier || 'ECONT'}-${Math.floor(100000000 + Math.random() * 900000000)}`
       });
 
@@ -514,57 +515,90 @@ export default function CheckoutPage() {
               </form>
             )}
 
-            {/* STEP 3: Stripe Payment */}
+            {/* STEP 3: Royal Payment Selection */}
             {step === 3 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <h2 className="font-cinzel text-base font-bold text-[#D4AF37] uppercase tracking-wider">
-                    3. Stripe Payment Gateway (Sandbox Mode)
+                    3. Payment Selection & Authorization
                   </h2>
-                  <div className="px-2.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-mono">
-                    Test Mode Active
+                  <div className="px-2.5 py-0.5 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F2D675] text-[10px] font-mono">
+                    Official Carrier COD Ready
                   </div>
                 </div>
 
-                <div className="p-4 bg-black/50 border border-white/10 rounded space-y-4 text-xs">
-                  <div className="flex items-center gap-2 text-[#D4AF37]">
-                    <CreditCard className="w-4 h-4" />
-                    <span className="font-cinzel font-bold">Credit / Debit Card (Stripe Elements)</span>
+                {/* Payment Method Selector */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'COD' }))}
+                    className={`p-4 rounded-xl border cursor-pointer transition-all ${formData.paymentMethod === 'COD' ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-[#F2D675] shadow-lg shadow-[#D4AF37]/10' : 'bg-black/50 border-white/10 text-[#D8BE99] hover:border-[#D4AF37]/40'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-[#D4AF37]" />
+                        <span className="font-cinzel font-bold text-xs">Cash On Delivery (COD)</span>
+                      </div>
+                      {formData.paymentMethod === 'COD' && <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
+                    </div>
+                    <p className="text-[11px] text-[#D8BE99]">Pay courier upon arrival at your doorstep in cash or by courier POS terminal.</p>
                   </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[#D8BE99] text-[10px] uppercase">Card Number</label>
-                      <input
-                        type="text"
-                        value={formData.cardNumber}
-                        readOnly
-                        className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
-                      />
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'CreditCard' }))}
+                    className={`p-4 rounded-xl border cursor-pointer transition-all ${formData.paymentMethod === 'CreditCard' ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-[#F2D675] shadow-lg shadow-[#D4AF37]/10' : 'bg-black/50 border-white/10 text-[#D8BE99] hover:border-[#D4AF37]/40'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-[#D4AF37]" />
+                        <span className="font-cinzel font-bold text-xs">Credit / Debit Card</span>
+                      </div>
+                      {formData.paymentMethod === 'CreditCard' && <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
+                    </div>
+                    <p className="text-[11px] text-[#D8BE99]">Instant encrypted authorization through certified payment gateway.</p>
+                  </div>
+                </div>
+
+                {formData.paymentMethod === 'CreditCard' && (
+                  <div className="p-4 bg-black/50 border border-white/10 rounded space-y-4 text-xs animate-fade-in">
+                    <div className="flex items-center gap-2 text-[#D4AF37]">
+                      <CreditCard className="w-4 h-4" />
+                      <span className="font-cinzel font-bold">Credit / Debit Card (Stripe Elements)</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       <div>
-                        <label className="text-[#D8BE99] text-[10px] uppercase">Expiration Date</label>
+                        <label className="text-[#D8BE99] text-[10px] uppercase">Card Number</label>
                         <input
                           type="text"
-                          value={formData.expiry}
+                          value={formData.cardNumber}
                           readOnly
                           className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
                         />
                       </div>
-                      <div>
-                        <label className="text-[#D8BE99] text-[10px] uppercase">CVC / CVV</label>
-                        <input
-                          type="text"
-                          value={formData.cvv}
-                          readOnly
-                          className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
-                        />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[#D8BE99] text-[10px] uppercase">Expiration Date</label>
+                          <input
+                            type="text"
+                            value={formData.expiry}
+                            readOnly
+                            className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[#D8BE99] text-[10px] uppercase">CVC / CVV</label>
+                          <input
+                            type="text"
+                            value={formData.cvv}
+                            readOnly
+                            className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="pt-4 flex justify-between">
                   <button

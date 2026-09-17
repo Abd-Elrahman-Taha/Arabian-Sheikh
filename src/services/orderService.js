@@ -465,9 +465,9 @@ export const orderService = {
         apiOrder = await orderApi.createOrder({
           addressId: Number(resolvedAddressId) || 1,
           shippingMethodId: Number(orderPayload.shippingMethodId) || 1,
-          quoteId: orderPayload.quoteId || undefined,
-          paymentMethod: orderPayload.paymentMethod || 'CreditCard',
-          couponCode: orderPayload.discountCode || orderPayload.couponCode || undefined
+          quoteId: orderPayload.quoteId,
+          paymentMethod: orderPayload.paymentMethod || 'COD',
+          couponCode: orderPayload.discountCode || orderPayload.couponCode || ''
         });
       } catch (e) {
         console.warn('Real API create order fallback:', e.message);

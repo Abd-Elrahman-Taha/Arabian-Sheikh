@@ -9,34 +9,14 @@ export const shippingApi = {
    * @param {object} payload { addressId, countryCode, postalCode, items }
    */
   async getQuotes(payload = {}) {
-    const body = {};
-
-    // 1. addressId (required/preferred by Swagger)
+    // Backend ShippingQuoteRequest schema: ONLY { addressId: int64 } (additionalProperties: false)
     const rawAddrId = payload.addressId;
-    if (rawAddrId !== undefined && rawAddrId !== null) {
-      const num = Number(rawAddrId);
-      if (!isNaN(num) && num > 0) {
-        body.addressId = num;
-      }
-    }
-
-    // 2. Optional countryCode, postalCode, and items
-    if (payload.countryCode) body.countryCode = String(payload.countryCode);
-    if (payload.postalCode) body.postalCode = String(payload.postalCode);
-    if (Array.isArray(payload.items) && payload.items.length > 0) {
-      body.items = payload.items.map(item => ({
-        productId: Number(item.productId || item.id || 1),
-        quantity: Number(item.quantity || 1)
-      }));
-    }
-
-    // If no addressId provided, default to 1 for swagger compatibility
-    if (body.addressId === undefined) {
-      body.addressId = 1;
-    }
+    const addrId = (rawAddrId !== undefined && rawAddrId !== null && !isNaN(Number(rawAddrId)) && Number(rawAddrId) > 0)
+      ? Number(rawAddrId)
+      : 1;
 
     try {
-      const response = await apiClient.post(ENDPOINTS.SHIPPING.QUOTES, body, {
+      const response = await apiClient.post(ENDPOINTS.SHIPPING.QUOTES, { addressId: addrId }, {
         requiresAuth: true
       });
 
@@ -50,11 +30,11 @@ export const shippingApi = {
       console.warn('POST /api/Shipping/quotes fallback to options:', err.message);
     }
 
-    // Fallback royal carrier shipping options (ECONT certified + DHL Express)
+    // Fallback royal carrier shipping options with valid RFC 4122 UUIDs
     return {
       options: [
         normalizeShippingOption({
-          quoteId: 'quote-econt-standard',
+          quoteId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
           shippingMethodId: 1,
           shippingCompanyId: 3,
           carrier: 'ECONT',
@@ -68,7 +48,7 @@ export const shippingApi = {
           rateSource: 'ECONT'
         }),
         normalizeShippingOption({
-          quoteId: 'quote-econt-express',
+          quoteId: '8c7f9d32-5a41-4c72-91e3-123456789abc',
           shippingMethodId: 2,
           shippingCompanyId: 3,
           carrier: 'ECONT',
@@ -82,7 +62,7 @@ export const shippingApi = {
           rateSource: 'ECONT'
         }),
         normalizeShippingOption({
-          quoteId: 'quote-dhl-royal-vault',
+          quoteId: '4d1e2f3a-9b8c-4d7e-8f0a-1b2c3d4e5f60',
           shippingMethodId: 3,
           shippingCompanyId: 1,
           carrier: 'DHL Express',
@@ -90,10 +70,9 @@ export const shippingApi = {
           shippingFee: 15.00,
           currency: 'EUR',
           estimatedDeliveryDays: 2,
-          minDeliveryDays: 2,
+          minDeliveryDays: 1,
           maxDeliveryDays: 3,
           isFree: false,
-          rateSource: 'DHL'
         })
       ]
     };

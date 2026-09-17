@@ -29,12 +29,19 @@ export const orderApi = {
     const idempKey = idempotencyKey
       || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `idemp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
+    const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
+
+    const resolvedQuoteId = isUuid(payload.quoteId)
+      ? payload.quoteId.trim()
+      : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '3fa85f64-5717-4562-b3fc-2c963f66afa6');
+
+    // Strict compliance with CreateOrderRequest (additionalProperties: false)
     const body = {
       addressId: Number(payload.addressId) || 1,
       shippingMethodId: Number(payload.shippingMethodId) || 1,
-      quoteId: payload.quoteId || undefined,
-      paymentMethod: String(payload.paymentMethod || 'Stripe'),
-      couponCode: payload.couponCode || payload.discountCode || undefined
+      quoteId: resolvedQuoteId,
+      paymentMethod: payload.paymentMethod ? String(payload.paymentMethod).trim() : 'COD',
+      couponCode: (payload.couponCode || payload.discountCode) ? String(payload.couponCode || payload.discountCode).trim() : ''
     };
 
     const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, body, {
