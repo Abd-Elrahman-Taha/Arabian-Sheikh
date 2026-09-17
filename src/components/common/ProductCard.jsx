@@ -219,10 +219,18 @@ export default function ProductCard({ product, onCompare }) {
             )}
           </div>
 
-          <div className={`flex items-center gap-1 text-xs ${isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'}`}>
-            <Star className="w-3.5 h-3.5 fill-current" />
-            <span className={`font-bold ${isDark ? 'text-[#FFFDF8]' : 'text-[#704622]'}`}>{product.rating || '5.0'}</span>
-          </div>
+          {product.rating && (product.reviewCount > 0 || product.reviewsCount > 0) ? (
+            <div className={`flex items-center gap-1 text-xs ${isDark ? 'text-[#FFDF8A]' : 'text-[#A8853B]'}`}>
+              <Star className="w-3.5 h-3.5 fill-current" />
+              <span className={`font-bold ${isDark ? 'text-[#FFFDF8]' : 'text-[#704622]'}`}>
+                {Number(product.rating).toFixed(1)}
+              </span>
+            </div>
+          ) : (
+            <div className={`flex items-center gap-1 text-[11px] italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8A6540]/60'}`}>
+              <span>{t('product.noReviewsYet') || 'No reviews'}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

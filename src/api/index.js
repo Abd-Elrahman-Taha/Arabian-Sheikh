@@ -22,3 +22,4 @@ export { default as subcategoryApi } from './subcategory.api';
 export { default as perfumeCategoryApi } from './perfumeCategory.api';
 export { default as adminManagementApi } from './adminManagement.api';
 export { default as analyticsApi } from './analytics.api';
+export { default as reviewApi } from './review.api';

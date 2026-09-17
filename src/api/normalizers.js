@@ -158,8 +158,11 @@ export function normalizeProduct(raw) {
     isActive: isActive,
     featured: Boolean(p.featured === true || p.isFeatured === true),
     isBestSeller: Boolean(p.isBestSeller || p.bestSeller),
-    rating: Number(p.rating || 5.0),
-    reviewsCount: Number(p.reviewCount || p.reviewsCount || (p.reviews ? p.reviews.length : 0)),
+    rating: (p.rating !== null && p.rating !== undefined && Number(p.reviewCount ?? p.reviewsCount ?? 0) > 0)
+      ? Number(p.rating)
+      : (p.rating !== null && p.rating !== undefined && p.rating > 0 ? Number(p.rating) : null),
+    reviewCount: Number(p.reviewCount ?? p.reviewsCount ?? (p.reviews ? p.reviews.length : 0)),
+    reviewsCount: Number(p.reviewCount ?? p.reviewsCount ?? (p.reviews ? p.reviews.length : 0)),
     description: resolvedDesc,
     ingredients: resolvedIngredients,
     spanishDescription: p.spanishDescription || p.description || '',
@@ -181,25 +184,31 @@ export function normalizeProduct(raw) {
     imageUrl: cleanImageUrl(p.imageUrl || (Array.isArray(p.images) && p.images[0]) || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
     cutoutImage: cleanImageUrl(p.cutoutImage || p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
     originalImage: cleanImageUrl(p.originalImage || p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
-    reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview) : []
+    reviewsPreview: Array.isArray(p.reviewsPreview) ? p.reviewsPreview.map(normalizeReview).filter(Boolean) : (Array.isArray(p.reviews) ? p.reviews.map(normalizeReview).filter(Boolean) : []),
+    reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview).filter(Boolean) : []
   };
 }
 
 /**
- * Review Normalizer (Compliant with ReviewResponse)
+ * Review Normalizer (Compliant with ReviewResponse & AdminReviewListItemResponse)
  */
 export function normalizeReview(raw) {
   if (!raw) return null;
   const r = normalizeObjectKeys(raw);
+  const authorName = r.userName || r.author || (r.user ? (r.user.name || r.user.fullName) : 'Anonymous');
   return {
-    id: r.id || `rev-${Date.now()}`,
-    productId: r.productId || null,
-    author: r.userName || r.author || 'Anonymous Patron',
-    userName: r.userName || r.author || 'Anonymous Patron',
-    rating: Number(r.rating || 5),
+    id: r.id !== undefined && r.id !== null ? r.id : `rev-${Date.now()}`,
+    productId: r.productId ? Number(r.productId) : null,
+    productName: r.productName || '',
+    userId: r.userId ? Number(r.userId) : null,
+    orderId: r.orderId ? Number(r.orderId) : null,
+    author: authorName,
+    userName: authorName,
+    rating: Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5))),
     comment: r.comment || r.body || '',
-    createdAt: r.createdAt || r.date || new Date().toISOString(),
-    status: r.status || 'Approved'
+    status: r.status || 'Approved',
+    isReported: Boolean(r.isReported),
+    createdAt: r.createdAt || r.date || new Date().toISOString()
   };
 }
 

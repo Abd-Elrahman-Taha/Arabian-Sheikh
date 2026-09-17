@@ -16,6 +16,7 @@ import {
   BarChart3,
   Tag,
   ShieldCheck,
+  Star,
   HelpCircle,
   FileText,
   PhoneCall,
@@ -57,6 +58,7 @@ export default function AdminLayout({ children }) {
         { to: '/admin/orders', label: t('admin.orders') || 'Orders', icon: ShoppingBag },
         { to: '/admin/inventory', label: t('admin.inventory') || 'Inventory', icon: Warehouse },
         { to: '/admin/users', label: t('admin.users') || 'Customers', icon: Users },
+        { to: '/admin/reviews', label: 'Reviews Moderation', icon: Star, aliases: ['/admin/review-moderation', '/dashboard/reviews'] },
         { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] }
       ]
     },

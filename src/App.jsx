@@ -74,6 +74,7 @@ import AdminCategories from './pages/admin/AdminCategories';
 import AdminSubcategories from './pages/admin/AdminSubcategories';
 import AdminBrands from './pages/admin/AdminBrands';
 import AdminPerfumeCategories from './pages/admin/AdminPerfumeCategories';
+import AdminReviews from './pages/admin/AdminReviews';
 
 // Public Content Pages
 import FaqPage from './pages/FaqPage';
@@ -123,6 +124,7 @@ function MainRouter() {
           {(currentPath === '/admin/content/faqs' || currentPath === '/dashboard/content/faqs') && <AdminFaqs />}
           {(currentPath === '/admin/content/pages' || currentPath === '/dashboard/content/pages') && <AdminPages />}
           {(currentPath === '/admin/content/contact' || currentPath === '/dashboard/content/contact') && <AdminContact />}
+          {(currentPath === '/admin/reviews' || currentPath === '/admin/review-moderation' || currentPath === '/dashboard/reviews') && <AdminReviews />}
           {currentPath === '/admin/settings' && <AdminSettings />}
         </AdminLayout>
       );
