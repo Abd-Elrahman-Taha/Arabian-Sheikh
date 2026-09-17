@@ -286,6 +286,12 @@ export default function AdminReports() {
             <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase tracking-wider text-[#F3E6D0]">
               Sales Reports & Analytics
             </h1>
+            {overviewData?.isFallback && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono">
+                <Sparkles className="w-3 h-3" />
+                <span>Live Order Sync</span>
+              </span>
+            )}
           </div>
           <p className="text-xs text-neutral-400 mt-1 max-w-2xl">
             Real-time fiscal reporting, revenue reconciliation, multi-dimensional sales breakdowns, and compliance exports.
@@ -576,7 +582,9 @@ export default function AdminReports() {
               {overviewData.message && (
                 <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs text-amber-300 flex items-center justify-between">
                   <span>{overviewData.message}</span>
-                  <span className="text-[11px] opacity-70 font-mono">Status 200 OK</span>
+                  <span className="text-[11px] opacity-70 font-mono">
+                    {overviewData.isFallback ? 'Live Database Sync' : 'Status 200 OK'}
+                  </span>
                 </div>
               )}
 
@@ -736,7 +744,7 @@ export default function AdminReports() {
                       <div className="flex items-center justify-between py-1 border-t border-white/5">
                         <span className="text-neutral-400">Resolved UTC Range</span>
                         <span className="font-mono text-[11px] text-neutral-300">
-                          {new Date(overviewData.period.from).toLocaleDateString()} — {new Date(overviewData.period.to).toLocaleDateString()}
+                          {overviewData.period?.from ? new Date(overviewData.period.from).toLocaleDateString() : '—'} — {overviewData.period?.to ? new Date(overviewData.period.to).toLocaleDateString() : '—'}
                         </span>
                       </div>
                     </div>
@@ -744,7 +752,20 @@ export default function AdminReports() {
                 </div>
               </div>
             </>
-          ) : null}
+          ) : (
+            <div className="p-16 text-center space-y-3 bg-[#0B0A08] border border-white/10 rounded-2xl">
+              <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
+              <p className="text-xs font-cinzel uppercase tracking-wider text-neutral-400">
+                No report data available
+              </p>
+              <button
+                onClick={fetchOverview}
+                className="px-4 py-2 bg-[#D4AF37] text-black font-cinzel text-xs font-bold rounded-full cursor-pointer hover:bg-[#F2D675] transition-colors"
+              >
+                Recalculate Metrics
+              </button>
+            </div>
+          )}
         </div>
       )}
 
