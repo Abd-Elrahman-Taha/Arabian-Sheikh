@@ -300,6 +300,11 @@ export const reviewService = {
    * @param {object} params { page, pageSize, status, rating, isReported, productId, language }
    */
   async adminGetReviews(params = {}) {
+    // Force-pull latest data from live cloud so reviews submitted from other devices appear immediately
+    try {
+      await liveCloudSync.sync(true);
+    } catch {}
+
     let remoteRes = { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 1, hasPreviousPage: false, hasNextPage: false };
     try {
       remoteRes = await reviewApi.adminGetReviews(params);
@@ -315,6 +320,7 @@ export const reviewService = {
       if (r?.id) reviewMap.set(String(r.id), r);
     });
 
+    // Local and cloud reviews are merged OVER remote so local status/edits win
     [...localReviews, ...cloudReviews].forEach(r => {
       if (r?.id) {
         const existing = reviewMap.get(String(r.id));
@@ -324,10 +330,10 @@ export const reviewService = {
 
     let allItems = Array.from(reviewMap.values());
 
-    // Filter by status
+    // Filter by status — treat null status as 'Approved' (backend API only returns approved items)
     if (params.status && params.status !== 'ALL') {
       const s = String(params.status).toLowerCase();
-      allItems = allItems.filter(r => String(r.status || '').toLowerCase() === s);
+      allItems = allItems.filter(r => (String(r.status || 'Approved').toLowerCase()) === s);
     }
 
     // Filter by rating

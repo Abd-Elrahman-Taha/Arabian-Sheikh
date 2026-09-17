@@ -116,9 +116,9 @@ export default function AdminReviews() {
         const allItems = allRes.items || [];
         setMetrics({
           total: allRes.totalCount || allItems.length,
-          pending: allItems.filter(r => String(r.status || '').toLowerCase() === 'pending').length,
-          approved: allItems.filter(r => String(r.status || '').toLowerCase() === 'approved').length,
-          rejectedOrHidden: allItems.filter(r => ['rejected', 'hidden'].includes(String(r.status || '').toLowerCase())).length
+          pending: allItems.filter(r => String(r.status || 'Approved').toLowerCase() === 'pending').length,
+          approved: allItems.filter(r => String(r.status || 'Approved').toLowerCase() === 'approved').length,
+          rejectedOrHidden: allItems.filter(r => ['rejected', 'hidden'].includes(String(r.status || 'Approved').toLowerCase())).length
         });
       } catch {
         // Fallback to page-level counts
@@ -140,6 +140,17 @@ export default function AdminReviews() {
 
   useEffect(() => {
     loadReviews();
+  }, [loadReviews]);
+
+  // Auto-refresh when a review is submitted from any tab/device via cloud sync
+  useEffect(() => {
+    const handleCloudUpdate = () => loadReviews();
+    window.addEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+    window.addEventListener('arabian_sheikh_review_created', handleCloudUpdate);
+    return () => {
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleCloudUpdate);
+      window.removeEventListener('arabian_sheikh_review_created', handleCloudUpdate);
+    };
   }, [loadReviews]);
 
   // Handle Search Input (Auto-detect ID vs text)

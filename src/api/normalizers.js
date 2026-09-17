@@ -206,7 +206,9 @@ export function normalizeReview(raw) {
     userName: authorName,
     rating: Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5))),
     comment: r.comment || r.body || '',
-    status: r.status || 'Approved',
+    // Preserve the exact status from the backend/local — do NOT default to 'Approved'
+    // Public endpoints only return Approved reviews anyway, so this is safe
+    status: r.status || null,
     isReported: Boolean(r.isReported),
     createdAt: r.createdAt || r.date || new Date().toISOString()
   };
