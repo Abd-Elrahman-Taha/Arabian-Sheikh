@@ -47,10 +47,12 @@ export default function ProductDetail() {
   const { isInWishlist, toggleWishlist, heartAnimatedId } = useWishlist();
   const { success, error } = useToast();
 
-  const productId = currentPath.split('/product/')[1]?.split('?')[0];
+  // On refresh, currentPath is set from window.location.pathname in the router — also use direct fallback
+  const rawPath = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const productId = rawPath.split('/product/')[1]?.split('?')[0];
 
   // Instant 0ms synchronous initialization from memory cache
-  const initialProduct = productService.getProductByIdSync(productId);
+  const initialProduct = productId ? productService.getProductByIdSync(productId) : null;
   const initialRelated = initialProduct ? productService.getRelatedProductsSync(initialProduct.id, 4) : [];
 
   const [product, setProduct] = useState(initialProduct);
@@ -61,6 +63,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('pyramid');
   const [loading, setLoading] = useState(!initialProduct);
+  const [loadError, setLoadError] = useState(false);
 
   // Reviews & Rating state
   const [reviews, setReviews] = useState(initialProduct?.reviewsPreview || initialProduct?.reviews || []);
@@ -88,6 +91,7 @@ export default function ProductDetail() {
     if (!productId) return;
 
     let isMounted = true;
+    setLoadError(false);
 
     const setupPromo = (prod) => {
       promotionService.getActivePromotions().then(promos => {
@@ -108,21 +112,30 @@ export default function ProductDetail() {
       setReviewsTotalCount(cached.reviewCount || cached.reviewsCount || 0);
       setupPromo(cached);
       setLoading(false);
-    } else {
-      setLoading(true);
-      productService.getProductById(productId).then(item => {
-        if (item && isMounted) {
-          setProduct(item);
-          setSelectedImage(0);
-          setSelectedSize(item.size || '60 ml / 2.0 fl oz');
-          setRelatedProducts(productService.getRelatedProductsSync(item.id, 4));
-          setReviews(item.reviewsPreview || item.reviews || []);
-          setReviewsTotalCount(item.reviewCount || item.reviewsCount || 0);
-          setupPromo(item);
-        }
-        if (isMounted) setLoading(false);
-      }).catch(() => { if (isMounted) setLoading(false); });
     }
+
+    // Always fetch fresh data from the API (especially critical on page refresh when memoryCatalog is empty)
+    setLoading(true);
+    productService.getProductById(productId).then(item => {
+      if (item && isMounted) {
+        setProduct(item);
+        setSelectedImage(0);
+        setSelectedSize(item.size || '60 ml / 2.0 fl oz');
+        setRelatedProducts(productService.getRelatedProductsSync(item.id, 4));
+        setReviews(item.reviewsPreview || item.reviews || []);
+        setReviewsTotalCount(item.reviewCount || item.reviewsCount || 0);
+        setupPromo(item);
+        setLoadError(false);
+      } else if (!item && isMounted && !cached) {
+        setLoadError(true);
+      }
+      if (isMounted) setLoading(false);
+    }).catch(() => {
+      if (isMounted) {
+        setLoading(false);
+        if (!cached) setLoadError(true);
+      }
+    });
 
     return () => { isMounted = false; };
   }, [productId, language]);
@@ -137,6 +150,42 @@ export default function ProductDetail() {
             <div className="h-4 bg-white/5 w-1/2 rounded" />
             <div className="h-32 bg-white/5 rounded" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError && !product) {
+    return (
+      <div className={`pt-36 pb-24 max-w-xl mx-auto px-4 text-center space-y-6 ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
+        <div className="text-5xl mb-4">🏺</div>
+        <h2 className="font-cinzel text-2xl font-bold">Royal Creation Unavailable</h2>
+        <p className={`text-sm ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+          This creation could not be retrieved at the moment. Please try again.
+        </p>
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          <button
+            onClick={() => {
+              setLoadError(false);
+              setLoading(true);
+              productService.getProductById(productId).then(item => {
+                if (item) {
+                  setProduct(item);
+                  setSelectedSize(item.size || '60 ml / 2.0 fl oz');
+                  setLoadError(false);
+                } else {
+                  setLoadError(true);
+                }
+                setLoading(false);
+              }).catch(() => { setLoading(false); setLoadError(true); });
+            }}
+            className="px-6 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-widest rounded-full transition-colors"
+          >
+            Try Again
+          </button>
+          <Link to="/shop" className={`px-6 py-3 border border-[#D4AF37]/50 font-cinzel font-bold text-xs uppercase tracking-widest rounded-full transition-colors ${isDark ? 'text-[#F3E6D0] hover:bg-white/5' : 'text-[#120B06] hover:bg-black/5'}`}>
+            Explore Boutique
+          </Link>
         </div>
       </div>
     );
@@ -209,6 +258,18 @@ export default function ProductDetail() {
       fetchProductReviews(reviewsPage, ratingFilter);
     }
   }, [activeTab, ratingFilter, reviewsPage, product?.id]);
+
+  // Fetch review count on product load so the tab header shows accurate count
+  useEffect(() => {
+    if (product?.id || product?.numericId) {
+      const targetId = product?.numericId || product?.id;
+      reviewService.getProductReviews(targetId, { page: 1, pageSize: 1 }).then(res => {
+        if (res.totalCount !== undefined) {
+          setReviewsTotalCount(res.totalCount);
+        }
+      }).catch(() => {});
+    }
+  }, [product?.id, product?.numericId]);
 
   const handleOpenReviewModal = async () => {
     const user = authService.getCurrentUser();
@@ -632,55 +693,200 @@ export default function ProductDetail() {
           </div>
 
           {/* TAB 1: Fragrance Pyramid */}
-          {activeTab === 'pyramid' && (
-            <div className="max-w-4xl mx-auto space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                
-                {/* Top Notes */}
-                <div className={`p-6 border space-y-3 rounded-2xl ${
-                  isDark
-                    ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
-                }`}>
-                  <div className="text-[11px] uppercase tracking-widest text-[#D4AF37] font-cinzel font-bold">
-                    Top Notes (Opening)
+          {activeTab === 'pyramid' && (() => {
+            // Support both API field formats: topNotes/heartNotes/baseNotes or notes.top/notes.heart/notes.base
+            const topNotes = (product.notes?.top?.length ? product.notes.top : null) || (product.topNotes?.length ? product.topNotes : null) || [];
+            const heartNotes = (product.notes?.heart?.length ? product.notes.heart : null) || (product.heartNotes?.length ? product.heartNotes : null) || [];
+            const baseNotes = (product.notes?.base?.length ? product.notes.base : null) || (product.baseNotes?.length ? product.baseNotes : null) || [];
+
+            return (
+              <div className="max-w-5xl mx-auto space-y-8">
+
+                {/* Pyramid Section Title */}
+                <div className="text-center space-y-2">
+                  <div className={`flex items-center justify-center gap-2 text-xs uppercase tracking-[0.25em] font-cinzel font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
+                    <Droplets className="w-4 h-4 text-[#D4AF37]" />
+                    <span>Olfactory Architecture</span>
+                    <Droplets className="w-4 h-4 text-[#D4AF37]" />
                   </div>
-                  <ul className={`space-y-1.5 text-xs font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
-                    {product.notes?.top?.map((n, i) => <li key={i}>{n}</li>) || <li>Add fragrance notes</li>}
-                  </ul>
+                  <p className={`text-sm font-serif italic ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/70'}`}>
+                    The three-tier structure that defines this creation's olfactory journey
+                  </p>
                 </div>
 
-                {/* Heart Notes */}
-                <div className={`p-6 border space-y-3 rounded-2xl ${
-                  isDark
-                    ? 'bg-[#0B0A08] border-[#D4AF37]/30 text-[#F3E6D0] shadow-lg'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 text-[#120B06] shadow-[0_12px_35px_rgba(212,175,55,0.25)] ring-1 ring-[#D4AF37]/30'
-                }`}>
-                  <div className="text-[11px] uppercase tracking-widest text-[#D4AF37] font-cinzel font-bold">
-                    Heart Notes (Core Sillage)
+                {/* Pyramid Visual + Cards */}
+                <div className="flex flex-col gap-5">
+
+                  {/* Top Notes — Narrowest (pyramid apex) */}
+                  <div className="flex justify-center">
+                    <div className={`w-full max-w-sm px-8 py-7 border-2 rounded-3xl text-center space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+                      isDark
+                        ? 'bg-gradient-to-br from-[#1A1208] via-[#0F0C06] to-[#0B0A08] border-[#D4AF37]/35 shadow-[0_0_40px_rgba(212,175,55,0.12)]'
+                        : 'bg-gradient-to-br from-[#FFFEFB] via-[#FBF5E6] to-[#F5EDD8] border-[#D4AF37]/50 shadow-[0_15px_40px_rgba(212,175,55,0.22)]'
+                    }`}>
+                      {/* Ambient glow */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-16 bg-[#D4AF37]/10 blur-2xl rounded-full pointer-events-none" />
+
+                      {/* Icon */}
+                      <div className="relative z-10 flex justify-center">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 border border-[#D4AF37]/50 flex items-center justify-center shadow-lg">
+                          <Droplets className="w-6 h-6 text-[#D4AF37]" />
+                        </div>
+                      </div>
+
+                      {/* Label */}
+                      <div className="relative z-10 space-y-0.5">
+                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel font-bold">Top Notes</div>
+                        <div className={`text-[11px] font-serif italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8C6239]/60'}`}>Opening · First 15–30 min</div>
+                      </div>
+
+                      {/* Notes list */}
+                      <div className="relative z-10">
+                        {topNotes.length > 0 ? (
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {topNotes.map((n, i) => (
+                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                                isDark
+                                  ? 'bg-[#D4AF37]/10 border-[#D4AF37]/30 text-[#F2D675]'
+                                  : 'bg-[#D4AF37]/15 border-[#D4AF37]/40 text-[#5A3517]'
+                              }`}>{n}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={`text-xs italic ${isDark ? 'text-[#D8BE99]/40' : 'text-[#8C6239]/40'}`}>No top notes listed yet</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <ul className={`space-y-1.5 text-xs font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
-                    {product.notes?.heart?.map((n, i) => <li key={i}>{n}</li>) || <li>Add fragrance notes</li>}
-                  </ul>
+
+                  {/* Pyramid connector arrow */}
+                  <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-px h-4 bg-gradient-to-b from-[#D4AF37]/60 to-[#D4AF37]/20" />
+                      <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-[#D4AF37]/50" />
+                    </div>
+                  </div>
+
+                  {/* Heart Notes — Wider (pyramid middle) */}
+                  <div className="flex justify-center">
+                    <div className={`w-full max-w-lg px-8 py-8 border-2 rounded-3xl text-center space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+                      isDark
+                        ? 'bg-gradient-to-br from-[#1E1409] via-[#130E06] to-[#0B0A08] border-[#D4AF37]/50 shadow-[0_0_60px_rgba(212,175,55,0.18)] ring-1 ring-[#D4AF37]/20'
+                        : 'bg-gradient-to-br from-[#FFFEFB] via-[#FAF3E2] to-[#F3EAD3] border-[#D4AF37]/60 shadow-[0_20px_50px_rgba(212,175,55,0.30)] ring-1 ring-[#D4AF37]/25'
+                    }`}>
+                      {/* Ambient glow (stronger for heart = signature) */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-20 bg-[#D4AF37]/15 blur-3xl rounded-full pointer-events-none" />
+
+                      {/* Crown badge — Heart is the signature */}
+                      <div className="absolute top-3 right-4 rtl:right-auto rtl:left-4">
+                        <span className="inline-flex items-center gap-1 bg-[#D4AF37] text-black text-[9px] font-cinzel font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
+                          <Crown className="w-2.5 h-2.5" />
+                          Signature
+                        </span>
+                      </div>
+
+                      {/* Icon */}
+                      <div className="relative z-10 flex justify-center">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37]/40 to-[#D4AF37]/15 border-2 border-[#D4AF37]/60 flex items-center justify-center shadow-xl">
+                          <Layers className="w-7 h-7 text-[#D4AF37]" />
+                        </div>
+                      </div>
+
+                      {/* Label */}
+                      <div className="relative z-10 space-y-0.5">
+                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel font-bold">Heart Notes</div>
+                        <div className={`text-[11px] font-serif italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8C6239]/60'}`}>Core Sillage · 30 min – 4 hours</div>
+                      </div>
+
+                      {/* Notes list */}
+                      <div className="relative z-10">
+                        {heartNotes.length > 0 ? (
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {heartNotes.map((n, i) => (
+                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                                isDark
+                                  ? 'bg-[#D4AF37]/15 border-[#D4AF37]/40 text-[#F2D675]'
+                                  : 'bg-[#D4AF37]/20 border-[#D4AF37]/50 text-[#4A2C0E]'
+                              }`}>{n}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={`text-xs italic ${isDark ? 'text-[#D8BE99]/40' : 'text-[#8C6239]/40'}`}>No heart notes listed yet</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pyramid connector arrow */}
+                  <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-px h-4 bg-gradient-to-b from-[#D4AF37]/60 to-[#D4AF37]/20" />
+                      <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-[#D4AF37]/50" />
+                    </div>
+                  </div>
+
+                  {/* Base Notes — Widest (pyramid base) */}
+                  <div className="flex justify-center">
+                    <div className={`w-full px-8 py-9 border-2 rounded-3xl text-center space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.005] ${
+                      isDark
+                        ? 'bg-gradient-to-br from-[#160E05] via-[#100A04] to-[#0B0A08] border-[#D4AF37]/30 shadow-[0_0_30px_rgba(212,175,55,0.10)]'
+                        : 'bg-gradient-to-br from-[#FAF5EA] via-[#F3EDD8] to-[#EDE4CA] border-[#D4AF37]/45 shadow-[0_12px_35px_rgba(212,175,55,0.20)]'
+                    }`}>
+                      {/* Dark earth ambient glow */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-24 bg-[#8C6239]/10 blur-3xl rounded-full pointer-events-none" />
+
+                      {/* Icon */}
+                      <div className="relative z-10 flex justify-center">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#8C6239]/25 to-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center shadow-lg">
+                          <Award className="w-6 h-6 text-[#D4AF37]" />
+                        </div>
+                      </div>
+
+                      {/* Label */}
+                      <div className="relative z-10 space-y-0.5">
+                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel font-bold">Base Notes</div>
+                        <div className={`text-[11px] font-serif italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8C6239]/60'}`}>Drydown · 4+ hours of lasting sillage</div>
+                      </div>
+
+                      {/* Notes list */}
+                      <div className="relative z-10">
+                        {baseNotes.length > 0 ? (
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {baseNotes.map((n, i) => (
+                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                                isDark
+                                  ? 'bg-[#8C6239]/15 border-[#D4AF37]/25 text-[#D8BE99]'
+                                  : 'bg-[#8C6239]/10 border-[#D4AF37]/35 text-[#3A1E08]'
+                              }`}>{n}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={`text-xs italic ${isDark ? 'text-[#D8BE99]/40' : 'text-[#8C6239]/40'}`}>No base notes listed yet</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
-                {/* Base Notes */}
-                <div className={`p-6 border space-y-3 rounded-2xl ${
-                  isDark
-                    ? 'bg-[#0B0A08] border-[#D4AF37]/20 text-[#F3E6D0]'
-                    : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 text-[#120B06] shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
-                }`}>
-                  <div className="text-[11px] uppercase tracking-widest text-[#D4AF37] font-cinzel font-bold">
-                    Base Notes (Drydown)
+                {/* Fragrance Family Footer */}
+                {(product.fragranceFamily || product.scentFamily) && (
+                  <div className={`flex items-center justify-center gap-3 text-xs font-cinzel pt-2 ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
+                    <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#D4AF37]/30" />
+                    <span className="uppercase tracking-widest font-bold">{product.fragranceFamily || product.scentFamily}</span>
+                    {product.concentration && (
+                      <>
+                        <span className="text-[#D4AF37]">•</span>
+                        <span className="uppercase tracking-widest">{product.concentration}</span>
+                      </>
+                    )}
+                    <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#D4AF37]/30" />
                   </div>
-                  <ul className={`space-y-1.5 text-xs font-medium ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
-                    {product.notes?.base?.map((n, i) => <li key={i}>{n}</li>) || <li>Add fragrance notes</li>}
-                  </ul>
-                </div>
+                )}
 
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB 2: Performance Profile */}
           {activeTab === 'performance' && (

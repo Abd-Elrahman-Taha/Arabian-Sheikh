@@ -109,14 +109,27 @@ export default function AdminReviews() {
       setHasPreviousPage(res.hasPreviousPage || page > 1);
       setHasNextPage(res.hasNextPage || page < (res.totalPages || 1));
 
-      // Calculate quick metric counts
-      setMetrics(prev => ({
-        ...prev,
-        total: res.totalCount || items.length,
-        pending: items.filter(r => r.status === 'Pending').length,
-        approved: items.filter(r => r.status === 'Approved').length,
-        rejectedOrHidden: items.filter(r => r.status === 'Rejected' || r.status === 'Hidden').length
-      }));
+      // Fetch accurate metrics from ALL reviews (not just current page) by getting all without status filter
+      // This ensures newly submitted Pending reviews always show up in the metrics strip
+      try {
+        const allRes = await reviewService.adminGetReviews({ pageSize: 1000 });
+        const allItems = allRes.items || [];
+        setMetrics({
+          total: allRes.totalCount || allItems.length,
+          pending: allItems.filter(r => String(r.status || '').toLowerCase() === 'pending').length,
+          approved: allItems.filter(r => String(r.status || '').toLowerCase() === 'approved').length,
+          rejectedOrHidden: allItems.filter(r => ['rejected', 'hidden'].includes(String(r.status || '').toLowerCase())).length
+        });
+      } catch {
+        // Fallback to page-level counts
+        setMetrics(prev => ({
+          ...prev,
+          total: res.totalCount || items.length,
+          pending: items.filter(r => r.status === 'Pending').length,
+          approved: items.filter(r => r.status === 'Approved').length,
+          rejectedOrHidden: items.filter(r => r.status === 'Rejected' || r.status === 'Hidden').length
+        }));
+      }
     } catch (err) {
       console.warn('Failed to load reviews queue:', err.message);
       error(err.message || 'Failed to load reviews moderation queue.');
