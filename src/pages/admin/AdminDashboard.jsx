@@ -7,6 +7,7 @@ import { orderService } from '../../services/orderService';
 import { useToast } from '../../context/ToastContext';
 import { cleanImageUrl } from '../../api/normalizers';
 import AnimatedCounter from '../../components/common/AnimatedCounter';
+import AdminReports from './AdminReports';
 import {
   DollarSign,
   ShoppingBag,
@@ -79,11 +80,12 @@ const DEFAULT_OVERVIEW = {
   topCustomers: []
 };
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ initialTab = 'all' }) {
   const { navigate } = useRouter();
   const { t } = useTranslation();
   const { success, error: showErrorToast } = useToast();
 
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [timeZone, setTimeZone] = useState(() => {
     return localStorage.getItem('arabian_sheikh_dashboard_tz') || 'Europe/London';
   });
@@ -268,6 +270,51 @@ export default function AdminDashboard() {
             Coupons
           </Link>
         </div>
+      </div>
+
+      {/* Dashboard View Mode Selector: All-In-One | Sales Reports | Operations */}
+      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[#D4AF37]/20 pb-4">
+        <div className="flex items-center p-1 rounded-2xl bg-black/60 border border-[#D4AF37]/30 backdrop-blur-md">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-cinzel font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'all'
+                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black shadow-lg font-extrabold'
+                : 'text-[#D8BE99] hover:text-[#F2D675]'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Complete Dashboard</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-cinzel font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'reports'
+                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black shadow-lg font-extrabold'
+                : 'text-[#D8BE99] hover:text-[#F2D675]'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Sales & Financial Reports</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('operations')}
+            className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-cinzel font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'operations'
+                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black shadow-lg font-extrabold'
+                : 'text-[#D8BE99] hover:text-[#F2D675]'
+            }`}
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>Operations & Pipeline</span>
+          </button>
+        </div>
+
+        <span className="text-xs font-mono text-[#A69076]">
+          {activeTab === 'all' && '✨ Unified operational telemetry & sales reports on one page'}
+          {activeTab === 'reports' && '📈 Multi-dimensional sales reports: Overview, Products, Categories, Countries, Export'}
+          {activeTab === 'operations' && '📦 Operational pipeline, inventory vaults, returns & recent live orders'}
+        </span>
       </div>
 
       {/* Fetch Error Notice */}
@@ -505,8 +552,45 @@ export default function AdminDashboard() {
         </div>
       </ScrollReveal>
 
-      {/* Returns & Refund Disbursements Telemetry */}
-      <ScrollReveal direction="up">
+      {/* Sales Reports & Performance Analytics (Integrated on Dashboard) */}
+      {(activeTab === 'all' || activeTab === 'reports') && (
+        <ScrollReveal direction="up">
+          <div className="p-5 sm:p-7 rounded-3xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 shadow-2xl backdrop-blur-md space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-4 gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F2D675]">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="font-cinzel text-lg sm:text-xl font-bold uppercase text-[#F3E6D0] tracking-wider">
+                    Sales Reports & Performance Analytics
+                  </h2>
+                  <p className="text-xs text-[#D8BE99]">
+                    Multi-dimensional breakdowns: Overview, Products, Categories, Countries & Direct Exports
+                  </p>
+                </div>
+              </div>
+              {activeTab === 'all' && (
+                <button
+                  onClick={() => setActiveTab('reports')}
+                  className="px-4 py-1.5 rounded-full border border-[#D4AF37]/40 text-xs font-cinzel font-bold text-[#F2D675] hover:bg-[#D4AF37]/10 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer transition-all"
+                >
+                  <span>Focus Reports View</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <AdminReports embedded={true} />
+          </div>
+        </ScrollReveal>
+      )}
+
+      {/* Operational Sections: Pipeline, Inventory, Returns, Recent Orders */}
+      {(activeTab === 'all' || activeTab === 'operations') && (
+        <>
+          {/* Returns & Refund Disbursements Telemetry */}
+          <ScrollReveal direction="up">
         <div className="p-5 sm:p-6 rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 space-y-4 shadow-2xl backdrop-blur-md">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#D4AF37]/20 pb-3 gap-2">
             <div className="flex items-center gap-2.5">
@@ -973,6 +1057,8 @@ export default function AdminDashboard() {
           )}
         </div>
       </ScrollReveal>
+        </>
+      )}
     </div>
   );
 }

@@ -118,7 +118,7 @@ function MainRouter() {
             <AdminManagement />
           )}
           {currentPath === '/admin/inventory' && <AdminInventory />}
-          {(currentPath === '/admin/reports' || currentPath === '/admin/reports/sales' || currentPath === '/admin/sales-reports' || currentPath === '/admin/analytics') && <AdminReports />}
+          {(currentPath === '/admin/reports' || currentPath === '/admin/reports/sales' || currentPath === '/admin/sales-reports' || currentPath === '/admin/analytics') && <AdminDashboard initialTab="reports" />}
           {currentPath === '/admin/promotions' && <AdminPromotions />}
           {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
           {(currentPath === '/admin/content/faqs' || currentPath === '/dashboard/content/faqs') && <AdminFaqs />}

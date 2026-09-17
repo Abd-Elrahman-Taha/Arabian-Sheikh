@@ -37,8 +37,7 @@ export default function AdminLayout({ children }) {
     {
       title: 'Overview',
       links: [
-        { to: '/admin', label: t('admin.dashboard') || 'Dashboard', icon: LayoutDashboard, exact: true },
-        { to: '/admin/reports', label: 'Sales Reports', icon: TrendingUp, aliases: ['/admin/reports/sales', '/admin/sales-reports'] }
+        { to: '/admin', label: t('admin.dashboard') || 'Dashboard', icon: LayoutDashboard, exact: true }
       ]
     },
     {

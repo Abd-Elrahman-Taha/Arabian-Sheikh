@@ -49,7 +49,7 @@ const ORDER_STATUS_OPTIONS = [
   { value: 'Cancelled', label: 'Cancelled' }
 ];
 
-export default function AdminReports() {
+export default function AdminReports({ embedded = false }) {
   const { t } = useTranslation();
   const { success, error, info } = useToast();
 
@@ -153,13 +153,23 @@ export default function AdminReports() {
       if (brandIdFilter && !isNaN(Number(brandIdFilter))) params.brandId = Number(brandIdFilter);
       if (countryFilter.trim()) params.country = countryFilter.trim();
 
-      const data = await reportService.getSalesReport(params);
-      setOverviewData(data);
+      try {
+        const data = await reportService.getSalesReport(params);
+        setOverviewData(data);
 
-      // Sync concrete server from/to if preset was used
-      if (data?.period?.from && data?.period?.to && periodPreset !== 'custom') {
-        setFromDate(data.period.from.split('T')[0]);
-        setToDate(data.period.to.split('T')[0]);
+        // Sync concrete server from/to if preset was used
+        if (typeof data?.period?.from === 'string' && typeof data?.period?.to === 'string' && periodPreset !== 'custom') {
+          setFromDate(data.period.from.split('T')[0]);
+          setToDate(data.period.to.split('T')[0]);
+        }
+      } catch (err) {
+        console.warn('API getSalesReport error, computing local fallback:', err.message);
+        const fallback = await reportService.computeSalesReportFallback(params).catch(() => null);
+        if (fallback) {
+          setOverviewData(fallback);
+        } else {
+          setOverviewError(err.message || 'Failed to load sales report overview.');
+        }
       }
     } catch (err) {
       setOverviewError(err.message || 'Failed to load sales report overview.');
@@ -275,7 +285,7 @@ export default function AdminReports() {
   );
 
   return (
-    <div className="space-y-8 pb-20 text-[#F3E6D0]">
+    <div className={`space-y-8 text-[#F3E6D0] ${embedded ? 'pb-4' : 'pb-20'}`}>
       {/* Top Banner & Date Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-[#D4AF37]/20 pb-6">
         <div>
