@@ -112,7 +112,7 @@ export default function AdminReviews() {
       // Fetch accurate metrics from ALL reviews (not just current page) by getting all without status filter
       // This ensures newly submitted Pending reviews always show up in the metrics strip
       try {
-        const allRes = await reviewService.adminGetReviews({ pageSize: 1000 });
+        const allRes = await reviewService.adminGetReviews({ pageSize: 100 });
         const allItems = allRes.items || [];
         setMetrics({
           total: allRes.totalCount || allItems.length,

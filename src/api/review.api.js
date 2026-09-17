@@ -10,7 +10,7 @@ export const reviewApi = {
   async getProductReviews(productId, params = {}) {
     const query = {};
     if (params.page || params.Page) query.page = Number(params.page || params.Page);
-    if (params.pageSize || params.PageSize) query.pageSize = Number(params.pageSize || params.PageSize);
+    if (params.pageSize || params.PageSize) query.pageSize = Math.min(100, Math.max(1, Number(params.pageSize || params.PageSize)));
     if (params.rating || params.Rating) query.rating = Number(params.rating || params.Rating);
 
     const response = await apiClient.get(ENDPOINTS.PRODUCTS.REVIEWS(productId), {
@@ -60,7 +60,7 @@ export const reviewApi = {
   async adminGetReviews(params = {}) {
     const query = {};
     if (params.page || params.Page) query.page = Number(params.page || params.Page);
-    if (params.pageSize || params.PageSize) query.pageSize = Number(params.pageSize || params.PageSize);
+    if (params.pageSize || params.PageSize) query.pageSize = Math.min(100, Math.max(1, Number(params.pageSize || params.PageSize)));
     if (params.status || params.Status) query.status = String(params.status || params.Status);
     if (params.rating || params.Rating) query.rating = Number(params.rating || params.Rating);
     if (params.isReported !== undefined && params.isReported !== null && params.isReported !== '') {

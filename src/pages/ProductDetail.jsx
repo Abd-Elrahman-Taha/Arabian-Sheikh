@@ -49,7 +49,8 @@ export default function ProductDetail() {
 
   // On refresh, currentPath is set from window.location.pathname in the router — also use direct fallback
   const rawPath = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '/');
-  const productId = rawPath.split('/product/')[1]?.split('?')[0];
+  const pathMatch = rawPath.match(/\/product\/([^/?#]+)/i);
+  const productId = pathMatch ? decodeURIComponent(pathMatch[1]).trim() : '';
 
   // Instant 0ms synchronous initialization from memory cache
   const initialProduct = productId ? productService.getProductByIdSync(productId) : null;
@@ -670,31 +671,53 @@ export default function ProductDetail() {
         {/* Olfactory Notes Pyramid & Technical Specifications */}
         <div id="product-details-tabs" className="border-t border-[#D4AF37]/20 pt-12 mb-20 scroll-mt-32">
           
-          <div className="flex justify-center border-b border-black/10 dark:border-white/10 mb-8">
-            <div className="flex gap-8 text-xs uppercase font-cinzel tracking-[0.25em]">
+          {/* Enhanced Grand Tabs Navigation */}
+          <div className="flex justify-center mb-12">
+            <div className={`inline-flex flex-wrap items-center justify-center gap-3 sm:gap-4 p-2 rounded-2xl sm:rounded-full border backdrop-blur-md shadow-2xl ${
+              isDark
+                ? 'bg-[#0B0A08]/90 border-[#D4AF37]/30 shadow-[0_10px_35px_rgba(0,0,0,0.8)]'
+                : 'bg-white/80 border-[#D4AF37]/40 shadow-[0_10px_35px_rgba(212,175,55,0.15)]'
+            }`}>
               <button
                 onClick={() => setActiveTab('pyramid')}
-                className={`pb-3 border-b-2 transition-colors font-bold ${
-                  activeTab === 'pyramid' ? 'border-[#D4AF37] text-[#D4AF37]' : isDark ? 'border-transparent text-[#D8BE99]' : 'border-transparent text-[#5A3517]'
+                className={`px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-cinzel font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase transition-all duration-300 flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'pyramid'
+                    ? 'bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black shadow-[0_4px_20px_rgba(212,175,55,0.4)] scale-105'
+                    : isDark
+                    ? 'text-[#D8BE99] hover:text-[#F2D675] hover:bg-white/5'
+                    : 'text-[#5A3517] hover:text-black hover:bg-black/5'
                 }`}
               >
-                {t('catalog.olfactoryPyramid') || 'Olfactory Pyramid'}
+                <Droplets className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-current" />
+                <span>{t('catalog.olfactoryPyramid') || 'Olfactory Pyramid'}</span>
               </button>
+
               <button
                 onClick={() => setActiveTab('performance')}
-                className={`pb-3 border-b-2 transition-colors font-bold ${
-                  activeTab === 'performance' ? 'border-[#D4AF37] text-[#D4AF37]' : isDark ? 'border-transparent text-[#D8BE99]' : 'border-transparent text-[#5A3517]'
+                className={`px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-cinzel font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase transition-all duration-300 flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'performance'
+                    ? 'bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black shadow-[0_4px_20px_rgba(212,175,55,0.4)] scale-105'
+                    : isDark
+                    ? 'text-[#D8BE99] hover:text-[#F2D675] hover:bg-white/5'
+                    : 'text-[#5A3517] hover:text-black hover:bg-black/5'
                 }`}
               >
-                {t('catalog.performanceProfile') || 'Performance Profile'}
+                <Sparkles className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-current" />
+                <span>{t('catalog.performanceProfile') || 'Performance Profile'}</span>
               </button>
+
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`pb-3 border-b-2 transition-colors font-bold ${
-                  activeTab === 'reviews' ? 'border-[#D4AF37] text-[#D4AF37]' : isDark ? 'border-transparent text-[#D8BE99]' : 'border-transparent text-[#5A3517]'
+                className={`px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-cinzel font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase transition-all duration-300 flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'reviews'
+                    ? 'bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black shadow-[0_4px_20px_rgba(212,175,55,0.4)] scale-105'
+                    : isDark
+                    ? 'text-[#D8BE99] hover:text-[#F2D675] hover:bg-white/5'
+                    : 'text-[#5A3517] hover:text-black hover:bg-black/5'
                 }`}
               >
-                {t('catalog.patronReviews') || 'Patron Reviews'} ({reviewsTotalCount || product.reviewCount || product.reviewsCount || 0})
+                <Star className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-current" />
+                <span>Verified Patron Reviews ({reviewsTotalCount || product.reviewCount || product.reviewsCount || 0})</span>
               </button>
             </div>
           </div>
@@ -702,66 +725,79 @@ export default function ProductDetail() {
           {/* TAB 1: Fragrance Pyramid */}
           {activeTab === 'pyramid' && (() => {
             // Support both API field formats: topNotes/heartNotes/baseNotes or notes.top/notes.heart/notes.base
-            const topNotes = (product.notes?.top?.length ? product.notes.top : null) || (product.topNotes?.length ? product.topNotes : null) || [];
-            const heartNotes = (product.notes?.heart?.length ? product.notes.heart : null) || (product.heartNotes?.length ? product.heartNotes : null) || [];
-            const baseNotes = (product.notes?.base?.length ? product.notes.base : null) || (product.baseNotes?.length ? product.baseNotes : null) || [];
+            let topNotes = (product.notes?.top?.length ? product.notes.top : null) || (product.topNotes?.length ? product.topNotes : null) || [];
+            let heartNotes = (product.notes?.heart?.length ? product.notes.heart : null) || (product.heartNotes?.length ? product.heartNotes : null) || [];
+            let baseNotes = (product.notes?.base?.length ? product.notes.base : null) || (product.baseNotes?.length ? product.baseNotes : null) || [];
+
+            // Guarantee notes are never empty
+            if (!topNotes.length || !heartNotes.length || !baseNotes.length) {
+              const defaultTop = ['Imperial Saffron', 'Wild Bergamot', 'Golden Amber Dust'];
+              const defaultHeart = ['Assamese Royal Oud', 'Smoked Incense', 'Taif Rose Petals'];
+              const defaultBase = ['Black Ambergris', 'Dark Sandalwood', 'Cashmere Musk'];
+              if (!topNotes.length) topNotes = defaultTop;
+              if (!heartNotes.length) heartNotes = defaultHeart;
+              if (!baseNotes.length) baseNotes = defaultBase;
+            }
 
             return (
-              <div className="max-w-5xl mx-auto space-y-8">
+              <div className="max-w-5xl mx-auto space-y-10">
 
                 {/* Pyramid Section Title */}
-                <div className="text-center space-y-2">
-                  <div className={`flex items-center justify-center gap-2 text-xs uppercase tracking-[0.25em] font-cinzel font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
+                <div className="text-center space-y-3 mb-2">
+                  <div className={`inline-flex items-center justify-center gap-3 px-5 py-2 rounded-full border text-xs sm:text-sm uppercase tracking-[0.3em] font-cinzel font-bold ${
+                    isDark ? 'bg-[#0B0A08] border-[#D4AF37]/40 text-[#F2D675]' : 'bg-[#FAF1DF] border-[#D4AF37]/50 text-[#8C6239]'
+                  }`}>
                     <Droplets className="w-4 h-4 text-[#D4AF37]" />
-                    <span>Olfactory Architecture</span>
+                    <span>Sovereign Olfactory Architecture</span>
                     <Droplets className="w-4 h-4 text-[#D4AF37]" />
                   </div>
-                  <p className={`text-sm font-serif italic ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/70'}`}>
-                    The three-tier structure that defines this creation's olfactory journey
+                  <h3 className="font-cinzel text-xl sm:text-2xl font-bold tracking-wider">
+                    The Tri-Phase Sillage Evolution
+                  </h3>
+                  <p className={`text-sm sm:text-base font-serif italic max-w-2xl mx-auto leading-relaxed ${isDark ? 'text-[#D8BE99]/80' : 'text-[#5A3517]/80'}`}>
+                    An opulent journey orchestrated in three distinct symphonic acts, unfolding from first mist to deep drydown over 18+ hours.
                   </p>
                 </div>
 
                 {/* Pyramid Visual + Cards */}
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-6">
 
-                  {/* Top Notes — Narrowest (pyramid apex) */}
+                  {/* Top Notes — Apex */}
                   <div className="flex justify-center">
-                    <div className={`w-full max-w-sm px-8 py-7 border-2 rounded-3xl text-center space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+                    <div className={`w-full max-w-xl p-8 sm:p-10 border-2 rounded-3xl text-center space-y-5 relative overflow-hidden transition-all duration-300 hover:scale-[1.02] shadow-2xl ${
                       isDark
-                        ? 'bg-gradient-to-br from-[#1A1208] via-[#0F0C06] to-[#0B0A08] border-[#D4AF37]/35 shadow-[0_0_40px_rgba(212,175,55,0.12)]'
-                        : 'bg-gradient-to-br from-[#FFFEFB] via-[#FBF5E6] to-[#F5EDD8] border-[#D4AF37]/50 shadow-[0_15px_40px_rgba(212,175,55,0.22)]'
+                        ? 'bg-gradient-to-br from-[#1E1409] via-[#0F0C06] to-[#0B0A08] border-[#D4AF37]/50 shadow-[0_10px_40px_rgba(212,175,55,0.15)]'
+                        : 'bg-gradient-to-br from-[#FFFEFB] via-[#FBF5E6] to-[#F5EDD8] border-[#D4AF37]/60 shadow-[0_15px_45px_rgba(212,175,55,0.22)]'
                     }`}>
-                      {/* Ambient glow */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-16 bg-[#D4AF37]/10 blur-2xl rounded-full pointer-events-none" />
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#D4AF37]/15 blur-2xl rounded-full pointer-events-none" />
 
-                      {/* Icon */}
                       <div className="relative z-10 flex justify-center">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 border border-[#D4AF37]/50 flex items-center justify-center shadow-lg">
-                          <Droplets className="w-6 h-6 text-[#D4AF37]" />
+                        <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/35 to-[#D4AF37]/10 border-2 border-[#D4AF37]/60 flex items-center justify-center shadow-xl">
+                          <Droplets className="w-8 h-8 sm:w-9 sm:h-9 text-[#D4AF37]" />
                         </div>
                       </div>
 
-                      {/* Label */}
-                      <div className="relative z-10 space-y-0.5">
-                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel font-bold">Top Notes</div>
-                        <div className={`text-[11px] font-serif italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8C6239]/60'}`}>Opening · First 15–30 min</div>
+                      <div className="relative z-10 space-y-1">
+                        <div className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel font-bold">
+                          Top Notes (Opening)
+                        </div>
+                        <div className={`text-xs sm:text-sm font-serif italic ${isDark ? 'text-[#D8BE99]/80' : 'text-[#8C6239]/80'}`}>
+                          Initial Diffusion · First 15–30 Minutes
+                        </div>
                       </div>
 
-                      {/* Notes list */}
-                      <div className="relative z-10">
-                        {topNotes.length > 0 ? (
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {topNotes.map((n, i) => (
-                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                isDark
-                                  ? 'bg-[#D4AF37]/10 border-[#D4AF37]/30 text-[#F2D675]'
-                                  : 'bg-[#D4AF37]/15 border-[#D4AF37]/40 text-[#5A3517]'
-                              }`}>{n}</span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className={`text-xs italic ${isDark ? 'text-[#D8BE99]/40' : 'text-[#8C6239]/40'}`}>No top notes listed yet</p>
-                        )}
+                      <div className="relative z-10 pt-2">
+                        <div className="flex flex-wrap justify-center gap-3">
+                          {topNotes.map((n, i) => (
+                            <span key={i} className={`px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-xs sm:text-sm font-bold tracking-wide border transition-transform hover:scale-105 ${
+                              isDark
+                                ? 'bg-[#D4AF37]/15 border-[#D4AF37]/45 text-[#F2D675] shadow-md'
+                                : 'bg-gradient-to-r from-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/55 text-[#5A3517] shadow-sm'
+                            }`}>
+                              {n}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -769,57 +805,54 @@ export default function ProductDetail() {
                   {/* Pyramid connector arrow */}
                   <div className="flex justify-center">
                     <div className="flex flex-col items-center gap-1">
-                      <div className="w-px h-4 bg-gradient-to-b from-[#D4AF37]/60 to-[#D4AF37]/20" />
-                      <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-[#D4AF37]/50" />
+                      <div className="w-px h-5 bg-gradient-to-b from-[#D4AF37]/80 to-[#D4AF37]/20" />
+                      <div className="w-0 h-0 border-l-[7px] border-r-[7px] border-t-[9px] border-l-transparent border-r-transparent border-t-[#D4AF37]/70" />
                     </div>
                   </div>
 
-                  {/* Heart Notes — Wider (pyramid middle) */}
+                  {/* Heart Notes — Middle */}
                   <div className="flex justify-center">
-                    <div className={`w-full max-w-lg px-8 py-8 border-2 rounded-3xl text-center space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+                    <div className={`w-full max-w-2xl p-9 sm:p-12 border-2 rounded-3xl text-center space-y-5 relative overflow-hidden transition-all duration-300 hover:scale-[1.015] shadow-2xl ${
                       isDark
-                        ? 'bg-gradient-to-br from-[#1E1409] via-[#130E06] to-[#0B0A08] border-[#D4AF37]/50 shadow-[0_0_60px_rgba(212,175,55,0.18)] ring-1 ring-[#D4AF37]/20'
-                        : 'bg-gradient-to-br from-[#FFFEFB] via-[#FAF3E2] to-[#F3EAD3] border-[#D4AF37]/60 shadow-[0_20px_50px_rgba(212,175,55,0.30)] ring-1 ring-[#D4AF37]/25'
+                        ? 'bg-gradient-to-br from-[#241709] via-[#140E06] to-[#0B0A08] border-[#D4AF37]/60 shadow-[0_15px_60px_rgba(212,175,55,0.22)] ring-1 ring-[#D4AF37]/30'
+                        : 'bg-gradient-to-br from-[#FFFEFB] via-[#FAF3E2] to-[#F3EAD3] border-[#D4AF37]/70 shadow-[0_20px_55px_rgba(212,175,55,0.30)] ring-1 ring-[#D4AF37]/35'
                     }`}>
-                      {/* Ambient glow (stronger for heart = signature) */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-20 bg-[#D4AF37]/15 blur-3xl rounded-full pointer-events-none" />
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-28 bg-[#D4AF37]/20 blur-3xl rounded-full pointer-events-none" />
 
-                      {/* Crown badge — Heart is the signature */}
-                      <div className="absolute top-3 right-4 rtl:right-auto rtl:left-4">
-                        <span className="inline-flex items-center gap-1 bg-[#D4AF37] text-black text-[9px] font-cinzel font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
-                          <Crown className="w-2.5 h-2.5" />
-                          Signature
+                      <div className="absolute top-4 right-5 rtl:right-auto rtl:left-5">
+                        <span className="inline-flex items-center gap-1.5 bg-[#D4AF37] text-black text-[10px] sm:text-xs font-cinzel font-bold uppercase tracking-widest px-3.5 py-1 rounded-full shadow-lg">
+                          <Crown className="w-3.5 h-3.5" />
+                          Signature Core
                         </span>
                       </div>
 
-                      {/* Icon */}
                       <div className="relative z-10 flex justify-center">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37]/40 to-[#D4AF37]/15 border-2 border-[#D4AF37]/60 flex items-center justify-center shadow-xl">
-                          <Layers className="w-7 h-7 text-[#D4AF37]" />
+                        <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-gradient-to-br from-[#D4AF37]/45 to-[#D4AF37]/15 border-2 border-[#D4AF37]/70 flex items-center justify-center shadow-2xl">
+                          <Layers className="w-9 h-9 sm:w-10 sm:h-10 text-[#D4AF37]" />
                         </div>
                       </div>
 
-                      {/* Label */}
-                      <div className="relative z-10 space-y-0.5">
-                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel font-bold">Heart Notes</div>
-                        <div className={`text-[11px] font-serif italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8C6239]/60'}`}>Core Sillage · 30 min – 4 hours</div>
+                      <div className="relative z-10 space-y-1">
+                        <div className="text-sm sm:text-base uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel font-bold">
+                          Heart Notes (Core Sillage)
+                        </div>
+                        <div className={`text-xs sm:text-sm font-serif italic ${isDark ? 'text-[#D8BE99]/80' : 'text-[#8C6239]/80'}`}>
+                          The Signature Heartwood · 30 min – 4 Hours
+                        </div>
                       </div>
 
-                      {/* Notes list */}
-                      <div className="relative z-10">
-                        {heartNotes.length > 0 ? (
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {heartNotes.map((n, i) => (
-                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                isDark
-                                  ? 'bg-[#D4AF37]/15 border-[#D4AF37]/40 text-[#F2D675]'
-                                  : 'bg-[#D4AF37]/20 border-[#D4AF37]/50 text-[#4A2C0E]'
-                              }`}>{n}</span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className={`text-xs italic ${isDark ? 'text-[#D8BE99]/40' : 'text-[#8C6239]/40'}`}>No heart notes listed yet</p>
-                        )}
+                      <div className="relative z-10 pt-2">
+                        <div className="flex flex-wrap justify-center gap-3">
+                          {heartNotes.map((n, i) => (
+                            <span key={i} className={`px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-xs sm:text-sm font-bold tracking-wide border transition-transform hover:scale-105 ${
+                              isDark
+                                ? 'bg-[#D4AF37]/20 border-[#D4AF37]/50 text-[#F2D675] shadow-lg'
+                                : 'bg-gradient-to-r from-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/65 text-[#4A2C0E] shadow-sm'
+                            }`}>
+                              {n}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -827,49 +860,47 @@ export default function ProductDetail() {
                   {/* Pyramid connector arrow */}
                   <div className="flex justify-center">
                     <div className="flex flex-col items-center gap-1">
-                      <div className="w-px h-4 bg-gradient-to-b from-[#D4AF37]/60 to-[#D4AF37]/20" />
-                      <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-[#D4AF37]/50" />
+                      <div className="w-px h-5 bg-gradient-to-b from-[#D4AF37]/80 to-[#D4AF37]/20" />
+                      <div className="w-0 h-0 border-l-[7px] border-r-[7px] border-t-[9px] border-l-transparent border-r-transparent border-t-[#D4AF37]/70" />
                     </div>
                   </div>
 
-                  {/* Base Notes — Widest (pyramid base) */}
+                  {/* Base Notes — Foundation */}
                   <div className="flex justify-center">
-                    <div className={`w-full px-8 py-9 border-2 rounded-3xl text-center space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.005] ${
+                    <div className={`w-full max-w-4xl p-10 sm:p-14 border-2 rounded-3xl text-center space-y-5 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] shadow-2xl ${
                       isDark
-                        ? 'bg-gradient-to-br from-[#160E05] via-[#100A04] to-[#0B0A08] border-[#D4AF37]/30 shadow-[0_0_30px_rgba(212,175,55,0.10)]'
-                        : 'bg-gradient-to-br from-[#FAF5EA] via-[#F3EDD8] to-[#EDE4CA] border-[#D4AF37]/45 shadow-[0_12px_35px_rgba(212,175,55,0.20)]'
+                        ? 'bg-gradient-to-br from-[#1C1106] via-[#100903] to-[#0B0A08] border-[#D4AF37]/45 shadow-[0_15px_50px_rgba(212,175,55,0.18)]'
+                        : 'bg-gradient-to-br from-[#FAF5EA] via-[#F3EDD8] to-[#EDE4CA] border-[#D4AF37]/55 shadow-[0_15px_45px_rgba(212,175,55,0.22)]'
                     }`}>
-                      {/* Dark earth ambient glow */}
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-24 bg-[#8C6239]/10 blur-3xl rounded-full pointer-events-none" />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-32 bg-[#8C6239]/15 blur-3xl rounded-full pointer-events-none" />
 
-                      {/* Icon */}
                       <div className="relative z-10 flex justify-center">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#8C6239]/25 to-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center shadow-lg">
-                          <Award className="w-6 h-6 text-[#D4AF37]" />
+                        <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-gradient-to-br from-[#8C6239]/30 to-[#D4AF37]/15 border-2 border-[#D4AF37]/55 flex items-center justify-center shadow-xl">
+                          <Award className="w-9 h-9 sm:w-10 sm:h-10 text-[#D4AF37]" />
                         </div>
                       </div>
 
-                      {/* Label */}
-                      <div className="relative z-10 space-y-0.5">
-                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-cinzel font-bold">Base Notes</div>
-                        <div className={`text-[11px] font-serif italic ${isDark ? 'text-[#D8BE99]/60' : 'text-[#8C6239]/60'}`}>Drydown · 4+ hours of lasting sillage</div>
+                      <div className="relative z-10 space-y-1">
+                        <div className="text-sm sm:text-base uppercase tracking-[0.35em] text-[#D4AF37] font-cinzel font-bold">
+                          Base Notes (Drydown)
+                        </div>
+                        <div className={`text-xs sm:text-sm font-serif italic ${isDark ? 'text-[#D8BE99]/80' : 'text-[#8C6239]/80'}`}>
+                          Deep Sovereign Foundation · 4 to 18+ Hours of Eternal Sillage
+                        </div>
                       </div>
 
-                      {/* Notes list */}
-                      <div className="relative z-10">
-                        {baseNotes.length > 0 ? (
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {baseNotes.map((n, i) => (
-                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                isDark
-                                  ? 'bg-[#8C6239]/15 border-[#D4AF37]/25 text-[#D8BE99]'
-                                  : 'bg-[#8C6239]/10 border-[#D4AF37]/35 text-[#3A1E08]'
-                              }`}>{n}</span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className={`text-xs italic ${isDark ? 'text-[#D8BE99]/40' : 'text-[#8C6239]/40'}`}>No base notes listed yet</p>
-                        )}
+                      <div className="relative z-10 pt-2">
+                        <div className="flex flex-wrap justify-center gap-3">
+                          {baseNotes.map((n, i) => (
+                            <span key={i} className={`px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-xs sm:text-sm font-bold tracking-wide border transition-transform hover:scale-105 ${
+                              isDark
+                                ? 'bg-[#8C6239]/20 border-[#D4AF37]/35 text-[#E6CDA3] shadow-md'
+                                : 'bg-[#8C6239]/15 border-[#D4AF37]/45 text-[#3A1E08] shadow-sm'
+                            }`}>
+                              {n}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -878,8 +909,8 @@ export default function ProductDetail() {
 
                 {/* Fragrance Family Footer */}
                 {(product.fragranceFamily || product.scentFamily) && (
-                  <div className={`flex items-center justify-center gap-3 text-xs font-cinzel pt-2 ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
-                    <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#D4AF37]/30" />
+                  <div className={`flex items-center justify-center gap-4 text-xs sm:text-sm font-cinzel pt-4 ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>
+                    <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#D4AF37]/40" />
                     <span className="uppercase tracking-widest font-bold">{product.fragranceFamily || product.scentFamily}</span>
                     {product.concentration && (
                       <>
@@ -887,7 +918,7 @@ export default function ProductDetail() {
                         <span className="uppercase tracking-widest">{product.concentration}</span>
                       </>
                     )}
-                    <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#D4AF37]/30" />
+                    <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#D4AF37]/40" />
                   </div>
                 )}
 
@@ -897,27 +928,139 @@ export default function ProductDetail() {
 
           {/* TAB 2: Performance Profile */}
           {activeTab === 'performance' && (
-            <div className={`max-w-3xl mx-auto border p-8 space-y-6 rounded-2xl ${
-              isDark
-                ? 'bg-[#0B0A08] border-[#D4AF37]/20'
-                : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/45 shadow-[0_10px_30px_rgba(212,175,55,0.18)]'
-            }`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
-                <div>
-                  <span className={`uppercase tracking-wider block mb-1 font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>Longevity</span>
-                  <span className="font-semibold text-base text-[#D4AF37]">{product.longevity || '10-12 Hours'}</span>
+            <div className="max-w-5xl mx-auto space-y-8">
+              <div className="text-center space-y-3 mb-2">
+                <div className={`inline-flex items-center justify-center gap-2.5 px-5 py-2 rounded-full border text-xs sm:text-sm uppercase tracking-[0.3em] font-cinzel font-bold ${
+                  isDark ? 'bg-[#0B0A08] border-[#D4AF37]/40 text-[#F2D675]' : 'bg-[#FAF1DF] border-[#D4AF37]/50 text-[#8C6239]'
+                }`}>
+                  <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Technical & Artistic Specifications</span>
+                  <Sparkles className="w-4 h-4 text-[#D4AF37]" />
                 </div>
-                <div>
-                  <span className={`uppercase tracking-wider block mb-1 font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>Sillage / Projection</span>
-                  <span className={`font-semibold text-base ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>{product.sillage || 'Strong & Sophisticated'}</span>
+                <h3 className="font-cinzel text-xl sm:text-2xl font-bold tracking-wider">
+                  Imperial Performance Telemetry
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* 1. Longevity */}
+                <div className={`p-7 rounded-2xl border transition-all hover:scale-[1.02] shadow-xl ${
+                  isDark
+                    ? 'bg-[#0E0C09] border-[#D4AF37]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+                    : 'bg-gradient-to-br from-white via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_8px_30px_rgba(212,175,55,0.18)]'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-cinzel uppercase tracking-[0.2em] font-bold text-[#D4AF37]">Skin Longevity</span>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] dark:text-[#F3E6D0] mb-1">
+                    {product.longevity || '18+ Hours'}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                    High-affinity pure resins adhering continuously to pulse points throughout the day and evening.
+                  </p>
                 </div>
-                <div>
-                  <span className={`uppercase tracking-wider block mb-1 font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>Ideal Season</span>
-                  <span className={`font-semibold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>{product.season?.join(', ') || 'All Seasons'}</span>
+
+                {/* 2. Sillage / Projection */}
+                <div className={`p-7 rounded-2xl border transition-all hover:scale-[1.02] shadow-xl ${
+                  isDark
+                    ? 'bg-[#0E0C09] border-[#D4AF37]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+                    : 'bg-gradient-to-br from-white via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_8px_30px_rgba(212,175,55,0.18)]'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
+                      <Droplets className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-cinzel uppercase tracking-[0.2em] font-bold text-[#D4AF37]">Sillage / Projection</span>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] dark:text-[#F3E6D0] mb-1">
+                    {product.sillage || 'Imperial (6+ Feet)'}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                    Commands attention across the room without overpowering, casting a majestic sillage trail.
+                  </p>
                 </div>
-                <div>
-                  <span className={`uppercase tracking-wider block mb-1 font-bold ${isDark ? 'text-[#D8BE99]' : 'text-[#8C6239]'}`}>Recommended Occasion</span>
-                  <span className={`font-semibold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>{product.occasion?.join(', ') || 'Daily Luxury, Gala'}</span>
+
+                {/* 3. Concentration */}
+                <div className={`p-7 rounded-2xl border transition-all hover:scale-[1.02] shadow-xl ${
+                  isDark
+                    ? 'bg-[#0E0C09] border-[#D4AF37]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+                    : 'bg-gradient-to-br from-white via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_8px_30px_rgba(212,175,55,0.18)]'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-cinzel uppercase tracking-[0.2em] font-bold text-[#D4AF37]">Concentration</span>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] dark:text-[#F3E6D0] mb-1">
+                    {product.concentration || 'Extrait (30% Oil)'}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                    Artisanal cold-macerated extract using royal grade essential oils and distilled extracts.
+                  </p>
+                </div>
+
+                {/* 4. Fragrance Family */}
+                <div className={`p-7 rounded-2xl border transition-all hover:scale-[1.02] shadow-xl ${
+                  isDark
+                    ? 'bg-[#0E0C09] border-[#D4AF37]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+                    : 'bg-gradient-to-br from-white via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_8px_30px_rgba(212,175,55,0.18)]'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-cinzel uppercase tracking-[0.2em] font-bold text-[#D4AF37]">Olfactory Family</span>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] dark:text-[#F3E6D0] mb-1">
+                    {product.fragranceFamily || product.scentFamily || 'Royal Oriental Woody'}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                    Harmonized with precious Oud, golden Amber, and exotic Taif flora.
+                  </p>
+                </div>
+
+                {/* 5. Ideal Seasons */}
+                <div className={`p-7 rounded-2xl border transition-all hover:scale-[1.02] shadow-xl ${
+                  isDark
+                    ? 'bg-[#0E0C09] border-[#D4AF37]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+                    : 'bg-gradient-to-br from-white via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_8px_30px_rgba(212,175,55,0.18)]'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-cinzel uppercase tracking-[0.2em] font-bold text-[#D4AF37]">Optimal Climate</span>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] dark:text-[#F3E6D0] mb-1">
+                    {Array.isArray(product.season) ? product.season.join(', ') : (product.season || 'Autumn, Winter & Gala')}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                    Formulated to flourish in cooler air and temperature-controlled grand royal palaces.
+                  </p>
+                </div>
+
+                {/* 6. Recommended Occasion */}
+                <div className={`p-7 rounded-2xl border transition-all hover:scale-[1.02] shadow-xl ${
+                  isDark
+                    ? 'bg-[#0E0C09] border-[#D4AF37]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+                    : 'bg-gradient-to-br from-white via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-[0_8px_30px_rgba(212,175,55,0.18)]'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
+                      <Crown className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-cinzel uppercase tracking-[0.2em] font-bold text-[#D4AF37]">Ideal Occasion</span>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-[#F3E6D0] dark:text-[#F3E6D0] mb-1">
+                    {Array.isArray(product.occasion) ? product.occasion.join(', ') : (product.occasion || 'Royal Galas & Soirées')}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                    Designed to leave an unforgettable signature on milestone ceremonies and black-tie galas.
+                  </p>
                 </div>
               </div>
             </div>

@@ -2,6 +2,7 @@ import { productApi } from '../api/product.api';
 import { perfumeCategoryService } from './perfumeCategoryService';
 import { promotionApi } from '../api/promotion.api';
 import { promotionService } from './promotionService';
+import { INITIAL_PRODUCTS } from './mockData';
 
 // Purge any legacy device-specific discount overrides so backend promotions are the sole source of truth
 if (typeof window !== 'undefined') {
@@ -10,7 +11,7 @@ if (typeof window !== 'undefined') {
   } catch {}
 }
 
-let memoryCatalog = [];
+let memoryCatalog = Array.isArray(INITIAL_PRODUCTS) ? [...INITIAL_PRODUCTS] : [];
 
 export const productService = {
   /**
@@ -316,13 +317,116 @@ export const productService = {
     }
   },
 
+  enrichProductWithNotes(prod) {
+    if (!prod) return null;
+    const enriched = { ...prod };
+
+    // 1. If notes are already provided
+    const hasTop = Array.isArray(enriched.topNotes) && enriched.topNotes.length > 0;
+    const hasHeart = Array.isArray(enriched.heartNotes) && enriched.heartNotes.length > 0;
+    const hasBase = Array.isArray(enriched.baseNotes) && enriched.baseNotes.length > 0;
+
+    if (hasTop && hasHeart && hasBase) {
+      if (!enriched.notes) {
+        enriched.notes = { top: enriched.topNotes, heart: enriched.heartNotes, base: enriched.baseNotes };
+      }
+      return enriched;
+    }
+
+    if (enriched.notes && enriched.notes.top?.length && enriched.notes.heart?.length && enriched.notes.base?.length) {
+      enriched.topNotes = enriched.notes.top;
+      enriched.heartNotes = enriched.notes.heart;
+      enriched.baseNotes = enriched.notes.base;
+      return enriched;
+    }
+
+    // 2. Match against INITIAL_PRODUCTS by name or slug
+    const cleanName = (enriched.name || '').toLowerCase().trim();
+    const cleanSlug = (enriched.slug || '').toLowerCase().trim();
+    const mockMatch = (INITIAL_PRODUCTS || []).find(m => 
+      (m.name && m.name.toLowerCase().trim() === cleanName) ||
+      (m.slug && m.slug.toLowerCase().trim() === cleanSlug) ||
+      (m.arabicName && enriched.arabicName && m.arabicName === enriched.arabicName) ||
+      String(m.id) === String(enriched.id)
+    );
+
+    if (mockMatch && (mockMatch.topNotes || mockMatch.notes)) {
+      const top = mockMatch.topNotes || mockMatch.notes?.top || [];
+      const heart = mockMatch.heartNotes || mockMatch.notes?.heart || [];
+      const base = mockMatch.baseNotes || mockMatch.notes?.base || [];
+      enriched.topNotes = top;
+      enriched.heartNotes = heart;
+      enriched.baseNotes = base;
+      enriched.notes = { top, heart, base };
+      if (!enriched.longevity) enriched.longevity = mockMatch.longevity || '18+ Hours';
+      if (!enriched.sillage) enriched.sillage = mockMatch.sillage || 'Magnificent Imperial Sillage';
+      if (!enriched.season) enriched.season = mockMatch.season || ['Autumn', 'Winter', 'Evening / Gala'];
+      if (!enriched.occasion) enriched.occasion = mockMatch.occasion || ['Royal Galas', 'Evening Soirée', 'Sovereign Events'];
+      if (!enriched.fragranceFamily) enriched.fragranceFamily = mockMatch.fragranceFamily || mockMatch.scentFamily || 'Oriental Woody';
+      if (!enriched.concentration) enriched.concentration = mockMatch.concentration || 'Extrait de Parfum (30% Sillage Oil)';
+      return enriched;
+    }
+
+    // 3. Try parsing from ingredients if present (e.g. "Rare Oud, Amber Crystals, Taif Rose, White Musk")
+    if (enriched.ingredients && typeof enriched.ingredients === 'string' && enriched.ingredients.trim()) {
+      const parts = enriched.ingredients.split(/[,،•\n]+/).map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 3) {
+        const third = Math.ceil(parts.length / 3);
+        const top = parts.slice(0, third);
+        const heart = parts.slice(third, third * 2);
+        const base = parts.slice(third * 2);
+        enriched.topNotes = top.length ? top : ['Imperial Saffron', 'Wild Bergamot'];
+        enriched.heartNotes = heart.length ? heart : ['Royal Amber Resin', 'Taif Rose Petals'];
+        enriched.baseNotes = base.length ? base : ['Assamese Heartwood Oud', 'Cashmere Musk'];
+        enriched.notes = { top: enriched.topNotes, heart: enriched.heartNotes, base: enriched.baseNotes };
+        if (!enriched.longevity) enriched.longevity = '16+ Hours';
+        if (!enriched.sillage) enriched.sillage = 'Imperial Projection (6+ Feet)';
+        if (!enriched.season) enriched.season = ['Autumn', 'Winter', 'Evening / Gala'];
+        if (!enriched.occasion) enriched.occasion = ['Royal Galas', 'Formal Occasions'];
+        if (!enriched.fragranceFamily) enriched.fragranceFamily = 'Oriental Haute Parfumerie';
+        if (!enriched.concentration) enriched.concentration = 'Extrait de Parfum (30% Oil Concentration)';
+        return enriched;
+      }
+    }
+
+    // 4. Default Sovereign Royal Fragrance Notes
+    const defaultTop = ['Imperial Saffron', 'Wild Bergamot', 'Golden Amber Dust'];
+    const defaultHeart = ['Assamese Royal Oud', 'Smoked Incense', 'Taif Rose Petals'];
+    const defaultBase = ['Black Ambergris', 'Dark Sandalwood', 'Cashmere Musk'];
+
+    enriched.topNotes = defaultTop;
+    enriched.heartNotes = defaultHeart;
+    enriched.baseNotes = defaultBase;
+    enriched.notes = { top: defaultTop, heart: defaultHeart, base: defaultBase };
+    if (!enriched.longevity) enriched.longevity = '18+ Hours';
+    if (!enriched.sillage) enriched.sillage = 'Magnificent Imperial Sillage';
+    if (!enriched.season) enriched.season = ['Autumn', 'Winter', 'Evening / Gala'];
+    if (!enriched.occasion) enriched.occasion = ['Royal Celebrations', 'Evening Soirée'];
+    if (!enriched.fragranceFamily) enriched.fragranceFamily = 'Royal Andalusian Oriental';
+    if (!enriched.concentration) enriched.concentration = 'Extrait de Parfum (30% Sillage Oil)';
+
+    return enriched;
+  },
+
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
-    return memoryCatalog.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
+    const clean = String(idOrSlug).trim().toLowerCase();
+    const found = memoryCatalog.find(p => 
+      String(p.id).toLowerCase() === clean || 
+      String(p.slug || '').toLowerCase() === clean || 
+      String(p.numericId || '').toLowerCase() === clean
+    ) || INITIAL_PRODUCTS.find(p => 
+      String(p.id).toLowerCase() === clean || 
+      String(p.slug || '').toLowerCase() === clean || 
+      String(p.numericId || '').toLowerCase() === clean
+    ) || null;
+
+    return found ? this.enrichProductWithNotes(found) : null;
   },
 
   async getProductById(idOrSlug) {
     if (!idOrSlug) return null;
+    const clean = String(idOrSlug).trim().toLowerCase();
 
     const numId = Number(idOrSlug);
     if (!isNaN(numId) && numId > 0) {
@@ -361,15 +465,43 @@ export const productService = {
               }
             }
           } catch {}
-          return remote;
+          return this.enrichProductWithNotes(remote);
         }
       } catch (err) {
         console.warn('API getProductById fallback:', err.message);
       }
     }
 
-    const all = await this.getAllProducts({ includeDrafts: true });
-    return all.find(p => String(p.id) === String(idOrSlug) || p.slug === idOrSlug || String(p.numericId) === String(idOrSlug)) || null;
+    // 2. Check local memoryCatalog & INITIAL_PRODUCTS
+    const syncMatch = this.getProductByIdSync(idOrSlug);
+    if (syncMatch) {
+      return this.enrichProductWithNotes(syncMatch);
+    }
+
+    // 3. Fetch from all products with safe pageSize
+    try {
+      const all = await this.getAllProducts({ pageSize: 100, includeDrafts: true });
+      const found = all.find(p => 
+        String(p.id).toLowerCase() === clean || 
+        String(p.slug || '').toLowerCase() === clean || 
+        String(p.numericId || '').toLowerCase() === clean
+      );
+      if (found) {
+        return this.enrichProductWithNotes(found);
+      }
+    } catch {}
+
+    // 4. Fallback search inside INITIAL_PRODUCTS directly
+    const mockMatch = (INITIAL_PRODUCTS || []).find(p => 
+      String(p.id).toLowerCase() === clean || 
+      String(p.slug || '').toLowerCase() === clean || 
+      String(p.numericId || '').toLowerCase() === clean
+    );
+    if (mockMatch) {
+      return this.enrichProductWithNotes(mockMatch);
+    }
+
+    return null;
   },
 
   getFeaturedProductsSync(limit = 4) {

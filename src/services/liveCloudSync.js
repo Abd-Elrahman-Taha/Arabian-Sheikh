@@ -692,6 +692,7 @@ export const liveCloudSync = {
   // REVIEWS SYNCHRONIZATION
   // ==========================================
   getReviews() {
+    loadLocalState();
     return Array.isArray(state.reviews) ? state.reviews : [];
   },
 
