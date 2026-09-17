@@ -652,6 +652,111 @@ export const orderService = {
     return this.updateOrderStatus(orderId, 'Cancelled', reason ? `Cancellation reason: ${reason}` : 'Cancelled by administrator');
   },
 
+  async customerCancelOrder(orderId, reason = '') {
+    const numId = Number(orderId);
+    if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
+      try {
+        await orderApi.cancelOrder(numId, reason);
+      } catch (e) {
+        console.warn('Customer cancelOrder API fallback:', e.message);
+      }
+    }
+    return this.updateOrderStatus(orderId, 'CancelPending', reason ? `Cancellation request: ${reason}` : 'Cancellation requested by patron');
+  },
+
+  async getDeliveryStatus(orderId) {
+    const numId = Number(orderId);
+    if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
+      try {
+        const status = await orderApi.getDeliveryStatus(numId);
+        if (status) return status;
+      } catch (e) {
+        console.warn('Customer getDeliveryStatus API fallback:', e.message);
+      }
+    }
+    const order = this.getOrderByIdSync(orderId);
+    return {
+      orderId,
+      orderStatus: order?.orderStatus || order?.status || 'Processing',
+      shipmentStatus: order?.shipmentStatus || (order?.orderStatus === 'Shipped' ? 'Shipped' : (order?.orderStatus === 'Delivered' ? 'Delivered' : 'Created')),
+      carrierStatus: null,
+      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null
+    };
+  },
+
+  async getCustomerTracking(orderId) {
+    const numId = Number(orderId);
+    if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
+      try {
+        const tracking = await orderApi.trackOrder(numId);
+        if (tracking && (tracking.events?.length > 0 || tracking.trackingNumber)) {
+          return tracking;
+        }
+      } catch (e) {
+        console.warn('Customer tracking API fallback:', e.message);
+      }
+    }
+
+    const order = this.getOrderByIdSync(orderId);
+    const trkNumber = order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null;
+    const curStatus = order?.shipmentStatus || order?.orderStatus || order?.status || 'Created';
+
+    const events = (order?.timeline || []).map(t => ({
+      status: t.status || 'Created',
+      description: t.title || t.desc || t.status,
+      location: t.location || 'Palace Logistics Vault',
+      occurredAt: t.timestamp || t.date || new Date().toISOString()
+    }));
+
+    if (events.length === 0 && order) {
+      events.push({
+        status: 'Created',
+        description: 'Shipment created and registered with carrier',
+        location: 'Palace Logistics Vault',
+        occurredAt: order.date || order.createdAt || new Date().toISOString()
+      });
+      if (['Shipped', 'OutForDelivery', 'Delivered'].includes(curStatus)) {
+        events.push({
+          status: 'Shipped',
+          description: 'Package dispatched with carrier',
+          location: 'Sofia Distribution Center',
+          occurredAt: new Date(Date.now() - 3600000 * 12).toISOString()
+        });
+      }
+      if (['OutForDelivery', 'Delivered'].includes(curStatus)) {
+        events.push({
+          status: 'OutForDelivery',
+          description: 'Out for final delivery to recipient address',
+          location: order.shippingAddress?.city || 'Destination City',
+          occurredAt: new Date(Date.now() - 3600000 * 3).toISOString()
+        });
+      }
+      if (curStatus === 'Delivered') {
+        events.push({
+          status: 'Delivered',
+          description: 'Delivered safely to patron',
+          location: order.shippingAddress?.city || 'Destination City',
+          occurredAt: new Date().toISOString()
+        });
+      }
+    }
+
+    return {
+      orderId,
+      shipmentId: order?.shipmentId || 100,
+      carrier: order?.carrier || order?.shippingSnapshot?.carrier || 'ECONT',
+      trackingNumber: trkNumber,
+      currentStatus: curStatus,
+      carrierStatus: null,
+      expectedDeliveryDate: order?.expectedDeliveryDate || null,
+      events
+    };
+  },
+
+  async getAdminOrderTracking(orderId) {
+    return this.getOrderTracking(orderId);
+  },
+
   async getOrderStatusHistory(orderId) {
     if (!apiClient.isMockEnabled()) {
       try {
@@ -677,14 +782,15 @@ export const orderService = {
     const order = this.getOrderByIdSync(orderId);
     return {
       orderId,
-      carrier: order?.shippingSnapshot?.carrier || 'DHL Express',
-      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || 'TRK-EXP-001',
+      carrier: order?.shippingSnapshot?.carrier || 'ECONT',
+      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || 'TRK-EXP-001',
       status: order?.orderStatus || order?.status || 'InTransit',
       events: (order?.timeline || []).map(t => ({
-        timestamp: t.timestamp,
+        timestamp: t.timestamp || t.date || new Date().toISOString(),
+        occurredAt: t.timestamp || t.date || new Date().toISOString(),
         status: t.status,
-        description: t.title || t.status,
-        location: 'Logistics Center'
+        description: t.title || t.desc || t.status,
+        location: t.location || 'Palace Logistics Vault'
       }))
     };
   },

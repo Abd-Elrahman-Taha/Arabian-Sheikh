@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { paymentService } from '../../services/paymentService';
 import { productService } from '../../services/productService';
+import { shippingService } from '../../services/shippingService';
 import { checkoutApi } from '../../api/checkout.api';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -64,6 +65,39 @@ export default function CheckoutPage() {
     cvv: '888'
   });
 
+  // Shipping Quotes State
+  const [shippingQuotes, setShippingQuotes] = useState([]);
+  const [loadingQuotes, setLoadingQuotes] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchQuotes() {
+      setLoadingQuotes(true);
+      try {
+        const res = await shippingService.getQuotes({
+          addressId: 1,
+          countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
+          postalCode: formData.postalCode,
+          items
+        });
+        if (!active) return;
+        const opts = res?.options || [];
+        setShippingQuotes(opts);
+        if (opts.length > 0) {
+          setSelectedQuote(curr => curr || opts[0]);
+          setFormData(prev => ({ ...prev, shippingMethod: (curr => curr?.shippingMethod || opts[0].shippingMethod)(selectedQuote) }));
+        }
+      } catch (err) {
+        console.warn('Failed to load shipping quotes:', err);
+      } finally {
+        if (active) setLoadingQuotes(false);
+      }
+    }
+    fetchQuotes();
+    return () => { active = false; };
+  }, [formData.country, formData.postalCode, items.length]);
+
   // Sync with authenticated user whenever auth state changes/finishes loading
   useEffect(() => {
     if (user) {
@@ -88,8 +122,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const shippingCost = totals.shipping;
-  const grandTotal = totals.total;
+  const dynamicShippingCost = selectedQuote ? selectedQuote.cost : (totals.shipping !== undefined ? totals.shipping : 0);
+  const grandTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0) + dynamicShippingCost);
 
   const handleNextStep = (e) => {
     e.preventDefault();
@@ -104,7 +138,8 @@ export default function CheckoutPage() {
       }).catch(() => {});
     } else if (step === 2) {
       checkoutApi.setCheckoutShipping({
-        shippingMethod: formData.shippingMethod
+        shippingMethod: selectedQuote?.shippingMethod || formData.shippingMethod,
+        shippingMethodId: selectedQuote?.shippingMethodId || 1
       }).catch(() => {});
     }
     if (step < 3) {
@@ -138,17 +173,22 @@ export default function CheckoutPage() {
         subtotal: totals.subtotal,
         discountAmount: totals.discountAmount,
         discountCode: cart.discountCode,
-        shipping: shippingCost,
+        shipping: dynamicShippingCost,
+        shippingCost: dynamicShippingCost,
         total: grandTotal,
+        quoteId: selectedQuote?.quoteId || undefined,
+        shippingMethodId: selectedQuote?.shippingMethodId || 1,
+        carrier: selectedQuote?.carrier || 'ECONT',
         shippingAddress: {
           fullName: finalName,
           address: formData.address,
           city: formData.city,
           country: formData.country,
-          postalCode: formData.postalCode
+          postalCode: formData.postalCode,
+          phone: formData.phone
         },
         paymentMethod: 'CreditCard',
-        dhlTrackingNumber: 'DHL-EXP-' + Math.floor(1000000000 + Math.random() * 9000000000)
+        dhlTrackingNumber: `${selectedQuote?.carrier || 'ECONT'}-${Math.floor(100000000 + Math.random() * 900000000)}`
       });
 
       clearCart();
@@ -305,46 +345,112 @@ export default function CheckoutPage() {
                     type="submit"
                     className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] transition-colors flex items-center gap-2"
                   >
-                    <span>Continue to DHL Shipping</span>
+                    <span>Continue to Shipping Options</span>
                     <ArrowRight className="w-4 h-4 rtl:rotate-180" />
                   </button>
                 </div>
               </form>
             )}
 
-            {/* STEP 2: DHL Shipping Selection */}
+            {/* STEP 2: Shipping Method Selection (POST /api/Shipping/quotes) */}
             {step === 2 && (
               <form onSubmit={handleNextStep} className="space-y-4">
-                <h2 className="font-cinzel text-base font-bold text-[#D4AF37] uppercase tracking-wider pb-3 border-b border-white/10">
-                  2. Select DHL Express Method
-                </h2>
-
-                <div className="space-y-3">
-                  <label className="p-4 bg-black/60 border border-[#D4AF37] rounded flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <input type="radio" checked readOnly className="accent-[#D4AF37]" />
-                      <div>
-                        <div className="font-cinzel font-bold text-xs text-[#F3E6D0]">DHL Express Royal Air Delivery</div>
-                        <p className="text-[11px] text-[#D8BE99]">2-4 business days • Full temperature-controlled vault transport</p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-[#D4AF37]">
-                      {shippingCost === 0 ? 'FREE' : '€15.00'}
-                    </span>
-                  </label>
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <h2 className="font-cinzel text-base font-bold text-[#D4AF37] uppercase tracking-wider">
+                    2. Select Insured Shipping Method
+                  </h2>
+                  <span className="text-[11px] font-mono text-[#D8BE99]">
+                    {shippingQuotes.length} Options Available
+                  </span>
                 </div>
+
+                {loadingQuotes ? (
+                  <div className="p-8 text-center space-y-2 bg-black/40 border border-white/10 rounded-xl">
+                    <Truck className="w-5 h-5 animate-pulse text-[#D4AF37] mx-auto" />
+                    <p className="text-xs font-cinzel text-[#D8BE99]">Calculating real-time carrier quotes...</p>
+                  </div>
+                ) : shippingQuotes.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-neutral-400 bg-black/40 border border-white/10 rounded-xl">
+                    Unable to load carrier rates. Defaulting to insured royal delivery.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shippingQuotes.map((opt) => {
+                      const isSelected = selectedQuote?.quoteId === opt.quoteId || selectedQuote?.shippingMethodId === opt.shippingMethodId;
+                      const isEcont = String(opt.carrier || '').toUpperCase().includes('ECONT');
+                      return (
+                        <label
+                          key={opt.quoteId || opt.shippingMethodId}
+                          onClick={() => {
+                            setSelectedQuote(opt);
+                            setFormData(prev => ({ ...prev, shippingMethod: opt.shippingMethod }));
+                          }}
+                          className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-300 ${
+                            isSelected
+                              ? 'bg-black/80 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.15)] ring-1 ring-[#D4AF37]/50'
+                              : 'bg-black/50 border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name="shippingMethod"
+                              checked={isSelected}
+                              onChange={() => {
+                                setSelectedQuote(opt);
+                                setFormData(prev => ({ ...prev, shippingMethod: opt.shippingMethod }));
+                              }}
+                              className="accent-[#D4AF37] w-4 h-4 cursor-pointer"
+                            />
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
+                                  isEcont
+                                    ? 'bg-amber-950/80 text-[#F2D675] border-[#D4AF37]/40'
+                                    : 'bg-neutral-900 text-neutral-300 border-neutral-600/40'
+                                }`}>
+                                  {opt.carrier}
+                                </span>
+                                <span className="font-cinzel font-bold text-xs text-[#F3E6D0]">
+                                  {opt.shippingMethod}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-[#D8BE99]">
+                                {opt.estimatedDeliveryDays
+                                  ? `${opt.estimatedDeliveryDays} business days • Insured temperature-controlled transport`
+                                  : '2-4 business days • Insured temperature-controlled transport'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className={`font-mono text-xs font-bold ${
+                              opt.isFree || opt.cost === 0 ? 'text-emerald-400' : 'text-[#D4AF37]'
+                            }`}>
+                              {opt.isFree || opt.cost === 0 ? 'FREE' : `€${Number(opt.cost).toFixed(2)}`}
+                            </span>
+                            {opt.rateSource && (
+                              <div className="text-[9px] font-mono text-neutral-500 uppercase tracking-wider">
+                                {opt.rateSource}
+                              </div>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="pt-4 flex justify-between">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="px-6 py-2.5 bg-white/5 border border-white/10 text-xs font-cinzel text-[#F3E6D0]"
+                    className="px-6 py-2.5 bg-white/5 border border-white/10 text-xs font-cinzel text-[#F3E6D0] hover:bg-white/10 transition-colors cursor-pointer"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
-                    className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] transition-colors flex items-center gap-2"
+                    className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] transition-colors flex items-center gap-2 cursor-pointer"
                   >
                     <span>Continue to Payment</span>
                     <ArrowRight className="w-4 h-4 rtl:rotate-180" />

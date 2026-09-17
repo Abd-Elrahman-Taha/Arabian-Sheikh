@@ -1400,7 +1400,7 @@ export default function AdminOrders() {
                       <div className="absolute -left-[25px] top-1 w-3 h-3 rounded-full bg-[#0B0A08] border-2 border-cyan-400" />
                       <p className="font-bold text-[#F3E6D0]">{evt.description || evt.status}</p>
                       <p className="text-[10px] text-[#D8BE99] font-mono">
-                        {evt.timestamp ? new Date(evt.timestamp).toLocaleString() : '—'} • {evt.location || 'Hub'}
+                        {(evt.occurredAt || evt.timestamp) ? new Date(evt.occurredAt || evt.timestamp).toLocaleString() : '—'} • {evt.location || 'Hub'}
                       </p>
                     </div>
                   ))}

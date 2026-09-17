@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
+import { shippingService } from '../../services/shippingService';
 import {
   Truck,
   CheckCircle2,
@@ -12,7 +13,9 @@ import {
   ArrowLeft,
   ShieldCheck,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
@@ -23,13 +26,17 @@ export default function OrderTracking() {
   const orderId = currentPath.split('/order-tracking/')[1]?.split('?')[0] || 'ORD-98421';
 
   const [order, setOrder] = useState(null);
+  const [trackingData, setTrackingData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copiedTracking, setCopiedTracking] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
         const item = await orderService.getOrderById(orderId);
         setOrder(item);
+        const trk = await orderService.getCustomerTracking(orderId);
+        setTrackingData(trk);
       } catch (err) {
         console.error(err);
       } finally {
@@ -182,25 +189,61 @@ export default function OrderTracking() {
         </ScrollReveal>
       )}
 
-      {/* Courier Strip */}
+      {/* Courier Strip (Carrier + Tracking + Status) */}
       <ScrollReveal direction="up" delay={0.1}>
-        <div className="p-4 sm:p-5 rounded-xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 flex items-center justify-between text-xs text-[#D8BE99] shadow-xl backdrop-blur-md font-medium">
+        <div className="p-4 sm:p-5 rounded-xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#D8BE99] shadow-xl backdrop-blur-md font-medium gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 flex items-center justify-center text-[#F2D675]">
-              <Truck className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 flex items-center justify-center text-[#F2D675] shrink-0">
+              <Truck className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-wider text-[#D8BE99]/80 block">Royal Air Courier</span>
-              <span className="text-[#F3E6D0] font-mono font-bold text-xs">{order?.trackingCode || 'AS-DHL-9842104-AE'}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-[#D8BE99]/80 block font-mono font-semibold">
+                  Carrier: {trackingData?.carrier || order?.carrier || (order?.trackingCode?.startsWith('ECONT') ? 'ECONT' : 'DHL Express')}
+                </span>
+                <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
+                  shippingService.getShipmentStatusBadge(trackingData?.currentStatus || order?.shipmentStatus || currentStatus)
+                }`}>
+                  {shippingService.getShipmentStatusLabel(trackingData?.currentStatus || order?.shipmentStatus || currentStatus)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[#F3E6D0] font-mono font-bold text-sm">
+                  {trackingData?.trackingNumber || order?.trackingCode || 'AS-ECONT-9842104-BG'}
+                </span>
+                <button
+                  onClick={() => {
+                    const code = trackingData?.trackingNumber || order?.trackingCode || 'AS-ECONT-9842104-BG';
+                    navigator.clipboard.writeText(code);
+                    setCopiedTracking(true);
+                    setTimeout(() => setCopiedTracking(false), 2000);
+                  }}
+                  className="p-1 text-[#D4AF37] hover:text-white transition-colors cursor-pointer"
+                  title="Copy Tracking Number"
+                >
+                  {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             </div>
           </div>
-          <span className="text-[#F2D675] font-cinzel font-bold text-xs uppercase tracking-wider hidden sm:inline border border-[#D4AF37]/30 px-3 py-1 rounded-full bg-black/40">
-            Insured Royal Air Dispatch
-          </span>
+
+          <div className="flex items-center gap-3">
+            {trackingData?.expectedDeliveryDate && (
+              <div className="text-right sm:border-r border-white/10 sm:pr-4">
+                <span className="text-[10px] uppercase text-neutral-400 block font-mono">Expected Arrival</span>
+                <span className="font-mono text-xs text-[#F2D675] font-bold">
+                  {new Date(trackingData.expectedDeliveryDate).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+            <span className="text-[#F2D675] font-cinzel font-bold text-xs uppercase tracking-wider hidden sm:inline border border-[#D4AF37]/30 px-3.5 py-1.5 rounded-full bg-black/40">
+              Insured Carrier Dispatch
+            </span>
+          </div>
         </div>
       </ScrollReveal>
 
-      {/* 6-Step Timeline */}
+      {/* 6-Step Conceptual Timeline */}
       <ScrollReveal direction="up" delay={0.2}>
         <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/30 p-6 sm:p-10 rounded-2xl shadow-2xl space-y-8 backdrop-blur-md">
           <div className="relative pl-8 sm:pl-10 space-y-8 before:absolute before:left-3.5 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-[#D4AF37] before:via-[#8C6239] before:to-white/10">
@@ -268,6 +311,95 @@ export default function OrderTracking() {
               </div>
             )}
           </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Section 7: Live Carrier Tracking Events Log */}
+      <ScrollReveal direction="up" delay={0.25}>
+        <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/30 p-6 sm:p-8 rounded-2xl shadow-2xl space-y-6 backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div>
+              <h2 className="font-cinzel text-base sm:text-lg font-bold uppercase text-[#F3E6D0] tracking-wider flex items-center gap-2">
+                <Truck className="w-4 h-4 text-[#D4AF37]" />
+                <span>Carrier Checkpoints ({trackingData?.carrier || 'ECONT'})</span>
+              </h2>
+              <p className="text-xs text-[#D8BE99] mt-0.5">
+                Real-time carrier scans synchronized directly from {trackingData?.carrier || 'ECONT'}
+              </p>
+            </div>
+            {trackingData?.carrierStatus && (
+              <span className="px-2.5 py-1 text-[10px] font-mono text-[#D8BE99] bg-white/5 border border-white/10 rounded">
+                Carrier Status: {trackingData.carrierStatus}
+              </span>
+            )}
+          </div>
+
+          {(!trackingData?.events || trackingData.events.length === 0) ? (
+            <div className="p-8 text-center space-y-2 bg-black/40 border border-white/5 rounded-xl">
+              <Package className="w-8 h-8 text-[#D4AF37]/40 mx-auto" />
+              <h4 className="font-cinzel text-sm font-bold text-[#F3E6D0]">Tracking In Preparation</h4>
+              <p className="text-xs text-[#D8BE99] max-w-md mx-auto leading-relaxed">
+                Your order is currently being prepared for carrier pickup. Full milestone timestamps and locations will appear here as the courier scans your package.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {trackingData.events.map((event, idx) => {
+                const isLatest = idx === trackingData.events.length - 1;
+                return (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                      isLatest
+                        ? 'bg-[#D4AF37]/10 border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)] ring-1 ring-[#D4AF37]/40'
+                        : 'bg-black/40 border-white/10'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                        isLatest
+                          ? 'border-[#D4AF37] bg-[#D4AF37] text-black font-bold'
+                          : 'border-white/20 bg-white/5 text-[#F2D675]'
+                      }`}>
+                        {isLatest ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-3.5 h-3.5" />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-cinzel font-bold text-xs uppercase text-[#F3E6D0]">
+                            {shippingService.getShipmentStatusLabel(event.status)}
+                          </span>
+                          {isLatest && (
+                            <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded bg-[#D4AF37]/30 text-[#F2D675] border border-[#D4AF37]/50">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        {event.description && (
+                          <p className="text-xs text-[#D8BE99] font-sans mt-0.5">
+                            {event.description}
+                          </p>
+                        )}
+                        {event.location && (
+                          <p className="text-[11px] text-neutral-400 flex items-center gap-1 mt-1 font-mono">
+                            <MapPin className="w-3 h-3 text-[#D4AF37]" />
+                            <span>{event.location}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="sm:text-right shrink-0">
+                      <span className="font-mono text-[11px] text-[#D8BE99] block">
+                        {new Date(event.occurredAt).toLocaleDateString()}
+                      </span>
+                      <span className="font-mono text-[10px] text-neutral-500">
+                        {new Date(event.occurredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </ScrollReveal>
 

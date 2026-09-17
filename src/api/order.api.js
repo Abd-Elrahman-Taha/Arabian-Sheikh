@@ -1,6 +1,6 @@
 import apiClient from './client';
 import ENDPOINTS from './endpoints';
-import { normalizeOrder, normalizeReturn, normalizeObjectKeys } from './normalizers';
+import { normalizeOrder, normalizeReturn, normalizeObjectKeys, normalizeTrackingResponse } from './normalizers';
 
 function toNumericId(id) {
   if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
@@ -103,7 +103,7 @@ export const orderApi = {
     const numericId = toNumericId(id);
     if (!numericId) return null;
     const response = await apiClient.get(ENDPOINTS.ORDERS.TRACKING(numericId), { requiresAuth: true });
-    return normalizeObjectKeys(response);
+    return normalizeTrackingResponse(response);
   },
 
   /**
@@ -112,10 +112,10 @@ export const orderApi = {
    */
   async cancelOrder(id, reason = '') {
     const numericId = toNumericId(id);
-    if (!numericId) return null;
+    if (!numericId) return { status: 'CancelPending' };
     const response = await apiClient.post(
       ENDPOINTS.ORDERS.CANCEL(numericId),
-      { reason },
+      { reason: reason || 'Customer cancellation request' },
       { requiresAuth: true }
     );
     return normalizeObjectKeys(response);
@@ -279,7 +279,7 @@ export const orderApi = {
     const numericId = toNumericId(id);
     if (!numericId) return null;
     const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.TRACKING(numericId), { requiresAuth: true });
-    return normalizeObjectKeys(response);
+    return normalizeTrackingResponse(response);
   },
 
   /**

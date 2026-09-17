@@ -407,6 +407,70 @@ export function normalizeOrder(raw) {
 }
 
 /**
+ * Shipping Quote / Option Normalizer (Compliant with ShippingQuoteResponse & ShippingOption)
+ */
+export function normalizeShippingOption(raw) {
+  if (!raw) return null;
+  const opt = normalizeObjectKeys(raw);
+  const quoteId = opt.quoteId || opt.id || null;
+  const carrier = opt.carrier || opt.carrierName || opt.shippingCompany || 'ECONT';
+  const shippingMethod = opt.shippingMethod || opt.methodName || opt.name || 'Standard Delivery';
+  const fee = Number(opt.shippingFee !== undefined ? opt.shippingFee : (opt.cost !== undefined ? opt.cost : 0));
+  const minDays = opt.minDeliveryDays !== undefined ? Number(opt.minDeliveryDays) : null;
+  const maxDays = opt.maxDeliveryDays !== undefined ? Number(opt.maxDeliveryDays) : null;
+  const estDays = opt.estimatedDeliveryDays !== undefined
+    ? Number(opt.estimatedDeliveryDays)
+    : (minDays && maxDays ? `${minDays}-${maxDays}` : (minDays || maxDays || 3));
+
+  return {
+    quoteId,
+    shippingMethodId: Number(opt.shippingMethodId) || (typeof opt.id === 'number' ? opt.id : 1),
+    shippingCompanyId: Number(opt.shippingCompanyId) || 3,
+    carrier,
+    carrierName: carrier,
+    shippingMethod,
+    methodName: shippingMethod,
+    shippingFee: fee,
+    cost: fee,
+    currency: opt.currency || 'EUR',
+    estimatedDeliveryDays: estDays,
+    minDeliveryDays: minDays,
+    maxDeliveryDays: maxDays,
+    isFree: Boolean(opt.isFree || fee === 0),
+    rateSource: opt.rateSource || carrier
+  };
+}
+
+/**
+ * Order Tracking Normalizer (Compliant with OrderTrackingResponse & TrackingEventResponse)
+ */
+export function normalizeTrackingResponse(raw) {
+  if (!raw) return null;
+  const t = normalizeObjectKeys(raw);
+  const rawEvents = Array.isArray(t.events) ? t.events : [];
+  const events = rawEvents.map(e => {
+    const norm = normalizeObjectKeys(e);
+    return {
+      status: norm.status || 'Updated',
+      description: norm.description || null,
+      location: norm.location || null,
+      occurredAt: norm.occurredAt || norm.date || new Date().toISOString()
+    };
+  });
+
+  return {
+    orderId: t.orderId ? Number(t.orderId) : null,
+    shipmentId: t.shipmentId ? Number(t.shipmentId) : null,
+    carrier: t.carrier || 'ECONT',
+    trackingNumber: t.trackingNumber || null,
+    currentStatus: t.currentStatus || t.shipmentStatus || t.status || null,
+    carrierStatus: t.carrierStatus || null,
+    expectedDeliveryDate: t.expectedDeliveryDate || null,
+    events
+  };
+}
+
+/**
  * Return Request Normalizer (Compliant with ReturnResponse)
  */
 export function normalizeReturn(raw) {

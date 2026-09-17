@@ -118,8 +118,16 @@ export default function OrderConfirmation() {
             </div>
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <span className="text-[#D8BE99] font-medium">{t('confirmation.estimatedDelivery')}:</span>
-              <span className="text-[#F3E6D0] font-bold font-mono">2-4 Business Days (Insured Royal Air Courier)</span>
+              <span className="text-[#F3E6D0] font-bold font-mono">
+                {order?.estimatedDeliveryDays ? `${order.estimatedDeliveryDays} Business Days` : '2-4 Business Days'} ({order?.carrier || order?.shippingMethod || 'Insured Royal Air Courier'})
+              </span>
             </div>
+            {order?.trackingNumber && (
+              <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+                <span className="text-[#D8BE99] font-medium">Tracking Number:</span>
+                <span className="text-[#F2D675] font-bold font-mono text-xs">{order.trackingNumber}</span>
+              </div>
+            )}
             <p className="text-[11px] text-[#D8BE99] pt-1 font-medium">
               {t('confirmation.emailSent', { email: order?.customerEmail || 'your email' })}
             </p>

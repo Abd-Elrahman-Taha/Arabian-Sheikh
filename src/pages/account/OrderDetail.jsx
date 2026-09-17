@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
-import { Truck, ArrowLeft, Printer, AlertCircle } from 'lucide-react';
+import { shippingService } from '../../services/shippingService';
+import { Truck, ArrowLeft, Printer, AlertCircle, Copy, Check, XCircle, Clock, ExternalLink, ShieldCheck } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
 
 function formatOrderStatus(status = '') {
@@ -35,6 +36,12 @@ export default function OrderDetail() {
   const { t } = useTranslation();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Logistics & Cancellation State
+  const [copiedTracking, setCopiedTracking] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   const orderId = currentPath.split('/account/orders/')[1]?.split('?')[0];
 
@@ -123,6 +130,39 @@ export default function OrderDetail() {
   const cancelNote = order.timeline?.find(t => String(t.status).toLowerCase().includes('cancel'))?.title ||
     order.statusHistory?.find(h => String(h.toStatus || h.status).toLowerCase().includes('cancel'))?.note || '';
 
+  const normStatus = String(displayStatus).toLowerCase();
+  const isCancellable = ['pending', 'processing'].includes(normStatus);
+  const isShippedOrOut = ['shipped', 'outfordelivery'].includes(normStatus);
+
+  const trackingNumber = order.trackingCode || order.dhlTrackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
+  const carrierName = order.carrier || order.shipping?.shippingCompanyName || order.shippingSnapshot?.carrier || (trackingNumber?.startsWith('ECONT') ? 'ECONT' : 'DHL Express');
+  const shipmentStatus = order.shipmentStatus || (normStatus === 'shipped' ? 'Shipped' : (normStatus === 'delivered' ? 'Delivered' : (normStatus === 'outfordelivery' ? 'OutForDelivery' : 'Created')));
+
+  const handleCopyTracking = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedTracking(true);
+    setTimeout(() => setCopiedTracking(false), 2000);
+  };
+
+  const handleConfirmCancel = async (e) => {
+    e.preventDefault();
+    setCancelling(true);
+    try {
+      await orderService.customerCancelOrder(order.id, cancelReason);
+      setOrder(prev => ({
+        ...prev,
+        orderStatus: 'CancelPending',
+        status: 'CancelPending'
+      }));
+      setCancelModalOpen(false);
+    } catch (err) {
+      console.warn('Failed to cancel order:', err);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
@@ -149,7 +189,29 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Cancel Button with Eligibility Rules (Section 9) */}
+          {isCancellable && (
+            <button
+              onClick={() => { setCancelReason(''); setCancelModalOpen(true); }}
+              className="px-3.5 py-2 border border-rose-500/40 hover:border-rose-500 text-rose-300 hover:text-rose-200 bg-rose-950/20 text-xs font-cinzel font-bold flex items-center gap-1.5 transition-colors cursor-pointer rounded"
+              title="Request cancellation for this order"
+            >
+              <XCircle className="w-3.5 h-3.5 text-rose-400" />
+              <span>Cancel Order</span>
+            </button>
+          )}
+
+          {isShippedOrOut && (
+            <span
+              className="px-3 py-1.5 border border-neutral-700/50 bg-neutral-900/40 text-neutral-400 text-[11px] font-cinzel flex items-center gap-1.5 rounded cursor-not-allowed"
+              title="Orders already shipped or out for delivery cannot be cancelled"
+            >
+              <Truck className="w-3 h-3 text-neutral-500" />
+              <span>Shipped (Non-cancellable)</span>
+            </span>
+          )}
+
           <Link
             to={`/order-tracking/${order.orderNumber || order.id}`}
             className="luxury-btn-gold px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
@@ -175,10 +237,10 @@ export default function OrderDetail() {
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs">
               <p className="font-cinzel font-bold text-sm text-rose-200 uppercase tracking-wider">
-                Order Cancelled by Administration
+                Order Cancelled
               </p>
               <p className="text-rose-300/90 font-medium">
-                {cancelNote || 'This acquisition was cancelled by palace administration. For questions or refund status, please contact royal concierge.'}
+                {cancelNote || 'This acquisition was cancelled. If payment was settled, a refund will be processed to your original settlement method.'}
               </p>
             </div>
           </div>
@@ -196,13 +258,13 @@ export default function OrderDetail() {
             <div key={idx} className="p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <img
-                  src={item.image}
+                  src={item.image || item.imageUrl || '/products/luxury_designs/07_arabian_gold.webp'}
                   alt={item.name}
                   className="w-16 h-20 object-cover bg-[var(--color-desert-primary)] border border-[var(--color-terracotta-deep)]/30"
                 />
                 <div>
                   <h4 className="font-cinzel text-sm font-bold text-[var(--color-earth-dark)]">{item.name}</h4>
-                  <p className="text-xs text-[var(--color-terracotta)] font-mono font-semibold">{item.size}</p>
+                  <p className="text-xs text-[var(--color-terracotta)] font-mono font-semibold">{item.size || '100 ml Extrait'}</p>
                   <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">Qty: {item.quantity} × ${item.price}</p>
                 </div>
               </div>
@@ -215,19 +277,75 @@ export default function OrderDetail() {
       </div>
       </ScrollReveal>
 
-      {/* Addresses & Financial Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Addresses, Shipping Information & Financial Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Shipping Destination */}
         <ScrollReveal direction="right" delay={0.2}>
         <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-2 text-xs h-full">
           <h4 className="font-cinzel text-xs font-bold uppercase text-[var(--color-terracotta)] tracking-wider mb-2">
             Delivery Destination
           </h4>
-          <p className="font-bold text-[var(--color-earth-dark)]">{order.shippingAddress?.fullName}</p>
-          <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.address}</p>
+          <p className="font-bold text-[var(--color-earth-dark)]">{order.shippingAddress?.fullName || order.customerName}</p>
+          <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.address || order.shippingAddress?.addressLine1}</p>
           <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
           <p className="text-[var(--color-terracotta-deep)] font-medium">{order.shippingAddress?.country}</p>
-          <p className="text-[var(--color-terracotta-deep)] font-medium">Phone: {order.shippingAddress?.phone}</p>
+          <p className="text-[var(--color-terracotta-deep)] font-medium">Phone: {order.shippingAddress?.phone || order.customerPhone || '—'}</p>
+        </div>
+        </ScrollReveal>
+
+        {/* Section 8: SHIPPING INFORMATION Card */}
+        <ScrollReveal direction="up" delay={0.2}>
+        <div className="p-5 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta-deep)]/20 space-y-3 text-xs h-full flex flex-col justify-between">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <h4 className="font-cinzel text-xs font-bold uppercase text-[var(--color-terracotta)] tracking-wider">
+                Shipping Information
+              </h4>
+              <span className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded border ${shippingService.getShipmentStatusBadge(shipmentStatus)}`}>
+                {shippingService.getShipmentStatusLabel(shipmentStatus)}
+              </span>
+            </div>
+
+            <div className="space-y-1 pt-1">
+              <div className="flex justify-between text-[var(--color-terracotta-deep)]">
+                <span>Carrier:</span>
+                <span className="font-bold text-[var(--color-earth-dark)] font-mono uppercase">{carrierName}</span>
+              </div>
+              <div className="flex justify-between items-center text-[var(--color-terracotta-deep)]">
+                <span>Tracking Number:</span>
+                {trackingNumber ? (
+                  <div className="flex items-center gap-1 font-mono font-bold text-[var(--color-terracotta)]">
+                    <span>{trackingNumber}</span>
+                    <button
+                      onClick={() => handleCopyTracking(trackingNumber)}
+                      className="p-1 hover:text-white transition-colors cursor-pointer"
+                      title="Copy Tracking Number"
+                    >
+                      {copiedTracking ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="font-mono text-neutral-500 italic">Not yet assigned</span>
+                )}
+              </div>
+              <div className="flex justify-between text-[var(--color-terracotta-deep)]">
+                <span>Expected Delivery:</span>
+                <span className="font-medium text-[var(--color-earth-dark)]">
+                  {order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : '2-4 business days'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {trackingNumber && (
+            <Link
+              to={`/order-tracking/${order.orderNumber || order.id}`}
+              className="w-full py-2 bg-[#D4AF37]/20 border border-[#D4AF37]/50 hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 rounded cursor-pointer mt-2"
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Track Shipment</span>
+            </Link>
+          )}
         </div>
         </ScrollReveal>
 
@@ -248,19 +366,77 @@ export default function OrderDetail() {
             </div>
           )}
           <div className="flex justify-between text-[var(--color-terracotta-deep)] font-medium">
-            <span>Insured Express Shipping:</span>
-            <span className="font-mono text-[var(--color-terracotta)] font-bold">Complimentary</span>
+            <span>Insured Shipping:</span>
+            <span className="font-mono text-[var(--color-terracotta)] font-bold">
+              {order.shippingCost === 0 || order.shipping === 0 ? 'Complimentary' : `$${order.shippingCost || order.shipping}`}
+            </span>
           </div>
           <div className="flex justify-between text-base font-bold text-[var(--color-earth-dark)] pt-3 border-t border-[var(--color-terracotta-deep)]/20 font-cinzel">
             <span>Total Settled:</span>
             <span className="text-[var(--color-terracotta)] font-mono font-bold">${order.total}</span>
           </div>
           <p className="text-[11px] text-[var(--color-terracotta-deep)] pt-2 font-medium">
-            Payment Method: {order.paymentMethod?.brand} ending in •••• {order.paymentMethod?.last4 || '4112'}
+            Payment Method: {order.paymentMethod?.brand || order.paymentMethod || 'Credit Card'}
           </p>
         </div>
         </ScrollReveal>
       </div>
+
+      {/* Royal Cancellation Confirmation Modal */}
+      {cancelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#120B06] border border-[#D4AF37]/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 text-[#F3E6D0]">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2 text-rose-400">
+                <AlertCircle className="w-5 h-5" />
+                <h3 className="font-cinzel text-base font-bold uppercase tracking-wider">Cancel Acquisition</h3>
+              </div>
+              <button
+                onClick={() => setCancelModalOpen(false)}
+                className="text-neutral-400 hover:text-white cursor-pointer"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[#D8BE99] leading-relaxed">
+              Are you certain you wish to request cancellation for Order <strong className="text-[#F3E6D0]">#{order.orderNumber || order.id}</strong>? Once accepted, logistics and warehouse dispatch will be terminated.
+            </p>
+
+            <form onSubmit={handleConfirmCancel} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-cinzel text-[#D8BE99] uppercase tracking-wider mb-1.5">
+                  Cancellation Reason (Optional)
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="E.g. Changed fragrance preference, ordered duplicate flacon..."
+                  rows={3}
+                  className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none placeholder:text-neutral-500 resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCancelModalOpen(false)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 text-xs font-cinzel text-[#F3E6D0] hover:bg-white/10 transition-colors cursor-pointer rounded-lg"
+                >
+                  Keep Order
+                </button>
+                <button
+                  type="submit"
+                  disabled={cancelling}
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-cinzel font-bold uppercase tracking-wider transition-colors cursor-pointer rounded-lg shadow-md flex items-center gap-1.5"
+                >
+                  {cancelling ? <span>Processing...</span> : <span>Confirm Cancellation</span>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

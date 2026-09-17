@@ -116,6 +116,10 @@ export const ENDPOINTS = {
     SET_SHIPPING: '/checkout/shipping',
     SHIPPING_OPTIONS: '/shipping/options'
   },
+  SHIPPING: {
+    QUOTES: '/shipping/quotes',
+    OPTIONS: '/shipping/options'
+  },
 
   // Payments (Stripe)
   PAYMENTS: {
