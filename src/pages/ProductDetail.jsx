@@ -227,7 +227,7 @@ export default function ProductDetail() {
       const orders = await reviewService.getEligibleOrdersForProduct(product.numericId || product.id);
       setEligibleOrders(orders);
       if (orders.length > 0) {
-        setSelectedOrderId(orders[0].numericId || orders[0].id);
+        setSelectedOrderId(orders[0].orderNumber || orders[0].numericId || orders[0].id);
       } else {
         setSelectedOrderId('');
       }
@@ -257,9 +257,10 @@ export default function ProductDetail() {
     setSubmittingReview(true);
     try {
       await reviewService.createReview(product.numericId || product.id, {
-        orderId: Number(orderToUse),
+        orderId: orderToUse,
         rating: reviewRating,
-        comment: reviewComment
+        comment: reviewComment,
+        productName: product.name || displayName
       });
 
       setReviewSuccessMessage('Thank you for sharing your royal impression! Your review has been submitted for royal moderation and will appear once approved.');
@@ -968,7 +969,7 @@ export default function ProductDetail() {
                         }`}
                       >
                         {eligibleOrders.map((ord) => (
-                          <option key={ord.id} value={ord.numericId || ord.id}>
+                          <option key={ord.id} value={ord.orderNumber || ord.numericId || ord.id}>
                             {ord.orderNumber || `Order #${ord.id}`} — {new Date(ord.date).toLocaleDateString()} ({ord.status})
                           </option>
                         ))}

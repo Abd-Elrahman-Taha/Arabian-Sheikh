@@ -1,4 +1,4 @@
-﻿import apiClient from './client';
+import apiClient from './client';
 import ENDPOINTS from './endpoints';
 import { normalizeReview } from './normalizers';
 
@@ -35,8 +35,12 @@ export const reviewApi = {
    * POST /api/products/{productId}/reviews
    */
   async createReview(productId, { orderId, rating, comment }) {
+    const numericOrderId = typeof orderId === 'number'
+      ? orderId
+      : Number(String(orderId).replace(/\D/g, ''));
+
     const body = {
-      orderId: Number(orderId),
+      orderId: !isNaN(numericOrderId) ? numericOrderId : 0,
       rating: Math.max(1, Math.min(5, Math.round(Number(rating) || 5)))
     };
     if (comment !== undefined && comment !== null) {

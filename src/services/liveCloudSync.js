@@ -10,6 +10,7 @@ const CLOUD_OBJECT_ID = 'ff8081819ff5b11001a04379654336f1';
 // In-memory state structure (Zero localStorage persistence)
 let state = {
   orders: [],
+  reviews: [],            // Customer product reviews & moderation queue
   users: [],              // Registered customer and admin accounts
   blockedUserEmails: [],  // Emails of blocked accounts
   deletedUserEmails: [],  // Emails of deleted accounts
@@ -30,6 +31,7 @@ function loadLocalState() {
       const parsed = JSON.parse(raw);
       state = {
         orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+        reviews: Array.isArray(parsed.reviews) ? parsed.reviews : [],
         users: Array.isArray(parsed.users) ? parsed.users : [],
         blockedUserEmails: Array.isArray(parsed.blockedUserEmails) ? parsed.blockedUserEmails : [],
         deletedUserEmails: Array.isArray(parsed.deletedUserEmails) ? parsed.deletedUserEmails : [],
@@ -163,6 +165,15 @@ function mergeRemoteData(remoteData) {
     }
   });
 
+  const reviewMap = new Map();
+  (remoteData.reviews || []).forEach(r => { if (r?.id) reviewMap.set(String(r.id), r); });
+  (state.reviews || []).forEach(r => {
+    if (r?.id) {
+      const existing = reviewMap.get(String(r.id));
+      reviewMap.set(String(r.id), { ...(existing || {}), ...r });
+    }
+  });
+
   // Remote modified products override local state
   const modified = {
     ...state.modifiedProducts,
@@ -171,6 +182,7 @@ function mergeRemoteData(remoteData) {
 
   state = {
     orders: Array.from(orderMap.values()),
+    reviews: Array.from(reviewMap.values()),
     users: Array.from(userMap.values()),
     blockedUserEmails: state.blockedUserEmails,
     deletedUserEmails: state.deletedUserEmails,
@@ -670,6 +682,41 @@ export const liveCloudSync = {
         };
       }
       return o;
+    });
+    state.lastUpdated = new Date().toISOString();
+    saveLocalState();
+    await pushToCloud();
+  },
+
+  // ==========================================
+  // REVIEWS SYNCHRONIZATION
+  // ==========================================
+  getReviews() {
+    return Array.isArray(state.reviews) ? state.reviews : [];
+  },
+
+  async addReview(review) {
+    if (!review || !review.id) return;
+    const list = Array.isArray(state.reviews) ? [...state.reviews] : [];
+    const idx = list.findIndex(r => String(r.id) === String(review.id));
+    if (idx > -1) {
+      list[idx] = { ...list[idx], ...review };
+    } else {
+      list.unshift(review);
+    }
+    state.reviews = list;
+    state.lastUpdated = new Date().toISOString();
+    saveLocalState();
+    await pushToCloud();
+  },
+
+  async updateReview(reviewId, updatedFields) {
+    if (!reviewId) return;
+    state.reviews = (state.reviews || []).map(r => {
+      if (String(r.id) === String(reviewId)) {
+        return { ...r, ...updatedFields, updatedAt: new Date().toISOString() };
+      }
+      return r;
     });
     state.lastUpdated = new Date().toISOString();
     saveLocalState();
