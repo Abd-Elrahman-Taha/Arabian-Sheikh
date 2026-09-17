@@ -42,8 +42,28 @@ export const cartService = {
 
     // Process each item individually against active promotion rules
     const items = rawItems.map(item => {
-      const baseUnitPrice = Number(item.originalPrice || item.price || 0);
       const qty = Number(item.quantity || 1);
+
+      // Handle Curated Bundle Suites with dedicated bundle pricing
+      if (item.isBundle) {
+        const bundleUnitPrice = Number(item.bundlePrice !== undefined ? item.bundlePrice : (item.price || 0));
+        const originalRetail = Number(item.originalPrice || bundleUnitPrice);
+        calculatedSubtotal += (bundleUnitPrice * qty);
+        
+        return {
+          ...item,
+          price: bundleUnitPrice,
+          bundlePrice: bundleUnitPrice,
+          originalPrice: originalRetail,
+          unitBasePrice: originalRetail,
+          unitEffectivePrice: bundleUnitPrice,
+          lineTotal: bundleUnitPrice * qty,
+          hasPromoDiscount: originalRetail > bundleUnitPrice,
+          promoDiscountAmount: Math.max(0, (originalRetail - bundleUnitPrice) * qty)
+        };
+      }
+
+      const baseUnitPrice = Number(item.originalPrice || item.price || 0);
       calculatedSubtotal += (baseUnitPrice * qty);
 
       // Check if this specific item matches any active promotion applicability rules

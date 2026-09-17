@@ -177,83 +177,131 @@ export default function CartDrawer() {
                 </button>
               </div>
             ) : (
-              items.map((item, idx) => (
-                <div
-                  key={`${item.productId}-${item.size}-${idx}`}
-                  className={`flex gap-3.5 p-3.5 border relative group transition-all rounded-2xl ${
-                    isDark
-                      ? 'bg-[#0B0A08] border-[#D4AF37]/15'
-                      : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/40 shadow-sm'
-                  }`}
-                >
-                  {/* Flacon Image */}
-                  <img
-                    src={item.image || '/products/luxury_designs/07_arabian_gold.webp'}
-                    alt={item.name}
-                    className={`w-16 h-20 object-contain p-0 shrink-0 border rounded-xl overflow-hidden ${
-                      isDark ? 'bg-black/50 border-white/5' : 'bg-white/80 border-[#D4AF37]/30'
-                    }`}
-                  />
+              items.map((item, idx) => {
+                const isBundle = Boolean(item.isBundle);
+                const targetKey = item.productId || item.id;
+                const bundleLink = isBundle ? `/bundle/${item.bundleId || String(item.id).replace('bundle-', '')}` : `/product/${item.productId || item.id}`;
 
-                  {/* Info */}
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between">
-                        <h4 className={`font-cinzel text-xs font-bold line-clamp-1 ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
-                          {item.name}
-                        </h4>
-                        <button
-                          onClick={() => removeFromCart(item.productId, item.size)}
-                          className="text-[#D4AF37] hover:text-red-500 p-1 transition-colors cursor-pointer"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      {item.arabicName && (
-                        <p className="font-arabic text-[11px] text-[#D4AF37]">{item.arabicName}</p>
-                      )}
-                      <p className={`text-[10px] font-mono mt-0.5 ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>Size: {item.size || '60 ml'}</p>
+                return (
+                  <div
+                    key={`${targetKey}-${item.size}-${idx}`}
+                    className={`flex gap-3.5 p-3.5 border relative group transition-all rounded-2xl ${
+                      isBundle
+                        ? isDark
+                          ? 'bg-gradient-to-br from-[#1C0F05] via-[#0B0A08] to-[#120B06] border-purple-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.6)]'
+                          : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-purple-500/50 shadow-md'
+                        : isDark
+                        ? 'bg-[#0B0A08] border-[#D4AF37]/15'
+                        : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/40 shadow-sm'
+                    }`}
+                  >
+                    {/* Flacon or Bundle Image */}
+                    <div
+                      onClick={() => {
+                        closeDrawer();
+                        navigate(bundleLink);
+                      }}
+                      className="cursor-pointer shrink-0"
+                    >
+                      <img
+                        src={item.image || '/products/luxury_designs/07_arabian_gold.webp'}
+                        alt={item.name}
+                        className={`w-16 h-20 object-contain p-0 shrink-0 border rounded-xl overflow-hidden hover:scale-105 transition-transform ${
+                          isBundle
+                            ? isDark ? 'bg-black/60 border-purple-500/40' : 'bg-white border-purple-500/40'
+                            : isDark ? 'bg-black/50 border-white/5' : 'bg-white/80 border-[#D4AF37]/30'
+                        }`}
+                      />
                     </div>
 
-                    {/* Quantity & Item Total */}
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/10 dark:border-white/5">
-                      <div className={`flex items-center border rounded-full ${
-                        isDark ? 'border-[#D4AF37]/30 bg-black/60' : 'border-[#D4AF37]/40 bg-white/90'
-                      }`}>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-                          className={`p-1 cursor-pointer ${isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#120B06] hover:text-[#D4AF37]'}`}
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="px-2 text-xs font-mono font-bold text-[#D4AF37]">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-                          className={`p-1 cursor-pointer ${isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#120B06] hover:text-[#D4AF37]'}`}
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+                    {/* Info */}
+                    <div className="flex-1 flex flex-col justify-between min-w-0">
+                      <div>
+                        {/* Bundle Badge */}
+                        {isBundle && (
+                          <div className="flex items-center gap-1 text-[9.5px] uppercase font-cinzel font-bold text-purple-400 mb-0.5">
+                            <Gift className="w-3 h-3" />
+                            <span>{language === 'ar' ? 'باقة عطور ملكية' : 'Curated Royal Suite'}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-start justify-between gap-1">
+                          <h4
+                            onClick={() => {
+                              closeDrawer();
+                              navigate(bundleLink);
+                            }}
+                            className={`font-cinzel text-xs font-bold line-clamp-1 cursor-pointer hover:text-[#D4AF37] transition-colors ${
+                              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+                            }`}
+                          >
+                            {item.name}
+                          </h4>
+                          <button
+                            onClick={() => removeFromCart(targetKey, item.size)}
+                            className="text-[#D4AF37] hover:text-red-500 p-1 transition-colors cursor-pointer shrink-0"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {item.arabicName && (
+                          <p className="font-arabic text-[11px] text-[#D4AF37] truncate">{item.arabicName}</p>
+                        )}
+
+                        <p className={`text-[10px] font-mono mt-0.5 ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>
+                          {isBundle ? item.size : `Size: ${item.size || '60 ml'}`}
+                        </p>
+
+                        {/* If bundle: show mini list of included flacons */}
+                        {isBundle && Array.isArray(item.bundleItems) && item.bundleItems.length > 0 && (
+                          <p className={`text-[9.5px] truncate mt-0.5 font-sans ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>
+                            {language === 'ar' ? 'تتضمن: ' : 'Includes: '}
+                            {item.bundleItems.map(bi => bi.productName || bi.name).join(', ')}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="text-right">
-                        <span className="font-cinzel text-sm font-bold text-[#D4AF37] block">
-                          €{(item.price * item.quantity).toFixed(2)}
-                        </span>
-                        {item.hasPromoDiscount && (
-                          <span className="text-[10px] text-neutral-400 line-through font-mono block">
-                            €{(item.unitBasePrice * item.quantity).toFixed(2)}
+                      {/* Quantity & Item Total */}
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/10 dark:border-white/5">
+                        <div className={`flex items-center border rounded-full ${
+                          isDark ? 'border-[#D4AF37]/30 bg-black/60' : 'border-[#D4AF37]/40 bg-white/90'
+                        }`}>
+                          <button
+                            onClick={() => updateQuantity(targetKey, item.size, item.quantity - 1)}
+                            className={`p-1 cursor-pointer ${isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#120B06] hover:text-[#D4AF37]'}`}
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="px-2 text-xs font-mono font-bold text-[#D4AF37]">
+                            {item.quantity}
                           </span>
-                        )}
+                          <button
+                            onClick={() => updateQuantity(targetKey, item.size, item.quantity + 1)}
+                            className={`p-1 cursor-pointer ${isDark ? 'text-[#F3E6D0] hover:text-[#D4AF37]' : 'text-[#120B06] hover:text-[#D4AF37]'}`}
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="font-cinzel text-sm font-bold text-[#D4AF37] block">
+                            €{(item.price * item.quantity).toFixed(2)}
+                          </span>
+                          {(item.hasPromoDiscount || (item.originalPrice && item.originalPrice > item.price)) && (
+                            <span className="text-[10px] text-neutral-400 line-through font-mono block">
+                              €{((item.originalPrice || item.unitBasePrice) * item.quantity).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
 
             {/* Cross-Sell Recommendations */}

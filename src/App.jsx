@@ -20,6 +20,7 @@ import Shop from './pages/Shop';
 import GenderCategory from './pages/GenderCategory';
 import Collections from './pages/Collections';
 import ProductDetail from './pages/ProductDetail';
+import BundleDetail from './pages/BundleDetail';
 import Discovery from './pages/Discovery';
 import Compare from './pages/Compare';
 import ThePalace from './pages/ThePalace';
@@ -176,6 +177,9 @@ function MainRouter() {
         return <Collections />;
       case currentPath.startsWith('/product/'):
         return <ProductDetail />;
+      case currentPath.startsWith('/bundle/'):
+      case currentPath.startsWith('/bundles/'):
+        return <BundleDetail />;
       case currentPath.startsWith('/the-palace'):
       case currentPath.startsWith('/the-house'):
         return <ThePalace />;

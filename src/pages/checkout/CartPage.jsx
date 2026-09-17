@@ -118,77 +118,103 @@ export default function CartPage() {
 
             {/* Line Items Table */}
             <div className="divide-y divide-[var(--color-terracotta-deep)]/20 border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-light)] shadow-xl">
-              {items.map((item, idx) => (
-                <ScrollRevealItem
-                  key={`${item.productId}-${item.size}-${idx}`}
-                  index={idx}
-                  desktopDirection="left"
-                  className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-20 h-24 object-cover bg-[var(--color-desert-primary)] shrink-0 border border-[var(--color-terracotta-deep)]/30"
-                    />
-                    <div>
-                      <span className="text-[10px] uppercase tracking-wider text-[var(--color-terracotta)] font-mono font-bold">
-                        {item.fragranceFamily}
-                      </span>
-                      <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)]">
-                        {item.name}
-                      </h3>
-                      <p className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">{item.arabicName}</p>
-                      <p className="text-xs text-[var(--color-terracotta)] font-mono mt-1 font-semibold">Size: {item.size}</p>
-                    </div>
-                  </div>
+              {items.map((item, idx) => {
+                const isBundle = Boolean(item.isBundle);
+                const targetKey = item.productId || item.id;
+                const bundleLink = isBundle ? `/bundle/${item.bundleId || String(item.id).replace('bundle-', '')}` : `/product/${item.productId || item.id}`;
 
-                  {/* Quantity & Actions */}
-                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-[var(--color-terracotta-deep)]/20">
-                    <div className="flex items-center border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-primary)]/40">
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-                        className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="px-3 text-xs font-mono font-bold text-[var(--color-earth-dark)]">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-                        className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                return (
+                  <ScrollRevealItem
+                    key={`${targetKey}-${item.size}-${idx}`}
+                    index={idx}
+                    desktopDirection="left"
+                    className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Link to={bundleLink}>
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-20 h-24 object-contain bg-[var(--color-desert-primary)] shrink-0 border border-[var(--color-terracotta-deep)]/30 hover:scale-105 transition-transform"
+                        />
+                      </Link>
+                      <div>
+                        {isBundle ? (
+                          <span className="text-[10px] uppercase tracking-wider text-purple-700 font-mono font-bold flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Curated Royal Suite</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] uppercase tracking-wider text-[var(--color-terracotta)] font-mono font-bold">
+                            {item.fragranceFamily}
+                          </span>
+                        )}
+                        <Link to={bundleLink} className="hover:text-[var(--color-terracotta)] transition-colors">
+                          <h3 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)]">
+                            {item.name}
+                          </h3>
+                        </Link>
+                        {item.arabicName && (
+                          <p className="font-arabic text-xs text-[var(--color-terracotta-deep)] font-semibold">{item.arabicName}</p>
+                        )}
+                        <p className="text-xs text-[var(--color-terracotta)] font-mono mt-1 font-semibold">
+                          {isBundle ? item.size : `Size: ${item.size}`}
+                        </p>
+                        {isBundle && Array.isArray(item.bundleItems) && item.bundleItems.length > 0 && (
+                          <p className="text-[11px] text-[var(--color-terracotta-deep)]/80 mt-1 max-w-md">
+                            Includes: {item.bundleItems.map(i => `${i.productName || i.name} (${i.quantity}x)`).join(', ')}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)] block">
-                        €{item.price * item.quantity}
-                      </span>
-                      {item.hasPromoDiscount ? (
-                        <div className="text-[11px] font-mono">
-                          <span className="line-through text-neutral-400 mr-1.5">€{item.unitBasePrice}</span>
-                          <span className="text-amber-600 font-bold">€{item.price} each</span>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-[var(--color-terracotta-deep)] font-mono">
-                          (€{item.price} each)
+                    {/* Quantity & Actions */}
+                    <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-[var(--color-terracotta-deep)]/20">
+                      <div className="flex items-center border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-primary)]/40">
+                        <button
+                          onClick={() => updateQuantity(targetKey, item.size, item.quantity - 1)}
+                          className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="px-3 text-xs font-mono font-bold text-[var(--color-earth-dark)]">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(targetKey, item.size, item.quantity + 1)}
+                          className="p-1.5 text-[var(--color-terracotta-deep)] hover:text-[var(--color-terracotta)] cursor-pointer"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)] block">
+                          €{(item.price * item.quantity).toFixed(2)}
                         </span>
-                      )}
-                    </div>
+                        {(item.hasPromoDiscount || (item.originalPrice && item.originalPrice > item.price)) ? (
+                          <div className="text-[11px] font-mono">
+                            <span className="line-through text-neutral-400 mr-1.5">€{(item.originalPrice || item.unitBasePrice) * item.quantity}</span>
+                            <span className="text-amber-600 font-bold">€{item.price} each</span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-[var(--color-terracotta-deep)] font-mono">
+                            (€{item.price} each)
+                          </span>
+                        )}
+                      </div>
 
-                    <button
-                      onClick={() => removeFromCart(item.productId, item.size)}
-                      className="text-[var(--color-terracotta-deep)] hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
-                      title="Remove from bag"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </ScrollRevealItem>
-              ))}
+                      <button
+                        onClick={() => removeFromCart(targetKey, item.size)}
+                        className="text-[var(--color-terracotta-deep)] hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
+                        title="Remove from bag"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </ScrollRevealItem>
+                );
+              })}
             </div>
           </div>
 

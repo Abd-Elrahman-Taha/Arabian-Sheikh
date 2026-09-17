@@ -494,6 +494,38 @@ export const promotionService = {
       console.warn(`[promotionService] Error fetching public promotion #${id}:`, err.message);
       return null;
     }
+  },
+
+  /**
+   * Get public bundle by ID (looks in active bundles, or fallback suites)
+   */
+  async getPublicBundleById(bundleId) {
+    if (!bundleId) return null;
+    const searchIdStr = String(bundleId).trim();
+    const searchIdNum = Number(bundleId);
+
+    try {
+      const bundles = await this.getPublicBundles();
+      const match = bundles.find(b => String(b.id) === searchIdStr || (searchIdNum > 0 && Number(b.id) === searchIdNum));
+      if (match) return match;
+    } catch (err) {
+      console.warn(`[promotionService] Error fetching bundle by ID #${bundleId}:`, err.message);
+    }
+
+    // Check if promotion details have bundles
+    if (!isNaN(searchIdNum) && searchIdNum > 0) {
+      try {
+        const promo = await this.getPublicPromotionById(searchIdNum);
+        if (promo?.bundles && promo.bundles.length > 0) {
+          const bMatch = promo.bundles.find(b => String(b.id) === searchIdStr || Number(b.id) === searchIdNum) || promo.bundles[0];
+          if (bMatch) return bMatch;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return null;
   }
 };
 

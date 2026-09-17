@@ -153,15 +153,27 @@ export default function CheckoutPage() {
 
       clearCart();
 
-      // Decrement stock for each ordered item (quantity × 1 per unit)
+      // Decrement stock for each ordered item
       if (Array.isArray(items) && items.length > 0) {
         items.forEach(item => {
-          const product = productService.getProductByIdSync(item.id || item.productId);
-          if (product) {
-            const currentStock = product.stock ?? 0;
-            const qty = item.quantity ?? 1;
-            const newStock = Math.max(0, currentStock - qty);
-            productService.updateStock(product.id, newStock).catch(() => {});
+          if (item.isBundle && Array.isArray(item.bundleItems)) {
+            item.bundleItems.forEach(bi => {
+              const product = productService.getProductByIdSync(bi.productId);
+              if (product) {
+                const currentStock = product.stock ?? 0;
+                const qty = (bi.quantity || 1) * (item.quantity || 1);
+                const newStock = Math.max(0, currentStock - qty);
+                productService.updateStock(product.id, newStock).catch(() => {});
+              }
+            });
+          } else {
+            const product = productService.getProductByIdSync(item.id || item.productId);
+            if (product) {
+              const currentStock = product.stock ?? 0;
+              const qty = item.quantity ?? 1;
+              const newStock = Math.max(0, currentStock - qty);
+              productService.updateStock(product.id, newStock).catch(() => {});
+            }
           }
         });
       }
@@ -428,25 +440,42 @@ export default function CheckoutPage() {
           {/* Order Summary Column */}
           <div className="lg:col-span-5 bg-[#0B0A08] border border-[#D4AF37]/20 p-6 shadow-2xl space-y-6">
             <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#D4AF37] pb-3 border-b border-white/10">
-              Order Summary ({items.length} Flacons)
+              Order Summary ({items.length} {items.some(i => i.isBundle) ? 'Creations & Suites' : 'Flacons'})
             </h3>
 
             {/* Items List */}
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {items.map((item, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 text-xs pb-3 border-b border-white/5">
-                  <img
-                    src={item.image || '/products/luxury_designs/07_arabian_gold.webp'}
-                    alt={item.name}
-                    className="w-12 h-14 object-contain bg-black/40 p-1 border border-white/10"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-cinzel font-bold text-[#F3E6D0] line-clamp-1">{item.name}</h4>
-                    <p className="text-[11px] text-[#D8BE99]">{item.size || '60 ml'} • Qty: {item.quantity}</p>
+              {items.map((item, i) => {
+                const isBundle = Boolean(item.isBundle);
+                return (
+                  <div key={i} className="flex items-center justify-between gap-3 text-xs pb-3 border-b border-white/5">
+                    <img
+                      src={item.image || '/products/luxury_designs/07_arabian_gold.webp'}
+                      alt={item.name}
+                      className={`w-12 h-14 object-contain bg-black/40 p-1 border shrink-0 rounded ${
+                        isBundle ? 'border-purple-500/50' : 'border-white/10'
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      {isBundle && (
+                        <span className="text-[9px] uppercase font-cinzel font-bold text-purple-400 block mb-0.5">
+                          🎁 Curated Suite
+                        </span>
+                      )}
+                      <h4 className="font-cinzel font-bold text-[#F3E6D0] line-clamp-1">{item.name}</h4>
+                      <p className="text-[11px] text-[#D8BE99]">
+                        {isBundle ? item.size : `${item.size || '60 ml'} • Qty: ${item.quantity}`}
+                        {isBundle && ` • Qty: ${item.quantity}`}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-mono font-bold text-[#D4AF37] block">
+                        €{(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <span className="font-mono font-bold text-[#D4AF37]">€{(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Coupon / Privilege Code Box */}

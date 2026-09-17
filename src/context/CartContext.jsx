@@ -47,7 +47,64 @@ export function CartProvider({ children }) {
   const totals = cartService.calculateTotals(cart, activePromos);
 
   // Direct internal add without auth check
+  // Direct internal add for Curated Bundle Suites
+  const _internalAddBundle = useCallback((bundle, quantity = 1) => {
+    const bId = bundle.id;
+    const bundleKey = `bundle-${bId}`;
+    const bundlePrice = Number(bundle.bundlePrice || 0);
+    const originalRetail = Number(bundle.originalItemsPrice || bundle.individualItemsTotal || bundlePrice);
+    const bundleImage = bundle.imageUrl || bundle.image || bundle.items?.[0]?.imageUrl || '/products/luxury_designs/07_arabian_gold.webp';
+    const suiteName = bundle.name || 'Royal Curated Suite';
+
+    setCart(prev => {
+      const items = [...(prev.items || [])];
+      const existingIndex = items.findIndex(
+        item => item.id === bundleKey || (item.isBundle && (String(item.bundleId) === String(bId) || item.id === bundleKey))
+      );
+
+      if (existingIndex > -1) {
+        items[existingIndex].quantity += quantity;
+      } else {
+        items.push({
+          id: bundleKey,
+          bundleId: bId,
+          productId: bundleKey,
+          isBundle: true,
+          name: suiteName,
+          arabicName: bundle.arabicName || suiteName,
+          category: 'bundles',
+          price: bundlePrice,
+          bundlePrice,
+          originalPrice: originalRetail,
+          image: bundleImage,
+          images: bundle.images || (bundle.items?.map(i => i.imageUrl).filter(Boolean)) || [],
+          size: `${bundle.items?.length || 2} Flacons Suite`,
+          fragranceFamily: 'Royal Curated Suite',
+          quantity: Math.max(1, Number(quantity) || 1),
+          bundleItems: bundle.items || [],
+          savingsAmount: Number(bundle.savingsAmount || Math.max(0, originalRetail - bundlePrice)),
+          savingsPercentage: Number(bundle.savingsPercentage || 0),
+          promotionName: bundle.promotionName || ''
+        });
+      }
+
+      return { ...prev, items };
+    });
+
+    // Trigger cart badge bounce
+    setCartBadgeAnimated(true);
+    setTimeout(() => setCartBadgeAnimated(false), 500);
+
+    success(`Added '${suiteName}' Curated Suite to your Royal Bag.`);
+    setIsDrawerOpen(true);
+  }, [success]);
+
+  // Direct internal add without auth check
   const _internalAdd = useCallback((product, size = '100ml', quantity = 1) => {
+    if (product.isBundle || product.bundlePrice !== undefined) {
+      return _internalAddBundle(product, quantity);
+    }
+
     setCart(prev => {
       const items = [...(prev.items || [])];
       const existingIndex = items.findIndex(
@@ -94,22 +151,47 @@ export function CartProvider({ children }) {
 
     success(`Added ${product.name} (${size}) to your Royal Bag.`);
     setIsDrawerOpen(true);
-  }, [success]);
+  }, [_internalAddBundle, success]);
 
   // Handle pending cart additions when user logs in
   useEffect(() => {
     if (isAuthenticated && pendingItem) {
-      const { product, size, quantity } = pendingItem;
+      const { product, bundle, isBundle, size, quantity } = pendingItem;
       sessionStorage.removeItem(PENDING_CART_KEY);
       setPendingItem(null);
       setAuthModalOpen(false);
 
-      // Auto add preserved product
-      _internalAdd(product, size || '100ml', quantity || 1);
+      // Auto add preserved product or bundle
+      if (isBundle && bundle) {
+        _internalAddBundle(bundle, quantity || 1);
+      } else if (product) {
+        _internalAdd(product, size || '100ml', quantity || 1);
+      }
     }
-  }, [isAuthenticated, pendingItem, _internalAdd]);
+  }, [isAuthenticated, pendingItem, _internalAdd, _internalAddBundle]);
+
+  const addBundleToCart = (bundle, quantity = 1) => {
+    if (!isAuthenticated) {
+      const intent = { bundle, isBundle: true, quantity };
+      setPendingItem(intent);
+      try {
+        sessionStorage.setItem(PENDING_CART_KEY, JSON.stringify(intent));
+      } catch (e) {
+        console.error(e);
+      }
+      setAuthModalOpen(true);
+      return false;
+    }
+
+    _internalAddBundle(bundle, quantity);
+    return true;
+  };
 
   const addToCart = (product, size = '100ml', quantity = 1) => {
+    if (product?.isBundle || product?.bundlePrice !== undefined) {
+      return addBundleToCart(product, quantity);
+    }
+
     if (!isAuthenticated) {
       const intent = { product, size, quantity };
       setPendingItem(intent);
@@ -130,9 +212,19 @@ export function CartProvider({ children }) {
     setCart(prev => {
       let items = [...prev.items];
       if (newQty <= 0) {
-        items = items.filter(i => !(i.productId === productId && i.size === size));
+        items = items.filter(i => {
+          if (i.isBundle) {
+            return !(i.id === productId || i.productId === productId || String(i.bundleId) === String(productId));
+          }
+          return !(i.productId === productId && i.size === size);
+        });
       } else {
-        const index = items.findIndex(i => i.productId === productId && i.size === size);
+        const index = items.findIndex(i => {
+          if (i.isBundle) {
+            return i.id === productId || i.productId === productId || String(i.bundleId) === String(productId);
+          }
+          return i.productId === productId && i.size === size;
+        });
         if (index > -1) {
           items[index].quantity = newQty;
         }
@@ -146,7 +238,12 @@ export function CartProvider({ children }) {
   const removeFromCart = (productId, size) => {
     setCart(prev => ({
       ...prev,
-      items: prev.items.filter(i => !(i.productId === productId && i.size === size))
+      items: prev.items.filter(i => {
+        if (i.isBundle) {
+          return !(i.id === productId || i.productId === productId || String(i.bundleId) === String(productId));
+        }
+        return !(i.productId === productId && i.size === size);
+      })
     }));
     info('Creation removed from your bag.');
   };
@@ -226,6 +323,7 @@ export function CartProvider({ children }) {
         },
         closeDrawer: () => setIsDrawerOpen(false),
         addToCart,
+        addBundleToCart,
         updateQuantity,
         removeFromCart,
         toggleGiftWrap,

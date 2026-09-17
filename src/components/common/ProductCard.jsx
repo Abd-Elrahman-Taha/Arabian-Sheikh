@@ -61,7 +61,11 @@ export default function ProductCard({ product, onCompare }) {
   };
 
   const handleCardClick = () => {
-    navigate(`/product/${product.slug || product.id}`);
+    if (product.isBundle || product.bundlePrice !== undefined) {
+      navigate(`/bundle/${product.id}`);
+    } else {
+      navigate(`/product/${product.slug || product.id}`);
+    }
   };
 
   const imageSrc = product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';

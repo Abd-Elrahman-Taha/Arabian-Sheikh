@@ -28,7 +28,7 @@ import BlurText from '../common/BlurText';
 export default function OffersDiscountSection({ products = [] }) {
   const { navigate } = useRouter();
   const { language, t } = useTranslation();
-  const { addToCart } = useCart();
+  const { addToCart, addBundleToCart } = useCart();
   const { isDark } = useTheme();
   const { success } = useToast();
 
@@ -151,34 +151,14 @@ export default function OffersDiscountSection({ products = [] }) {
     setTimeout(() => setCopiedCode(null), 3000);
   };
 
-  // Add entire bundle suite to cart
+  // Add entire bundle suite to cart as a dedicated bundle item with bundle price
   const handleAddBundleToCart = (bundle) => {
-    if (!bundle || !Array.isArray(bundle.items) || bundle.items.length === 0) return;
-
-    let totalFlacons = 0;
-    bundle.items.forEach(item => {
-      const matched = (products || []).find(p => Number(p.id) === Number(item.productId));
-      const flacon = {
-        id: item.productId,
-        name: item.productName || matched?.name || `Product #${item.productId}`,
-        arabicName: matched?.arabicName || '',
-        price: item.unitPrice || matched?.price || 0,
-        image: item.imageUrl || matched?.imageUrl || matched?.image || matched?.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp',
-        imageUrl: item.imageUrl || matched?.imageUrl || matched?.image || matched?.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp',
-        category: matched?.category || 'perfumes',
-        brand: item.brandName || matched?.brand || 'Arabian Sheikh',
-        tier: matched?.tier || 'Royal'
-      };
-      const qty = Number(item.quantity) || 1;
-      totalFlacons += qty;
-      addToCart(flacon, '60 ml', qty);
-    });
-
-    success(
-      language === 'ar'
-        ? `تمت إضافة باقة '${bundle.name}' (${totalFlacons} قوارير) إلى حقيبتك الملكية!`
-        : `Added '${bundle.name}' suite (${totalFlacons} flacons) to your Royal Bag!`
-    );
+    if (!bundle) return;
+    if (addBundleToCart) {
+      addBundleToCart(bundle, 1);
+    } else {
+      addToCart(bundle, 'Curated Suite', 1);
+    }
   };
 
   return (
@@ -308,7 +288,7 @@ export default function OffersDiscountSection({ products = [] }) {
 
                     {/* Bundle Presentation / Items Visual Gallery */}
                     <div
-                      onClick={() => setSelectedBundleModal(bundle)}
+                      onClick={() => navigate(`/bundle/${bundle.id}`)}
                       className="cursor-pointer mb-5 p-4 rounded-xl bg-black/40 border border-white/10 relative overflow-hidden group-hover:border-[#D4AF37]/50 transition-colors"
                     >
                       <div className="flex items-center justify-center -space-x-4 sm:-space-x-6 py-2">
@@ -335,8 +315,8 @@ export default function OffersDiscountSection({ products = [] }) {
 
                       <div className="text-center mt-3">
                         <span className="text-[11px] font-cinzel text-[#D8BE99] uppercase tracking-wider flex items-center justify-center gap-1">
-                          <Eye className="w-3 h-3 text-[#D4AF37]" />
-                          <span>{bundle.items.length} {language === 'ar' ? 'قوارير متضمنة' : 'Creations Included'}</span>
+                          <Eye className="w-3.5 h-3.5 text-[#D4AF37]" />
+                          <span>{bundle.items.length} {language === 'ar' ? 'قوارير متضمنة • انقر للتفاصيل' : 'Creations Included • Click for Details'}</span>
                         </span>
                       </div>
                     </div>
@@ -349,7 +329,7 @@ export default function OffersDiscountSection({ products = [] }) {
                         </p>
                       )}
                       <h4
-                        onClick={() => setSelectedBundleModal(bundle)}
+                        onClick={() => navigate(`/bundle/${bundle.id}`)}
                         className={`font-cinzel text-lg sm:text-xl font-bold cursor-pointer transition-colors ${
                           isDark ? 'text-[#FFFDF8] group-hover:text-[#F2D675]' : 'text-[#704622] group-hover:text-[#A8853B]'
                         }`}
@@ -397,11 +377,11 @@ export default function OffersDiscountSection({ products = [] }) {
                     <div className="grid grid-cols-2 gap-2 pt-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedBundleModal(bundle)}
-                        className="px-3 py-2.5 rounded-xl border border-white/20 hover:border-[#D4AF37] text-xs font-cinzel font-bold uppercase text-[#D8BE99] hover:text-white transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        onClick={() => navigate(`/bundle/${bundle.id}`)}
+                        className="px-3 py-2.5 rounded-xl border border-white/20 hover:border-[#D4AF37] text-xs font-cinzel font-bold uppercase text-[#D8BE99] hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>{language === 'ar' ? 'تفاصيل العرض' : 'Inspect Suite'}</span>
+                        <span>{language === 'ar' ? 'استعراض الباقة' : 'View Suite'}</span>
                       </button>
 
                       <button
@@ -410,7 +390,7 @@ export default function OffersDiscountSection({ products = [] }) {
                         className="px-3 py-2.5 rounded-xl bg-gradient-to-r from-purple-800 via-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-500 text-white font-cinzel font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-102 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>{language === 'ar' ? 'اقتنِ الباقة' : 'Claim Suite'}</span>
+                        <span>{language === 'ar' ? 'إضافة للحقيبة' : 'Add to Bag'}</span>
                       </button>
                     </div>
                   </div>
@@ -678,13 +658,26 @@ export default function OffersDiscountSection({ products = [] }) {
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#D4AF37]/20">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-[#D4AF37]/20">
               <button
                 type="button"
                 onClick={() => setSelectedBundleModal(null)}
                 className="px-5 py-2.5 rounded-full border border-white/20 text-xs font-cinzel uppercase text-[#D8BE99] hover:text-white transition-all cursor-pointer"
               >
                 {language === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const targetId = selectedBundleModal.id;
+                  setSelectedBundleModal(null);
+                  navigate(`/bundle/${targetId}`);
+                }}
+                className="px-5 py-2.5 rounded-full border border-[#D4AF37]/50 text-xs font-cinzel uppercase text-[#F2D675] hover:bg-[#D4AF37]/20 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'صفحة الباقة الكاملة' : 'Full Suite Page'}</span>
               </button>
 
               <button
