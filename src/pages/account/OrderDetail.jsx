@@ -2,8 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
-import { Truck, ArrowLeft, Printer } from 'lucide-react';
+import { Truck, ArrowLeft, Printer, AlertCircle } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
+
+function formatOrderStatus(status = '') {
+  if (!status) return 'Pending';
+  return String(status)
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .replace(/_/g, ' ');
+}
+
+function getStatusBadge(status = '') {
+  const s = String(status || '').toUpperCase().replace(/[\s_-]+/g, '');
+  if (s.includes('DELIVER')) {
+    return 'bg-emerald-950 text-emerald-300 border-emerald-500/40';
+  }
+  if (s.includes('SHIP') || s.includes('TRANSIT') || s.includes('OUTFOR')) {
+    return 'bg-amber-950 text-amber-300 border-amber-500/40';
+  }
+  if (s.includes('PROCESS') || s.includes('CONFIRM')) {
+    return 'bg-blue-950 text-blue-300 border-blue-500/40';
+  }
+  if (s.includes('CANCEL')) {
+    return 'bg-rose-950 text-rose-300 border-rose-500/40';
+  }
+  return 'bg-neutral-900 text-neutral-300 border-neutral-600/40';
+}
 
 export default function OrderDetail() {
   const { currentPath, navigate } = useRouter();
@@ -26,6 +51,36 @@ export default function OrderDetail() {
       }
     }
     load();
+
+    const handleUpdate = async (e) => {
+      const updatedId = e?.detail?.orderId;
+      const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
+      const eventTarget = String(updatedId || '').replace(/^#/, '').toLowerCase().trim();
+      if (!updatedId || eventTarget === target || (e?.detail?.order && (String(e.detail.order.id).toLowerCase() === target || String(e.detail.order.orderNumber).toLowerCase() === target))) {
+        const item = await orderService.getOrderById(orderId);
+        if (item) setOrder(item);
+      }
+    };
+
+    window.addEventListener('arabian_sheikh_order_updated', handleUpdate);
+    window.addEventListener('arabian_sheikh_cloud_updated', handleUpdate);
+
+    const handleStorageChange = (e) => {
+      if (
+        e.key === 'arabian_sheikh_orders' ||
+        e.key === 'arabian_sheikh_last_order_update' ||
+        e.key === 'arabian_sheikh_live_cloud_state_v4'
+      ) {
+        orderService.getOrderById(orderId).then(item => { if (item) setOrder(item); });
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_order_updated', handleUpdate);
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [orderId]);
 
   if (loading) {
@@ -43,6 +98,12 @@ export default function OrderDetail() {
     );
   }
 
+  const displayStatus = order.orderStatus || order.status || 'Pending';
+  const isCancelled = String(displayStatus).toLowerCase().includes('cancel');
+  const statusBadgeClass = getStatusBadge(displayStatus);
+  const cancelNote = order.timeline?.find(t => String(t.status).toLowerCase().includes('cancel'))?.title ||
+    order.statusHistory?.find(h => String(h.toStatus || h.status).toLowerCase().includes('cancel'))?.note || '';
+
   return (
     <div className="space-y-8 animate-fade-in text-[var(--color-earth-dark)]">
       {/* Header */}
@@ -57,16 +118,21 @@ export default function OrderDetail() {
             <span>Back to All Orders</span>
           </button>
           <h2 className="font-cinzel text-2xl font-bold uppercase text-[var(--color-earth-dark)]">
-            Order Reference: {order.id}
+            Order Reference: {order.orderNumber || order.id}
           </h2>
-          <p className="text-xs text-[var(--color-terracotta-deep)] font-mono font-medium">
-            Placed on {new Date(order.date).toLocaleString()} • Status: <strong className="text-[var(--color-terracotta)]">{order.status}</strong>
-          </p>
+          <div className="flex flex-wrap items-center gap-3 mt-1.5">
+            <span className="text-xs text-[var(--color-terracotta-deep)] font-mono font-medium">
+              Placed on {new Date(order.date || order.createdAt).toLocaleString()}
+            </span>
+            <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full uppercase border ${statusBadgeClass}`}>
+              {formatOrderStatus(displayStatus)}
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <Link
-            to={`/order-tracking/${order.id}`}
+            to={`/order-tracking/${order.orderNumber || order.id}`}
             className="luxury-btn-gold px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
           >
             <Truck className="w-4 h-4" />
@@ -82,6 +148,23 @@ export default function OrderDetail() {
         </div>
       </div>
       </ScrollReveal>
+
+      {/* Cancellation Notice Banner */}
+      {isCancelled && (
+        <ScrollReveal direction="up">
+          <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-500/40 flex items-start gap-3 text-rose-300">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="space-y-1 text-xs">
+              <p className="font-cinzel font-bold text-sm text-rose-200 uppercase tracking-wider">
+                Order Cancelled by Administration
+              </p>
+              <p className="text-rose-300/90 font-medium">
+                {cancelNote || 'This acquisition was cancelled by palace administration. For questions or refund status, please contact royal concierge.'}
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
 
       {/* Items Breakdown */}
       <ScrollReveal direction="up" delay={0.1}>

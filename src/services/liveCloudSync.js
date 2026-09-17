@@ -125,8 +125,25 @@ function mergeRemoteData(remoteData) {
   }
 
   const orderMap = new Map();
-  (remoteData.orders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-  state.orders.forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+  (remoteData.orders || []).forEach(o => {
+    if (o?.id) {
+      const key = String(o.orderNumber || o.id).toLowerCase();
+      orderMap.set(key, o);
+    }
+  });
+  state.orders.forEach(o => {
+    if (o?.id) {
+      const key = String(o.orderNumber || o.id).toLowerCase();
+      const existing = orderMap.get(key);
+      if (existing) {
+        const oTime = new Date(o.updatedAt || o.date || o.createdAt || 0).getTime();
+        const exTime = new Date(existing.updatedAt || existing.date || existing.createdAt || 0).getTime();
+        orderMap.set(key, oTime >= exTime ? { ...existing, ...o } : { ...o, ...existing });
+      } else {
+        orderMap.set(key, o);
+      }
+    }
+  });
 
   const userMap = new Map();
   (remoteData.users || []).forEach(u => {
@@ -619,9 +636,11 @@ export const liveCloudSync = {
 
   async updateOrderStatus(orderId, newStatus) {
     if (!orderId) return;
-    const idStr = String(orderId);
+    const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
     state.orders = (state.orders || []).map(o => {
-      if (String(o.id) === idStr || String(o.orderNumber) === idStr) {
+      const oId = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+      const oNum = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+      if (oId === target || oNum === target || (oNum && target && (oNum.endsWith(target) || target.endsWith(oNum)))) {
         return {
           ...o,
           status: newStatus,

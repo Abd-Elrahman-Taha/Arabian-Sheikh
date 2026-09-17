@@ -4,15 +4,30 @@ import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { Package, Truck, ChevronRight } from 'lucide-react';
 
-const STATUS_STYLES = {
-  CONFIRMED:        'bg-blue-950 text-blue-300 border border-blue-500/40',
-  PROCESSING:       'bg-yellow-950 text-yellow-300 border border-yellow-500/40',
-  SHIPPED:          'bg-amber-950 text-amber-300 border border-amber-500/40',
-  OUT_FOR_DELIVERY: 'bg-orange-950 text-orange-300 border border-orange-500/40',
-  DELIVERED:        'bg-emerald-950 text-emerald-300 border border-emerald-500/40',
-  CANCELLED:        'bg-rose-950 text-rose-300 border border-rose-500/40',
-  PENDING:          'bg-neutral-900 text-neutral-300 border border-neutral-600/40',
-};
+function getStatusStyle(status = '') {
+  const s = String(status || '').toUpperCase().replace(/[\s_-]+/g, '');
+  if (s.includes('DELIVER')) {
+    return 'bg-emerald-950 text-emerald-300 border border-emerald-500/40 shadow-sm';
+  }
+  if (s.includes('SHIP') || s.includes('TRANSIT') || s.includes('OUTFOR')) {
+    return 'bg-amber-950 text-amber-300 border border-amber-500/40 shadow-sm';
+  }
+  if (s.includes('PROCESS') || s.includes('CONFIRM')) {
+    return 'bg-blue-950 text-blue-300 border border-blue-500/40 shadow-sm';
+  }
+  if (s.includes('CANCEL')) {
+    return 'bg-rose-950 text-rose-300 border border-rose-500/40 shadow-sm';
+  }
+  return 'bg-neutral-900 text-neutral-300 border border-neutral-600/40 shadow-sm';
+}
+
+function formatOrderStatus(status = '') {
+  if (!status) return 'Pending';
+  return String(status)
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .replace(/_/g, ' ');
+}
 
 export default function AccountOrders() {
   const { user } = useAuth();
@@ -31,6 +46,39 @@ export default function AccountOrders() {
       }
     }
     load();
+
+    // Real-time reactive updates when admin updates status or an order is placed
+    const handleOrderUpdate = async () => {
+      try {
+        const fresh = await orderService.getCustomerOrders(user);
+        setOrders(fresh);
+      } catch (e) {
+        console.warn('Real-time order refresh error:', e);
+      }
+    };
+
+    window.addEventListener('arabian_sheikh_order_updated', handleOrderUpdate);
+    window.addEventListener('arabian_sheikh_cloud_updated', handleOrderUpdate);
+    window.addEventListener('arabian_sheikh_order_created', handleOrderUpdate);
+
+    // Cross-tab synchronization
+    const handleStorageChange = (e) => {
+      if (
+        e.key === 'arabian_sheikh_orders' ||
+        e.key === 'arabian_sheikh_last_order_update' ||
+        e.key === 'arabian_sheikh_live_cloud_state_v4'
+      ) {
+        handleOrderUpdate();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_order_updated', handleOrderUpdate);
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleOrderUpdate);
+      window.removeEventListener('arabian_sheikh_order_created', handleOrderUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [user]);
 
   if (loading) {
@@ -73,9 +121,10 @@ export default function AccountOrders() {
 
       <div className="space-y-5">
         {orders.map((o) => {
-          const statusClass = STATUS_STYLES[o.status] || STATUS_STYLES.PENDING;
-          const dateStr = o.date
-            ? new Date(o.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          const displayStatus = o.orderStatus || o.status || 'Pending';
+          const statusClass = getStatusStyle(displayStatus);
+          const dateStr = o.date || o.createdAt
+            ? new Date(o.date || o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
             : '—';
           const orderItems = Array.isArray(o.items) ? o.items : [];
 
@@ -89,7 +138,7 @@ export default function AccountOrders() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 text-xs font-mono uppercase font-bold rounded-full ${statusClass}`}>
-                    {(o.status || 'CONFIRMED').replace(/_/g, ' ')}
+                    {formatOrderStatus(displayStatus)}
                   </span>
                   <span className="font-cinzel font-bold text-[#F3E6D0] text-base sm:text-lg">
                     €{Number(o.total || 0).toFixed(2)}

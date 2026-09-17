@@ -16,6 +16,31 @@ import {
   Package
 } from 'lucide-react';
 
+function formatOrderStatus(status = '') {
+  if (!status) return 'Pending';
+  return String(status)
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .replace(/_/g, ' ');
+}
+
+function getOrderStatusBadge(status = '') {
+  const s = String(status || '').toUpperCase().replace(/[\s_-]+/g, '');
+  if (s.includes('DELIVER')) {
+    return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
+  }
+  if (s.includes('SHIP') || s.includes('TRANSIT') || s.includes('OUTFOR')) {
+    return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+  }
+  if (s.includes('PROCESS') || s.includes('CONFIRM')) {
+    return 'bg-blue-500/15 text-blue-300 border-blue-500/40';
+  }
+  if (s.includes('CANCEL')) {
+    return 'bg-rose-500/15 text-rose-300 border-rose-500/40';
+  }
+  return 'bg-[#D4AF37]/20 text-[#F2D675] border-[#D4AF37]/35';
+}
+
 export default function AccountOverview() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
@@ -45,6 +70,33 @@ export default function AccountOverview() {
       }
     }
     loadCustomerData();
+
+    // Listen for real-time order status updates and order creation
+    const handleOrderEvent = () => {
+      loadCustomerData();
+    };
+
+    window.addEventListener('arabian_sheikh_order_updated', handleOrderEvent);
+    window.addEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
+    window.addEventListener('arabian_sheikh_order_created', handleOrderEvent);
+
+    const handleStorageChange = (e) => {
+      if (
+        e.key === 'arabian_sheikh_orders' ||
+        e.key === 'arabian_sheikh_last_order_update' ||
+        e.key === 'arabian_sheikh_live_cloud_state_v4'
+      ) {
+        loadCustomerData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_order_updated', handleOrderEvent);
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
+      window.removeEventListener('arabian_sheikh_order_created', handleOrderEvent);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [user]);
 
   return (
@@ -134,6 +186,8 @@ export default function AccountOverview() {
               const dateStr = order.date || order.createdAt
                 ? new Date(order.date || order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                 : 'Recent';
+              const displayStatus = order.orderStatus || order.status || 'Pending';
+              const badgeClass = getOrderStatusBadge(displayStatus);
 
               return (
                 <div
@@ -143,8 +197,8 @@ export default function AccountOverview() {
                   <div>
                     <div className="flex items-center gap-3">
                       <span className="font-cinzel font-bold text-base sm:text-lg text-[#F3E6D0]">{order.id}</span>
-                      <span className="px-3 py-0.5 text-xs font-mono rounded-full bg-[#D4AF37]/20 text-[#F2D675] border border-[#D4AF37]/35 font-bold">
-                        {order.status || order.orderStatus || 'CONFIRMED'}
+                      <span className={`px-3 py-0.5 text-xs font-mono rounded-full border font-bold uppercase ${badgeClass}`}>
+                        {formatOrderStatus(displayStatus)}
                       </span>
                     </div>
                     <div className="text-xs sm:text-sm text-[#D8BE99] mt-1.5 flex items-center gap-2">

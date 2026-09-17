@@ -10,26 +10,41 @@ const PLACED_ORDERS_STORAGE_KEY = 'arabian_sheikh_placed_order_ids';
 let inMemoryOrders = null;
 
 function loadOrders() {
-  let base = inMemoryOrders;
-  if (!base || base.length === 0) {
-    const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        base = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_ORDERS];
-      } catch {
-        base = [...INITIAL_ORDERS];
-      }
-    } else {
-      base = [...INITIAL_ORDERS];
+  let base = [];
+  const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      base = Array.isArray(parsed) && parsed.length > 0 ? parsed : (inMemoryOrders || [...INITIAL_ORDERS]);
+    } catch {
+      base = inMemoryOrders || [...INITIAL_ORDERS];
     }
+  } else {
+    base = inMemoryOrders || [...INITIAL_ORDERS];
   }
 
   // Merge live cloud orders
-  const cloudOrders = liveCloudSync.getOrders();
+  const cloudOrders = typeof liveCloudSync.getOrders === 'function' ? liveCloudSync.getOrders() : [];
   const orderMap = new Map();
-  (base || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-  (cloudOrders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
+  (base || []).forEach(o => {
+    if (o?.id) {
+      const key = String(o.orderNumber || o.id).toLowerCase();
+      orderMap.set(key, o);
+    }
+  });
+  (cloudOrders || []).forEach(o => {
+    if (o?.id) {
+      const key = String(o.orderNumber || o.id).toLowerCase();
+      const existing = orderMap.get(key);
+      if (existing) {
+        const baseTime = new Date(existing.updatedAt || existing.date || existing.createdAt || 0).getTime();
+        const cloudTime = new Date(o.updatedAt || o.date || o.createdAt || 0).getTime();
+        orderMap.set(key, baseTime >= cloudTime ? { ...o, ...existing } : { ...existing, ...o });
+      } else {
+        orderMap.set(key, o);
+      }
+    }
+  });
 
   inMemoryOrders = Array.from(orderMap.values());
   return inMemoryOrders;
@@ -125,6 +140,9 @@ export const orderService = {
    * Returns orders placed in this browser session, or matching email/userId, or all if Admin
    */
   async getCustomerOrders(user) {
+    // 1. Sync latest live cloud updates first
+    await liveCloudSync.sync().catch(() => {});
+
     if (!apiClient.isMockEnabled()) {
       try {
         const response = await orderApi.getMyOrders();
@@ -133,9 +151,20 @@ export const orderService = {
           const current = loadOrders();
           const merged = [...current];
           for (const item of remoteItems) {
-            const idx = merged.findIndex(o => o.id === item.id);
+            const target = String(item.orderNumber || item.id).replace(/^#/, '').toLowerCase().trim();
+            const idx = merged.findIndex(o => {
+              const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+              const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+              return idStr === target || numStr === target;
+            });
             if (idx > -1) {
+              const localStatus = merged[idx].orderStatus || merged[idx].status;
               merged[idx] = { ...merged[idx], ...item };
+              // Preserve status if admin has updated it locally/in cloud
+              if (localStatus && localStatus !== 'Pending' && item.orderStatus === 'Pending') {
+                merged[idx].orderStatus = localStatus;
+                merged[idx].status = localStatus;
+              }
             } else {
               merged.unshift(item);
             }
@@ -153,10 +182,10 @@ export const orderService = {
     const userId = user?.id;
 
     let mine = all.filter(o => {
-      const orderEmail = (o.customerEmail || '').toLowerCase().trim();
-      const orderUserId = o.userId ? String(o.userId) : null;
+      const orderEmail = (o.customerEmail || o.customer?.email || '').toLowerCase().trim();
+      const orderUserId = (o.userId || o.customer?.id) ? String(o.userId || o.customer?.id) : null;
       const currentUserIdStr = userId ? String(userId) : null;
-      const isPlacedOnDevice = !user && placedIds.includes(o.id);
+      const isPlacedOnDevice = placedIds.includes(o.id) || placedIds.includes(o.orderNumber);
 
       if (userEmail && orderEmail && orderEmail === userEmail) return true;
       if (currentUserIdStr && orderUserId && orderUserId === currentUserIdStr) return true;
@@ -343,28 +372,53 @@ export const orderService = {
   getOrderByIdSync(id) {
     if (!id) return null;
     const orders = loadOrders();
-    return orders.find(o => o.id === id || o.trackingCode === id || o.dhlTrackingNumber === id) || null;
+    const target = String(id).replace(/^#/, '').toLowerCase().trim();
+    return orders.find(o => {
+      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+      const trk = String(o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase().trim();
+      return idStr === target || numStr === target || trk === target;
+    }) || null;
   },
 
   async getOrderById(id) {
+    await liveCloudSync.sync().catch(() => {});
     const local = this.getOrderByIdSync(id);
-    if (local) return local;
 
     if (!apiClient.isMockEnabled()) {
       try {
         const remote = await orderApi.getOrderById(id);
         if (remote) {
           const orders = loadOrders();
-          orders.unshift(remote);
+          const target = String(id).replace(/^#/, '').toLowerCase().trim();
+          const idx = orders.findIndex(o => {
+            const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+            const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+            return idStr === target || numStr === target;
+          });
+
+          // If local has a newer status updated by admin, preserve it!
+          const localStatus = local?.orderStatus || local?.status;
+          const merged = { ...remote, ...local };
+          if (localStatus && localStatus !== 'Pending' && remote.orderStatus === 'Pending') {
+            merged.orderStatus = localStatus;
+            merged.status = localStatus;
+          }
+
+          if (idx > -1) {
+            orders[idx] = merged;
+          } else {
+            orders.unshift(merged);
+          }
           saveOrders(orders);
-          return remote;
+          return merged;
         }
       } catch (e) {
         console.warn('Real API getOrderById fallback:', e.message);
       }
     }
 
-    return null;
+    return local;
   },
 
   async createOrder(orderPayload) {
@@ -529,7 +583,14 @@ export const orderService = {
     }
 
     const orders = loadOrders();
-    const index = orders.findIndex(o => String(o.id) === String(orderId) || o.orderNumber === orderId);
+    const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
+    const index = orders.findIndex(o => {
+      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+      return idStr === target || numStr === target;
+    });
+
+    let updatedOrder = null;
     if (index > -1) {
       orders[index].status = newStatus;
       orders[index].orderStatus = newStatus;
@@ -550,9 +611,32 @@ export const orderService = {
         createdAt: new Date().toISOString()
       });
       saveOrders(orders);
-      return orders[index];
+      updatedOrder = orders[index];
+    } else {
+      updatedOrder = { id: orderId, orderNumber: orderId, status: newStatus, orderStatus: newStatus };
     }
-    return { id: orderId, status: newStatus };
+
+    // 3. Dispatch real-time event so customer account, tracking, and detail views update immediately
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
+        detail: {
+          orderId,
+          status: newStatus,
+          orderStatus: newStatus,
+          note,
+          order: updatedOrder
+        }
+      }));
+      try {
+        localStorage.setItem('arabian_sheikh_last_order_update', JSON.stringify({
+          orderId,
+          status: newStatus,
+          timestamp: Date.now()
+        }));
+      } catch {}
+    }
+
+    return updatedOrder;
   },
 
   async cancelOrder(orderId, reason = '') {

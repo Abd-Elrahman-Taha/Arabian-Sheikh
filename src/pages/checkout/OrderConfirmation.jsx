@@ -18,12 +18,56 @@ export default function OrderConfirmation() {
   const [loading, setLoading] = useState(!order);
 
   useEffect(() => {
-    const item = orderService.getOrderByIdSync(orderId);
-    if (item) {
-      setOrder(item);
-      setLoading(false);
+    async function load() {
+      try {
+        const item = await orderService.getOrderById(orderId);
+        if (item) setOrder(item);
+      } catch (err) {
+        console.warn('Confirmation fetch order error:', err);
+      } finally {
+        setLoading(false);
+      }
     }
+    load();
+
+    const handleUpdate = async (e) => {
+      const updatedId = e?.detail?.orderId;
+      const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
+      const eventTarget = String(updatedId || '').replace(/^#/, '').toLowerCase().trim();
+      if (
+        !updatedId ||
+        eventTarget === target ||
+        (e?.detail?.order &&
+          (String(e.detail.order.id).toLowerCase() === target ||
+            String(e.detail.order.orderNumber).toLowerCase() === target))
+      ) {
+        const item = await orderService.getOrderById(orderId);
+        if (item) setOrder(item);
+      }
+    };
+
+    window.addEventListener('arabian_sheikh_order_updated', handleUpdate);
+    window.addEventListener('arabian_sheikh_cloud_updated', handleUpdate);
+
+    const handleStorageChange = (e) => {
+      if (
+        e.key === 'arabian_sheikh_orders' ||
+        e.key === 'arabian_sheikh_last_order_update' ||
+        e.key === 'arabian_sheikh_live_cloud_state_v4'
+      ) {
+        orderService.getOrderById(orderId).then(item => { if (item) setOrder(item); });
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_order_updated', handleUpdate);
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [orderId]);
+
+  const displayStatus = order?.orderStatus || order?.status || 'Confirmed';
 
   return (
     <div className="pt-36 sm:pt-40 pb-6 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-[#F3E6D0]">
@@ -52,6 +96,12 @@ export default function OrderConfirmation() {
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <span className="text-[#D8BE99] font-medium">{t('confirmation.orderNumber')}:</span>
               <span className="font-cinzel font-bold text-sm text-[#F2D675]">{orderId}</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+              <span className="text-[#D8BE99] font-medium">Fulfillment Status:</span>
+              <span className="font-mono font-bold text-xs uppercase px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F2D675]">
+                {String(displayStatus).replace(/([A-Z])/g, ' $1').trim()}
+              </span>
             </div>
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <span className="text-[#D8BE99] font-medium">{t('confirmation.estimatedDelivery')}:</span>
