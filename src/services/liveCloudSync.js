@@ -217,9 +217,14 @@ function mergeRemoteData(remoteData) {
 }
 
 // Pull latest state from live cloud and merge across devices
+let isPulling = false;
+let lastPulledTimestamp = null;
+
 async function pullFromCloud() {
   if (typeof window === 'undefined') return state;
-  
+  if (isPulling) return state;
+
+  isPulling = true;
   try {
     const res = await fetch(VERCEL_SYNC_ENDPOINT, {
       headers: { 'Accept': 'application/json' },
@@ -230,15 +235,24 @@ async function pullFromCloud() {
       const data = await res.json();
       if (data && typeof data === 'object') {
         const remoteData = data?.data || data;
-        mergeRemoteData(remoteData);
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
+        const remoteTimestamp = remoteData.lastUpdated || null;
+
+        // Only process and dispatch if there is actual new/updated data
+        const isNew = !lastPulledTimestamp || (remoteTimestamp && remoteTimestamp !== lastPulledTimestamp);
+        if (isNew) {
+          lastPulledTimestamp = remoteTimestamp || new Date().toISOString();
+          mergeRemoteData(remoteData);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
+          }
         }
         return state;
       }
     }
   } catch (err) {
     console.warn('Cloud sync pull error:', err.message);
+  } finally {
+    isPulling = false;
   }
   return state;
 }
@@ -266,9 +280,16 @@ if (typeof window !== 'undefined') {
   setupLiveSyncListener();
 }
 
+let lastSyncTime = 0;
+
 export const liveCloudSync = {
-  // Pull latest updates from cloud
-  async sync() {
+  // Pull latest updates from cloud (throttled to at most once per 5 seconds unless forced)
+  async sync(force = false) {
+    const now = Date.now();
+    if (!force && now - lastSyncTime < 5000) {
+      return state;
+    }
+    lastSyncTime = now;
     return await pullFromCloud();
   },
 

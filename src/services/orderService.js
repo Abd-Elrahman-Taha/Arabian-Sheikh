@@ -382,12 +382,14 @@ export const orderService = {
   },
 
   async getOrderById(id) {
-    await liveCloudSync.sync().catch(() => {});
     const local = this.getOrderByIdSync(id);
 
-    if (!apiClient.isMockEnabled()) {
+    const numId = Number(id);
+    const validNumericId = !isNaN(numId) && numId > 0 ? numId : (local?.numericId ? Number(local.numericId) : null);
+
+    if (!apiClient.isMockEnabled() && validNumericId) {
       try {
-        const remote = await orderApi.getOrderById(id);
+        const remote = await orderApi.getOrderById(validNumericId);
         if (remote) {
           const orders = loadOrders();
           const target = String(id).replace(/^#/, '').toLowerCase().trim();
@@ -414,7 +416,7 @@ export const orderService = {
           return merged;
         }
       } catch (e) {
-        console.warn('Real API getOrderById fallback:', e.message);
+        // Graceful silent fallback to local/cloud order
       }
     }
 

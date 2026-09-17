@@ -2,6 +2,18 @@ import apiClient from './client';
 import ENDPOINTS from './endpoints';
 import { normalizeOrder, normalizeReturn, normalizeObjectKeys } from './normalizers';
 
+function toNumericId(id) {
+  if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
+  if (typeof id === 'string') {
+    const cleaned = id.trim();
+    if (/^\d+$/.test(cleaned)) {
+      const n = Number(cleaned);
+      if (!isNaN(n) && n > 0) return n;
+    }
+  }
+  return null;
+}
+
 export const orderApi = {
   // ==========================================
   // CUSTOMER STOREFRONT ENDPOINTS
@@ -66,7 +78,9 @@ export const orderApi = {
    * GET /api/Orders/{id}
    */
   async getOrderById(id) {
-    const response = await apiClient.get(ENDPOINTS.ORDERS.DETAILS(id), { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    const response = await apiClient.get(ENDPOINTS.ORDERS.DETAILS(numericId), { requiresAuth: true });
     return normalizeOrder(response);
   },
 
@@ -75,7 +89,9 @@ export const orderApi = {
    * GET /api/Orders/{id}/delivery-status
    */
   async getDeliveryStatus(id) {
-    const response = await apiClient.get(ENDPOINTS.ORDERS.DELIVERY_STATUS(id), { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    const response = await apiClient.get(ENDPOINTS.ORDERS.DELIVERY_STATUS(numericId), { requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
@@ -84,7 +100,9 @@ export const orderApi = {
    * GET /api/Orders/{id}/tracking
    */
   async trackOrder(id) {
-    const response = await apiClient.get(ENDPOINTS.ORDERS.TRACKING(id), { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    const response = await apiClient.get(ENDPOINTS.ORDERS.TRACKING(numericId), { requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
@@ -93,8 +111,10 @@ export const orderApi = {
    * POST /api/Orders/{id}/cancel
    */
   async cancelOrder(id, reason = '') {
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
     const response = await apiClient.post(
-      ENDPOINTS.ORDERS.CANCEL(id),
+      ENDPOINTS.ORDERS.CANCEL(numericId),
       { reason },
       { requiresAuth: true }
     );
@@ -203,7 +223,9 @@ export const orderApi = {
    * GET /api/admin/orders/{id}
    */
   async adminGetOrderDetails(id) {
-    const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.DETAILS(id), { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.DETAILS(numericId), { requiresAuth: true });
     return normalizeOrder(response);
   },
 
@@ -212,8 +234,10 @@ export const orderApi = {
    * PATCH /api/admin/orders/{id}/status
    */
   async adminUpdateOrderStatus(id, status, note = '') {
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
     const response = await apiClient.patch(
-      ENDPOINTS.ADMIN.ORDERS.UPDATE_STATUS(id),
+      ENDPOINTS.ADMIN.ORDERS.UPDATE_STATUS(numericId),
       { status, note },
       { requiresAuth: true }
     );
@@ -225,8 +249,10 @@ export const orderApi = {
    * POST /api/admin/orders/{id}/cancel
    */
   async adminCancelOrder(id, reason = '') {
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
     const response = await apiClient.post(
-      ENDPOINTS.ADMIN.ORDERS.CANCEL(id),
+      ENDPOINTS.ADMIN.ORDERS.CANCEL(numericId),
       { reason },
       { requiresAuth: true }
     );
@@ -238,7 +264,9 @@ export const orderApi = {
    * GET /api/admin/orders/{id}/status-history
    */
   async adminGetOrderStatusHistory(id) {
-    const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.STATUS_HISTORY(id), { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return [];
+    const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.STATUS_HISTORY(numericId), { requiresAuth: true });
     const rawList = Array.isArray(response) ? response : (response?.items || []);
     return rawList.map(normalizeObjectKeys);
   },
@@ -248,7 +276,9 @@ export const orderApi = {
    * GET /api/admin/orders/{id}/tracking
    */
   async adminGetOrderTracking(id) {
-    const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.TRACKING(id), { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    const response = await apiClient.get(ENDPOINTS.ADMIN.ORDERS.TRACKING(numericId), { requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
@@ -257,7 +287,9 @@ export const orderApi = {
    * POST /api/admin/orders/{id}/compensation/retry
    */
   async adminRetryCompensation(id) {
-    const response = await apiClient.post(ENDPOINTS.ADMIN.ORDERS.COMPENSATION_RETRY(id), {}, { requiresAuth: true });
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    const response = await apiClient.post(ENDPOINTS.ADMIN.ORDERS.COMPENSATION_RETRY(numericId), {}, { requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 

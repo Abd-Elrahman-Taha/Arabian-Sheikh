@@ -40,19 +40,32 @@ export default function OrderTracking() {
 
     // Listen for real-time status updates from Admin
     const handleUpdate = async (e) => {
-      const updatedId = e?.detail?.orderId;
       const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
-      const eventTarget = String(updatedId || '').replace(/^#/, '').toLowerCase().trim();
-      if (
-        !updatedId ||
-        eventTarget === target ||
-        (e?.detail?.order &&
-          (String(e.detail.order.id).toLowerCase() === target ||
-            String(e.detail.order.orderNumber).toLowerCase() === target))
-      ) {
-        const item = await orderService.getOrderById(orderId);
-        if (item) setOrder(item);
+
+      if (e?.type === 'arabian_sheikh_order_updated') {
+        const updatedId = e?.detail?.orderId;
+        const eventTarget = String(updatedId || '').replace(/^#/, '').toLowerCase().trim();
+        const matchesDetail = e?.detail?.order && (
+          String(e.detail.order.id || '').toLowerCase().replace(/^#/, '').trim() === target ||
+          String(e.detail.order.orderNumber || '').toLowerCase().replace(/^#/, '').trim() === target
+        );
+        if (eventTarget !== target && !matchesDetail) return;
       }
+
+      if (e?.type === 'arabian_sheikh_cloud_updated') {
+        const cloudOrders = e?.detail?.orders;
+        if (Array.isArray(cloudOrders)) {
+          const hasThisOrder = cloudOrders.some(o => {
+            const oId = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+            const oNum = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+            return oId === target || oNum === target;
+          });
+          if (!hasThisOrder) return;
+        }
+      }
+
+      const item = await orderService.getOrderById(orderId);
+      if (item) setOrder(item);
     };
 
     window.addEventListener('arabian_sheikh_order_updated', handleUpdate);
