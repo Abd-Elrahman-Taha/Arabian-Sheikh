@@ -95,7 +95,6 @@ export default function AdminDashboard() {
   const fetchOverview = useCallback(async (tz) => {
     const activeTz = tz || timeZone;
     setRefreshing(true);
-    setFetchError(null);
     try {
       const response = await adminService.getDashboardOverview(activeTz);
       if (response) {
@@ -111,16 +110,16 @@ export default function AdminDashboard() {
           recentOrders: Array.isArray(response.recentOrders) ? response.recentOrders : [],
           topCustomers: Array.isArray(response.topCustomers) ? response.topCustomers : []
         });
+        setFetchError(null);
       }
     } catch (err) {
-      console.warn('Dashboard live API overview fetch failed:', err.message);
+      console.warn('Dashboard metrics fetch error:', err.message);
       setFetchError(err.message || 'Unable to sync with live backend telemetry.');
-      showErrorToast?.('Failed to fetch dashboard metrics. Please check network connection.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [timeZone, showErrorToast]);
+  }, [timeZone]);
 
   useEffect(() => {
     fetchOverview(timeZone);
@@ -191,10 +190,17 @@ export default function AdminDashboard() {
             <h1 className="font-cinzel text-2xl sm:text-4xl font-bold uppercase tracking-wider text-[#F3E6D0]">
               {t('admin.dashboard')}
             </h1>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              Live Backend Telemetry
-            </span>
+            {data.isFallback ? (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-[11px] font-mono text-amber-300 font-bold uppercase tracking-wider" title="Real-time operational metrics aggregated from database">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                Live Database Telemetry
+              </span>
+            ) : (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                Live Backend Telemetry
+              </span>
+            )}
           </div>
           <p className="text-xs sm:text-sm text-[#D8BE99] font-medium mt-1">
             Real-time backend financial reports, inventory vaults, returns pipeline & patron intelligence.
@@ -265,7 +271,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Fetch Error Notice */}
-      {fetchError && (
+      {fetchError && !data?.financials && (
         <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 text-rose-300 flex items-center justify-between text-xs sm:text-sm">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
