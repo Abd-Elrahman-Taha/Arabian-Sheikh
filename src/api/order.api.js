@@ -9,56 +9,95 @@ export const orderApi = {
 
   /**
    * Create Order after successful payment / checkout
-   * POST /api/orders
+   * POST /api/Orders
+   * @param {object} payload { addressId, shippingMethodId, quoteId, paymentMethod, couponCode }
+   * @param {string} idempotencyKey
    */
-  async createOrder({ addressId, currency = 'EUR' }) {
-    const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, {
-      addressId: Number(addressId),
-      currency
+  async createOrder(payload = {}, idempotencyKey = null) {
+    const idempKey = idempotencyKey
+      || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `idemp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+
+    const body = {
+      addressId: Number(payload.addressId) || 1,
+      shippingMethodId: Number(payload.shippingMethodId) || 1,
+      quoteId: payload.quoteId || undefined,
+      paymentMethod: String(payload.paymentMethod || 'Stripe'),
+      couponCode: payload.couponCode || payload.discountCode || undefined
+    };
+
+    const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, body, {
+      headers: {
+        'Idempotency-Key': idempKey
+      },
+      requiresAuth: true
     });
     return normalizeOrder(response);
   },
 
   /**
    * List Customer's own orders
-   * GET /api/orders
+   * GET /api/Orders
+   * @param {object} params { Page, PageSize, Status }
    */
   async getMyOrders(params = {}) {
-    const response = await apiClient.get(ENDPOINTS.ORDERS.LIST, { params });
+    const query = {};
+    if (params.page || params.Page) query.Page = Number(params.page || params.Page);
+    if (params.pageSize || params.PageSize) query.PageSize = Number(params.pageSize || params.PageSize);
+    const statusVal = params.status || params.Status;
+    if (statusVal && String(statusVal).toUpperCase() !== 'ALL') {
+      query.Status = String(statusVal).trim();
+    }
+
+    const response = await apiClient.get(ENDPOINTS.ORDERS.LIST, { params: query, requiresAuth: true });
     const rawList = response?.items || (Array.isArray(response) ? response : []);
     return {
       items: rawList.map(normalizeOrder),
-      page: response?.page || 1,
-      pageSize: response?.pageSize || 20,
-      totalCount: response?.totalCount || rawList.length,
-      totalPages: response?.totalPages || 1
+      page: Number(response?.page || query.Page || 1),
+      pageSize: Number(response?.pageSize || query.PageSize || 20),
+      totalCount: Number(response?.totalCount !== undefined ? response.totalCount : rawList.length),
+      totalPages: Number(response?.totalPages || 1),
+      hasPreviousPage: Boolean(response?.hasPreviousPage),
+      hasNextPage: Boolean(response?.hasNextPage)
     };
   },
 
   /**
    * Get single order details
-   * GET /api/orders/{id}
+   * GET /api/Orders/{id}
    */
   async getOrderById(id) {
-    const response = await apiClient.get(ENDPOINTS.ORDERS.DETAILS(id));
+    const response = await apiClient.get(ENDPOINTS.ORDERS.DETAILS(id), { requiresAuth: true });
     return normalizeOrder(response);
   },
 
   /**
+   * Get order delivery status
+   * GET /api/Orders/{id}/delivery-status
+   */
+  async getDeliveryStatus(id) {
+    const response = await apiClient.get(ENDPOINTS.ORDERS.DELIVERY_STATUS(id), { requiresAuth: true });
+    return normalizeObjectKeys(response);
+  },
+
+  /**
    * Track order shipment
-   * GET /api/orders/{id}/tracking
+   * GET /api/Orders/{id}/tracking
    */
   async trackOrder(id) {
-    const response = await apiClient.get(ENDPOINTS.ORDERS.TRACKING(id));
+    const response = await apiClient.get(ENDPOINTS.ORDERS.TRACKING(id), { requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
   /**
    * Cancel Order (Only Pending or Processing)
-   * POST /api/orders/{id}/cancel
+   * POST /api/Orders/{id}/cancel
    */
   async cancelOrder(id, reason = '') {
-    const response = await apiClient.post(ENDPOINTS.ORDERS.CANCEL(id), { reason });
+    const response = await apiClient.post(
+      ENDPOINTS.ORDERS.CANCEL(id),
+      { reason },
+      { requiresAuth: true }
+    );
     return normalizeObjectKeys(response);
   },
 

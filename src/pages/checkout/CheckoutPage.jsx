@@ -147,7 +147,7 @@ export default function CheckoutPage() {
           country: formData.country,
           postalCode: formData.postalCode
         },
-        paymentMethod: 'Stripe Test Card (•••• 4242)',
+        paymentMethod: 'CreditCard',
         dhlTrackingNumber: 'DHL-EXP-' + Math.floor(1000000000 + Math.random() * 9000000000)
       });
 

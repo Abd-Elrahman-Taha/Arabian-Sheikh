@@ -591,5 +591,48 @@ export const liveCloudSync = {
 
     saveLocalState();
     await pushToCloud();
+  },
+
+  // ==========================================
+  // ORDERS SYNCHRONIZATION
+  // ==========================================
+  getOrders() {
+    return Array.isArray(state.orders) ? state.orders : [];
+  },
+
+  async addOrder(order) {
+    if (!order || !order.id) return;
+    const idStr = String(order.id);
+    const numStr = order.orderNumber ? String(order.orderNumber) : null;
+    const list = Array.isArray(state.orders) ? [...state.orders] : [];
+    const idx = list.findIndex(o => String(o.id) === idStr || (numStr && String(o.orderNumber) === numStr));
+    if (idx > -1) {
+      list[idx] = { ...list[idx], ...order };
+    } else {
+      list.unshift(order);
+    }
+    state.orders = list;
+    state.lastUpdated = new Date().toISOString();
+    saveLocalState();
+    await pushToCloud();
+  },
+
+  async updateOrderStatus(orderId, newStatus) {
+    if (!orderId) return;
+    const idStr = String(orderId);
+    state.orders = (state.orders || []).map(o => {
+      if (String(o.id) === idStr || String(o.orderNumber) === idStr) {
+        return {
+          ...o,
+          status: newStatus,
+          orderStatus: newStatus,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return o;
+    });
+    state.lastUpdated = new Date().toISOString();
+    saveLocalState();
+    await pushToCloud();
   }
 };

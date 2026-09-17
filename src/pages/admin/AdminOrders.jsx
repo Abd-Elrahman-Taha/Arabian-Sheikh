@@ -137,6 +137,19 @@ export default function AdminOrders() {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Real-time reactive listener: when an order is placed on any customer account or tab
+  useEffect(() => {
+    const handleOrderEvent = () => {
+      fetchOrders();
+    };
+    window.addEventListener('arabian_sheikh_order_created', handleOrderEvent);
+    window.addEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
+    return () => {
+      window.removeEventListener('arabian_sheikh_order_created', handleOrderEvent);
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
+    };
+  }, [fetchOrders]);
+
   // Open Details Modal and fetch deep purchase cycle snapshot
   const handleOpenDetails = async (order) => {
     setDetailsModalOrder(order);

@@ -1,5 +1,7 @@
 import { INITIAL_ORDERS } from './mockData';
 import { orderApi } from '../api/order.api';
+import { addressApi } from '../api/address.api';
+import { cartApi } from '../api/cart.api';
 import { apiClient } from '../api/client';
 import { liveCloudSync } from './liveCloudSync';
 
@@ -168,50 +170,123 @@ export const orderService = {
 
   /**
    * Get orders for Admin back-office with server sync & live cloud sync
+   * Merges remote backend orders with customer orders placed in browser/cloud
    */
   async getAdminOrders(filters = {}) {
     // 1. Pull latest orders from live cloud sync
     await liveCloudSync.sync().catch(() => {});
-    const cloudOrders = liveCloudSync.getOrders();
+    const cloudOrders = typeof liveCloudSync.getOrders === 'function' ? liveCloudSync.getOrders() : [];
+    const currentOrders = loadOrders();
+
+    let remoteItems = [];
+    let remotePage = Number(filters.page || filters.Page || 1);
+    let remotePageSize = Number(filters.pageSize || filters.PageSize || 20);
 
     if (!apiClient.isMockEnabled()) {
       try {
         const response = await orderApi.adminGetOrders(filters);
-        const remoteItems = response?.items || (Array.isArray(response) ? response : []);
-        if (Array.isArray(remoteItems) && remoteItems.length > 0) {
-          for (const item of remoteItems) {
-            await liveCloudSync.addOrder(item);
-          }
-          const current = loadOrders();
-          const orderMap = new Map();
-          (current || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-          (cloudOrders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-          (remoteItems || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-          saveOrders(Array.from(orderMap.values()));
-        }
-
         if (response && Array.isArray(response.items)) {
-          return response;
+          remoteItems = response.items;
+          remotePage = response.page || remotePage;
+          remotePageSize = response.pageSize || remotePageSize;
         }
       } catch (e) {
         console.warn('Real API adminGetOrders fallback:', e.message);
       }
     }
 
-    const current = loadOrders();
+    // Combine local saved orders, live cloud sync orders, and remote backend orders
     const orderMap = new Map();
-    (current || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-    (cloudOrders || []).forEach(o => { if (o?.id) orderMap.set(String(o.id), o); });
-    const merged = Array.from(orderMap.values());
-    saveOrders(merged);
 
-    const localItems = this.getAllOrdersSync(filters);
-    const page = Number(filters.page || filters.Page || 1);
-    const pageSize = Number(filters.pageSize || filters.PageSize || 20);
-    const totalCount = localItems.length;
+    // 1. Base / Local orders (created on this device)
+    (currentOrders || []).forEach(o => {
+      if (o?.id) {
+        const key = String(o.orderNumber || o.id);
+        orderMap.set(key, o);
+      }
+    });
+
+    // 2. Live cloud sync orders (placed by normal user accounts on any tab or device)
+    (cloudOrders || []).forEach(o => {
+      if (o?.id) {
+        const key = String(o.orderNumber || o.id);
+        const existing = orderMap.get(key);
+        orderMap.set(key, { ...(existing || {}), ...o });
+      }
+    });
+
+    // 3. Remote backend orders
+    (remoteItems || []).forEach(o => {
+      if (o?.id) {
+        const key = String(o.orderNumber || o.id);
+        const existing = orderMap.get(key);
+        orderMap.set(key, { ...(existing || {}), ...o });
+      }
+    });
+
+    const allOrders = Array.from(orderMap.values());
+    saveOrders(allOrders);
+
+    // Apply filters (orderStatus, paymentStatus, search, date range)
+    let filtered = allOrders;
+
+    const statusFilter = filters.orderStatus || filters.OrderStatus || filters.status;
+    if (statusFilter && statusFilter !== 'ALL') {
+      filtered = filtered.filter(o => {
+        const s = String(o.orderStatus || o.status || '').toLowerCase();
+        return s === String(statusFilter).toLowerCase();
+      });
+    }
+
+    const paymentFilter = filters.paymentStatus || filters.PaymentStatus;
+    if (paymentFilter && paymentFilter !== 'ALL') {
+      filtered = filtered.filter(o => {
+        const p = String(o.paymentStatus || o.payments?.[0]?.status || '').toLowerCase();
+        return p === String(paymentFilter).toLowerCase();
+      });
+    }
+
+    const searchStr = (filters.search || filters.Search || '').toLowerCase().trim();
+    if (searchStr) {
+      filtered = filtered.filter(o => {
+        const idStr = String(o.id || '').toLowerCase();
+        const numStr = String(o.orderNumber || '').toLowerCase();
+        const custName = String(o.customer?.name || o.customerName || '').toLowerCase();
+        const custEmail = String(o.customer?.email || o.customerEmail || '').toLowerCase();
+        const trk = String(o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase();
+        return idStr.includes(searchStr) || numStr.includes(searchStr) || custName.includes(searchStr) || custEmail.includes(searchStr) || trk.includes(searchStr);
+      });
+    }
+
+    if (filters.from || filters.From) {
+      const fromTime = new Date(filters.from || filters.From).getTime();
+      filtered = filtered.filter(o => new Date(o.createdAt || o.date || 0).getTime() >= fromTime);
+    }
+    if (filters.to || filters.To) {
+      const toTime = new Date(filters.to || filters.To).getTime();
+      filtered = filtered.filter(o => new Date(o.createdAt || o.date || 0).getTime() <= toTime);
+    }
+
+    // Sort
+    const sortBy = filters.sortBy || filters.SortBy || 'createdAt';
+    const sortDir = (filters.sortDirection || filters.SortDirection || 'desc').toLowerCase() === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      if (sortBy === 'total') {
+        const totA = Number(a.totals?.total ?? a.total ?? 0);
+        const totB = Number(b.totals?.total ?? b.total ?? 0);
+        return (totA - totB) * sortDir;
+      }
+      const timeA = new Date(a.createdAt || a.date || 0).getTime();
+      const timeB = new Date(b.createdAt || b.date || 0).getTime();
+      return (timeA - timeB) * sortDir;
+    });
+
+    const page = remotePage;
+    const pageSize = remotePageSize;
+    const totalCount = filtered.length;
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
     const startIdx = (page - 1) * pageSize;
-    const paginatedItems = localItems.slice(startIdx, startIdx + pageSize);
+    const paginatedItems = filtered.slice(startIdx, startIdx + pageSize);
 
     return {
       items: paginatedItems,
@@ -294,9 +369,50 @@ export const orderService = {
 
   async createOrder(orderPayload) {
     let apiOrder = null;
+    let resolvedAddressId = orderPayload.addressId;
+
     if (!apiClient.isMockEnabled()) {
       try {
-        apiOrder = await orderApi.createOrder(orderPayload);
+        // 1. Resolve or create customer delivery address on backend if needed
+        if (!resolvedAddressId) {
+          const addresses = await addressApi.getAddresses().catch(() => []);
+          if (Array.isArray(addresses) && addresses.length > 0 && addresses[0]?.id) {
+            resolvedAddressId = addresses[0].id;
+          } else if (orderPayload.shippingAddress) {
+            const createdAddr = await addressApi.createAddress({
+              fullName: orderPayload.shippingAddress.fullName || orderPayload.customerName || 'Valued Patron',
+              phone: orderPayload.customerPhone || orderPayload.phone || '+971500000000',
+              countryCode: 'AE',
+              region: orderPayload.shippingAddress.region || 'Dubai',
+              city: orderPayload.shippingAddress.city || 'Dubai',
+              addressLine1: orderPayload.shippingAddress.address || orderPayload.shippingAddress.addressLine1 || 'Sheikh Zayed Road',
+              addressLine2: orderPayload.shippingAddress.addressLine2 || null,
+              postalCode: orderPayload.shippingAddress.postalCode || '00000'
+            }).catch(() => null);
+            if (createdAddr?.id) {
+              resolvedAddressId = createdAddr.id;
+            }
+          }
+        }
+
+        // 2. Ensure items exist in server-side cart
+        if (Array.isArray(orderPayload.items) && orderPayload.items.length > 0) {
+          for (const item of orderPayload.items) {
+            const pId = item.productId || item.id;
+            if (pId && !isNaN(Number(pId))) {
+              await cartApi.addItem(Number(pId), item.quantity || 1).catch(() => {});
+            }
+          }
+        }
+
+        // 3. Call official POST /api/Orders
+        apiOrder = await orderApi.createOrder({
+          addressId: Number(resolvedAddressId) || 1,
+          shippingMethodId: Number(orderPayload.shippingMethodId) || 1,
+          quoteId: orderPayload.quoteId || undefined,
+          paymentMethod: orderPayload.paymentMethod || 'CreditCard',
+          couponCode: orderPayload.discountCode || orderPayload.couponCode || undefined
+        });
       } catch (e) {
         console.warn('Real API create order fallback:', e.message);
       }
@@ -304,38 +420,83 @@ export const orderService = {
 
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const orderId = apiOrder?.id || `ORD-${randomNum}`;
-    const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || `${randomNum}04-AE`;
+    const orderNum = apiOrder?.orderNumber || (typeof orderId === 'string' && orderId.startsWith('ORD-') ? orderId : `ORD-${orderId}`);
+    const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || `DHL-EXP-${randomNum}04`;
+
+    const customerName = orderPayload.customerName || apiOrder?.customer?.name || 'Valued Patron';
+    const customerEmail = orderPayload.customerEmail || apiOrder?.customer?.email || '';
+    const customerPhone = orderPayload.customerPhone || apiOrder?.customer?.phone || '';
+    const orderTotal = Number(apiOrder?.total ?? orderPayload.total ?? 0);
+    const subtotal = Number(apiOrder?.subtotal ?? orderPayload.subtotal ?? orderTotal);
+    const shippingCost = Number(apiOrder?.shippingCost ?? orderPayload.shipping ?? 0);
+    const discountTotal = Number(apiOrder?.discountTotal ?? orderPayload.discountAmount ?? 0);
+    const orderDate = apiOrder?.createdAt || new Date().toISOString();
 
     const newOrder = {
       ...orderPayload,
       ...(apiOrder || {}),
       id: orderId,
-      orderNumber: orderId,
-      customerEmail: orderPayload.customerEmail || apiOrder?.customerEmail || '',
-      customerName: orderPayload.customerName || apiOrder?.customerName || 'Valued Patron',
-      customerPhone: orderPayload.customerPhone || apiOrder?.customerPhone || '',
-      userId: orderPayload.userId || apiOrder?.userId || null,
-      items: orderPayload.items || apiOrder?.items || [],
-      total: orderPayload.total ?? apiOrder?.total ?? 0,
-      subtotal: orderPayload.subtotal ?? apiOrder?.subtotal ?? 0,
-      shipping: orderPayload.shipping ?? apiOrder?.shippingCost ?? 0,
+      numericId: typeof orderId === 'number' ? orderId : (!isNaN(Number(orderId)) ? Number(orderId) : null),
+      orderNumber: orderNum,
+      customer: {
+        id: orderPayload.userId || apiOrder?.customer?.id || null,
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone
+      },
+      customerEmail,
+      customerName,
+      customerPhone,
+      userId: orderPayload.userId || null,
+      items: (apiOrder?.items && apiOrder.items.length > 0) ? apiOrder.items : (orderPayload.items || []),
+      totals: {
+        subtotal,
+        discountTotal,
+        shippingCost,
+        total: orderTotal,
+        currency: 'EUR'
+      },
+      total: orderTotal,
+      subtotal,
+      shipping: shippingCost,
+      currency: apiOrder?.currency || 'EUR',
+      orderStatus: apiOrder?.orderStatus || 'Pending',
+      paymentStatus: apiOrder?.paymentStatus || 'Paid',
+      status: apiOrder?.orderStatus || 'Pending',
       shippingAddress: orderPayload.shippingAddress || apiOrder?.shippingAddress || {},
-      date: apiOrder?.date || apiOrder?.createdAt || new Date().toISOString(),
-      status: apiOrder?.status || apiOrder?.orderStatus || 'CONFIRMED',
+      shippingSnapshot: {
+        carrier: 'DHL Express',
+        shippingMethod: 'Express Worldwide',
+        trackingNumber: trackingCode,
+        shippingCost
+      },
+      createdAt: orderDate,
+      date: orderDate,
       trackingCode,
       dhlTrackingNumber: orderPayload.dhlTrackingNumber || trackingCode,
       timeline: [
-        { status: 'PLACED', title: 'Order Placed', timestamp: new Date().toISOString() },
-        { status: 'CONFIRMED', title: 'Payment Confirmed', timestamp: new Date().toISOString() }
-      ]
+        { status: 'Placed', title: 'Order Placed by Customer', timestamp: orderDate },
+        { status: 'Pending', title: 'Awaiting Admin Fulfillment Dispatch', timestamp: orderDate }
+      ],
+      statusHistory: [
+        {
+          status: 'Pending',
+          toStatus: 'Pending',
+          fromStatus: null,
+          note: 'Order submitted successfully via customer checkout',
+          changedBy: 'Customer',
+          createdAt: orderDate
+        }
+      ],
+      compensationFailure: false
     };
 
-    // Save to live cloud sync so all admins and accounts see it immediately!
+    // 1. Save to live cloud sync so all admins and accounts see it immediately!
     await liveCloudSync.addOrder(newOrder);
 
-    // Save to local list
+    // 2. Save to local storage list
     const orders = loadOrders();
-    const existingIndex = orders.findIndex(o => o.id === newOrder.id);
+    const existingIndex = orders.findIndex(o => String(o.id) === String(newOrder.id) || o.orderNumber === newOrder.orderNumber);
     if (existingIndex > -1) {
       orders[existingIndex] = newOrder;
     } else {
@@ -343,8 +504,13 @@ export const orderService = {
     }
     saveOrders(orders);
 
-    // Record this order on this client/device so it always appears for the one who made it
+    // 3. Record this order on this client/device
     recordPlacedOrderId(newOrder.id);
+
+    // 4. Dispatch browser event for real-time reactive UI update
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_order_created', { detail: newOrder }));
+    }
 
     return newOrder;
   },
