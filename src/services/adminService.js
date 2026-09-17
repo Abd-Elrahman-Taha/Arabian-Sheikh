@@ -1,6 +1,7 @@
 import { productService } from './productService';
 import { orderService } from './orderService';
 import { userService } from './userService';
+import { analyticsApi } from '../api/analytics.api';
 
 const SETTINGS_STORAGE_KEY = 'arabian_sheikh_settings';
 
@@ -108,6 +109,14 @@ export const adminService = {
       console.warn('getDashboardMetrics error, fallback to sync:', e.message);
       return this.getDashboardMetricsSync();
     }
+  },
+
+  /**
+   * Official Real Backend Dashboard Overview KPIs
+   * GET /api/admin/dashboard/overview?timeZone=...
+   */
+  async getDashboardOverview(timeZone = 'Europe/London') {
+    return await analyticsApi.getOverview({ timeZone });
   },
 
   getSettings() {

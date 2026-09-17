@@ -8,7 +8,8 @@ export const analyticsApi = {
    * GET /api/admin/dashboard/overview
    */
   async getOverview(params = {}) {
-    const response = await apiClient.get(ENDPOINTS.ADMIN.DASHBOARD.OVERVIEW, { params });
+    const queryParams = typeof params === 'string' ? { timeZone: params } : params;
+    const response = await apiClient.get(ENDPOINTS.ADMIN.DASHBOARD.OVERVIEW, { params: queryParams });
     return normalizeObjectKeys(response);
   },
 
