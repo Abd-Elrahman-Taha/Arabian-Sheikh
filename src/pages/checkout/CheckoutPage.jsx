@@ -123,6 +123,7 @@ export default function CheckoutPage() {
   }
 
   const dynamicShippingCost = selectedQuote ? selectedQuote.cost : (totals.shipping !== undefined ? totals.shipping : 0);
+  const shippingCost = dynamicShippingCost;
   const grandTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0) + dynamicShippingCost);
 
   const handleNextStep = (e) => {
@@ -634,7 +635,7 @@ export default function CheckoutPage() {
                 <span className="font-mono text-[#F3E6D0]">€{totals.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[#D8BE99]">
-                <span>DHL Express Shipping</span>
+                <span>{selectedQuote?.shippingMethod || selectedQuote?.carrier || 'Shipping'}</span>
                 <span className="font-mono text-[#F3E6D0]">{shippingCost === 0 ? 'Complimentary' : `€${shippingCost.toFixed(2)}`}</span>
               </div>
               {totals.discountAmount > 0 && (
