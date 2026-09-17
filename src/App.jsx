@@ -62,7 +62,6 @@ import AdminProductEdit from './pages/admin/AdminProductEdit';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminInventory from './pages/admin/AdminInventory';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminDiscounts from './pages/admin/AdminDiscounts';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminManagement from './pages/admin/AdminManagement';
@@ -119,8 +118,7 @@ function MainRouter() {
             <AdminManagement />
           )}
           {currentPath === '/admin/inventory' && <AdminInventory />}
-          {currentPath === '/admin/analytics' && <AdminAnalytics />}
-          {(currentPath === '/admin/reports' || currentPath === '/admin/reports/sales' || currentPath === '/admin/sales-reports') && <AdminReports />}
+          {(currentPath === '/admin/reports' || currentPath === '/admin/reports/sales' || currentPath === '/admin/sales-reports' || currentPath === '/admin/analytics') && <AdminReports />}
           {currentPath === '/admin/promotions' && <AdminPromotions />}
           {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
           {(currentPath === '/admin/content/faqs' || currentPath === '/dashboard/content/faqs') && <AdminFaqs />}

@@ -13,7 +13,6 @@ import {
   ShoppingBag,
   Users,
   Warehouse,
-  BarChart3,
   TrendingUp,
   Tag,
   ShieldCheck,
@@ -39,8 +38,7 @@ export default function AdminLayout({ children }) {
       title: 'Overview',
       links: [
         { to: '/admin', label: t('admin.dashboard') || 'Dashboard', icon: LayoutDashboard, exact: true },
-        { to: '/admin/reports', label: 'Sales Reports', icon: TrendingUp, aliases: ['/admin/reports/sales', '/admin/sales-reports'] },
-        { to: '/admin/analytics', label: t('admin.analytics') || 'Analytics', icon: BarChart3 }
+        { to: '/admin/reports', label: 'Sales Reports', icon: TrendingUp, aliases: ['/admin/reports/sales', '/admin/sales-reports'] }
       ]
     },
     {
