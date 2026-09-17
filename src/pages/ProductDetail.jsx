@@ -114,8 +114,10 @@ export default function ProductDetail() {
       setLoading(false);
     }
 
-    // Always fetch fresh data from the API (especially critical on page refresh when memoryCatalog is empty)
-    setLoading(true);
+    // Always fetch fresh data from the API (critical on page refresh when memoryCatalog is empty)
+    // Only show loading skeleton if we have NO cached data at all
+    if (!cached) setLoading(true);
+
     productService.getProductById(productId).then(item => {
       if (item && isMounted) {
         setProduct(item);
@@ -139,6 +141,49 @@ export default function ProductDetail() {
 
     return () => { isMounted = false; };
   }, [productId, language]);
+
+  // ── ALL useEffect hooks MUST come before any early returns (Rules of Hooks) ──
+
+  // fetchProductReviews helper — defined before hooks so it can be referenced
+  const fetchProductReviews = async (page = 1, filter = ratingFilter) => {
+    const targetId = product?.numericId || product?.id;
+    if (!targetId) return;
+    setLoadingReviews(true);
+    try {
+      const res = await reviewService.getProductReviews(targetId, {
+        page,
+        pageSize: 10,
+        rating: filter !== null && filter !== undefined ? filter : undefined
+      });
+      setReviews(res.items || []);
+      setReviewsPage(res.page || 1);
+      setReviewsTotalPages(res.totalPages || 1);
+      setReviewsTotalCount(res.totalCount || 0);
+    } catch (err) {
+      console.warn('Failed to load reviews:', err.message);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  // Load reviews when the Reviews tab is active
+  useEffect(() => {
+    if (activeTab === 'reviews' && (product?.id || product?.numericId)) {
+      fetchProductReviews(reviewsPage, ratingFilter);
+    }
+  }, [activeTab, ratingFilter, reviewsPage, product?.id]);
+
+  // Fetch review count on product load so the tab header shows accurate count
+  useEffect(() => {
+    if (product?.id || product?.numericId) {
+      const targetId = product?.numericId || product?.id;
+      reviewService.getProductReviews(targetId, { page: 1, pageSize: 1 }).then(res => {
+        if (res.totalCount !== undefined) {
+          setReviewsTotalCount(res.totalCount);
+        }
+      }).catch(() => {});
+    }
+  }, [product?.id, product?.numericId]);
 
   if (loading) {
     return (
@@ -232,44 +277,6 @@ export default function ProductDetail() {
     navigate('/checkout');
   };
 
-  const fetchProductReviews = async (page = 1, filter = ratingFilter) => {
-    const targetId = product?.numericId || product?.id;
-    if (!targetId) return;
-    setLoadingReviews(true);
-    try {
-      const res = await reviewService.getProductReviews(targetId, {
-        page,
-        pageSize: 10,
-        rating: filter !== null && filter !== undefined ? filter : undefined
-      });
-      setReviews(res.items || []);
-      setReviewsPage(res.page || 1);
-      setReviewsTotalPages(res.totalPages || 1);
-      setReviewsTotalCount(res.totalCount || 0);
-    } catch (err) {
-      console.warn('Failed to load reviews:', err.message);
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'reviews' && (product?.id || product?.numericId)) {
-      fetchProductReviews(reviewsPage, ratingFilter);
-    }
-  }, [activeTab, ratingFilter, reviewsPage, product?.id]);
-
-  // Fetch review count on product load so the tab header shows accurate count
-  useEffect(() => {
-    if (product?.id || product?.numericId) {
-      const targetId = product?.numericId || product?.id;
-      reviewService.getProductReviews(targetId, { page: 1, pageSize: 1 }).then(res => {
-        if (res.totalCount !== undefined) {
-          setReviewsTotalCount(res.totalCount);
-        }
-      }).catch(() => {});
-    }
-  }, [product?.id, product?.numericId]);
 
   const handleOpenReviewModal = async () => {
     const user = authService.getCurrentUser();
