@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
+    "@stripe/react-stripe-js": "^6.10.0",
+    "@stripe/stripe-js": "^9.16.0",
     "@tailwindcss/vite": "^4.3.3",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^13.1.0",

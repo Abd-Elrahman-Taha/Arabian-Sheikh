@@ -302,7 +302,8 @@ export const ENDPOINTS = {
       DETAILS: (id) => `/admin/payments/${id}`,
       ATTEMPTS: (paymentId) => `/admin/payments/${paymentId}/attempts`,
       WEBHOOKS: '/admin/payment-webhooks',
-      AUDIT: (paymentId) => `/admin/payments/${paymentId}/audit`
+      AUDIT: (paymentId) => `/admin/payments/${paymentId}/audit`,
+      MANUAL_REVIEW: (paymentId) => `/admin/payments/${paymentId}/manual-review`
     },
 
     // Refunds

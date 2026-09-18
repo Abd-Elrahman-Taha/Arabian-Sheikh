@@ -1,15 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
-import { paymentService } from '../../services/paymentService';
+import {
+  paymentService,
+  newOrderKey,
+  newPaymentKey,
+  setCurrentCheckoutOrderId,
+  getCurrentCheckoutOrderId,
+  clearCheckoutOrder,
+  getPaymentKey,
+  setPaymentKey,
+  setPaymentId,
+  clearPaymentSession,
+  isTerminalStatus
+} from '../../services/paymentService';
 import { productService } from '../../services/productService';
 import { shippingService } from '../../services/shippingService';
 import { checkoutApi } from '../../api/checkout.api';
 import { addressApi } from '../../api/address.api';
 import { useToast } from '../../context/ToastContext';
+import StripePaymentForm from '../../components/checkout/StripePaymentForm';
 import {
   ShieldCheck,
   CreditCard,
@@ -20,7 +33,8 @@ import {
   Lock,
   Sparkles,
   CheckCircle2,
-  Tag
+  Tag,
+  Loader2
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -34,6 +48,14 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+
+  // Stripe payment state
+  const [clientSecret, setClientSecret] = useState(null);
+  const [paymentIdState, setPaymentIdState] = useState(null);
+  const [orderIdState, setOrderIdState] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null); // 'preparing' | 'ready' | 'polling' | 'paid' | 'failed' | 'timeout'
+  const [paymentError, setPaymentError] = useState(null);
+  const pollAbortRef = useRef(null);
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -59,12 +81,7 @@ export default function CheckoutPage() {
     address: 'Downtown Dubai Boulevard, Royal Suite 40',
     postalCode: '00000',
     shippingMethod: 'dhl-express',
-    paymentType: 'COD',
-    paymentMethod: 'COD',
-    cardNumber: '4242 •••• •••• 4242',
-    cardholderName: user?.name || 'Tariq Al-Hashemi',
-    expiry: '12/28',
-    cvv: '888'
+    paymentMethod: 'COD',  // 'COD' or 'CreditCard' (UI display values)
   });
 
   // Shipping Quotes State
@@ -72,8 +89,6 @@ export default function CheckoutPage() {
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [addressId, setAddressId] = useState(null);
-  // Tracks whether the currently loaded quotes are real backend-issued quotes
-  // (quoteIds are valid for order creation) or display-only mock fallbacks
   const [quotesFromBackend, setQuotesFromBackend] = useState(false);
 
   // Load authenticated patron saved addresses if available
@@ -104,20 +119,23 @@ export default function CheckoutPage() {
   useEffect(() => {
     let active = true;
     async function fetchQuotes() {
+      if (!addressId) return;
       setLoadingQuotes(true);
       try {
-        // Only pass a real addressId — never fallback to 1 (causes ADDRESS_NOT_FOUND)
         const res = await shippingService.getQuotes({
           addressId: addressId || null,
         });
         if (!active) return;
         const opts = res?.options || [];
         setShippingQuotes(opts);
-        // Track whether these are real backend quotes or display-only fallbacks
         setQuotesFromBackend(Boolean(res?.fromBackend));
         if (opts.length > 0) {
-          setSelectedQuote(curr => curr || opts[0]);
-          setFormData(prev => ({ ...prev, shippingMethod: (curr => curr?.shippingMethod || opts[0].shippingMethod)(selectedQuote) }));
+          setSelectedQuote(curr => {
+            if (!curr || curr.isMockFallback || !curr.quoteId) return opts[0];
+            const matching = opts.find(o => o.shippingMethodId === curr.shippingMethodId);
+            return matching || opts[0];
+          });
+          setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
         }
       } catch (err) {
         console.warn('Failed to load shipping quotes:', err);
@@ -136,10 +154,18 @@ export default function CheckoutPage() {
         ...prev,
         fullName: prev.fullName === 'Tariq Al-Hashemi' && user.name ? user.name : prev.fullName,
         email: prev.email === 'tariq.alhashemi@example.com' && user.email ? user.email : prev.email,
-        cardholderName: prev.cardholderName === 'Tariq Al-Hashemi' && user.name ? user.name : prev.cardholderName
       }));
     }
   }, [user]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollAbortRef.current) {
+        pollAbortRef.current.abort();
+      }
+    };
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -160,7 +186,6 @@ export default function CheckoutPage() {
   const handleNextStep = async (e) => {
     e.preventDefault();
     if (step === 1) {
-      // Step 1 -> 2: Resolve addressId and notify backend via PUT /api/checkout/address
       let currentAddrId = addressId;
       try {
         if (!currentAddrId) {
@@ -182,12 +207,24 @@ export default function CheckoutPage() {
           await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch((err) => {
             console.warn('Checkout address sync notice:', err.message);
           });
+          // Immediately fetch real quotes for this valid addressId so step 2 has real quotes
+          try {
+            const res = await shippingService.getQuotes({ addressId: currentAddrId });
+            const opts = res?.options || [];
+            if (opts.length > 0) {
+              setShippingQuotes(opts);
+              setQuotesFromBackend(Boolean(res?.fromBackend));
+              setSelectedQuote(opts[0]);
+              setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
+            }
+          } catch (e) {
+            console.warn('Error pre-fetching quotes on step advance:', e);
+          }
         }
       } catch (err) {
         console.warn('Address sync error:', err.message);
       }
     } else if (step === 2) {
-      // Step 2 -> 3: Notify backend of selected shipping carrier via PUT /api/checkout/shipping
       if (selectedQuote?.shippingMethodId) {
         await checkoutApi.setCheckoutShipping({
           shippingMethodId: selectedQuote.shippingMethodId,
@@ -206,90 +243,281 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePlaceOrder = async () => {
-    setProcessing(true);
-    try {
-      // 1. Process Stripe mock gateway authorization
-      await paymentService.processPayment({
-        cardNumber: formData.cardNumber,
-        cardholderName: formData.cardholderName,
-        expiry: formData.expiry,
-        cvv: formData.cvv
-      });
+  // ─── Map UI payment method to API value ──────────────────────
+  function getApiPaymentMethod() {
+    return formData.paymentMethod === 'CreditCard' ? 'stripe' : 'cod';
+  }
 
-      // 2. Resolve final customer identification
-      const finalEmail = (user?.email || formData.email || '').trim();
-      const finalName = (formData.fullName || user?.name || 'Valued Patron').trim();
+  // ─── Create the order on the backend ─────────────────────────
+  async function createBackendOrder() {
+    const finalEmail = (user?.email || formData.email || '').trim();
+    const finalName = (formData.fullName || user?.name || 'Valued Patron').trim();
 
-      // Determine if the selected quote is a real backend-issued quote or a display-only fallback.
-      // isMockQuote=true tells orderService NOT to send the quoteId to the backend
-      // (otherwise the backend returns SHIPPING_QUOTE_EXPIRED 422)
-      const isMockQuote = !quotesFromBackend || Boolean(selectedQuote?.isMockFallback) || !selectedQuote?.quoteId;
-
-      // 3. Create official order record
-      const newOrder = await orderService.createOrder({
-        addressId: addressId || undefined,
-        userId: user?.id || null,
-        customerEmail: finalEmail,
-        customerName: finalName,
-        customerPhone: formData.phone,
-        items,
-        subtotal: totals.subtotal,
-        discountAmount: totals.discountAmount,
-        discountCode: cart.discountCode,
-        shipping: dynamicShippingCost,
-        shippingCost: dynamicShippingCost,
-        total: grandTotal,
-        quoteId: selectedQuote?.quoteId || undefined,
-        isMockQuote,
-        shippingMethodId: selectedQuote?.shippingMethodId || 1,
-        carrier: selectedQuote?.carrier || 'ECONT',
-        shippingAddress: {
+    let currentAddrId = addressId;
+    if (!currentAddrId) {
+      try {
+        const created = await addressApi.createAddress({
           fullName: finalName,
-          address: formData.address,
-          city: formData.city,
-          country: formData.country,
-          postalCode: formData.postalCode,
-          phone: formData.phone
-        },
-        paymentMethod: formData.paymentMethod || 'COD',
-        dhlTrackingNumber: `${selectedQuote?.carrier || 'ECONT'}-${Math.floor(100000000 + Math.random() * 900000000)}`
-      });
+          phone: formData.phone || '+971 50 123 4567',
+          countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
+          region: formData.city || 'Dubai',
+          city: formData.city || 'Dubai',
+          addressLine1: formData.address || 'Royal Suite',
+          postalCode: formData.postalCode || '00000'
+        });
+        if (created?.id) {
+          currentAddrId = created.id;
+          setAddressId(created.id);
+        }
+      } catch (e) {
+        console.warn('Address creation fallback in createBackendOrder:', e);
+      }
+    }
 
-      clearCart();
+    // Ensure we have a real backend quote with valid UUID quoteId
+    let currentQuote = selectedQuote;
+    const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val?.trim());
 
-      // Decrement stock for each ordered item
-      if (Array.isArray(items) && items.length > 0) {
-        items.forEach(item => {
-          if (item.isBundle && Array.isArray(item.bundleItems)) {
-            item.bundleItems.forEach(bi => {
-              const product = productService.getProductByIdSync(bi.productId);
-              if (product) {
-                const currentStock = product.stock ?? 0;
-                const qty = (bi.quantity || 1) * (item.quantity || 1);
-                const newStock = Math.max(0, currentStock - qty);
-                productService.updateStock(product.id, newStock).catch(() => {});
-              }
-            });
-          } else {
-            const product = productService.getProductByIdSync(item.id || item.productId);
+    if ((!currentQuote || !isUuid(currentQuote.quoteId)) && currentAddrId) {
+      try {
+        const res = await shippingService.getQuotes({ addressId: currentAddrId });
+        const realOpt = res?.options?.find(o => isUuid(o.quoteId)) || res?.options?.[0];
+        if (realOpt) {
+          currentQuote = realOpt;
+          setSelectedQuote(realOpt);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch real quote in createBackendOrder:', err);
+      }
+    }
+
+    const orderShippingCost = currentQuote ? currentQuote.cost : dynamicShippingCost;
+    const isMockQuote = !quotesFromBackend || Boolean(currentQuote?.isMockFallback) || !currentQuote?.quoteId;
+
+    const newOrder = await orderService.createOrder({
+      addressId: currentAddrId || undefined,
+      userId: user?.id || null,
+      customerEmail: finalEmail,
+      customerName: finalName,
+      customerPhone: formData.phone,
+      items,
+      subtotal: totals.subtotal,
+      discountAmount: totals.discountAmount,
+      discountCode: cart.discountCode,
+      shipping: orderShippingCost,
+      shippingCost: orderShippingCost,
+      total: grandTotal,
+      quoteId: currentQuote?.quoteId || undefined,
+      isMockQuote,
+      shippingMethodId: currentQuote?.shippingMethodId || 1,
+      carrier: currentQuote?.carrier || 'ECONT',
+      shippingAddress: {
+        fullName: finalName,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
+        postalCode: formData.postalCode,
+        phone: formData.phone
+      },
+      paymentMethod: getApiPaymentMethod(),
+      dhlTrackingNumber: `${currentQuote?.carrier || 'ECONT'}-${Math.floor(100000000 + Math.random() * 900000000)}`
+    });
+
+    return newOrder;
+  }
+
+  // ─── Decrement stock helper ──────────────────────────────────
+  function decrementStock() {
+    if (Array.isArray(items) && items.length > 0) {
+      items.forEach(item => {
+        if (item.isBundle && Array.isArray(item.bundleItems)) {
+          item.bundleItems.forEach(bi => {
+            const product = productService.getProductByIdSync(bi.productId);
             if (product) {
               const currentStock = product.stock ?? 0;
-              const qty = item.quantity ?? 1;
+              const qty = (bi.quantity || 1) * (item.quantity || 1);
               const newStock = Math.max(0, currentStock - qty);
               productService.updateStock(product.id, newStock).catch(() => {});
             }
+          });
+        } else {
+          const product = productService.getProductByIdSync(item.id || item.productId);
+          if (product) {
+            const currentStock = product.stock ?? 0;
+            const qty = item.quantity ?? 1;
+            const newStock = Math.max(0, currentStock - qty);
+            productService.updateStock(product.id, newStock).catch(() => {});
           }
-        });
-      }
+        }
+      });
+    }
+  }
 
-      success('Order placed successfully.');
-      navigate(`/order-confirmation/${newOrder.id}`);
+  // ─── COD: Place order directly ───────────────────────────────
+  const handlePlaceCodOrder = async () => {
+    setProcessing(true);
+    setPaymentError(null);
+    try {
+      const newOrder = await createBackendOrder();
+      const createdOrderId = newOrder.id || newOrder.numericId;
+      
+      clearPaymentSession(createdOrderId);
+      clearCheckoutOrder();
+      decrementStock();
+      clearCart();
+
+      // Record placed order so reviews & account order history see it
+      orderService.recordPlacedOrderId(createdOrderId);
+
+      success('Order placed successfully! Pay in cash on delivery.');
+      navigate(`/order-confirmation/${createdOrderId}`);
     } catch (err) {
-      console.error('Order placement error:', err);
-      error(err?.message || 'Failed to process order. Please verify your details and try again.');
+      console.error('COD order placement error:', err);
+      const msg = err?.message || 'Failed to place order. Please try again.';
+      setPaymentError(msg);
+      error(msg);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // ─── Stripe: Create order → Create intent → Show form ───────
+  const handleStartStripePayment = async () => {
+    setProcessing(true);
+    setPaymentError(null);
+    setPaymentStatus('preparing');
+
+    try {
+      // Step 1: Create the order (freezes totals and payment method = 'stripe')
+      const newOrder = await createBackendOrder();
+      const createdOrderId = newOrder.id || newOrder.numericId;
+      setOrderIdState(createdOrderId);
+      setCurrentCheckoutOrderId(createdOrderId);
+      orderService.recordPlacedOrderId(createdOrderId);
+
+      // Step 2: Create or replay the Stripe payment intent
+      let payKey = getPaymentKey(createdOrderId);
+      if (!payKey) {
+        payKey = newPaymentKey();
+        setPaymentKey(createdOrderId, payKey);
+      }
+
+      const intent = await paymentService.createPaymentIntent(createdOrderId, payKey);
+
+      // Step 3: Route by intent result
+      if (intent.status === 'Paid') {
+        // Already paid (replay of a completed payment)
+        clearPaymentSession(createdOrderId);
+        clearCheckoutOrder();
+        decrementStock();
+        clearCart();
+        orderService.recordPlacedOrderId(createdOrderId);
+        success('Payment confirmed!');
+        navigate(`/order-confirmation/${createdOrderId}`);
+        return;
+      }
+
+      if (!intent.clientSecret) {
+        // No secret + not paid → go to pending
+        setPaymentIdState(intent.paymentId);
+        setPaymentStatus('polling');
+        startPolling(intent.paymentId, createdOrderId);
+        return;
+      }
+
+      // Step 4: Mount Stripe Elements with the clientSecret
+      setPaymentIdState(intent.paymentId);
+      setPaymentId(createdOrderId, intent.paymentId);
+      setClientSecret(intent.clientSecret);
+      setPaymentStatus('ready');
+      setStep(4); // Show the Stripe payment form step
+    } catch (err) {
+      console.error('Stripe payment setup error:', err);
+      const msg = err?.message || 'Failed to prepare payment. Please try again.';
+      setPaymentError(msg);
+      setPaymentStatus(null);
+      error(msg);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // ─── Start polling for payment result ────────────────────────
+  function startPolling(paymentId, orderId) {
+    setPaymentStatus('polling');
+
+    // Abort any existing poll
+    if (pollAbortRef.current) {
+      pollAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    pollAbortRef.current = controller;
+
+    paymentService.pollUntilTerminal(paymentId, {
+      signal: controller.signal,
+    }).then(result => {
+      handlePaymentResult(result, orderId);
+    }).catch(err => {
+      if (err.message === 'PAYMENT_POLL_TIMEOUT') {
+        setPaymentStatus('timeout');
+      } else if (err.message !== 'PAYMENT_POLL_ABORTED') {
+        setPaymentError(err.message);
+        setPaymentStatus('failed');
+      }
+    });
+  }
+
+  // ─── Handle terminal payment result ──────────────────────────
+  function handlePaymentResult(result, orderId) {
+    const oid = orderId || orderIdState;
+    if (result.status === 'Paid') {
+      clearPaymentSession(oid);
+      clearCheckoutOrder();
+      decrementStock();
+      clearCart();
+      orderService.recordPlacedOrderId(oid);
+      success('Payment successful!');
+      navigate(`/order-confirmation/${oid}`);
+    } else if (result.status === 'Failed') {
+      clearPaymentSession(oid);
+      setPaymentStatus('failed');
+      setPaymentError('Payment failed. Please try again with another card.');
+    } else {
+      setPaymentStatus('timeout');
+    }
+  }
+
+  // ─── Stripe form callbacks ───────────────────────────────────
+  function handleStripeConfirmed() {
+    // confirmPayment succeeded without redirect → start polling
+    if (paymentIdState && orderIdState) {
+      startPolling(paymentIdState, orderIdState);
+    }
+  }
+
+  function handleStripeError(message) {
+    setPaymentError(message);
+  }
+
+  // ─── Retry payment with new key ──────────────────────────────
+  function handleRetryPayment() {
+    if (orderIdState) {
+      clearPaymentSession(orderIdState);
+    }
+    setClientSecret(null);
+    setPaymentIdState(null);
+    setPaymentStatus(null);
+    setPaymentError(null);
+    setStep(3);
+  }
+
+  // ─── Handle Place Order button (step 3) ──────────────────────
+  const handlePlaceOrder = async () => {
+    if (formData.paymentMethod === 'COD') {
+      await handlePlaceCodOrder();
+    } else {
+      // CreditCard → Stripe
+      await handleStartStripePayment();
     }
   };
 
@@ -317,13 +545,22 @@ export default function CheckoutPage() {
           <div className="w-12 h-px bg-white/10" />
           <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#D4AF37] font-bold' : 'text-neutral-600'}`}>
             <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">2</span>
-            <span>DHL Delivery</span>
+            <span>Delivery</span>
           </div>
           <div className="w-12 h-px bg-white/10" />
           <div className={`flex items-center gap-2 ${step >= 3 ? 'text-[#D4AF37] font-bold' : 'text-neutral-600'}`}>
             <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">3</span>
-            <span>Stripe Payment</span>
+            <span>Payment</span>
           </div>
+          {step === 4 && (
+            <>
+              <div className="w-12 h-px bg-white/10" />
+              <div className="flex items-center gap-2 text-[#D4AF37] font-bold">
+                <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">4</span>
+                <span>Confirm</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -418,7 +655,7 @@ export default function CheckoutPage() {
               </form>
             )}
 
-            {/* STEP 2: Shipping Method Selection (POST /api/Shipping/quotes) */}
+            {/* STEP 2: Shipping Method Selection */}
             {step === 2 && (
               <form onSubmit={handleNextStep} className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -525,7 +762,7 @@ export default function CheckoutPage() {
               </form>
             )}
 
-            {/* STEP 3: Royal Payment Selection */}
+            {/* STEP 3: Payment Method Selection */}
             {step === 3 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -564,49 +801,23 @@ export default function CheckoutPage() {
                       </div>
                       {formData.paymentMethod === 'CreditCard' && <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
                     </div>
-                    <p className="text-[11px] text-[#D8BE99]">Instant encrypted authorization through certified payment gateway.</p>
+                    <p className="text-[11px] text-[#D8BE99]">Secure payment via Stripe — Visa, Mastercard, and more.</p>
                   </div>
                 </div>
 
-                {formData.paymentMethod === 'CreditCard' && (
-                  <div className="p-4 bg-black/50 border border-white/10 rounded space-y-4 text-xs animate-fade-in">
-                    <div className="flex items-center gap-2 text-[#D4AF37]">
-                      <CreditCard className="w-4 h-4" />
-                      <span className="font-cinzel font-bold">Credit / Debit Card (Stripe Elements)</span>
-                    </div>
+                {/* Payment error display */}
+                {paymentError && (
+                  <div role="alert" className="p-3 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
+                    <span className="shrink-0 mt-0.5">⚠</span>
+                    <span>{paymentError}</span>
+                  </div>
+                )}
 
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-[#D8BE99] text-[10px] uppercase">Card Number</label>
-                        <input
-                          type="text"
-                          value={formData.cardNumber}
-                          readOnly
-                          className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-[#D8BE99] text-[10px] uppercase">Expiration Date</label>
-                          <input
-                            type="text"
-                            value={formData.expiry}
-                            readOnly
-                            className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[#D8BE99] text-[10px] uppercase">CVC / CVV</label>
-                          <input
-                            type="text"
-                            value={formData.cvv}
-                            readOnly
-                            className="w-full bg-black/80 border border-[#D4AF37]/30 px-3 py-2 text-xs font-mono text-[#F3E6D0] rounded"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                {/* Preparing payment indicator */}
+                {paymentStatus === 'preparing' && (
+                  <div className="p-6 rounded-xl bg-black/40 border border-white/10 text-center space-y-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#D4AF37] mx-auto" />
+                    <p className="text-xs font-cinzel text-[#D8BE99]">Creating your order and preparing secure payment...</p>
                   </div>
                 )}
 
@@ -621,22 +832,113 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={handlePlaceOrder}
-                    disabled={processing}
-                    className="group/btn relative px-8 py-4 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-[1.02] flex items-center gap-2.5 overflow-hidden cursor-pointer"
+                    disabled={processing || paymentStatus === 'preparing'}
+                    className="group/btn relative px-8 py-4 rounded-full bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 hover:border-white font-cinzel font-bold text-xs uppercase tracking-[0.22em] transition-all duration-400 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.65)] hover:scale-[1.02] flex items-center gap-2.5 overflow-hidden cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {/* Light Glint */}
                     <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
 
-                    {processing ? (
-                      <span className="relative z-10">Authorizing Stripe...</span>
+                    {processing || paymentStatus === 'preparing' ? (
+                      <span className="relative z-10 flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{formData.paymentMethod === 'COD' ? 'Placing Order...' : 'Preparing Payment...'}</span>
+                      </span>
                     ) : (
                       <>
                         <Lock className="w-4 h-4 relative z-10" />
-                        <span className="relative z-10 drop-shadow-sm">Authorize Payment (€{grandTotal.toFixed(2)})</span>
+                        <span className="relative z-10 drop-shadow-sm">
+                          {formData.paymentMethod === 'COD'
+                            ? `Place Order (€${grandTotal.toFixed(2)})`
+                            : `Continue to Payment (€${grandTotal.toFixed(2)})`
+                          }
+                        </span>
                       </>
                     )}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* STEP 4: Stripe Payment Form / Polling / Result */}
+            {step === 4 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <h2 className="font-cinzel text-base font-bold text-[#D4AF37] uppercase tracking-wider">
+                    4. Complete Payment
+                  </h2>
+                </div>
+
+                {/* Stripe card form */}
+                {paymentStatus === 'ready' && clientSecret && (
+                  <StripePaymentForm
+                    clientSecret={clientSecret}
+                    orderId={orderIdState}
+                    paymentId={paymentIdState}
+                    onConfirmed={handleStripeConfirmed}
+                    onError={handleStripeError}
+                  />
+                )}
+
+                {/* Polling / Processing */}
+                {paymentStatus === 'polling' && (
+                  <div className="p-8 rounded-xl bg-black/40 border border-white/10 text-center space-y-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37] mx-auto" />
+                    <p className="font-cinzel text-sm font-bold text-[#F3E6D0]">Confirming Payment...</p>
+                    <p className="text-xs text-[#D8BE99]">Verifying with your bank. This usually takes a few seconds.</p>
+                  </div>
+                )}
+
+                {/* Payment failed */}
+                {paymentStatus === 'failed' && (
+                  <div className="p-8 rounded-xl bg-red-950/20 border border-red-500/30 text-center space-y-4">
+                    <p className="font-cinzel text-sm font-bold text-red-300">Payment Failed</p>
+                    <p className="text-xs text-[#D8BE99]">{paymentError || 'Your card was declined. Please try another card.'}</p>
+                    <button
+                      onClick={handleRetryPayment}
+                      className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full cursor-pointer"
+                    >
+                      Try Another Card
+                    </button>
+                  </div>
+                )}
+
+                {/* Timeout / still pending */}
+                {paymentStatus === 'timeout' && (
+                  <div className="p-8 rounded-xl bg-amber-950/20 border border-amber-500/30 text-center space-y-4">
+                    <p className="font-cinzel text-sm font-bold text-amber-300">Still Confirming</p>
+                    <p className="text-xs text-[#D8BE99]">We're still confirming with your bank. This may take a moment.</p>
+                    {paymentIdState && (
+                      <p className="text-[10px] font-mono text-[#D8BE99]">Payment Ref: #{paymentIdState}</p>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (paymentIdState) startPolling(paymentIdState, orderIdState);
+                      }}
+                      className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full cursor-pointer"
+                    >
+                      Check Again
+                    </button>
+                  </div>
+                )}
+
+                {/* Stripe inline error on form */}
+                {paymentError && paymentStatus === 'ready' && (
+                  <div role="alert" className="p-3 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs">
+                    {paymentError}
+                  </div>
+                )}
+
+                {/* Back button (only if form is showing, not during polling) */}
+                {(paymentStatus === 'ready' || paymentStatus === 'failed') && (
+                  <div className="pt-4">
+                    <button
+                      type="button"
+                      onClick={handleRetryPayment}
+                      className="px-6 py-2.5 bg-white/5 border border-white/10 text-xs font-cinzel text-[#F3E6D0] cursor-pointer"
+                    >
+                      ← Back to Payment Selection
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

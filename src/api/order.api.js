@@ -26,30 +26,34 @@ export const orderApi = {
    * @param {string} idempotencyKey
    */
   async createOrder(payload = {}, idempotencyKey = null) {
-    const idempKey = idempotencyKey
-      || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `idemp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-
     const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
 
-    // Only send quoteId when it is a real backend-issued UUID.
-    // If quoteId is null/undefined/empty (e.g. mock fallback), omit it entirely —
-    // sending a self-generated or hardcoded UUID causes SHIPPING_QUOTE_EXPIRED (422).
+    const idempKey = (isUuid(idempotencyKey) ? idempotencyKey.trim() : null)
+      || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '00000000-0000-4000-8000-' + Math.random().toString(16).slice(2, 14).padEnd(12, '0'));
+
+    // quoteId: Backend contract requires non-empty GUID issued by /api/shipping/quotes
     const resolvedQuoteId = isUuid(payload.quoteId) ? payload.quoteId.trim() : null;
 
-    // addressId MUST be a real backend address ID — never default to 1.
-    // Callers are responsible for resolving a valid address before calling this.
+    // addressId MUST be a real backend address ID
     const resolvedAddressId = Number(payload.addressId) || null;
     if (!resolvedAddressId) {
       throw new Error('A valid addressId is required to create an order.');
     }
 
-    // Strict compliance with CreateOrderRequest (additionalProperties: false)
+    // paymentMethod: 'stripe' or 'cod' (case-insensitive)
+    const rawMethod = String(payload.paymentMethod || 'cod').trim().toLowerCase();
+    const paymentMethod = ['stripe', 'creditcard', 'card'].includes(rawMethod) ? 'stripe' : 'cod';
+
+    // couponCode: max 50 chars, null or omitted when unused (never empty string "")
+    const rawCoupon = payload.couponCode || payload.discountCode;
+    const couponCode = rawCoupon && String(rawCoupon).trim() ? String(rawCoupon).trim() : null;
+
+    // Strict compliance with CreateOrderRequest
     const body = {
       addressId: resolvedAddressId,
       shippingMethodId: Number(payload.shippingMethodId) || 1,
-      paymentMethod: payload.paymentMethod ? String(payload.paymentMethod).trim() : 'COD',
-      couponCode: (payload.couponCode || payload.discountCode) ? String(payload.couponCode || payload.discountCode).trim() : '',
-      // Only include quoteId when we have a real backend-issued UUID
+      paymentMethod,
+      couponCode,
       ...(resolvedQuoteId ? { quoteId: resolvedQuoteId } : {})
     };
 

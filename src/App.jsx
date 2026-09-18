@@ -53,6 +53,7 @@ import CartPage from './pages/checkout/CartPage';
 import CheckoutPage from './pages/checkout/CheckoutPage';
 import OrderConfirmation from './pages/checkout/OrderConfirmation';
 import OrderTracking from './pages/checkout/OrderTracking';
+import PaymentReturn from './pages/checkout/PaymentReturn';
 
 // Admin Suite Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -157,6 +158,9 @@ function MainRouter() {
     }
     if (currentPath === '/checkout') {
       return <CheckoutPage />;
+    }
+    if (currentPath === '/payment/return' || currentPath.startsWith('/payment/return')) {
+      return <PaymentReturn />;
     }
 
     // 4. Public, Discovery, Compare, Product, Auth Routes

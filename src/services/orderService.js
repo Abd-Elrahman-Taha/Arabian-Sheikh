@@ -1,9 +1,11 @@
 import { INITIAL_ORDERS } from './mockData';
 import { orderApi } from '../api/order.api';
+import { shippingApi } from '../api/shipping.api';
 import { addressApi } from '../api/address.api';
 import { cartApi } from '../api/cart.api';
 import { apiClient } from '../api/client';
 import { liveCloudSync } from './liveCloudSync';
+import { newOrderKey } from './paymentService';
 
 const ORDERS_STORAGE_KEY = 'arabian_sheikh_orders';
 const PLACED_ORDERS_STORAGE_KEY = 'arabian_sheikh_placed_order_ids';
@@ -468,21 +470,39 @@ export const orderService = {
         }
 
         // 3. Call official POST /api/Orders
-        // Only pass quoteId when it is a real backend-issued UUID (not a mock fallback / null).
-        // The backend rejects any UUID it didn't issue as SHIPPING_QUOTE_EXPIRED (422).
         const isRealQuoteId = orderPayload.quoteId &&
           !orderPayload.isMockQuote &&
           /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(orderPayload.quoteId));
 
+        let resolvedQuoteId = isRealQuoteId ? String(orderPayload.quoteId).trim() : null;
+
+        // If quoteId was missing or fallback, try to get a fresh quote with the valid addressId
+        if (!resolvedQuoteId && numericAddressId) {
+          try {
+            const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId });
+            const realOpt = freshQuotes?.options?.find(o => !o.isMockFallback && o.quoteId) || freshQuotes?.options?.[0];
+            if (realOpt?.quoteId) {
+              resolvedQuoteId = realOpt.quoteId;
+            }
+          } catch (qErr) {
+            console.warn('Could not auto-fetch fresh quote:', qErr.message);
+          }
+        }
+
+        const orderKey = orderPayload.idempotencyKey || newOrderKey();
+
         apiOrder = await orderApi.createOrder({
           addressId: numericAddressId,
           shippingMethodId: Number(orderPayload.shippingMethodId) || 1,
-          quoteId: isRealQuoteId ? orderPayload.quoteId : undefined,
-          paymentMethod: orderPayload.paymentMethod || 'COD',
-          couponCode: orderPayload.discountCode || orderPayload.couponCode || ''
-        });
+          quoteId: resolvedQuoteId || undefined,
+          paymentMethod: orderPayload.paymentMethod || 'cod',
+          couponCode: orderPayload.discountCode || orderPayload.couponCode || null
+        }, orderKey);
       } catch (e) {
-        console.warn('Real API create order fallback:', e.message);
+        console.error('Real API create order error:', e);
+        if (!apiClient.isMockEnabled()) {
+          throw e; // Fail fast so caller receives the real backend error instead of phantom mock
+        }
       }
     }
 

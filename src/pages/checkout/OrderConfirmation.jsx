@@ -128,6 +128,36 @@ export default function OrderConfirmation() {
                 <span className="text-[#F2D675] font-bold font-mono text-xs">{order.trackingNumber}</span>
               </div>
             )}
+            <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+              <span className="text-[#D8BE99] font-medium">Payment Method:</span>
+              <span className="font-cinzel font-bold text-xs text-[#F2D675]">
+                {['cod', 'cashondelivery'].includes(String(order?.paymentMethod || order?.paymentMethodCode || '').toLowerCase())
+                  ? 'Cash on Delivery (COD)'
+                  : 'Credit / Debit Card (Stripe)'}
+              </span>
+            </div>
+            {(order?.total !== undefined || order?.totals?.total !== undefined) && (
+              <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+                <span className="text-[#D8BE99] font-medium">Total Amount:</span>
+                <span className="font-mono font-bold text-sm text-[#D4AF37]">
+                  {order?.currency || 'EUR'} {Number(order?.total ?? order?.totals?.total ?? 0).toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {/* COD Specific Instructions */}
+            {['cod', 'cashondelivery'].includes(String(order?.paymentMethod || order?.paymentMethodCode || '').toLowerCase()) && (
+              <div className="p-3.5 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-xs text-[#F2D675] flex items-center gap-3 mt-2">
+                <Truck className="w-5 h-5 text-[#D4AF37] shrink-0" />
+                <div>
+                  <p className="font-cinzel font-bold text-xs text-[#F2D675]">Pay in cash on delivery</p>
+                  <p className="text-[11px] text-[#D8BE99]">
+                    Please have {order?.currency || 'EUR'} {Number(order?.total ?? order?.totals?.total ?? 0).toFixed(2)} ready in cash or card for the courier upon arrival.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <p className="text-[11px] text-[#D8BE99] pt-1 font-medium">
               {t('confirmation.emailSent', { email: order?.customerEmail || 'your email' })}
             </p>
