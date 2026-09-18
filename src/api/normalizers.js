@@ -440,10 +440,11 @@ export function normalizeOrder(raw) {
 export function normalizeShippingOption(raw) {
   if (!raw) return null;
   const opt = normalizeObjectKeys(raw);
-  const quoteId = opt.quoteId || opt.id || null;
-  const carrier = opt.carrier || opt.carrierName || opt.shippingCompany || 'ECONT';
-  const shippingMethod = opt.shippingMethod || opt.methodName || opt.name || 'Standard Delivery';
-  const fee = Number(opt.shippingFee !== undefined ? opt.shippingFee : (opt.cost !== undefined ? opt.cost : 0));
+  // quoteId must only come from quoteId, never opt.id (opt.id is the method/option ID)
+  const quoteId = opt.quoteId && typeof opt.quoteId === 'string' ? opt.quoteId.trim() : null;
+  const carrier = opt.carrier || opt.carrierName || opt.shippingCompany || opt.companyName || 'ECONT';
+  const shippingMethod = opt.shippingMethod || opt.methodName || opt.name || opt.serviceName || opt.title || 'Standard Delivery';
+  const fee = Number(opt.shippingFee !== undefined ? opt.shippingFee : (opt.cost !== undefined ? opt.cost : (opt.fee !== undefined ? opt.fee : 0)));
   const minDays = opt.minDeliveryDays !== undefined ? Number(opt.minDeliveryDays) : null;
   const maxDays = opt.maxDeliveryDays !== undefined ? Number(opt.maxDeliveryDays) : null;
   const estDays = opt.estimatedDeliveryDays !== undefined
@@ -452,7 +453,13 @@ export function normalizeShippingOption(raw) {
 
   const shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
     ? Number(opt.shippingMethodId)
-    : (typeof opt.id === 'number' ? opt.id : null);
+    : (opt.methodId !== undefined && opt.methodId !== null && !isNaN(Number(opt.methodId))
+      ? Number(opt.methodId)
+      : (opt.serviceId !== undefined && opt.serviceId !== null && !isNaN(Number(opt.serviceId))
+        ? Number(opt.serviceId)
+        : (typeof opt.id === 'number' || (!isNaN(Number(opt.id)) && Number(opt.id) > 0)
+          ? Number(opt.id)
+          : null)));
 
   return {
     quoteId,

@@ -248,11 +248,17 @@ export default function CheckoutPage() {
     }
   }, [user, refreshCart]);
 
-  // Invalidate quotes and reset to Step 1 if cart items change
-  const prevItemsRef = useRef(items);
+  // Invalidate quotes and reset to Step 1 only if cart items actually change (deep fingerprint check)
+  const getCartFingerprint = (cartItems) => {
+    if (!Array.isArray(cartItems)) return '';
+    return cartItems.map(i => `${i.id || i.productId}:${i.quantity}`).sort().join('|');
+  };
+
+  const prevItemsFingerprintRef = useRef(getCartFingerprint(items));
   useEffect(() => {
-    if (prevItemsRef.current !== items) {
-      prevItemsRef.current = items;
+    const currentFingerprint = getCartFingerprint(items);
+    if (prevItemsFingerprintRef.current !== currentFingerprint) {
+      prevItemsFingerprintRef.current = currentFingerprint;
       setShippingQuotes([]);
       setSelectedQuote(null);
       setQuotesError(null);
@@ -447,10 +453,45 @@ export default function CheckoutPage() {
     }
   };
 
+  // Helper to determine if a shipping quote option is currently selected
+  const isOptionSelected = (opt) => {
+    if (!selectedQuote || !opt) return false;
+    if (selectedQuote === opt) return true;
+    const selMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
+    const optMethodId = Number(opt.shippingMethodId || opt.id);
+    if (selMethodId && optMethodId) {
+      if (selMethodId !== optMethodId) return false;
+      if (selectedQuote.carrier && opt.carrier) {
+        return String(selectedQuote.carrier).toLowerCase() === String(opt.carrier).toLowerCase();
+      }
+      return true;
+    }
+    return (
+      String(selectedQuote.shippingMethod || '').trim().toLowerCase() === String(opt.shippingMethod || '').trim().toLowerCase() &&
+      String(selectedQuote.carrier || '').trim().toLowerCase() === String(opt.carrier || '').trim().toLowerCase()
+    );
+  };
+
+  const handleSelectShippingQuote = (opt) => {
+    if (!opt) return;
+    setSelectedQuote(opt);
+    setFormData(prev => ({
+      ...prev,
+      shippingMethod: opt.shippingMethod || opt.methodName || 'Standard Delivery'
+    }));
+    setQuotesError(null);
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Selected shipping option:', opt);
+    }
+  };
+
   // ─── STEP 2: Shipping method selection submit ─────────────────
   const handleShippingSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!selectedQuote?.quoteId || !selectedQuote?.shippingMethodId) {
+    const resolvedMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
+    const resolvedQuoteId = selectedQuote?.quoteId;
+
+    if (!resolvedQuoteId || !resolvedMethodId) {
       const err = 'Please select a valid shipping method before proceeding.';
       setQuotesError(err);
       error(err);
@@ -461,8 +502,8 @@ export default function CheckoutPage() {
     try {
       if (import.meta.env.DEV) {
         console.log('[Checkout] Confirming shipping selection:', {
-          shippingMethodId: selectedQuote.shippingMethodId,
-          quoteId: selectedQuote.quoteId,
+          shippingMethodId: resolvedMethodId,
+          quoteId: resolvedQuoteId,
           carrier: selectedQuote.carrier
         });
       }
@@ -470,8 +511,8 @@ export default function CheckoutPage() {
       // Sync selection with backend checkout session if authenticated
       if (user) {
         await checkoutApi.setCheckoutShipping({
-          shippingMethodId: selectedQuote.shippingMethodId,
-          quoteId: selectedQuote.quoteId
+          shippingMethodId: resolvedMethodId,
+          quoteId: resolvedQuoteId
         }, {
           addressId: addressId || undefined,
           couponCode: cart?.discountCode || undefined
@@ -510,7 +551,7 @@ export default function CheckoutPage() {
       throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
     }
 
-    const shippingMethodId = Number(selectedQuote.shippingMethodId);
+    const shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
     if (!shippingMethodId || isNaN(shippingMethodId)) {
       throw new Error('A valid shipping method must be selected.');
     }
@@ -1138,20 +1179,17 @@ export default function CheckoutPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {shippingQuotes.map((opt) => {
-                      const isSelected = selectedQuote?.quoteId === opt.quoteId || selectedQuote?.shippingMethodId === opt.shippingMethodId;
+                    {shippingQuotes.map((opt, idx) => {
+                      const isSelected = isOptionSelected(opt);
                       const isEcont = String(opt.carrier || '').toUpperCase().includes('ECONT');
+                      const optionKey = `shipping-quote-${opt.shippingMethodId ?? opt.id ?? idx}-${idx}`;
+                      const inputId = `shipping-radio-${opt.shippingMethodId ?? opt.id ?? idx}-${idx}`;
+
                       return (
-                        <label
-                          key={opt.quoteId || opt.shippingMethodId}
-                          onClick={() => {
-                            setSelectedQuote(opt);
-                            setFormData(prev => ({ ...prev, shippingMethod: opt.shippingMethod }));
-                            if (import.meta.env.DEV) {
-                              console.log('[Checkout] Selected shipping option:', opt);
-                            }
-                          }}
-                          className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-300 ${
+                        <div
+                          key={optionKey}
+                          onClick={() => handleSelectShippingQuote(opt)}
+                          className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-300 select-none ${
                             isSelected
                               ? 'bg-black/80 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.15)] ring-1 ring-[#D4AF37]/50'
                               : 'bg-black/50 border-white/10 hover:border-white/30'
@@ -1160,15 +1198,14 @@ export default function CheckoutPage() {
                           <div className="flex items-center gap-3">
                             <input
                               type="radio"
-                              name="shippingMethod"
+                              id={inputId}
+                              name="shippingMethodSelection"
                               checked={isSelected}
-                              onChange={() => {
-                                setSelectedQuote(opt);
-                                setFormData(prev => ({ ...prev, shippingMethod: opt.shippingMethod }));
-                              }}
+                              onChange={() => handleSelectShippingQuote(opt)}
+                              onClick={(e) => e.stopPropagation()}
                               className="accent-[#D4AF37] w-4 h-4 cursor-pointer"
                             />
-                            <div className="space-y-0.5">
+                            <label htmlFor={inputId} className="space-y-0.5 cursor-pointer">
                               <div className="flex items-center gap-2">
                                 <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
                                   isEcont
@@ -1186,7 +1223,7 @@ export default function CheckoutPage() {
                                   ? `${opt.estimatedDeliveryDays} business days • Insured temperature-controlled transport`
                                   : '2-4 business days • Insured temperature-controlled transport'}
                               </p>
-                            </div>
+                            </label>
                           </div>
                           <div className="text-right">
                             <span className={`font-mono text-xs font-bold ${
@@ -1200,7 +1237,7 @@ export default function CheckoutPage() {
                               </div>
                             )}
                           </div>
-                        </label>
+                        </div>
                       );
                     })}
                   </div>

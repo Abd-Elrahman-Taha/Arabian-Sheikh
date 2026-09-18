@@ -37,8 +37,12 @@ export const orderApi = {
       throw new Error('A valid addressId is required to create an order.');
     }
 
-    // quoteId: Backend contract requires non-empty GUID issued by /api/shipping/quotes
-    const resolvedQuoteId = isUuid(payload.quoteId) ? payload.quoteId.trim() : null;
+    // quoteId: Backend contract requires non-empty quote identifier issued by /api/shipping/quotes
+    const rawQuote = payload.quoteId || payload.shippingQuoteId;
+    const resolvedQuoteId = typeof rawQuote === 'string' && rawQuote.trim().length > 0
+      ? rawQuote.trim()
+      : (rawQuote ? String(rawQuote).trim() : null);
+
     if (!resolvedQuoteId) {
       throw new Error('Unable to create the order because the shipping quote is missing. Please recalculate shipping and try again.');
     }

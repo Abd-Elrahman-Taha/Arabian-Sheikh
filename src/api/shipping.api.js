@@ -46,7 +46,7 @@ export const shippingApi = {
         const norm = normalizeShippingOption(item);
         if (!norm) return null;
         if (!norm.quoteId && topLevelQuoteId) {
-          norm.quoteId = topLevelQuoteId;
+          norm.quoteId = String(topLevelQuoteId);
         }
         return norm;
       })
