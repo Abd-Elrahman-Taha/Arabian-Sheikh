@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 const COMMON_COUNTRIES = [
+  { code: 'BG', name: 'Bulgaria' },
   { code: 'AE', name: 'United Arab Emirates' },
   { code: 'SA', name: 'Saudi Arabia' },
   { code: 'EG', name: 'Egypt' },

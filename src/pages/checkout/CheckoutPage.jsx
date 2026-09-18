@@ -37,8 +37,35 @@ import {
   Tag,
   Loader2,
   AlertTriangle,
-  MapPin
+  MapPin,
+  ChevronDown,
+  Home,
+  Briefcase,
+  Phone,
+  Globe,
+  Building
 } from 'lucide-react';
+
+export const COUNTRIES = [
+  { code: 'BG', name: 'Bulgaria', dialCode: '+359', flag: '🇧🇬', placeholder: '888123456' },
+  { code: 'AE', name: 'United Arab Emirates', dialCode: '+971', flag: '🇦🇪', placeholder: '501234567' },
+  { code: 'SA', name: 'Saudi Arabia', dialCode: '+966', flag: '🇸🇦', placeholder: '501234567' },
+  { code: 'KW', name: 'Kuwait', dialCode: '+965', flag: '🇰🇼', placeholder: '91234567' },
+  { code: 'QA', name: 'Qatar', dialCode: '+974', flag: '🇶🇦', placeholder: '33123456' },
+  { code: 'BH', name: 'Bahrain', dialCode: '+973', flag: '🇧🇭', placeholder: '36123456' },
+  { code: 'OM', name: 'Oman', dialCode: '+968', flag: '🇴🇲', placeholder: '91234567' },
+  { code: 'EG', name: 'Egypt', dialCode: '+20', flag: '🇪🇬', placeholder: '1001234567' },
+  { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧', placeholder: '7911123456' },
+  { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸', placeholder: '2025550123' },
+  { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪', placeholder: '15112345678' },
+  { code: 'FR', name: 'France', dialCode: '+33', flag: '🇫🇷', placeholder: '612345678' },
+  { code: 'IT', name: 'Italy', dialCode: '+39', flag: '🇮🇹', placeholder: '3123456789' },
+  { code: 'ES', name: 'Spain', dialCode: '+34', flag: '🇪🇸', placeholder: '612345678' },
+  { code: 'CH', name: 'Switzerland', dialCode: '+41', flag: '🇨🇭', placeholder: '781234567' },
+  { code: 'TR', name: 'Turkey', dialCode: '+90', flag: '🇹🇷', placeholder: '5321234567' },
+  { code: 'GR', name: 'Greece', dialCode: '+30', flag: '🇬🇷', placeholder: '6912345678' },
+  { code: 'RO', name: 'Romania', dialCode: '+40', flag: '🇷🇴', placeholder: '712345678' },
+];
 
 export default function CheckoutPage() {
   const { navigate } = useRouter();
@@ -75,33 +102,83 @@ export default function CheckoutPage() {
   };
 
   // Country code helper for backend addresses
-  function getCountryCode(country) {
-    if (!country) return 'AE';
-    const c = country.trim().toUpperCase();
-    if (c === 'BG' || c === 'BULGARIA') return 'BG';
-    if (c === 'SA' || c === 'SAUDI ARABIA') return 'SA';
-    if (c === 'AE' || c.includes('EMIRATES') || c.includes('UAE')) return 'AE';
-    if (c === 'US' || c === 'USA' || c.includes('UNITED STATES')) return 'US';
-    if (c === 'GB' || c === 'UK' || c.includes('UNITED KINGDOM')) return 'GB';
-    if (c === 'KW' || c === 'KUWAIT') return 'KW';
-    if (c === 'QA' || c === 'QATAR') return 'QA';
-    if (c === 'OM' || c === 'OMAN') return 'OM';
-    if (c === 'BH' || c === 'BAHRAIN') return 'BH';
-    return c.length === 2 ? c : 'AE';
+  function getCountryCode(val) {
+    if (!val) return 'BG';
+    const c = String(val).trim().toUpperCase();
+    const found = COUNTRIES.find(x => x.code === c || x.name.toUpperCase() === c);
+    if (found) return found.code;
+    return c.length === 2 ? c : 'BG';
   }
 
-  // Form State
+  // Form State with ECONT Bulgaria test defaults matching exact user specification
   const [formData, setFormData] = useState({
-    fullName: user?.name || 'Tariq Al-Hashemi',
-    email: user?.email || 'tariq.alhashemi@example.com',
-    phone: user?.phone || '+971 50 123 4567',
-    country: 'United Arab Emirates',
-    city: 'Dubai',
-    address: 'Downtown Dubai Boulevard, Royal Suite 40',
-    postalCode: '00000',
+    label: 'Home',
+    customLabel: 'Test Home',
+    fullName: user?.name || 'ECONT Test Customer',
+    email: user?.email || 'patron@arabiansheikh.com',
+    countryCode: 'BG',
+    phone: '+359888123456',
+    region: 'Sofia City',
+    city: 'Sofia',
+    addressLine1: 'bul. Vitosha 1',
+    addressLine2: '',
+    address: 'bul. Vitosha 1',
+    postalCode: '1000',
     shippingMethod: '',
     paymentMethod: 'COD',  // 'COD' or 'CreditCard' (UI display values)
   });
+
+  const selectedCountry = COUNTRIES.find(c => c.code === (formData.countryCode || 'BG')) || COUNTRIES[0];
+
+  const handleCountryCodeChange = (newCode) => {
+    const newCountry = COUNTRIES.find(c => c.code === newCode) || COUNTRIES[0];
+    const oldCountry = COUNTRIES.find(c => c.code === formData.countryCode);
+
+    setAddressId(null);
+    setShippingQuotes([]);
+    setSelectedQuote(null);
+    setQuotesError(null);
+    setAddressError(null);
+
+    let nationalNumber = '';
+    const currentPhone = (formData.phone || '').trim();
+    if (oldCountry && currentPhone.startsWith(oldCountry.dialCode)) {
+      nationalNumber = currentPhone.slice(oldCountry.dialCode.length).trim();
+    } else {
+      const matched = COUNTRIES.find(c => currentPhone.startsWith(c.dialCode));
+      if (matched) {
+        nationalNumber = currentPhone.slice(matched.dialCode.length).trim();
+      } else {
+        nationalNumber = currentPhone.replace(/^\+?[0-9]{1,4}/, '').trim() || currentPhone.replace(/^0+/, '');
+      }
+    }
+
+    if (!nationalNumber) {
+      nationalNumber = newCountry.placeholder.replace(/\s+/g, '');
+    }
+
+    const updatedPhone = `${newCountry.dialCode}${nationalNumber.replace(/\s+/g, '')}`;
+
+    setFormData(prev => ({
+      ...prev,
+      countryCode: newCountry.code,
+      country: newCountry.name,
+      phone: updatedPhone
+    }));
+  };
+
+  const handlePhoneInputChange = (e) => {
+    let inputVal = e.target.value;
+    if (inputVal.startsWith('+')) {
+      const matched = COUNTRIES.find(c => inputVal.startsWith(c.dialCode));
+      if (matched) {
+        inputVal = inputVal.slice(matched.dialCode.length);
+      }
+    }
+    const digitsOnly = inputVal.replace(/[^\d]/g, '');
+    const fullPhone = `${selectedCountry.dialCode}${digitsOnly}`;
+    handleAddressFieldChange('phone', fullPhone);
+  };
 
   // Saved Addresses & Delivery State
   const [savedAddresses, setSavedAddresses] = useState([]);
@@ -126,12 +203,18 @@ export default function CheckoutPage() {
           setSavedAddresses(list);
           const defaultAddr = list.find(a => a.isDefaultShipping || a.isDefault) || list[0];
           setAddressId(defaultAddr.id);
+          const cCode = defaultAddr.countryCode || 'BG';
           setFormData(prev => ({
             ...prev,
+            label: defaultAddr.label || prev.label || 'Home',
+            customLabel: defaultAddr.customLabel || '',
             fullName: defaultAddr.fullName || prev.fullName,
             phone: defaultAddr.phone || prev.phone,
-            country: defaultAddr.countryCode === 'BG' ? 'Bulgaria' : (defaultAddr.country || prev.country),
+            countryCode: cCode,
+            region: defaultAddr.region || prev.region || 'Sofia City',
             city: defaultAddr.city || prev.city,
+            addressLine1: defaultAddr.addressLine1 || defaultAddr.address || prev.addressLine1,
+            addressLine2: defaultAddr.addressLine2 || '',
             address: defaultAddr.addressLine1 || defaultAddr.address || prev.address,
             postalCode: defaultAddr.postalCode || prev.postalCode
           }));
@@ -152,8 +235,8 @@ export default function CheckoutPage() {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        fullName: prev.fullName === 'Tariq Al-Hashemi' && user.name ? user.name : prev.fullName,
-        email: prev.email === 'tariq.alhashemi@example.com' && user.email ? user.email : prev.email,
+        fullName: prev.fullName === 'ECONT Test Customer' && user.name ? user.name : prev.fullName,
+        email: prev.email === 'patron@arabiansheikh.com' && user.email ? user.email : prev.email,
       }));
     }
   }, [user]);
@@ -184,12 +267,18 @@ export default function CheckoutPage() {
   // Handle saved address selection
   const handleSelectSavedAddress = (addr) => {
     setAddressId(addr.id);
+    const addrCountryCode = addr.countryCode || 'BG';
     setFormData(prev => ({
       ...prev,
+      label: addr.label || 'Home',
+      customLabel: addr.customLabel || '',
       fullName: addr.fullName || prev.fullName,
       phone: addr.phone || prev.phone,
-      country: addr.countryCode === 'BG' ? 'Bulgaria' : (addr.country || prev.country),
+      countryCode: addrCountryCode,
+      region: addr.region || '',
       city: addr.city || prev.city,
+      addressLine1: addr.addressLine1 || addr.address || prev.addressLine1,
+      addressLine2: addr.addressLine2 || '',
       address: addr.addressLine1 || addr.address || prev.address,
       postalCode: addr.postalCode || prev.postalCode
     }));
@@ -211,7 +300,12 @@ export default function CheckoutPage() {
     setSelectedQuote(null);
     setQuotesError(null);
     setAddressError(null);
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+      ...(field === 'addressLine1' ? { address: value } : {}),
+      ...(field === 'address' ? { addressLine1: value } : {})
+    }));
   };
 
   if (items.length === 0) {
@@ -242,20 +336,25 @@ export default function CheckoutPage() {
 
       // 1. If no addressId exists, create address on backend
       if (!currentAddrId) {
-        const countryCode = getCountryCode(formData.country);
+        const countryCode = formData.countryCode || getCountryCode(formData.countryCode);
+        const addressPayload = {
+          label: ['Home', 'Work', 'Other'].includes(formData.label) ? formData.label : 'Home',
+          customLabel: formData.customLabel !== undefined && formData.customLabel !== null ? String(formData.customLabel).trim() : '',
+          fullName: String(formData.fullName || '').trim(),
+          phone: String(formData.phone || '').trim(),
+          countryCode,
+          region: String(formData.region || formData.city || 'Sofia City').trim(),
+          city: String(formData.city || '').trim(),
+          addressLine1: String(formData.addressLine1 || formData.address || '').trim(),
+          addressLine2: String(formData.addressLine2 || '').trim(),
+          postalCode: String(formData.postalCode || '').trim()
+        };
+
         if (import.meta.env.DEV) {
-          console.log('[Checkout] Creating address on backend:', { ...formData, countryCode });
+          console.log('[Checkout] Creating address on backend:', addressPayload);
         }
         try {
-          const createdAddr = await addressApi.createAddress({
-            fullName: formData.fullName,
-            phone: formData.phone,
-            countryCode,
-            region: formData.city || 'Dubai',
-            city: formData.city,
-            addressLine1: formData.address,
-            postalCode: formData.postalCode || '00000'
-          });
+          const createdAddr = await addressApi.createAddress(addressPayload);
           if (!createdAddr?.id) {
             throw new Error('Address creation failed: Backend did not return an address ID.');
           }
@@ -438,12 +537,18 @@ export default function CheckoutPage() {
       shippingMethodId,
       carrier: selectedQuote.carrier || 'ECONT',
       shippingAddress: {
+        label: formData.label || 'Home',
+        customLabel: formData.customLabel || '',
         fullName: finalName,
-        address: formData.address,
+        phone: formData.phone,
+        countryCode: formData.countryCode || 'BG',
+        country: selectedCountry?.name || 'Bulgaria',
+        region: formData.region || formData.city || 'Sofia City',
         city: formData.city,
-        country: formData.country,
+        addressLine1: formData.addressLine1 || formData.address,
+        addressLine2: formData.addressLine2 || '',
+        address: formData.addressLine1 || formData.address,
         postalCode: formData.postalCode,
-        phone: formData.phone
       },
       paymentMethod: getApiPaymentMethod()
     });
@@ -756,80 +861,194 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {/* Address Category */}
+                <div className="space-y-2">
+                  <label className="text-[#D8BE99] uppercase text-[11px] font-cinzel font-bold">
+                    Address Category *
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'Home', label: 'Home', icon: Home },
+                      { id: 'Work', label: 'Office', icon: Briefcase },
+                      { id: 'Other', label: 'Other', icon: MapPin }
+                    ].map((cat) => {
+                      const Icon = cat.icon;
+                      const isSelected = formData.label === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => handleAddressFieldChange('label', cat.id)}
+                          className={`py-2 px-3 rounded border flex items-center justify-center gap-2 font-cinzel text-xs uppercase font-bold tracking-wider transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-md'
+                              : 'border-[#D4AF37]/25 bg-black/40 text-[#D8BE99] hover:border-[#D4AF37]/50 hover:text-white'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{cat.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Label */}
+                <div className="space-y-1">
+                  <label className="text-[#D8BE99] uppercase text-[11px] font-bold">
+                    Custom Label {formData.label === 'Other' && <span className="text-rose-400">*</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customLabel}
+                    onChange={(e) => handleAddressFieldChange('customLabel', e.target.value)}
+                    placeholder="e.g. Test Home, Royal Villa, Diplomatic Salon"
+                    className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="text-[#D8BE99] uppercase">Full Name</label>
+                  {/* Full Name */}
+                  <div className="space-y-1">
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">Recipient Full Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.fullName}
                       onChange={(e) => handleAddressFieldChange('fullName', e.target.value)}
+                      placeholder="e.g. ECONT Test Customer"
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
 
+                  {/* Email */}
                   <div className="space-y-1">
-                    <label className="text-[#D8BE99] uppercase">Email Address</label>
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">Email Address *</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => handleAddressFieldChange('email', e.target.value)}
+                      placeholder="patron@arabiansheikh.com"
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
 
+                  {/* Country Selection */}
                   <div className="space-y-1">
-                    <label className="text-[#D8BE99] uppercase">Phone Number</label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => handleAddressFieldChange('phone', e.target.value)}
-                      className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-                    />
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold flex items-center justify-between">
+                      <span>Country / Destination *</span>
+                      <span className="text-[10px] text-[#D4AF37] font-mono">Code: {selectedCountry.code}</span>
+                    </label>
+                    <div className="relative">
+                      <Globe className="w-3.5 h-3.5 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <select
+                        value={formData.countryCode}
+                        onChange={(e) => handleCountryCodeChange(e.target.value)}
+                        className="w-full bg-black/60 border border-[#D4AF37]/30 pl-9 pr-8 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none appearance-none cursor-pointer"
+                      >
+                        {COUNTRIES.map((c) => (
+                          <option key={c.code} value={c.code} className="bg-[#0B0A08] text-[#F3E6D0]">
+                            {c.flag} {c.name} ({c.code}) — {c.dialCode}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-3.5 h-3.5 text-[#D4AF37] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
                   </div>
 
+                  {/* Courier Phone Number matching country */}
+                  <div className="space-y-1">
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold flex items-center justify-between">
+                      <span>Phone Number *</span>
+                      <span className="text-[10px] text-[#D4AF37] font-mono">Dial Code: {selectedCountry.dialCode}</span>
+                    </label>
+                    <div className="flex rounded bg-black/60 border border-[#D4AF37]/30 focus-within:border-[#D4AF37] transition-all overflow-hidden">
+                      <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#D4AF37]/10 border-r border-[#D4AF37]/20 text-[#F2D675] font-mono text-xs font-bold shrink-0 select-none">
+                        <span>{selectedCountry.flag}</span>
+                        <span>{selectedCountry.dialCode}</span>
+                      </div>
+                      <input
+                        type="tel"
+                        required
+                        value={
+                          formData.phone.startsWith(selectedCountry.dialCode)
+                            ? formData.phone.slice(selectedCountry.dialCode.length)
+                            : formData.phone.replace(/^\+\d+/, '')
+                        }
+                        onChange={handlePhoneInputChange}
+                        placeholder={selectedCountry.placeholder}
+                        className="w-full bg-transparent px-3 py-2.5 text-xs text-[#F3E6D0] focus:outline-none font-mono"
+                      />
+                    </div>
+                    <p className="text-[10px] text-neutral-400">
+                      International: <span className="text-[#D4AF37] font-mono">{formData.phone}</span>
+                    </p>
+                  </div>
+
+                  {/* Street Address Line 1 */}
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="text-[#D8BE99] uppercase">Street Address / Palace Villa</label>
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">Address Line 1 / Street Address *</label>
+                    <div className="relative">
+                      <Building className="w-3.5 h-3.5 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        required
+                        value={formData.addressLine1}
+                        onChange={(e) => handleAddressFieldChange('addressLine1', e.target.value)}
+                        placeholder="e.g. bul. Vitosha 1"
+                        className="w-full bg-black/60 border border-[#D4AF37]/30 pl-9 pr-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address Line 2 */}
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">Address Line 2 / Suite / Floor (Optional)</label>
                     <input
                       type="text"
-                      required
-                      value={formData.address}
-                      onChange={(e) => handleAddressFieldChange('address', e.target.value)}
+                      value={formData.addressLine2}
+                      onChange={(e) => handleAddressFieldChange('addressLine2', e.target.value)}
+                      placeholder="e.g. Apt 4B, Level 2 (optional)"
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
 
+                  {/* City */}
                   <div className="space-y-1">
-                    <label className="text-[#D8BE99] uppercase">City</label>
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">City / Municipality *</label>
                     <input
                       type="text"
                       required
                       value={formData.city}
                       onChange={(e) => handleAddressFieldChange('city', e.target.value)}
+                      placeholder="e.g. Sofia"
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
 
+                  {/* Region */}
                   <div className="space-y-1">
-                    <label className="text-[#D8BE99] uppercase">Country</label>
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">Region / State / Province *</label>
                     <input
                       type="text"
                       required
-                      value={formData.country}
-                      onChange={(e) => handleAddressFieldChange('country', e.target.value)}
+                      value={formData.region}
+                      onChange={(e) => handleAddressFieldChange('region', e.target.value)}
+                      placeholder="e.g. Sofia City"
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
 
+                  {/* Postal Code */}
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="text-[#D8BE99] uppercase">Postal Code</label>
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-bold">Postal / ZIP Code *</label>
                     <input
                       type="text"
+                      required
                       value={formData.postalCode}
                       onChange={(e) => handleAddressFieldChange('postalCode', e.target.value)}
-                      placeholder="e.g. 1000 or 00000"
+                      placeholder="e.g. 1000"
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none font-mono"
                     />
                   </div>
