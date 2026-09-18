@@ -1,6 +1,6 @@
 import { INITIAL_USERS } from './mockData';
 import { authApi } from '../api/auth.api';
-import { apiClient } from '../api/client';
+import { apiClient, tokenManager } from '../api/client';
 import { liveCloudSync } from './liveCloudSync';
 
 const USERS_STORAGE_KEY = 'arabian_sheikh_users';

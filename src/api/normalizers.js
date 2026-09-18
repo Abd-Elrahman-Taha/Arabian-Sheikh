@@ -246,16 +246,33 @@ export function normalizeUser(raw) {
 export function normalizeCartItem(raw) {
   if (!raw) return null;
   const item = normalizeObjectKeys(raw);
+  const resolvedImg = item.imageUrl || item.product?.imageUrl || item.image || '/products/luxury_designs/07_arabian_gold.webp';
+  const unitPrice = Number(item.unitPriceSnapshot !== undefined && item.unitPriceSnapshot !== null ? item.unitPriceSnapshot : (item.price || 0));
+  const qty = Math.max(1, Number(item.quantity || 1));
+  const lineTotal = Number(item.lineTotal !== undefined && item.lineTotal !== null ? item.lineTotal : unitPrice * qty);
+
   return {
-    id: item.id || `ci-${Date.now()}`,
-    productId: item.productId || item.product?.id,
+    id: item.id !== undefined && item.id !== null ? item.id : `ci-${Date.now()}`,
+    productId: item.productId !== undefined && item.productId !== null ? item.productId : item.product?.id,
     productName: item.productName || item.product?.name || item.name || 'Imperial Extrait',
-    imageUrl: item.imageUrl || item.product?.imageUrl || '/products/luxury_designs/07_arabian_gold.webp',
-    quantity: Number(item.quantity || 1),
-    unitPriceSnapshot: Number(item.unitPriceSnapshot || item.price || 0),
+    imageUrl: resolvedImg,
+    quantity: qty,
+    unitPriceSnapshot: unitPrice,
     priceChangeDetectedAt: item.priceChangeDetectedAt || null,
     priceLockExpiresAt: item.priceLockExpiresAt || null,
-    lineTotal: Number(item.lineTotal || (item.unitPriceSnapshot || item.price || 0) * (item.quantity || 1))
+    lineTotal,
+    // UI Compatibility Aliases
+    name: item.productName || item.product?.name || item.name || 'Imperial Extrait',
+    image: cleanImageUrl(resolvedImg),
+    price: unitPrice,
+    originalPrice: Number(item.originalPrice || unitPrice),
+    unitBasePrice: Number(item.unitBasePrice || unitPrice),
+    size: item.size || '100ml',
+    fragranceFamily: item.fragranceFamily || 'Haute Parfumerie',
+    arabicName: item.arabicName || '',
+    isBundle: Boolean(item.isBundle || String(item.productId || '').startsWith('bundle-')),
+    bundleId: item.bundleId || null,
+    bundleItems: Array.isArray(item.bundleItems) ? item.bundleItems : []
   };
 }
 
@@ -265,16 +282,27 @@ export function normalizeCartItem(raw) {
 export function normalizeCart(raw) {
   if (!raw) return null;
   const c = normalizeObjectKeys(raw);
+  const items = Array.isArray(c.items) ? c.items.map(normalizeCartItem).filter(Boolean) : [];
+  const subtotal = Number(c.subtotal !== undefined && c.subtotal !== null ? c.subtotal : items.reduce((sum, i) => sum + (i.lineTotal || i.price * i.quantity), 0));
+  const discountTotal = Number(c.discountTotal !== undefined && c.discountTotal !== null ? c.discountTotal : (c.discount || 0));
+  const shippingEstimate = Number(c.shippingEstimate !== undefined && c.shippingEstimate !== null ? c.shippingEstimate : (c.shipping !== undefined ? c.shipping : (subtotal >= 200 || items.length === 0 ? 0 : 10)));
+  const total = Number(c.total !== undefined && c.total !== null ? c.total : Math.max(0, subtotal - discountTotal + shippingEstimate));
+
   return {
-    id: c.id || `cart-${Date.now()}`,
-    items: Array.isArray(c.items) ? c.items.map(normalizeCartItem) : [],
-    subtotal: Number(c.subtotal || 0),
-    discountTotal: Number(c.discountTotal || c.discount || 0),
-    discount: Number(c.discountTotal || c.discount || 0),
-    shippingEstimate: Number(c.shippingEstimate || c.shipping || 0),
-    total: Number(c.total || 0),
+    id: c.id !== undefined && c.id !== null ? c.id : `cart-${Date.now()}`,
+    items,
+    subtotal,
+    discountTotal,
+    discount: discountTotal,
+    shippingEstimate,
+    shipping: shippingEstimate,
+    total,
     currency: c.currency || 'EUR',
-    expiresAt: c.expiresAt || null
+    expiresAt: c.expiresAt || null,
+    discountCode: c.discountCode || null,
+    discountPercent: Number(c.discountPercent || 0),
+    discountFixed: Number(c.discountFixed || 0),
+    giftWrap: Boolean(c.giftWrap)
   };
 }
 

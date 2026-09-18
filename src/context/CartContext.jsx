@@ -16,7 +16,8 @@ export function CartProvider({ children }) {
   const { isAuthenticated, user } = useAuth();
   const { success, error, info } = useToast();
 
-  const [cart, setCart] = useState(() => cartService.getCart());
+  const [cart, setCart] = useState(() => cartService.getInitialCart());
+  const [loading, setLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [activePromos, setActivePromos] = useState([]);
@@ -39,138 +40,45 @@ export function CartProvider({ children }) {
     }).catch(() => {});
   }, []);
 
-  // Sync cart to storage
+  // Hydrate cart from live backend API whenever authentication status or user changes
+  const fetchBackendCart = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCart(cartService.getInitialCart());
+      return;
+    }
+    setLoading(true);
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[Cart] Hydrating cart from backend GET /api/cart');
+      }
+      const remoteCart = await cartApi.getCart();
+      if (remoteCart) {
+        setCart(remoteCart);
+      }
+    } catch (err) {
+      if (err?.status === 401) {
+        if (import.meta.env.DEV) {
+          console.warn('[Cart] Unauthorized (401) fetching cart, resetting to empty');
+        }
+        setCart(cartService.getInitialCart());
+      } else if (err?.status === 403) {
+        console.error('[Cart] Forbidden (403) accessing cart');
+      } else {
+        console.error('[Cart] Error loading backend cart:', err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
   useEffect(() => {
-    cartService.saveCart(cart);
-  }, [cart]);
+    fetchBackendCart();
+  }, [fetchBackendCart, user?.id]);
 
   const totals = cartService.calculateTotals(cart, activePromos);
 
-  // Direct internal add without auth check
-  // Direct internal add for Curated Bundle Suites
-  const _internalAddBundle = useCallback((bundle, quantity = 1) => {
-    const bId = bundle.id;
-    const bundleKey = `bundle-${bId}`;
-    const bundlePrice = Number(bundle.bundlePrice || 0);
-    const originalRetail = Number(bundle.originalItemsPrice || bundle.individualItemsTotal || bundlePrice);
-    const bundleImage = bundle.imageUrl || bundle.image || bundle.items?.[0]?.imageUrl || '/products/luxury_designs/07_arabian_gold.webp';
-    const suiteName = bundle.name || 'Royal Curated Suite';
-
-    setCart(prev => {
-      const items = [...(prev.items || [])];
-      const existingIndex = items.findIndex(
-        item => item.id === bundleKey || (item.isBundle && (String(item.bundleId) === String(bId) || item.id === bundleKey))
-      );
-
-      if (existingIndex > -1) {
-        items[existingIndex].quantity += quantity;
-      } else {
-        items.push({
-          id: bundleKey,
-          bundleId: bId,
-          productId: bundleKey,
-          isBundle: true,
-          name: suiteName,
-          arabicName: bundle.arabicName || suiteName,
-          category: 'bundles',
-          price: bundlePrice,
-          bundlePrice,
-          originalPrice: originalRetail,
-          image: bundleImage,
-          images: bundle.images || (bundle.items?.map(i => i.imageUrl).filter(Boolean)) || [],
-          size: `${bundle.items?.length || 2} Flacons Suite`,
-          fragranceFamily: 'Royal Curated Suite',
-          quantity: Math.max(1, Number(quantity) || 1),
-          bundleItems: bundle.items || [],
-          savingsAmount: Number(bundle.savingsAmount || Math.max(0, originalRetail - bundlePrice)),
-          savingsPercentage: Number(bundle.savingsPercentage || 0),
-          promotionName: bundle.promotionName || ''
-        });
-      }
-
-      return { ...prev, items };
-    });
-
-    // Trigger cart badge bounce
-    setCartBadgeAnimated(true);
-    setTimeout(() => setCartBadgeAnimated(false), 500);
-
-    success(`Added '${suiteName}' Curated Suite to your Royal Bag.`);
-    setIsDrawerOpen(true);
-  }, [success]);
-
-  // Direct internal add without auth check
-  const _internalAdd = useCallback((product, size = '100ml', quantity = 1) => {
-    if (product.isBundle || product.bundlePrice !== undefined) {
-      return _internalAddBundle(product, quantity);
-    }
-
-    setCart(prev => {
-      const items = [...(prev.items || [])];
-      const existingIndex = items.findIndex(
-        item => item.productId === product.id && item.size === size
-      );
-
-      const basePrice = Number(product.originalPrice || product.price || 0);
-
-      if (existingIndex > -1) {
-        items[existingIndex].quantity += quantity;
-      } else {
-        items.push({
-          productId: product.id,
-          id: product.id,
-          name: product.name,
-          arabicName: product.arabicName || '',
-          categoryId: product.categoryId || product.category?.id || (product.category === 'perfumes' ? 1 : 0),
-          category: product.category,
-          brandId: product.brandId || product.brand?.id || 0,
-          brand: product.brand,
-          subcategoryId: product.subcategoryId || product.subcategory?.id || 0,
-          perfumeCategoryId: product.perfumeCategoryId || product.perfumeCategory?.id || 0,
-          tier: product.tier,
-          price: basePrice,
-          originalPrice: basePrice,
-          image: product.imageUrl || product.image || product.images?.[0] || '',
-          fragranceFamily: product.fragranceFamily || 'Haute Parfumerie',
-          size,
-          quantity
-        });
-      }
-
-      return { ...prev, items };
-    });
-
-    // If authenticated, sync to backend
-    if (product.id) {
-      cartApi.addItem(product.id, quantity).catch(() => {});
-    }
-
-    // Trigger cart badge bounce
-    setCartBadgeAnimated(true);
-    setTimeout(() => setCartBadgeAnimated(false), 500);
-
-    success(`Added ${product.name} (${size}) to your Royal Bag.`);
-    setIsDrawerOpen(true);
-  }, [_internalAddBundle, success]);
-
-  // Handle pending cart additions when user logs in
-  useEffect(() => {
-    if (isAuthenticated && pendingItem) {
-      const { product, bundle, isBundle, size, quantity } = pendingItem;
-      sessionStorage.removeItem(PENDING_CART_KEY);
-      setPendingItem(null);
-      setAuthModalOpen(false);
-
-      // Auto add preserved product or bundle
-      if (isBundle && bundle) {
-        _internalAddBundle(bundle, quantity || 1);
-      } else if (product) {
-        _internalAdd(product, size || '100ml', quantity || 1);
-      }
-    }
-  }, [isAuthenticated, pendingItem, _internalAdd, _internalAddBundle]);
-
-  const addBundleToCart = (bundle, quantity = 1) => {
+  // Add Curated Bundle Suites to backend cart
+  const addBundleToCart = useCallback(async (bundle, quantity = 1) => {
     if (!isAuthenticated) {
       const intent = { bundle, isBundle: true, quantity };
       setPendingItem(intent);
@@ -183,11 +91,44 @@ export function CartProvider({ children }) {
       return false;
     }
 
-    _internalAddBundle(bundle, quantity);
-    return true;
-  };
+    const suiteName = bundle.name || 'Royal Curated Suite';
+    const qty = Math.max(1, Number(quantity) || 1);
 
-  const addToCart = (product, size = '100ml', quantity = 1) => {
+    try {
+      if (Array.isArray(bundle.items) && bundle.items.length > 0) {
+        let lastCart = null;
+        for (const bi of bundle.items) {
+          const pId = bi.productId || bi.id;
+          const biQty = (bi.quantity || 1) * qty;
+          if (pId) {
+            lastCart = await cartApi.addItem(pId, biQty);
+          }
+        }
+        if (lastCart) {
+          setCart(lastCart);
+        } else {
+          await fetchBackendCart();
+        }
+      } else if (bundle.id) {
+        const updatedCart = await cartApi.addItem(bundle.id, qty);
+        if (updatedCart) setCart(updatedCart);
+      }
+
+      setCartBadgeAnimated(true);
+      setTimeout(() => setCartBadgeAnimated(false), 500);
+
+      success(`Added '${suiteName}' Curated Suite to your Royal Bag.`);
+      setIsDrawerOpen(true);
+      return true;
+    } catch (err) {
+      console.error('[Cart] Failed to add bundle to backend cart:', err);
+      error(err?.message || 'Failed to add suite to bag. Please try again.');
+      return false;
+    }
+  }, [isAuthenticated, fetchBackendCart, success, error]);
+
+  // Add Product to backend cart
+  const addToCart = useCallback(async (product, size = '100ml', quantity = 1) => {
     if (product?.isBundle || product?.bundlePrice !== undefined) {
       return addBundleToCart(product, quantity);
     }
@@ -204,55 +145,111 @@ export function CartProvider({ children }) {
       return false;
     }
 
-    _internalAdd(product, size, quantity);
-    return true;
-  };
+    const productId = product?.id || product?.productId;
+    if (!productId) {
+      error('Unable to identify product for addition to bag.');
+      return false;
+    }
 
-  const updateQuantity = (productId, size, newQty) => {
-    setCart(prev => {
-      let items = [...prev.items];
+    const qty = Math.max(1, Number(quantity) || 1);
+
+    try {
+      const updatedCart = await cartApi.addItem(productId, qty);
+      if (updatedCart) {
+        setCart(updatedCart);
+      }
+      setCartBadgeAnimated(true);
+      setTimeout(() => setCartBadgeAnimated(false), 500);
+
+      success(`Added ${product.name || 'Creation'} to your Royal Bag.`);
+      setIsDrawerOpen(true);
+      return true;
+    } catch (err) {
+      console.error('[Cart] Failed to add item to backend cart:', err);
+      error(err?.message || 'Failed to add item to bag. Please try again.');
+      return false;
+    }
+  }, [isAuthenticated, addBundleToCart, success, error]);
+
+  // Handle pending cart additions when user logs in
+  useEffect(() => {
+    if (isAuthenticated && pendingItem) {
+      const { product, bundle, isBundle, size, quantity } = pendingItem;
+      sessionStorage.removeItem(PENDING_CART_KEY);
+      setPendingItem(null);
+      setAuthModalOpen(false);
+
+      if (isBundle && bundle) {
+        addBundleToCart(bundle, quantity || 1);
+      } else if (product) {
+        addToCart(product, size || '100ml', quantity || 1);
+      }
+    }
+  }, [isAuthenticated, pendingItem, addToCart, addBundleToCart]);
+
+  // Update quantity via PUT /api/cart/items/{itemId}
+  const updateQuantity = useCallback(async (idOrProductId, size, newQty) => {
+    const targetItem = (cart.items || []).find(
+      i => String(i.id) === String(idOrProductId) || String(i.productId) === String(idOrProductId)
+    );
+
+    if (!targetItem) {
+      console.warn('[Cart] updateQuantity: Target item not found in cart', { idOrProductId });
+      return;
+    }
+
+    const itemId = targetItem.id;
+
+    try {
       if (newQty <= 0) {
-        items = items.filter(i => {
-          if (i.isBundle) {
-            return !(i.id === productId || i.productId === productId || String(i.bundleId) === String(productId));
-          }
-          return !(i.productId === productId && i.size === size);
-        });
+        const updatedCart = await cartApi.removeItem(itemId);
+        if (updatedCart) {
+          setCart(updatedCart);
+        }
       } else {
-        const index = items.findIndex(i => {
-          if (i.isBundle) {
-            return i.id === productId || i.productId === productId || String(i.bundleId) === String(productId);
-          }
-          return i.productId === productId && i.size === size;
-        });
-        if (index > -1) {
-          items[index].quantity = newQty;
+        const updatedCart = await cartApi.updateItem(itemId, newQty);
+        if (updatedCart) {
+          setCart(updatedCart);
         }
       }
-      return { ...prev, items };
-    });
-    setCartBadgeAnimated(true);
-    setTimeout(() => setCartBadgeAnimated(false), 400);
-  };
+      setCartBadgeAnimated(true);
+      setTimeout(() => setCartBadgeAnimated(false), 400);
+    } catch (err) {
+      console.error('[Cart] Failed to update item quantity:', err);
+      error(err?.message || 'Failed to update item quantity.');
+    }
+  }, [cart.items, error]);
 
-  const removeFromCart = (productId, size) => {
-    setCart(prev => ({
-      ...prev,
-      items: prev.items.filter(i => {
-        if (i.isBundle) {
-          return !(i.id === productId || i.productId === productId || String(i.bundleId) === String(productId));
-        }
-        return !(i.productId === productId && i.size === size);
-      })
-    }));
-    info('Creation removed from your bag.');
-  };
+  // Remove item via DELETE /api/cart/items/{itemId}
+  const removeFromCart = useCallback(async (idOrProductId, size) => {
+    const targetItem = (cart.items || []).find(
+      i => String(i.id) === String(idOrProductId) || String(i.productId) === String(idOrProductId)
+    );
 
-  const toggleGiftWrap = () => {
+    if (!targetItem) {
+      console.warn('[Cart] removeFromCart: Target item not found in cart', { idOrProductId });
+      return;
+    }
+
+    const itemId = targetItem.id;
+
+    try {
+      const updatedCart = await cartApi.removeItem(itemId);
+      if (updatedCart) {
+        setCart(updatedCart);
+      }
+      info('Creation removed from your bag.');
+    } catch (err) {
+      console.error('[Cart] Failed to remove item from backend cart:', err);
+      error(err?.message || 'Failed to remove item from bag.');
+    }
+  }, [cart.items, info, error]);
+
+  const toggleGiftWrap = useCallback(() => {
     setCart(prev => ({ ...prev, giftWrap: !prev.giftWrap }));
-  };
+  }, []);
 
-  const applyDiscount = async (codeStr) => {
+  const applyDiscount = useCallback(async (codeStr) => {
     if (!codeStr || !codeStr.trim()) {
       error('Please enter a promotional code.');
       throw new Error('Please enter a promotional code.');
@@ -264,15 +261,6 @@ export function CartProvider({ children }) {
     }
 
     try {
-      // Sync items to backend cart before validating if authenticated
-      if (isAuthenticated && bagItems.length > 0) {
-        for (const item of bagItems) {
-          if (item.productId) {
-            await cartApi.addItem(item.productId, item.quantity).catch(() => {});
-          }
-        }
-      }
-
       const discount = await discountService.validateCode(codeStr, totals.subtotal, bagItems);
       setCart(prev => ({
         ...prev,
@@ -286,26 +274,29 @@ export function CartProvider({ children }) {
       error(err.message || 'Invalid privilege code.');
       throw err;
     }
-  };
+  }, [cart.items, totals.subtotal, success, error]);
 
-  const removeDiscount = () => {
+  const removeDiscount = useCallback(() => {
     setCart(prev => ({
       ...prev,
       discountCode: null,
       discountPercent: 0,
       discountFixed: 0
     }));
-  };
+  }, []);
 
-  const clearCart = () => {
-    setCart({
-      items: [],
-      discountCode: null,
-      discountPercent: 0,
-      discountFixed: 0,
-      giftWrap: false
-    });
-  };
+  // Clear cart via DELETE /api/cart
+  const clearCart = useCallback(async () => {
+    try {
+      if (isAuthenticated) {
+        await cartApi.clearCart();
+      }
+      setCart(cartService.getInitialCart());
+    } catch (err) {
+      console.error('[Cart] Failed to clear backend cart:', err);
+      setCart(cartService.getInitialCart());
+    }
+  }, [isAuthenticated]);
 
   return (
     <CartContext.Provider
@@ -313,6 +304,7 @@ export function CartProvider({ children }) {
         cart,
         items: totals.items || cart.items || [],
         totals,
+        loading,
         isDrawerOpen,
         openDrawer: () => {
           if (!isAuthenticated) {
@@ -330,6 +322,7 @@ export function CartProvider({ children }) {
         applyDiscount,
         removeDiscount,
         clearCart,
+        refreshCart: fetchBackendCart,
         cartBadgeAnimated,
         openAuthModal: () => setAuthModalOpen(true),
         closeAuthModal: () => setAuthModalOpen(false)
@@ -342,7 +335,7 @@ export function CartProvider({ children }) {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         pendingItem={pendingItem}
-        onAuthenticatedAdd={(prod, sz, qty) => _internalAdd(prod, sz, qty)}
+        onAuthenticatedAdd={(prod, sz, qty) => addToCart(prod, sz, qty)}
       />
     </CartContext.Provider>
   );

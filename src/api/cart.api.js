@@ -8,8 +8,21 @@ export const cartApi = {
    * GET /api/cart
    */
   async getCart() {
-    const response = await apiClient.get(ENDPOINTS.CART.GET);
-    return normalizeCart(response);
+    if (import.meta.env.DEV) {
+      console.log('[Cart] Fetching backend cart');
+    }
+    try {
+      const response = await apiClient.get(ENDPOINTS.CART.GET);
+      if (import.meta.env.DEV) {
+        console.log('[Cart] Backend cart fetched successfully:', response);
+      }
+      return normalizeCart(response);
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[Cart] API error fetching cart:', err);
+      }
+      throw err;
+    }
   },
 
   /**
@@ -17,8 +30,18 @@ export const cartApi = {
    * DELETE /api/cart
    */
   async clearCart() {
-    await apiClient.delete(ENDPOINTS.CART.CLEAR);
-    return true;
+    if (import.meta.env.DEV) {
+      console.log('[Cart] Clearing backend cart');
+    }
+    try {
+      await apiClient.delete(ENDPOINTS.CART.CLEAR);
+      return true;
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[Cart] API error clearing cart:', err);
+      }
+      throw err;
+    }
   },
 
   /**
@@ -26,11 +49,26 @@ export const cartApi = {
    * POST /api/cart/items
    */
   async addItem(productId, quantity = 1) {
-    const response = await apiClient.post(ENDPOINTS.CART.ADD_ITEM, {
-      productId: Number(productId),
-      quantity: Number(quantity)
-    });
-    return normalizeCart(response);
+    const numId = Number(productId);
+    const qty = Number(quantity);
+    if (import.meta.env.DEV) {
+      console.log('[Cart] Adding item', { productId: numId, quantity: qty });
+    }
+    try {
+      const response = await apiClient.post(ENDPOINTS.CART.ADD_ITEM, {
+        productId: numId,
+        quantity: qty
+      });
+      if (import.meta.env.DEV) {
+        console.log('[Cart] Item added successfully, updated cart:', response);
+      }
+      return normalizeCart(response);
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[Cart] API error adding item:', err);
+      }
+      throw err;
+    }
   },
 
   /**
@@ -38,10 +76,24 @@ export const cartApi = {
    * PUT /api/cart/items/{itemId}
    */
   async updateItem(itemId, quantity) {
-    const response = await apiClient.put(ENDPOINTS.CART.UPDATE_ITEM(itemId), {
-      quantity: Number(quantity)
-    });
-    return normalizeCart(response);
+    const qty = Number(quantity);
+    if (import.meta.env.DEV) {
+      console.log('[Cart] Updating item', { itemId, quantity: qty });
+    }
+    try {
+      const response = await apiClient.put(ENDPOINTS.CART.UPDATE_ITEM(itemId), {
+        quantity: qty
+      });
+      if (import.meta.env.DEV) {
+        console.log('[Cart] Item updated successfully, updated cart:', response);
+      }
+      return normalizeCart(response);
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[Cart] API error updating item:', err);
+      }
+      throw err;
+    }
   },
 
   /**
@@ -49,8 +101,22 @@ export const cartApi = {
    * DELETE /api/cart/items/{itemId}
    */
   async removeItem(itemId) {
-    await apiClient.delete(ENDPOINTS.CART.REMOVE_ITEM(itemId));
-    return true;
+    if (import.meta.env.DEV) {
+      console.log('[Cart] Removing item', { itemId });
+    }
+    try {
+      const response = await apiClient.delete(ENDPOINTS.CART.REMOVE_ITEM(itemId));
+      if (response && response.items) {
+        return normalizeCart(response);
+      }
+      // If DELETE only returned success, refetch fresh cart
+      return await this.getCart();
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[Cart] API error removing item:', err);
+      }
+      throw err;
+    }
   },
 
   /**
@@ -58,8 +124,18 @@ export const cartApi = {
    * DELETE /api/cart/coupon
    */
   async removeCoupon() {
-    await apiClient.delete(ENDPOINTS.CART.REMOVE_COUPON);
-    return true;
+    if (import.meta.env.DEV) {
+      console.log('[Cart] Removing coupon from cart');
+    }
+    try {
+      await apiClient.delete(ENDPOINTS.CART.REMOVE_COUPON);
+      return true;
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[Cart] API error removing coupon:', err);
+      }
+      throw err;
+    }
   },
 
   /**

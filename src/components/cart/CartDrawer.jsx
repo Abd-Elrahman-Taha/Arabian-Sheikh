@@ -179,7 +179,7 @@ export default function CartDrawer() {
             ) : (
               items.map((item, idx) => {
                 const isBundle = Boolean(item.isBundle);
-                const targetKey = item.productId || item.id;
+                const targetKey = item.id || item.productId;
                 const bundleLink = isBundle ? `/bundle/${item.bundleId || String(item.id).replace('bundle-', '')}` : `/product/${item.productId || item.id}`;
 
                 return (

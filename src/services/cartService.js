@@ -1,36 +1,33 @@
 import { promotionService } from './promotionService';
 
-const CART_STORAGE_KEY = 'arabian_sheikh_cart';
+export const EMPTY_CART = {
+  id: null,
+  items: [],
+  subtotal: 0,
+  discountTotal: 0,
+  discount: 0,
+  shippingEstimate: 0,
+  shipping: 0,
+  total: 0,
+  currency: 'EUR',
+  expiresAt: null,
+  discountCode: null,
+  discountPercent: 0,
+  discountFixed: 0,
+  giftWrap: false
+};
 
 export const cartService = {
+  getInitialCart() {
+    return { ...EMPTY_CART, items: [] };
+  },
+
   getCart() {
-    const data = typeof window !== 'undefined' ? localStorage.getItem(CART_STORAGE_KEY) : null;
-    if (!data) {
-      return {
-        items: [],
-        discountCode: null,
-        discountPercent: 0,
-        discountFixed: 0,
-        giftWrap: false
-      };
-    }
-    try {
-      return JSON.parse(data);
-    } catch {
-      return {
-        items: [],
-        discountCode: null,
-        discountPercent: 0,
-        discountFixed: 0,
-        giftWrap: false
-      };
-    }
+    return { ...EMPTY_CART, items: [] };
   },
 
   saveCart(cart) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    }
+    // Deprecated: Authenticated cart source of truth is the backend API.
   },
 
   calculateTotals(cart, activePromos = []) {

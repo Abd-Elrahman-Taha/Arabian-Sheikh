@@ -70,7 +70,7 @@ export const COUNTRIES = [
 export default function CheckoutPage() {
   const { navigate } = useRouter();
   const { t, isRtl } = useTranslation();
-  const { items, totals, cart, clearCart, applyDiscount, removeDiscount } = useCart();
+  const { items, totals, cart, clearCart, applyDiscount, removeDiscount, refreshCart } = useCart();
   const { user } = useAuth();
   const { success, error } = useToast();
 
@@ -240,6 +240,13 @@ export default function CheckoutPage() {
       }));
     }
   }, [user]);
+
+  // Refresh backend cart on mount to ensure synchrony across devices/tabs
+  useEffect(() => {
+    if (user && typeof refreshCart === 'function') {
+      refreshCart().catch(() => {});
+    }
+  }, [user, refreshCart]);
 
   // Invalidate quotes and reset to Step 1 if cart items change
   const prevItemsRef = useRef(items);

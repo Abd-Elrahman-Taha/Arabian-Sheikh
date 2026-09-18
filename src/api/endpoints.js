@@ -67,8 +67,8 @@ export const ENDPOINTS = {
     GET: '/cart',
     CLEAR: '/cart',
     ADD_ITEM: '/cart/items',
-    UPDATE_ITEM: (productId) => `/cart/items/${productId}`,
-    REMOVE_ITEM: (productId) => `/cart/items/${productId}`,
+    UPDATE_ITEM: (itemId) => `/cart/items/${itemId}`,
+    REMOVE_ITEM: (itemId) => `/cart/items/${itemId}`,
     REMOVE_COUPON: '/cart/coupon'
   },
 

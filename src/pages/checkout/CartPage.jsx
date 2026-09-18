@@ -120,7 +120,7 @@ export default function CartPage() {
             <div className="divide-y divide-[var(--color-terracotta-deep)]/20 border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-light)] shadow-xl">
               {items.map((item, idx) => {
                 const isBundle = Boolean(item.isBundle);
-                const targetKey = item.productId || item.id;
+                const targetKey = item.id || item.productId;
                 const bundleLink = isBundle ? `/bundle/${item.bundleId || String(item.id).replace('bundle-', '')}` : `/product/${item.productId || item.id}`;
 
                 return (

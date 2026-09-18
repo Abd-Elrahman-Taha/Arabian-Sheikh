@@ -226,8 +226,18 @@ function sleep(ms) {
  * Builds full URL with path and query parameters
  */
 function buildUrl(endpoint, params = {}) {
-  const baseUrl = resolveBaseUrl();
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const baseUrl = resolveBaseUrl().replace(/\/+$/, '');
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // Prevent duplicate /api prefixes when baseUrl already ends with /api
+  if (baseUrl.endsWith('/api')) {
+    if (cleanEndpoint.startsWith('/api/')) {
+      cleanEndpoint = cleanEndpoint.slice(4);
+    } else if (cleanEndpoint === '/api') {
+      cleanEndpoint = '';
+    }
+  }
+
   let url = `${baseUrl}${cleanEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
 
   const searchParams = new URLSearchParams();
