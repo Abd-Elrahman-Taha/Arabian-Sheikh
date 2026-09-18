@@ -72,6 +72,9 @@ export default function CheckoutPage() {
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [addressId, setAddressId] = useState(null);
+  // Tracks whether the currently loaded quotes are real backend-issued quotes
+  // (quoteIds are valid for order creation) or display-only mock fallbacks
+  const [quotesFromBackend, setQuotesFromBackend] = useState(false);
 
   // Load authenticated patron saved addresses if available
   useEffect(() => {
@@ -103,15 +106,15 @@ export default function CheckoutPage() {
     async function fetchQuotes() {
       setLoadingQuotes(true);
       try {
+        // Only pass a real addressId — never fallback to 1 (causes ADDRESS_NOT_FOUND)
         const res = await shippingService.getQuotes({
-          addressId: addressId || 1,
-          countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
-          postalCode: formData.postalCode,
-          items
+          addressId: addressId || null,
         });
         if (!active) return;
         const opts = res?.options || [];
         setShippingQuotes(opts);
+        // Track whether these are real backend quotes or display-only fallbacks
+        setQuotesFromBackend(Boolean(res?.fromBackend));
         if (opts.length > 0) {
           setSelectedQuote(curr => curr || opts[0]);
           setFormData(prev => ({ ...prev, shippingMethod: (curr => curr?.shippingMethod || opts[0].shippingMethod)(selectedQuote) }));
@@ -218,6 +221,11 @@ export default function CheckoutPage() {
       const finalEmail = (user?.email || formData.email || '').trim();
       const finalName = (formData.fullName || user?.name || 'Valued Patron').trim();
 
+      // Determine if the selected quote is a real backend-issued quote or a display-only fallback.
+      // isMockQuote=true tells orderService NOT to send the quoteId to the backend
+      // (otherwise the backend returns SHIPPING_QUOTE_EXPIRED 422)
+      const isMockQuote = !quotesFromBackend || Boolean(selectedQuote?.isMockFallback) || !selectedQuote?.quoteId;
+
       // 3. Create official order record
       const newOrder = await orderService.createOrder({
         addressId: addressId || undefined,
@@ -233,6 +241,7 @@ export default function CheckoutPage() {
         shippingCost: dynamicShippingCost,
         total: grandTotal,
         quoteId: selectedQuote?.quoteId || undefined,
+        isMockQuote,
         shippingMethodId: selectedQuote?.shippingMethodId || 1,
         carrier: selectedQuote?.carrier || 'ECONT',
         shippingAddress: {
@@ -274,10 +283,11 @@ export default function CheckoutPage() {
         });
       }
 
-      success('Order placed successfully via Stripe test mode.');
+      success('Order placed successfully.');
       navigate(`/order-confirmation/${newOrder.id}`);
     } catch (err) {
-      error('Failed to process payment. Please verify your details.');
+      console.error('Order placement error:', err);
+      error(err?.message || 'Failed to process order. Please verify your details and try again.');
     } finally {
       setProcessing(false);
     }

@@ -6,77 +6,106 @@ export const shippingApi = {
   /**
    * Request Shipping Quotes for Checkout
    * POST /api/Shipping/quotes
-   * @param {object} payload { addressId, countryCode, postalCode, items }
+   * @param {object} payload { addressId }
+   * @returns {{ options: ShippingOption[], fromBackend: boolean }}
+   *   fromBackend=true  → quoteIds are real backend UUIDs, safe to use in POST /api/Orders
+   *   fromBackend=false → fallback display-only quotes, do NOT send quoteId to backend
    */
   async getQuotes(payload = {}) {
-    // Backend ShippingQuoteRequest schema: ONLY { addressId: int64 } (additionalProperties: false)
     const rawAddrId = payload.addressId;
-    const addrId = (rawAddrId !== undefined && rawAddrId !== null && !isNaN(Number(rawAddrId)) && Number(rawAddrId) > 0)
-      ? Number(rawAddrId)
-      : 1;
+    const addrId =
+      rawAddrId !== undefined &&
+      rawAddrId !== null &&
+      !isNaN(Number(rawAddrId)) &&
+      Number(rawAddrId) > 0
+        ? Number(rawAddrId)
+        : null;
 
-    try {
-      const response = await apiClient.post(ENDPOINTS.SHIPPING.QUOTES, { addressId: addrId }, {
-        requiresAuth: true
-      });
+    // Only call the backend when we have a real addressId
+    if (addrId) {
+      try {
+        const response = await apiClient.post(
+          ENDPOINTS.SHIPPING.QUOTES,
+          { addressId: addrId },
+          { requiresAuth: true }
+        );
 
-      const rawOptions = response?.options || (Array.isArray(response) ? response : []);
-      if (Array.isArray(rawOptions) && rawOptions.length > 0) {
-        return {
-          options: rawOptions.map(normalizeShippingOption).filter(Boolean)
-        };
+        const rawOptions =
+          response?.options || (Array.isArray(response) ? response : []);
+        if (Array.isArray(rawOptions) && rawOptions.length > 0) {
+          return {
+            options: rawOptions.map(normalizeShippingOption).filter(Boolean),
+            fromBackend: true,
+          };
+        }
+      } catch (err) {
+        // Surface the error for checkout to warn the user,
+        // then fall through to display-only fallback quotes
+        console.warn(
+          `POST /api/Shipping/quotes failed (addressId=${addrId}):`,
+          err.message
+        );
       }
-    } catch (err) {
-      console.warn('POST /api/Shipping/quotes fallback to options:', err.message);
+    } else {
+      console.warn(
+        'getQuotes called without a valid addressId – using display-only fallback quotes'
+      );
     }
 
-    // Fallback royal carrier shipping options with valid RFC 4122 UUIDs
+    // ─── Display-only fallback ─────────────────────────────────────────────────
+    // isMockFallback: true  → these MUST NOT be sent as quoteId to POST /api/Orders
+    // quoteId: null          → explicitly null so order.api.js skips it
+    // They exist only to give the UI something to show when the backend quote call fails.
+    const makeFallback = (raw) => ({
+      ...normalizeShippingOption(raw),
+      quoteId: null,
+      isMockFallback: true,
+    });
+
     return {
       options: [
-        normalizeShippingOption({
-          quoteId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        makeFallback({
           shippingMethodId: 1,
           shippingCompanyId: 3,
           carrier: 'ECONT',
           shippingMethod: 'ECONT Standard Delivery',
-          shippingFee: 5.00,
+          shippingFee: 5.0,
           currency: 'EUR',
           estimatedDeliveryDays: 3,
           minDeliveryDays: 2,
           maxDeliveryDays: 4,
           isFree: false,
-          rateSource: 'ECONT'
+          rateSource: 'ECONT',
         }),
-        normalizeShippingOption({
-          quoteId: '8c7f9d32-5a41-4c72-91e3-123456789abc',
+        makeFallback({
           shippingMethodId: 2,
           shippingCompanyId: 3,
           carrier: 'ECONT',
           shippingMethod: 'ECONT Priority Express',
-          shippingFee: 12.00,
+          shippingFee: 12.0,
           currency: 'EUR',
           estimatedDeliveryDays: 1,
           minDeliveryDays: 1,
           maxDeliveryDays: 2,
           isFree: false,
-          rateSource: 'ECONT'
+          rateSource: 'ECONT',
         }),
-        normalizeShippingOption({
-          quoteId: '4d1e2f3a-9b8c-4d7e-8f0a-1b2c3d4e5f60',
+        makeFallback({
           shippingMethodId: 3,
           shippingCompanyId: 1,
           carrier: 'DHL Express',
           shippingMethod: 'DHL Royal Air Delivery',
-          shippingFee: 15.00,
+          shippingFee: 15.0,
           currency: 'EUR',
           estimatedDeliveryDays: 2,
           minDeliveryDays: 1,
           maxDeliveryDays: 3,
           isFree: false,
-        })
-      ]
+        }),
+      ],
+      fromBackend: false,
     };
-  }
+  },
 };
 
 export default shippingApi;

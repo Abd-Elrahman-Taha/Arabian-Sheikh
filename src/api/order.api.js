@@ -31,17 +31,26 @@ export const orderApi = {
 
     const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
 
-    const resolvedQuoteId = isUuid(payload.quoteId)
-      ? payload.quoteId.trim()
-      : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '3fa85f64-5717-4562-b3fc-2c963f66afa6');
+    // Only send quoteId when it is a real backend-issued UUID.
+    // If quoteId is null/undefined/empty (e.g. mock fallback), omit it entirely —
+    // sending a self-generated or hardcoded UUID causes SHIPPING_QUOTE_EXPIRED (422).
+    const resolvedQuoteId = isUuid(payload.quoteId) ? payload.quoteId.trim() : null;
+
+    // addressId MUST be a real backend address ID — never default to 1.
+    // Callers are responsible for resolving a valid address before calling this.
+    const resolvedAddressId = Number(payload.addressId) || null;
+    if (!resolvedAddressId) {
+      throw new Error('A valid addressId is required to create an order.');
+    }
 
     // Strict compliance with CreateOrderRequest (additionalProperties: false)
     const body = {
-      addressId: Number(payload.addressId) || 1,
+      addressId: resolvedAddressId,
       shippingMethodId: Number(payload.shippingMethodId) || 1,
-      quoteId: resolvedQuoteId,
       paymentMethod: payload.paymentMethod ? String(payload.paymentMethod).trim() : 'COD',
-      couponCode: (payload.couponCode || payload.discountCode) ? String(payload.couponCode || payload.discountCode).trim() : ''
+      couponCode: (payload.couponCode || payload.discountCode) ? String(payload.couponCode || payload.discountCode).trim() : '',
+      // Only include quoteId when we have a real backend-issued UUID
+      ...(resolvedQuoteId ? { quoteId: resolvedQuoteId } : {})
     };
 
     const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, body, {

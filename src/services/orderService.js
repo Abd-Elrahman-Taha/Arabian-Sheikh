@@ -451,6 +451,12 @@ export const orderService = {
           }
         }
 
+        // Ensure we have a real numeric address ID before hitting the API
+        const numericAddressId = Number(resolvedAddressId) || null;
+        if (!numericAddressId) {
+          throw new Error('No valid address found for this customer. Please add a shipping address first.');
+        }
+
         // 2. Ensure items exist in server-side cart
         if (Array.isArray(orderPayload.items) && orderPayload.items.length > 0) {
           for (const item of orderPayload.items) {
@@ -462,10 +468,16 @@ export const orderService = {
         }
 
         // 3. Call official POST /api/Orders
+        // Only pass quoteId when it is a real backend-issued UUID (not a mock fallback / null).
+        // The backend rejects any UUID it didn't issue as SHIPPING_QUOTE_EXPIRED (422).
+        const isRealQuoteId = orderPayload.quoteId &&
+          !orderPayload.isMockQuote &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(orderPayload.quoteId));
+
         apiOrder = await orderApi.createOrder({
-          addressId: Number(resolvedAddressId) || 1,
+          addressId: numericAddressId,
           shippingMethodId: Number(orderPayload.shippingMethodId) || 1,
-          quoteId: orderPayload.quoteId,
+          quoteId: isRealQuoteId ? orderPayload.quoteId : undefined,
           paymentMethod: orderPayload.paymentMethod || 'COD',
           couponCode: orderPayload.discountCode || orderPayload.couponCode || ''
         });
