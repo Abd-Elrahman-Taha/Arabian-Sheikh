@@ -119,11 +119,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     let active = true;
     async function fetchQuotes() {
-      if (!addressId) return;
       setLoadingQuotes(true);
       try {
         const res = await shippingService.getQuotes({
-          addressId: addressId || null,
+          addressId: addressId || 0,
         });
         if (!active) return;
         const opts = res?.options || [];
@@ -132,7 +131,7 @@ export default function CheckoutPage() {
         if (opts.length > 0) {
           setSelectedQuote(curr => {
             if (!curr || curr.isMockFallback || !curr.quoteId) return opts[0];
-            const matching = opts.find(o => o.shippingMethodId === curr.shippingMethodId);
+            const matching = opts.find(o => (curr.quoteId && o.quoteId === curr.quoteId) || o.shippingMethodId === curr.shippingMethodId);
             return matching || opts[0];
           });
           setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
@@ -189,10 +188,11 @@ export default function CheckoutPage() {
       let currentAddrId = addressId;
       try {
         if (!currentAddrId) {
+          const countryCode = formData.country === 'Bulgaria' ? 'BG' : (formData.country === 'Saudi Arabia' ? 'SA' : 'AE');
           const createdAddr = await addressApi.createAddress({
             fullName: formData.fullName,
             phone: formData.phone,
-            countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
+            countryCode,
             region: formData.city || 'Dubai',
             city: formData.city,
             addressLine1: formData.address,
@@ -207,19 +207,19 @@ export default function CheckoutPage() {
           await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch((err) => {
             console.warn('Checkout address sync notice:', err.message);
           });
-          // Immediately fetch real quotes for this valid addressId so step 2 has real quotes
-          try {
-            const res = await shippingService.getQuotes({ addressId: currentAddrId });
-            const opts = res?.options || [];
-            if (opts.length > 0) {
-              setShippingQuotes(opts);
-              setQuotesFromBackend(Boolean(res?.fromBackend));
-              setSelectedQuote(opts[0]);
-              setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
-            }
-          } catch (e) {
-            console.warn('Error pre-fetching quotes on step advance:', e);
+        }
+        // Always refresh quotes for currentAddrId (or 0) so step 2 has real options
+        try {
+          const res = await shippingService.getQuotes({ addressId: currentAddrId || 0 });
+          const opts = res?.options || [];
+          if (opts.length > 0) {
+            setShippingQuotes(opts);
+            setQuotesFromBackend(Boolean(res?.fromBackend));
+            setSelectedQuote(opts[0]);
+            setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
           }
+        } catch (e) {
+          console.warn('Error pre-fetching quotes on step advance:', e);
         }
       } catch (err) {
         console.warn('Address sync error:', err.message);
@@ -673,8 +673,47 @@ export default function CheckoutPage() {
                     <p className="text-xs font-cinzel text-[#D8BE99]">Calculating real-time carrier quotes...</p>
                   </div>
                 ) : shippingQuotes.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-neutral-400 bg-black/40 border border-white/10 rounded-xl">
-                    Unable to load carrier rates. Defaulting to insured royal delivery.
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-xl border border-[#D4AF37]/40 bg-black/60 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="shippingMethod"
+                          checked={true}
+                          readOnly
+                          className="accent-[#D4AF37] w-4 h-4"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border bg-amber-950/80 text-[#F2D675] border-[#D4AF37]/40">
+                              ROYAL
+                            </span>
+                            <span className="font-cinzel font-bold text-xs text-[#F3E6D0]">
+                              Insured Royal Courier Delivery
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#D8BE99]">
+                            2-4 business days • Insured temperature-controlled transport
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-[#D4AF37]">€10.00</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        shippingService.getQuotes({ addressId: addressId || 0 }).then(res => {
+                          const opts = res?.options || [];
+                          if (opts.length > 0) {
+                            setShippingQuotes(opts);
+                            setSelectedQuote(opts[0]);
+                          }
+                        });
+                      }}
+                      className="w-full py-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#F2D675] text-[11px] font-cinzel tracking-wider rounded-lg transition-all text-center"
+                    >
+                      ↻ Refresh Real-Time Carrier Rates
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-3">

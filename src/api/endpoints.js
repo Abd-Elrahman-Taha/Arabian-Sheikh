@@ -114,11 +114,11 @@ export const ENDPOINTS = {
     GET: '/checkout',
     SET_ADDRESS: '/checkout/address',
     SET_SHIPPING: '/checkout/shipping',
-    SHIPPING_OPTIONS: '/shipping/options'
+    SHIPPING_OPTIONS: '/Shipping/options'
   },
   SHIPPING: {
-    QUOTES: '/shipping/quotes',
-    OPTIONS: '/shipping/options'
+    QUOTES: '/Shipping/quotes',
+    OPTIONS: '/Shipping/options'
   },
 
   // Payments (Stripe)

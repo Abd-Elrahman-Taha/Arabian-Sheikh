@@ -16,18 +16,24 @@ export const shippingApi = {
     const addrId =
       rawAddrId !== undefined &&
       rawAddrId !== null &&
-      !isNaN(Number(rawAddrId)) &&
-      Number(rawAddrId) > 0
+      !isNaN(Number(rawAddrId))
         ? Number(rawAddrId)
-        : null;
+        : 0;
 
-    // Only call the backend when we have a real addressId
-    if (addrId) {
+    // Endpoints to attempt (/Shipping/quotes matching ASP.NET controller casing, /shipping/quotes fallback)
+    const endpointsToTry = [
+      ENDPOINTS.SHIPPING.QUOTES,
+      '/Shipping/quotes',
+      '/shipping/quotes'
+    ];
+    const uniqueEndpoints = [...new Set(endpointsToTry)];
+
+    for (const ep of uniqueEndpoints) {
       try {
         const response = await apiClient.post(
-          ENDPOINTS.SHIPPING.QUOTES,
+          ep,
           { addressId: addrId },
-          { requiresAuth: true }
+          { requiresAuth: false }
         );
 
         const rawOptions =
@@ -39,17 +45,11 @@ export const shippingApi = {
           };
         }
       } catch (err) {
-        // Surface the error for checkout to warn the user,
-        // then fall through to display-only fallback quotes
         console.warn(
-          `POST /api/Shipping/quotes failed (addressId=${addrId}):`,
-          err.message
+          `POST ${ep} failed (addressId=${addrId}):`,
+          err?.message || err
         );
       }
-    } else {
-      console.warn(
-        'getQuotes called without a valid addressId – using display-only fallback quotes'
-      );
     }
 
     // ─── Display-only fallback ─────────────────────────────────────────────────
