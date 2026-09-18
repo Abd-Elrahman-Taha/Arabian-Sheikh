@@ -196,8 +196,8 @@ export const authService = {
     }
 
     // For Customers:
-    // If marked as deleted or blocked in cloud, sign out immediately
-    if (liveCloudSync.isUserDeleted(current.email) || liveCloudSync.isUserBlocked(current.email)) {
+    // If explicitly marked as blocked in cloud, sign out
+    if (liveCloudSync.isUserBlocked(current.email)) {
       this.logout();
       return null;
     }
@@ -224,36 +224,38 @@ export const authService = {
         return merged;
       }
     } catch (e) {
-      // If server returned 401 Unauthorized (invalid/expired/deleted token) or 404 Not Found (user deleted from database):
-      if (e.status === 401 || e.status === 404 || e.message?.toLowerCase().includes('not found') || e.message?.toLowerCase().includes('unauthorized') || e.message?.toLowerCase().includes('block')) {
+      // Background profile refresh failed (network offline, cold start, expired token, etc.)
+      // Retain active session so refresh doesn't log out the user
+      console.warn('[authService] Background profile refresh warning, maintaining local session:', e?.message || e);
+    }
+
+    // 2. Check live cloud sync for any customer updates without interrupting session
+    try {
+      await liveCloudSync.sync().catch(() => {});
+      if (liveCloudSync.isUserBlocked(current.email)) {
         this.logout();
         return null;
       }
-    }
 
-    // 2. Also check live cloud sync for any customer updates
-    await liveCloudSync.sync().catch(() => {});
-    if (liveCloudSync.isUserDeleted(current.email) || liveCloudSync.isUserBlocked(current.email)) {
-      this.logout();
-      return null;
-    }
-
-    const cloudUser = liveCloudSync.findUserByEmail(current.email);
-    if (cloudUser) {
-      if (cloudUser.isBlocked || cloudUser.status === 'BLOCKED' || liveCloudSync.isUserBlocked(current.email)) {
-        this.logout();
-        return null;
+      const cloudUser = liveCloudSync.findUserByEmail(current.email);
+      if (cloudUser) {
+        if (cloudUser.isBlocked || cloudUser.status === 'BLOCKED' || liveCloudSync.isUserBlocked(current.email)) {
+          this.logout();
+          return null;
+        }
+        const merged = {
+          ...current,
+          ...cloudUser,
+          name: cloudUser.name || (cloudUser.firstName ? `${cloudUser.firstName} ${cloudUser.lastName || ''}`.trim() : current.name),
+          firstName: cloudUser.firstName || current.firstName,
+          lastName: cloudUser.lastName || current.lastName,
+          phone: cloudUser.phone || current.phone
+        };
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(merged));
+        return merged;
       }
-      const merged = {
-        ...current,
-        ...cloudUser,
-        name: cloudUser.name || (cloudUser.firstName ? `${cloudUser.firstName} ${cloudUser.lastName || ''}`.trim() : current.name),
-        firstName: cloudUser.firstName || current.firstName,
-        lastName: cloudUser.lastName || current.lastName,
-        phone: cloudUser.phone || current.phone
-      };
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(merged));
-      return merged;
+    } catch {
+      // Silently ignore cloud sync failures on refresh
     }
 
     return current;

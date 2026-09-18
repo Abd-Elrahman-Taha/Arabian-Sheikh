@@ -4,8 +4,8 @@ import { authService } from '../services/authService';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const refreshAuth = async () => {
@@ -21,9 +21,11 @@ export function AuthProvider({ children }) {
 
       try {
         const fresh = await authService.fetchLatestProfile();
-        setUser(fresh || null);
-      } catch {
-        setUser(null);
+        if (fresh) {
+          setUser(fresh);
+        }
+      } catch (err) {
+        console.warn('Background profile refresh notice:', err?.message || err);
       }
     };
 

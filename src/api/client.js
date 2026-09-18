@@ -347,12 +347,42 @@ async function request(endpoint, options = {}, attempt = 0) {
 
     // Handle HTTP Error Codes
     if (!response.ok) {
-      // 401 Unauthorized or 403 Forbidden on Admin Endpoints: Auto-Recover by refreshing admin token
+      // 401 Unauthorized / 403 Forbidden Auto-Recovery: Refresh Admin or Customer tokens
       if ((response.status === 401 || (response.status === 403 && isAdminEndpoint)) && requiresAuth && !options._retryCount) {
-        tokenManager.clearAdminToken();
-        const freshToken = await tokenManager.ensureAdminToken(true);
-        if (freshToken) {
-          return await request(endpoint, { ...options, _retryCount: true });
+        if (isAdminEndpoint || response.status === 403) {
+          tokenManager.clearAdminToken();
+          const freshToken = await tokenManager.ensureAdminToken(true);
+          if (freshToken) {
+            return await request(endpoint, { ...options, _retryCount: true });
+          }
+        } else {
+          // Attempt silent customer token refresh
+          const refreshToken = tokenManager.getRefreshToken();
+          if (refreshToken) {
+            try {
+              const refreshRes = await fetch(buildUrl('/auth/refresh-token'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ refreshToken })
+              });
+              if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                const newAccessToken = refreshData?.tokens?.accessToken || refreshData?.accessToken || refreshData?.token;
+                const newRefreshToken = refreshData?.tokens?.refreshToken || refreshData?.refreshToken;
+                if (newAccessToken) {
+                  tokenManager.setToken(newAccessToken);
+                }
+                if (newRefreshToken) {
+                  tokenManager.setRefreshToken(newRefreshToken);
+                }
+                if (newAccessToken) {
+                  return await request(endpoint, { ...options, _retryCount: true });
+                }
+              }
+            } catch (refErr) {
+              console.warn('[client] Silent customer token refresh failed:', refErr?.message);
+            }
+          }
         }
       }
 
