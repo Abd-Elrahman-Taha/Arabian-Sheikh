@@ -500,7 +500,9 @@ export const orderService = {
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const orderId = apiOrder?.id || `ORD-${randomNum}`;
     const orderNum = apiOrder?.orderNumber || (typeof orderId === 'string' && orderId.startsWith('ORD-') ? orderId : `ORD-${orderId}`);
-    const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || `DHL-EXP-${randomNum}04`;
+    const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || apiOrder?.trackingNumber || null;
+    const resolvedCarrier = orderPayload.carrier || apiOrder?.shippingSnapshot?.shippingCompanyName || apiOrder?.shippingSnapshot?.carrier || apiOrder?.carrier || 'ECONT';
+    const resolvedShippingMethod = orderPayload.shippingMethod || apiOrder?.shippingSnapshot?.shippingMethod || 'Standard Delivery';
 
     const customerName = orderPayload.customerName || apiOrder?.customer?.name || 'Valued Patron';
     const customerEmail = orderPayload.customerEmail || apiOrder?.customer?.email || '';
@@ -543,21 +545,21 @@ export const orderService = {
       paymentStatus: apiOrder?.paymentStatus || 'Paid',
       status: apiOrder?.orderStatus || 'Pending',
       shippingAddress: orderPayload.shippingAddress || apiOrder?.shippingAddress || {},
-      shippingSnapshot: {
-        carrier: 'DHL Express',
-        shippingMethod: 'Express Worldwide',
+      shippingSnapshot: apiOrder?.shippingSnapshot || {
+        carrier: resolvedCarrier,
+        shippingCompanyName: resolvedCarrier,
+        shippingMethod: resolvedShippingMethod,
         trackingNumber: trackingCode,
         shippingCost
       },
+      carrier: resolvedCarrier,
+      shippingMethod: resolvedShippingMethod,
       createdAt: orderDate,
       date: orderDate,
       trackingCode,
-      dhlTrackingNumber: orderPayload.dhlTrackingNumber || trackingCode,
-      timeline: [
-        { status: 'Placed', title: 'Order Placed by Customer', timestamp: orderDate },
-        { status: 'Pending', title: 'Awaiting Admin Fulfillment Dispatch', timestamp: orderDate }
-      ],
-      statusHistory: [
+      dhlTrackingNumber: trackingCode,
+      timeline: apiOrder?.timeline || [],
+      statusHistory: apiOrder?.statusHistory || [
         {
           status: 'Pending',
           toStatus: 'Pending',
@@ -694,14 +696,16 @@ export const orderService = {
         const status = await orderApi.getDeliveryStatus(numId);
         if (status) return status;
       } catch (e) {
-        console.warn('Customer getDeliveryStatus API fallback:', e.message);
+        if (import.meta.env.DEV) {
+          console.warn('Customer getDeliveryStatus API fallback:', e.message);
+        }
       }
     }
     const order = this.getOrderByIdSync(orderId);
     return {
-      orderId,
+      orderId: numId || orderId,
       orderStatus: order?.orderStatus || order?.status || 'Processing',
-      shipmentStatus: order?.shipmentStatus || (order?.orderStatus === 'Shipped' ? 'Shipped' : (order?.orderStatus === 'Delivered' ? 'Delivered' : 'Created')),
+      shipmentStatus: order?.shipmentStatus || null,
       carrierStatus: null,
       trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null
     };
@@ -712,67 +716,29 @@ export const orderService = {
     if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
       try {
         const tracking = await orderApi.trackOrder(numId);
-        if (tracking && (tracking.events?.length > 0 || tracking.trackingNumber)) {
+        if (tracking) {
           return tracking;
         }
       } catch (e) {
-        console.warn('Customer tracking API fallback:', e.message);
+        if (import.meta.env.DEV) {
+          console.warn('Customer tracking API fallback:', e.message);
+        }
       }
     }
 
     const order = this.getOrderByIdSync(orderId);
     const trkNumber = order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null;
-    const curStatus = order?.shipmentStatus || order?.orderStatus || order?.status || 'Created';
-
-    const events = (order?.timeline || []).map(t => ({
-      status: t.status || 'Created',
-      description: t.title || t.desc || t.status,
-      location: t.location || 'Palace Logistics Vault',
-      occurredAt: t.timestamp || t.date || new Date().toISOString()
-    }));
-
-    if (events.length === 0 && order) {
-      events.push({
-        status: 'Created',
-        description: 'Shipment created and registered with carrier',
-        location: 'Palace Logistics Vault',
-        occurredAt: order.date || order.createdAt || new Date().toISOString()
-      });
-      if (['Shipped', 'OutForDelivery', 'Delivered'].includes(curStatus)) {
-        events.push({
-          status: 'Shipped',
-          description: 'Package dispatched with carrier',
-          location: 'Sofia Distribution Center',
-          occurredAt: new Date(Date.now() - 3600000 * 12).toISOString()
-        });
-      }
-      if (['OutForDelivery', 'Delivered'].includes(curStatus)) {
-        events.push({
-          status: 'OutForDelivery',
-          description: 'Out for final delivery to recipient address',
-          location: order.shippingAddress?.city || 'Destination City',
-          occurredAt: new Date(Date.now() - 3600000 * 3).toISOString()
-        });
-      }
-      if (curStatus === 'Delivered') {
-        events.push({
-          status: 'Delivered',
-          description: 'Delivered safely to patron',
-          location: order.shippingAddress?.city || 'Destination City',
-          occurredAt: new Date().toISOString()
-        });
-      }
-    }
+    const curStatus = order?.shipmentStatus || null;
 
     return {
-      orderId,
-      shipmentId: order?.shipmentId || 100,
-      carrier: order?.carrier || order?.shippingSnapshot?.carrier || 'ECONT',
+      orderId: numId || orderId,
+      shipmentId: order?.shipmentId || null,
+      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || 'ECONT',
       trackingNumber: trkNumber,
       currentStatus: curStatus,
       carrierStatus: null,
       expectedDeliveryDate: order?.expectedDeliveryDate || null,
-      events
+      events: []
     };
   },
 
@@ -805,15 +771,15 @@ export const orderService = {
     const order = this.getOrderByIdSync(orderId);
     return {
       orderId,
-      carrier: order?.shippingSnapshot?.carrier || 'ECONT',
-      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || 'TRK-EXP-001',
-      status: order?.orderStatus || order?.status || 'InTransit',
+      carrier: order?.shippingSnapshot?.carrier || order?.carrier || 'ECONT',
+      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null,
+      status: order?.orderStatus || order?.status || 'Processing',
       events: (order?.timeline || []).map(t => ({
         timestamp: t.timestamp || t.date || new Date().toISOString(),
         occurredAt: t.timestamp || t.date || new Date().toISOString(),
         status: t.status,
         description: t.title || t.desc || t.status,
-        location: t.location || 'Palace Logistics Vault'
+        location: t.location || null
       }))
     };
   },

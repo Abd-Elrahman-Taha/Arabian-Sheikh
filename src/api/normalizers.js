@@ -451,7 +451,7 @@ export function normalizeShippingOption(raw) {
     ? Number(opt.estimatedDeliveryDays)
     : (minDays && maxDays ? `${minDays}-${maxDays}` : (minDays || maxDays || 3));
 
-  const shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
+  let shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
     ? Number(opt.shippingMethodId)
     : (opt.methodId !== undefined && opt.methodId !== null && !isNaN(Number(opt.methodId))
       ? Number(opt.methodId)
@@ -461,10 +461,29 @@ export function normalizeShippingOption(raw) {
           ? Number(opt.id)
           : null)));
 
+  let shippingCompanyId = opt.shippingCompanyId !== undefined && opt.shippingCompanyId !== null && !isNaN(Number(opt.shippingCompanyId))
+    ? Number(opt.shippingCompanyId)
+    : null;
+
+  // If shippingMethodId is omitted by POST /api/shipping/quotes, map deterministically based on carrier and method
+  if (!shippingMethodId) {
+    const cUpper = String(carrier).toUpperCase();
+    const mUpper = String(shippingMethod).toUpperCase();
+    if (cUpper.includes('ECONT')) {
+      shippingCompanyId = shippingCompanyId || 3;
+      shippingMethodId = mUpper.includes('EXP') ? 4 : 3;
+    } else if (cUpper.includes('SPEEDY')) {
+      shippingCompanyId = shippingCompanyId || 2;
+      shippingMethodId = mUpper.includes('EXP') ? 2 : 1;
+    } else {
+      shippingMethodId = 1;
+    }
+  }
+
   return {
     quoteId,
     shippingMethodId,
-    shippingCompanyId: opt.shippingCompanyId !== undefined && opt.shippingCompanyId !== null ? Number(opt.shippingCompanyId) : null,
+    shippingCompanyId,
     carrier,
     carrierName: carrier,
     shippingMethod,

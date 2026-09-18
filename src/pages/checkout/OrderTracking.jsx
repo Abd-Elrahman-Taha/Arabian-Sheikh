@@ -23,7 +23,7 @@ export default function OrderTracking() {
   const { currentPath, navigate } = useRouter();
   const { t } = useTranslation();
 
-  const orderId = currentPath.split('/order-tracking/')[1]?.split('?')[0] || 'ORD-98421';
+  const orderId = currentPath.split('/order-tracking/')[1]?.split('?')[0] || null;
 
   const [order, setOrder] = useState(null);
   const [trackingData, setTrackingData] = useState(null);
@@ -32,11 +32,39 @@ export default function OrderTracking() {
 
   useEffect(() => {
     async function load() {
+      if (!orderId) {
+        setLoading(false);
+        return;
+      }
       try {
-        const item = await orderService.getOrderById(orderId);
+        const [itemRes, trkRes, delivRes] = await Promise.allSettled([
+          orderService.getOrderById(orderId),
+          orderService.getCustomerTracking(orderId),
+          orderService.getDeliveryStatus(orderId)
+        ]);
+
+        const item = itemRes.status === 'fulfilled' ? itemRes.value : null;
+        const trk = trkRes.status === 'fulfilled' ? trkRes.value : null;
+        const deliv = delivRes.status === 'fulfilled' ? delivRes.value : null;
+
         setOrder(item);
-        const trk = await orderService.getCustomerTracking(orderId);
-        setTrackingData(trk);
+
+        const realCarrier = trk?.carrier || deliv?.carrier || item?.carrier || item?.shippingSnapshot?.shippingCompanyName || item?.shippingSnapshot?.carrier || 'ECONT';
+        const realStatus = deliv?.shipmentStatus || trk?.currentStatus || item?.shipmentStatus || null;
+        const realTrackingNum = deliv?.trackingNumber || trk?.trackingNumber || item?.trackingCode || item?.shippingSnapshot?.trackingNumber || null;
+        const realCarrierStatus = deliv?.carrierStatus || trk?.carrierStatus || null;
+        const realEvents = Array.isArray(trk?.events) ? trk.events : [];
+
+        setTrackingData({
+          orderId: orderId,
+          shipmentId: trk?.shipmentId || null,
+          carrier: realCarrier,
+          trackingNumber: realTrackingNum,
+          currentStatus: realStatus,
+          carrierStatus: realCarrierStatus,
+          expectedDeliveryDate: trk?.expectedDeliveryDate || item?.expectedDeliveryDate || null,
+          events: realEvents
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -47,6 +75,7 @@ export default function OrderTracking() {
 
     // Listen for real-time status updates from Admin
     const handleUpdate = async (e) => {
+      if (!orderId) return;
       const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
 
       if (e?.type === 'arabian_sheikh_order_updated') {
@@ -71,8 +100,7 @@ export default function OrderTracking() {
         }
       }
 
-      const item = await orderService.getOrderById(orderId);
-      if (item) setOrder(item);
+      load();
     };
 
     window.addEventListener('arabian_sheikh_order_updated', handleUpdate);
@@ -84,7 +112,7 @@ export default function OrderTracking() {
         e.key === 'arabian_sheikh_last_order_update' ||
         e.key === 'arabian_sheikh_live_cloud_state_v4'
       ) {
-        orderService.getOrderById(orderId).then(item => { if (item) setOrder(item); });
+        load();
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -106,8 +134,10 @@ export default function OrderTracking() {
     { key: 'DELIVERED', title: t('tracking.delivered'), desc: t('tracking.deliveredDesc'), icon: Sparkles }
   ];
 
-  const currentStatus = order?.orderStatus || order?.status || 'Pending';
-  const normStatus = String(currentStatus).toUpperCase().replace(/[\s_-]+/g, '');
+  const currentShipmentStatus = trackingData?.currentStatus || order?.shipmentStatus || null;
+  const currentOrderStatus = order?.orderStatus || order?.status || 'Pending';
+  const displayStatus = currentShipmentStatus || currentOrderStatus;
+  const normStatus = String(displayStatus).toUpperCase().replace(/[\s_-]+/g, '');
   const isCancelled = normStatus.includes('CANCEL');
 
   // Flexible stage index mapping
@@ -118,7 +148,7 @@ export default function OrderTracking() {
     activeIndex = 4;
   } else if (normStatus.includes('SHIP')) {
     activeIndex = 3;
-  } else if (normStatus.includes('PROCESS')) {
+  } else if (normStatus.includes('PROCESS') || normStatus.includes('CREAT')) {
     activeIndex = 2;
   } else if (normStatus.includes('CONFIRM')) {
     activeIndex = 1;
@@ -199,30 +229,40 @@ export default function OrderTracking() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase tracking-wider text-[#D8BE99]/80 block font-mono font-semibold">
-                  Carrier: {trackingData?.carrier || order?.carrier || (order?.trackingCode?.startsWith('ECONT') ? 'ECONT' : 'DHL Express')}
+                  Carrier: {trackingData?.carrier || order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || 'ECONT'}
                 </span>
                 <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
-                  shippingService.getShipmentStatusBadge(trackingData?.currentStatus || order?.shipmentStatus || currentStatus)
+                  shippingService.getShipmentStatusBadge(trackingData?.currentStatus || order?.shipmentStatus || 'Pending')
                 }`}>
-                  {shippingService.getShipmentStatusLabel(trackingData?.currentStatus || order?.shipmentStatus || currentStatus)}
+                  {shippingService.getShipmentStatusLabel(trackingData?.currentStatus || order?.shipmentStatus || 'Pending')}
                 </span>
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[#F3E6D0] font-mono font-bold text-sm">
-                  {trackingData?.trackingNumber || order?.trackingCode || 'AS-ECONT-9842104-BG'}
-                </span>
-                <button
-                  onClick={() => {
-                    const code = trackingData?.trackingNumber || order?.trackingCode || 'AS-ECONT-9842104-BG';
-                    navigator.clipboard.writeText(code);
-                    setCopiedTracking(true);
-                    setTimeout(() => setCopiedTracking(false), 2000);
-                  }}
-                  className="p-1 text-[#D4AF37] hover:text-white transition-colors cursor-pointer"
-                  title="Copy Tracking Number"
-                >
-                  {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
+              <div className="mt-0.5">
+                {(trackingData?.trackingNumber || order?.trackingCode) ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#F3E6D0] font-mono font-bold text-sm">
+                      {trackingData?.trackingNumber || order?.trackingCode}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const code = trackingData?.trackingNumber || order?.trackingCode;
+                        if (code) {
+                          navigator.clipboard.writeText(code);
+                          setCopiedTracking(true);
+                          setTimeout(() => setCopiedTracking(false), 2000);
+                        }
+                      }}
+                      className="p-1 text-[#D4AF37] hover:text-white transition-colors cursor-pointer"
+                      title="Copy Tracking Number"
+                    >
+                      {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-neutral-400 font-mono italic">
+                    Tracking information will be available once your order ships
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -421,8 +461,8 @@ export default function OrderTracking() {
                 <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>Dispatch Security</span>
               </h4>
-              <p>Carrier: Arabian Sovereign Logistics</p>
-              <p>Service: Ultra-Insured Flight Courier</p>
+              <p>Carrier: {trackingData?.carrier || order?.carrier || order?.shippingSnapshot?.shippingCompanyName || 'ECONT'}</p>
+              <p>Service: {order?.shippingMethod || order?.shippingSnapshot?.shippingMethod || 'Standard Delivery'}</p>
               <p>Signature: Mandatory upon Handover</p>
             </div>
           </div>

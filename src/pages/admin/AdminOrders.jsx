@@ -1123,17 +1123,21 @@ export default function AdminOrders() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Tracking Airway</span>
-                          <div className="flex items-center gap-1">
-                            <span className="font-mono text-[#F2D675] font-bold">
-                              {detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber || 'TRK-EXP-001'}
-                            </span>
-                            <button
-                              onClick={() => handleCopy(detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber, 'Tracking number')}
-                              className="p-1 hover:text-[#F2D675] cursor-pointer"
-                            >
-                              <Copy className="w-3 h-3" />
-                            </button>
-                          </div>
+                          {(detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber) ? (
+                            <div className="flex items-center gap-1">
+                              <span className="font-mono text-[#F2D675] font-bold">
+                                {detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber}
+                              </span>
+                              <button
+                                onClick={() => handleCopy(detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber, 'Tracking number')}
+                                className="p-1 hover:text-[#F2D675] cursor-pointer"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="font-mono text-neutral-500 italic text-xs">Unassigned</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1361,17 +1365,21 @@ export default function AdminOrders() {
 
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[#D8BE99]">Tracking Number</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-sm font-bold text-[#F2D675]">
-                    {trackingModalData.trackingNumber || 'TRK-EXP-001'}
-                  </span>
-                  <button
-                    onClick={() => handleCopy(trackingModalData.trackingNumber, 'Tracking number')}
-                    className="p-1 text-[#D4AF37] hover:text-[#F2D675] cursor-pointer"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                {trackingModalData.trackingNumber ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-sm font-bold text-[#F2D675]">
+                      {trackingModalData.trackingNumber}
+                    </span>
+                    <button
+                      onClick={() => handleCopy(trackingModalData.trackingNumber, 'Tracking number')}
+                      className="p-1 text-[#D4AF37] hover:text-[#F2D675] cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="font-mono text-neutral-500 italic text-xs">Unassigned</span>
+                )}
               </div>
 
               <div className="flex items-center justify-between">

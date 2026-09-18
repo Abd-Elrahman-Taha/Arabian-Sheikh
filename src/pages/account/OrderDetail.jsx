@@ -135,8 +135,8 @@ export default function OrderDetail() {
   const isShippedOrOut = ['shipped', 'outfordelivery'].includes(normStatus);
 
   const trackingNumber = order.trackingCode || order.dhlTrackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
-  const carrierName = order.carrier || order.shipping?.shippingCompanyName || order.shippingSnapshot?.carrier || (trackingNumber?.startsWith('ECONT') ? 'ECONT' : 'DHL Express');
-  const shipmentStatus = order.shipmentStatus || (normStatus === 'shipped' ? 'Shipped' : (normStatus === 'delivered' ? 'Delivered' : (normStatus === 'outfordelivery' ? 'OutForDelivery' : 'Created')));
+  const carrierName = order.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || 'ECONT';
+  const shipmentStatus = order.shipmentStatus || (normStatus === 'shipped' ? 'Shipped' : (normStatus === 'delivered' ? 'Delivered' : (normStatus === 'outfordelivery' ? 'OutForDelivery' : 'Pending')));
 
   const handleCopyTracking = (code) => {
     if (!code) return;
@@ -325,7 +325,7 @@ export default function OrderDetail() {
                     </button>
                   </div>
                 ) : (
-                  <span className="font-mono text-neutral-500 italic">Not yet assigned</span>
+                  <span className="font-mono text-neutral-500 italic text-[11px]">Tracking will be available once your order ships</span>
                 )}
               </div>
               <div className="flex justify-between text-[var(--color-terracotta-deep)]">
@@ -337,15 +337,13 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          {trackingNumber && (
-            <Link
-              to={`/order-tracking/${order.orderNumber || order.id}`}
-              className="w-full py-2 bg-[#D4AF37]/20 border border-[#D4AF37]/50 hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 rounded cursor-pointer mt-2"
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Track Shipment</span>
-            </Link>
-          )}
+          <Link
+            to={`/order-tracking/${order.orderNumber || order.id}`}
+            className="w-full py-2 bg-[#D4AF37]/20 border border-[#D4AF37]/50 hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 rounded cursor-pointer mt-2"
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>{trackingNumber ? 'Track Shipment' : 'View Delivery Status'}</span>
+          </Link>
         </div>
         </ScrollReveal>
 

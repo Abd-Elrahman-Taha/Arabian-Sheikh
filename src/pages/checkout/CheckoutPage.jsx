@@ -459,17 +459,17 @@ export default function CheckoutPage() {
     if (selectedQuote === opt) return true;
     const selMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
     const optMethodId = Number(opt.shippingMethodId || opt.id);
-    if (selMethodId && optMethodId) {
-      if (selMethodId !== optMethodId) return false;
+    if (selMethodId && optMethodId && selMethodId === optMethodId) {
       if (selectedQuote.carrier && opt.carrier) {
-        return String(selectedQuote.carrier).toLowerCase() === String(opt.carrier).toLowerCase();
+        return String(selectedQuote.carrier).trim().toLowerCase() === String(opt.carrier).trim().toLowerCase();
       }
       return true;
     }
-    return (
-      String(selectedQuote.shippingMethod || '').trim().toLowerCase() === String(opt.shippingMethod || '').trim().toLowerCase() &&
-      String(selectedQuote.carrier || '').trim().toLowerCase() === String(opt.carrier || '').trim().toLowerCase()
-    );
+    const selMethod = String(selectedQuote.shippingMethod || selectedQuote.methodName || '').trim().toLowerCase();
+    const optMethod = String(opt.shippingMethod || opt.methodName || '').trim().toLowerCase();
+    const selCarrier = String(selectedQuote.carrier || '').trim().toLowerCase();
+    const optCarrier = String(opt.carrier || '').trim().toLowerCase();
+    return selMethod === optMethod && selCarrier === optCarrier;
   };
 
   const handleSelectShippingQuote = (opt) => {
@@ -488,8 +488,20 @@ export default function CheckoutPage() {
   // ─── STEP 2: Shipping method selection submit ─────────────────
   const handleShippingSubmit = async (e) => {
     if (e) e.preventDefault();
-    const resolvedMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
+    let resolvedMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
     const resolvedQuoteId = selectedQuote?.quoteId;
+
+    if (!resolvedMethodId || isNaN(resolvedMethodId)) {
+      const cUpper = String(selectedQuote?.carrier || '').toUpperCase();
+      const mUpper = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase();
+      if (cUpper.includes('ECONT')) {
+        resolvedMethodId = mUpper.includes('EXP') ? 4 : 3;
+      } else if (cUpper.includes('SPEEDY')) {
+        resolvedMethodId = mUpper.includes('EXP') ? 2 : 1;
+      } else {
+        resolvedMethodId = 1;
+      }
+    }
 
     if (!resolvedQuoteId || !resolvedMethodId) {
       const err = 'Please select a valid shipping method before proceeding.';
@@ -551,7 +563,18 @@ export default function CheckoutPage() {
       throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
     }
 
-    const shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
+    let shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
+    if (!shippingMethodId || isNaN(shippingMethodId)) {
+      const cUpper = String(selectedQuote?.carrier || '').toUpperCase();
+      const mUpper = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase();
+      if (cUpper.includes('ECONT')) {
+        shippingMethodId = mUpper.includes('EXP') ? 4 : 3;
+      } else if (cUpper.includes('SPEEDY')) {
+        shippingMethodId = mUpper.includes('EXP') ? 2 : 1;
+      } else {
+        shippingMethodId = 1;
+      }
+    }
     if (!shippingMethodId || isNaN(shippingMethodId)) {
       throw new Error('A valid shipping method must be selected.');
     }
