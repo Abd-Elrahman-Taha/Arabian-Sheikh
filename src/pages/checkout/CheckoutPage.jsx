@@ -278,12 +278,10 @@ export default function CheckoutPage() {
         }
       }
 
-      // 2. Set checkout address if authenticated
-      if (user) {
-        await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch(err => {
-          console.warn('[Checkout] Checkout address sync notice:', err?.message || err);
-        });
-      }
+      // 2. Set checkout address via PUT /api/checkout/address
+      await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch(err => {
+        console.warn('[Checkout] Checkout address sync notice:', err?.message || err);
+      });
 
       // 3. Sync local cart items with backend before requesting shipping quotes
       if (import.meta.env.DEV) {

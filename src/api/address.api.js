@@ -18,6 +18,21 @@ import {
  * - PATCH /api/addresses/{id}/default (Set as default delivery address)
  * - GET /api/addresses/{id}/snapshot (Retrieve immutable snapshot for order/shipping record)
  */
+function normalizeCountryCode(val) {
+  if (!val) return 'AE';
+  const str = String(val).trim().toUpperCase();
+  if (str === 'BG' || str === 'BULGARIA') return 'BG';
+  if (str === 'SA' || str === 'SAUDI ARABIA') return 'SA';
+  if (str === 'AE' || str.includes('EMIRATES') || str.includes('UAE')) return 'AE';
+  if (str === 'US' || str === 'USA' || str.includes('UNITED STATES')) return 'US';
+  if (str === 'GB' || str === 'UK' || str.includes('UNITED KINGDOM')) return 'GB';
+  if (str === 'KW' || str === 'KUWAIT') return 'KW';
+  if (str === 'QA' || str === 'QATAR') return 'QA';
+  if (str === 'OM' || str === 'OMAN') return 'OM';
+  if (str === 'BH' || str === 'BAHRAIN') return 'BH';
+  return str.length === 2 ? str : 'AE';
+}
+
 export const addressApi = {
   /**
    * Get all saved addresses for the authenticated customer
@@ -51,13 +66,17 @@ export const addressApi = {
       customLabel: payload.label === 'Other' && payload.customLabel ? String(payload.customLabel).trim() : null,
       fullName: String(payload.fullName || '').trim(),
       phone: String(payload.phone || '').trim(),
-      countryCode: String(payload.countryCode || 'AE').toUpperCase().trim(),
-      region: String(payload.region || '').trim(),
+      countryCode: normalizeCountryCode(payload.countryCode || payload.country),
+      region: String(payload.region || payload.city || '').trim(),
       city: String(payload.city || '').trim(),
       addressLine1: String(payload.addressLine1 || '').trim(),
       addressLine2: payload.addressLine2 ? String(payload.addressLine2).trim() : null,
       postalCode: String(payload.postalCode || '').trim()
     };
+
+    if (import.meta.env.DEV) {
+      console.log('[AddressApi] Creating address with body:', body);
+    }
 
     const response = await apiClient.post(ENDPOINTS.ADDRESSES.CREATE, body);
     return normalizeAddress(response);
@@ -78,8 +97,8 @@ export const addressApi = {
       customLabel: payload.label === 'Other' && payload.customLabel ? String(payload.customLabel).trim() : null,
       fullName: String(payload.fullName || '').trim(),
       phone: String(payload.phone || '').trim(),
-      countryCode: String(payload.countryCode || 'AE').toUpperCase().trim(),
-      region: String(payload.region || '').trim(),
+      countryCode: normalizeCountryCode(payload.countryCode || payload.country),
+      region: String(payload.region || payload.city || '').trim(),
       city: String(payload.city || '').trim(),
       addressLine1: String(payload.addressLine1 || '').trim(),
       addressLine2: payload.addressLine2 ? String(payload.addressLine2).trim() : null,
