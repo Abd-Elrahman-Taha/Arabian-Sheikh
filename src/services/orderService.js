@@ -431,7 +431,7 @@ export const orderService = {
 
     if (!apiClient.isMockEnabled()) {
       try {
-        // 1. Resolve or create customer delivery address on backend if needed
+        // 1. Resolve customer delivery address on backend if needed
         if (!resolvedAddressId) {
           const addresses = await addressApi.getAddresses().catch(() => []);
           if (Array.isArray(addresses) && addresses.length > 0 && addresses[0]?.id) {
@@ -440,13 +440,13 @@ export const orderService = {
             const createdAddr = await addressApi.createAddress({
               fullName: orderPayload.shippingAddress.fullName || orderPayload.customerName || 'Valued Patron',
               phone: orderPayload.customerPhone || orderPayload.phone || '+971500000000',
-              countryCode: 'AE',
-              region: orderPayload.shippingAddress.region || 'Dubai',
+              countryCode: orderPayload.shippingAddress.countryCode || 'AE',
+              region: orderPayload.shippingAddress.region || orderPayload.shippingAddress.city || 'Dubai',
               city: orderPayload.shippingAddress.city || 'Dubai',
               addressLine1: orderPayload.shippingAddress.address || orderPayload.shippingAddress.addressLine1 || 'Sheikh Zayed Road',
               addressLine2: orderPayload.shippingAddress.addressLine2 || null,
               postalCode: orderPayload.shippingAddress.postalCode || '00000'
-            }).catch(() => null);
+            });
             if (createdAddr?.id) {
               resolvedAddressId = createdAddr.id;
             }
@@ -461,48 +461,39 @@ export const orderService = {
 
         // 2. Ensure items exist in server-side cart
         if (Array.isArray(orderPayload.items) && orderPayload.items.length > 0) {
-          for (const item of orderPayload.items) {
-            const pId = item.productId || item.id;
-            if (pId && !isNaN(Number(pId))) {
-              await cartApi.addItem(Number(pId), item.quantity || 1).catch(() => {});
-            }
-          }
+          await cartApi.syncCart(orderPayload.items);
         }
 
-        // 3. Call official POST /api/Orders
-        const isRealQuoteId = orderPayload.quoteId &&
-          !orderPayload.isMockQuote &&
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(orderPayload.quoteId));
+        // 3. Strict guards before calling POST /api/Orders
+        if (!numericAddressId) {
+          throw new Error('A valid shipping address is required.');
+        }
 
-        let resolvedQuoteId = isRealQuoteId ? String(orderPayload.quoteId).trim() : null;
+        const rawQuoteId = orderPayload.quoteId;
+        if (!rawQuoteId || typeof rawQuoteId !== 'string' || !rawQuoteId.trim()) {
+          throw new Error('Unable to create the order because the shipping quote is missing. Please recalculate shipping and try again.');
+        }
 
-        // If quoteId was missing or fallback, try to get a fresh quote with the valid addressId
-        if (!resolvedQuoteId && numericAddressId) {
-          try {
-            const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId });
-            const realOpt = freshQuotes?.options?.find(o => !o.isMockFallback && o.quoteId) || freshQuotes?.options?.[0];
-            if (realOpt?.quoteId) {
-              resolvedQuoteId = realOpt.quoteId;
-            }
-          } catch (qErr) {
-            console.warn('Could not auto-fetch fresh quote:', qErr.message);
-          }
+        const rawMethodId = orderPayload.shippingMethodId;
+        const shippingMethodId = rawMethodId !== undefined && rawMethodId !== null && !isNaN(Number(rawMethodId))
+          ? Number(rawMethodId)
+          : null;
+        if (!shippingMethodId) {
+          throw new Error('A shipping method must be selected.');
         }
 
         const orderKey = orderPayload.idempotencyKey || newOrderKey();
 
         apiOrder = await orderApi.createOrder({
           addressId: numericAddressId,
-          shippingMethodId: Number(orderPayload.shippingMethodId) || 1,
-          quoteId: resolvedQuoteId || undefined,
+          shippingMethodId,
+          quoteId: rawQuoteId.trim(),
           paymentMethod: orderPayload.paymentMethod || 'cod',
           couponCode: orderPayload.discountCode || orderPayload.couponCode || null
         }, orderKey);
       } catch (e) {
         console.error('Real API create order error:', e);
-        if (!apiClient.isMockEnabled()) {
-          throw e; // Fail fast so caller receives the real backend error instead of phantom mock
-        }
+        throw e; // Fail fast so caller receives the real backend error instead of phantom mock
       }
     }
 

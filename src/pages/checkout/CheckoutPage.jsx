@@ -21,6 +21,7 @@ import { productService } from '../../services/productService';
 import { shippingService } from '../../services/shippingService';
 import { checkoutApi } from '../../api/checkout.api';
 import { addressApi } from '../../api/address.api';
+import { cartApi } from '../../api/cart.api';
 import { useToast } from '../../context/ToastContext';
 import StripePaymentForm from '../../components/checkout/StripePaymentForm';
 import {
@@ -34,7 +35,9 @@ import {
   Sparkles,
   CheckCircle2,
   Tag,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  MapPin
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -71,6 +74,22 @@ export default function CheckoutPage() {
     }
   };
 
+  // Country code helper for backend addresses
+  function getCountryCode(country) {
+    if (!country) return 'AE';
+    const c = country.trim().toUpperCase();
+    if (c === 'BG' || c === 'BULGARIA') return 'BG';
+    if (c === 'SA' || c === 'SAUDI ARABIA') return 'SA';
+    if (c === 'AE' || c.includes('EMIRATES') || c.includes('UAE')) return 'AE';
+    if (c === 'US' || c === 'USA' || c.includes('UNITED STATES')) return 'US';
+    if (c === 'GB' || c === 'UK' || c.includes('UNITED KINGDOM')) return 'GB';
+    if (c === 'KW' || c === 'KUWAIT') return 'KW';
+    if (c === 'QA' || c === 'QATAR') return 'QA';
+    if (c === 'OM' || c === 'OMAN') return 'OM';
+    if (c === 'BH' || c === 'BAHRAIN') return 'BH';
+    return c.length === 2 ? c : 'AE';
+  }
+
   // Form State
   const [formData, setFormData] = useState({
     fullName: user?.name || 'Tariq Al-Hashemi',
@@ -80,23 +99,31 @@ export default function CheckoutPage() {
     city: 'Dubai',
     address: 'Downtown Dubai Boulevard, Royal Suite 40',
     postalCode: '00000',
-    shippingMethod: 'dhl-express',
+    shippingMethod: '',
     paymentMethod: 'COD',  // 'COD' or 'CreditCard' (UI display values)
   });
+
+  // Saved Addresses & Delivery State
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [addressId, setAddressId] = useState(null);
+  const [addressError, setAddressError] = useState(null);
+  const [quotesError, setQuotesError] = useState(null);
 
   // Shipping Quotes State
   const [shippingQuotes, setShippingQuotes] = useState([]);
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
-  const [addressId, setAddressId] = useState(null);
-  const [quotesFromBackend, setQuotesFromBackend] = useState(false);
 
   // Load authenticated patron saved addresses if available
   useEffect(() => {
+    let active = true;
     async function loadSavedAddresses() {
+      if (!user) return;
       try {
         const list = await addressApi.getAddresses();
+        if (!active) return;
         if (Array.isArray(list) && list.length > 0) {
+          setSavedAddresses(list);
           const defaultAddr = list.find(a => a.isDefaultShipping || a.isDefault) || list[0];
           setAddressId(defaultAddr.id);
           setFormData(prev => ({
@@ -108,43 +135,17 @@ export default function CheckoutPage() {
             address: defaultAddr.addressLine1 || defaultAddr.address || prev.address,
             postalCode: defaultAddr.postalCode || prev.postalCode
           }));
+          if (import.meta.env.DEV) {
+            console.log('[Checkout] Loaded saved addresses:', list);
+          }
         }
       } catch (e) {
         // guest or unauthenticated
       }
     }
     loadSavedAddresses();
-  }, [user]);
-
-  useEffect(() => {
-    let active = true;
-    async function fetchQuotes() {
-      setLoadingQuotes(true);
-      try {
-        const res = await shippingService.getQuotes({
-          addressId: addressId || 0,
-        });
-        if (!active) return;
-        const opts = res?.options || [];
-        setShippingQuotes(opts);
-        setQuotesFromBackend(Boolean(res?.fromBackend));
-        if (opts.length > 0) {
-          setSelectedQuote(curr => {
-            if (!curr || curr.isMockFallback || !curr.quoteId) return opts[0];
-            const matching = opts.find(o => (curr.quoteId && o.quoteId === curr.quoteId) || o.shippingMethodId === curr.shippingMethodId);
-            return matching || opts[0];
-          });
-          setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
-        }
-      } catch (err) {
-        console.warn('Failed to load shipping quotes:', err);
-      } finally {
-        if (active) setLoadingQuotes(false);
-      }
-    }
-    fetchQuotes();
     return () => { active = false; };
-  }, [formData.country, formData.postalCode, items.length, addressId]);
+  }, [user]);
 
   // Sync with authenticated user whenever auth state changes/finishes loading
   useEffect(() => {
@@ -157,6 +158,20 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
+  // Invalidate quotes and reset to Step 1 if cart items change
+  const prevItemsRef = useRef(items);
+  useEffect(() => {
+    if (prevItemsRef.current !== items) {
+      prevItemsRef.current = items;
+      setShippingQuotes([]);
+      setSelectedQuote(null);
+      setQuotesError(null);
+      if (step > 1) {
+        setStep(1);
+      }
+    }
+  }, [items, step]);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
@@ -165,6 +180,39 @@ export default function CheckoutPage() {
       }
     };
   }, []);
+
+  // Handle saved address selection
+  const handleSelectSavedAddress = (addr) => {
+    setAddressId(addr.id);
+    setFormData(prev => ({
+      ...prev,
+      fullName: addr.fullName || prev.fullName,
+      phone: addr.phone || prev.phone,
+      country: addr.countryCode === 'BG' ? 'Bulgaria' : (addr.country || prev.country),
+      city: addr.city || prev.city,
+      address: addr.addressLine1 || addr.address || prev.address,
+      postalCode: addr.postalCode || prev.postalCode
+    }));
+    // Invalidate previous quotes and errors
+    setShippingQuotes([]);
+    setSelectedQuote(null);
+    setQuotesError(null);
+    setAddressError(null);
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Selected saved address:', addr.id, addr);
+    }
+  };
+
+  // Handle manual address input changes
+  const handleAddressFieldChange = (field, value) => {
+    // Editing address fields invalidates the previously assigned addressId and quotes
+    setAddressId(null);
+    setShippingQuotes([]);
+    setSelectedQuote(null);
+    setQuotesError(null);
+    setAddressError(null);
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   if (items.length === 0) {
     return (
@@ -178,17 +226,27 @@ export default function CheckoutPage() {
     );
   }
 
-  const dynamicShippingCost = selectedQuote ? selectedQuote.cost : (totals.shipping !== undefined ? totals.shipping : 0);
+  const dynamicShippingCost = selectedQuote ? Number(selectedQuote.cost) || 0 : 0;
   const shippingCost = dynamicShippingCost;
   const grandTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0) + dynamicShippingCost);
 
-  const handleNextStep = async (e) => {
-    e.preventDefault();
-    if (step === 1) {
+  // ─── STEP 1: Address submission & quote fetching ───────────────
+  const handleAddressSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setAddressError(null);
+    setQuotesError(null);
+    setProcessing(true);
+
+    try {
       let currentAddrId = addressId;
-      try {
-        if (!currentAddrId) {
-          const countryCode = formData.country === 'Bulgaria' ? 'BG' : (formData.country === 'Saudi Arabia' ? 'SA' : 'AE');
+
+      // 1. If no addressId exists, create address on backend
+      if (!currentAddrId) {
+        const countryCode = getCountryCode(formData.country);
+        if (import.meta.env.DEV) {
+          console.log('[Checkout] Creating address on backend:', { ...formData, countryCode });
+        }
+        try {
           const createdAddr = await addressApi.createAddress({
             fullName: formData.fullName,
             phone: formData.phone,
@@ -197,49 +255,136 @@ export default function CheckoutPage() {
             city: formData.city,
             addressLine1: formData.address,
             postalCode: formData.postalCode || '00000'
-          }).catch(() => null);
-          if (createdAddr?.id) {
-            currentAddrId = createdAddr.id;
-            setAddressId(createdAddr.id);
-          }
-        }
-        if (currentAddrId) {
-          await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch((err) => {
-            console.warn('Checkout address sync notice:', err.message);
           });
-        }
-        // Always refresh quotes for currentAddrId (or 0) so step 2 has real options
-        try {
-          const res = await shippingService.getQuotes({ addressId: currentAddrId || 0 });
-          const opts = res?.options || [];
-          if (opts.length > 0) {
-            setShippingQuotes(opts);
-            setQuotesFromBackend(Boolean(res?.fromBackend));
-            setSelectedQuote(opts[0]);
-            setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
+          if (!createdAddr?.id) {
+            throw new Error('Address creation failed: Backend did not return an address ID.');
           }
-        } catch (e) {
-          console.warn('Error pre-fetching quotes on step advance:', e);
+          currentAddrId = createdAddr.id;
+          setAddressId(createdAddr.id);
+          if (import.meta.env.DEV) {
+            console.log('[Checkout] Address created successfully:', currentAddrId);
+          }
+        } catch (addrErr) {
+          console.error('[Checkout] Address creation error:', addrErr);
+          const errorMsg = addrErr?.message || 'Failed to save shipping address. Please verify your address details.';
+          setAddressError(errorMsg);
+          error(errorMsg);
+          setProcessing(false);
+          return; // STOP! Never proceed if address creation fails!
         }
-      } catch (err) {
-        console.warn('Address sync error:', err.message);
+      } else {
+        if (import.meta.env.DEV) {
+          console.log('[Checkout] Using existing address ID:', currentAddrId);
+        }
       }
-    } else if (step === 2) {
-      if (selectedQuote?.shippingMethodId) {
+
+      // 2. Set checkout address if authenticated
+      if (user) {
+        await checkoutApi.setCheckoutAddress({ addressId: currentAddrId }).catch(err => {
+          console.warn('[Checkout] Checkout address sync notice:', err?.message || err);
+        });
+      }
+
+      // 3. Sync local cart items with backend before requesting shipping quotes
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Syncing cart before quotes:', items);
+      }
+      await cartApi.syncCart(items);
+
+      // 4. Request real shipping quotes from backend
+      setLoadingQuotes(true);
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Requesting quotes for address ID:', currentAddrId);
+      }
+
+      let res;
+      try {
+        res = await shippingService.getQuotes({ addressId: currentAddrId });
+      } catch (quoteErr) {
+        console.error('[Checkout] Shipping quote fetch error:', quoteErr);
+        const errMsg = quoteErr?.message || '';
+        if (quoteErr?.code === 'CART_EMPTY' || errMsg.toLowerCase().includes('empty')) {
+          setQuotesError('Your cart is empty. Please add products before continuing to checkout.');
+        } else {
+          setQuotesError(errMsg || 'Failed to load shipping quotes. Please check your address details.');
+        }
+        setProcessing(false);
+        setLoadingQuotes(false);
+        return; // STOP! Never proceed without quotes!
+      }
+
+      const opts = res?.options || [];
+      if (opts.length === 0) {
+        setQuotesError('No shipping methods are available for the selected address. Please choose a different delivery address.');
+        setProcessing(false);
+        setLoadingQuotes(false);
+        return; // STOP!
+      }
+
+      // 5. Valid quotes returned: set state and advance to Step 2
+      setShippingQuotes(opts);
+      setSelectedQuote(opts[0]);
+      setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Shipping quotes received:', opts);
+        console.log('[Checkout] Default selected quote:', opts[0]);
+      }
+
+      setStep(2);
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    } catch (generalErr) {
+      console.error('[Checkout] Error preparing shipping options:', generalErr);
+      const msg = generalErr?.message || 'An unexpected error occurred. Please try again.';
+      setAddressError(msg);
+      error(msg);
+    } finally {
+      setProcessing(false);
+      setLoadingQuotes(false);
+    }
+  };
+
+  // ─── STEP 2: Shipping method selection submit ─────────────────
+  const handleShippingSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!selectedQuote?.quoteId || !selectedQuote?.shippingMethodId) {
+      const err = 'Please select a valid shipping method before proceeding.';
+      setQuotesError(err);
+      error(err);
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Confirming shipping selection:', {
+          shippingMethodId: selectedQuote.shippingMethodId,
+          quoteId: selectedQuote.quoteId,
+          carrier: selectedQuote.carrier
+        });
+      }
+
+      // Sync selection with backend checkout session if authenticated
+      if (user) {
         await checkoutApi.setCheckoutShipping({
           shippingMethodId: selectedQuote.shippingMethodId,
           quoteId: selectedQuote.quoteId
         }, {
           addressId: addressId || undefined,
           couponCode: cart?.discountCode || undefined
-        }).catch((err) => {
-          console.warn('Checkout shipping sync notice:', err.message);
+        }).catch(err => {
+          console.warn('[Checkout] Checkout shipping sync notice:', err?.message || err);
         });
       }
-    }
-    if (step < 3) {
-      setStep(step + 1);
+
+      setStep(3);
       window.scrollTo({ top: 120, behavior: 'smooth' });
+    } catch (err) {
+      console.error('[Checkout] Shipping confirmation error:', err);
+      const msg = err?.message || 'Failed to select shipping method.';
+      setQuotesError(msg);
+      error(msg);
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -253,49 +398,33 @@ export default function CheckoutPage() {
     const finalEmail = (user?.email || formData.email || '').trim();
     const finalName = (formData.fullName || user?.name || 'Valued Patron').trim();
 
-    let currentAddrId = addressId;
-    if (!currentAddrId) {
-      try {
-        const created = await addressApi.createAddress({
-          fullName: finalName,
-          phone: formData.phone || '+971 50 123 4567',
-          countryCode: formData.country === 'Bulgaria' ? 'BG' : 'AE',
-          region: formData.city || 'Dubai',
-          city: formData.city || 'Dubai',
-          addressLine1: formData.address || 'Royal Suite',
-          postalCode: formData.postalCode || '00000'
-        });
-        if (created?.id) {
-          currentAddrId = created.id;
-          setAddressId(created.id);
-        }
-      } catch (e) {
-        console.warn('Address creation fallback in createBackendOrder:', e);
-      }
+    if (!addressId) {
+      throw new Error('A valid delivery address is required.');
     }
 
-    // Ensure we have a real backend quote with valid UUID quoteId
-    let currentQuote = selectedQuote;
-    const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val?.trim());
-
-    if ((!currentQuote || !isUuid(currentQuote.quoteId)) && currentAddrId) {
-      try {
-        const res = await shippingService.getQuotes({ addressId: currentAddrId });
-        const realOpt = res?.options?.find(o => isUuid(o.quoteId)) || res?.options?.[0];
-        if (realOpt) {
-          currentQuote = realOpt;
-          setSelectedQuote(realOpt);
-        }
-      } catch (err) {
-        console.warn('Failed to fetch real quote in createBackendOrder:', err);
-      }
+    if (!selectedQuote?.quoteId) {
+      throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
     }
 
-    const orderShippingCost = currentQuote ? currentQuote.cost : dynamicShippingCost;
-    const isMockQuote = !quotesFromBackend || Boolean(currentQuote?.isMockFallback) || !currentQuote?.quoteId;
+    const shippingMethodId = Number(selectedQuote.shippingMethodId);
+    if (!shippingMethodId || isNaN(shippingMethodId)) {
+      throw new Error('A valid shipping method must be selected.');
+    }
+
+    const orderShippingCost = Number(selectedQuote.cost) || 0;
+
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Creating order with verified parameters:', {
+        addressId,
+        shippingMethodId,
+        quoteId: selectedQuote.quoteId,
+        paymentMethod: getApiPaymentMethod(),
+        couponCode: cart?.discountCode || null
+      });
+    }
 
     const newOrder = await orderService.createOrder({
-      addressId: currentAddrId || undefined,
+      addressId,
       userId: user?.id || null,
       customerEmail: finalEmail,
       customerName: finalName,
@@ -307,10 +436,9 @@ export default function CheckoutPage() {
       shipping: orderShippingCost,
       shippingCost: orderShippingCost,
       total: grandTotal,
-      quoteId: currentQuote?.quoteId || undefined,
-      isMockQuote,
-      shippingMethodId: currentQuote?.shippingMethodId || 1,
-      carrier: currentQuote?.carrier || 'ECONT',
+      quoteId: selectedQuote.quoteId,
+      shippingMethodId,
+      carrier: selectedQuote.carrier || 'ECONT',
       shippingAddress: {
         fullName: finalName,
         address: formData.address,
@@ -319,9 +447,12 @@ export default function CheckoutPage() {
         postalCode: formData.postalCode,
         phone: formData.phone
       },
-      paymentMethod: getApiPaymentMethod(),
-      dhlTrackingNumber: `${currentQuote?.carrier || 'ECONT'}-${Math.floor(100000000 + Math.random() * 900000000)}`
+      paymentMethod: getApiPaymentMethod()
     });
+
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Order created successfully:', newOrder);
+    }
 
     return newOrder;
   }
@@ -358,6 +489,9 @@ export default function CheckoutPage() {
     setProcessing(true);
     setPaymentError(null);
     try {
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Placing COD order...');
+      }
       const newOrder = await createBackendOrder();
       const createdOrderId = newOrder.id || newOrder.numericId;
       
@@ -369,10 +503,14 @@ export default function CheckoutPage() {
       // Record placed order so reviews & account order history see it
       orderService.recordPlacedOrderId(createdOrderId);
 
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] COD order successfully placed:', createdOrderId);
+      }
+
       success('Order placed successfully! Pay in cash on delivery.');
       navigate(`/order-confirmation/${createdOrderId}`);
     } catch (err) {
-      console.error('COD order placement error:', err);
+      console.error('[Checkout] COD order placement error:', err);
       const msg = err?.message || 'Failed to place order. Please try again.';
       setPaymentError(msg);
       error(msg);
@@ -388,6 +526,10 @@ export default function CheckoutPage() {
     setPaymentStatus('preparing');
 
     try {
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Initiating Stripe flow: creating backend order first...');
+      }
+
       // Step 1: Create the order (freezes totals and payment method = 'stripe')
       const newOrder = await createBackendOrder();
       const createdOrderId = newOrder.id || newOrder.numericId;
@@ -402,7 +544,15 @@ export default function CheckoutPage() {
         setPaymentKey(createdOrderId, payKey);
       }
 
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Order created. Initializing Stripe payment intent for order:', createdOrderId, 'IdempotencyKey:', payKey);
+      }
+
       const intent = await paymentService.createPaymentIntent(createdOrderId, payKey);
+
+      if (import.meta.env.DEV) {
+        console.log('[Checkout] Stripe payment intent created:', intent);
+      }
 
       // Step 3: Route by intent result
       if (intent.status === 'Paid') {
@@ -432,7 +582,7 @@ export default function CheckoutPage() {
       setPaymentStatus('ready');
       setStep(4); // Show the Stripe payment form step
     } catch (err) {
-      console.error('Stripe payment setup error:', err);
+      console.error('[Checkout] Stripe payment setup error:', err);
       const msg = err?.message || 'Failed to prepare payment. Please try again.';
       setPaymentError(msg);
       setPaymentStatus(null);
@@ -570,10 +720,43 @@ export default function CheckoutPage() {
             
             {/* STEP 1: Contact & Address */}
             {step === 1 && (
-              <form onSubmit={handleNextStep} className="space-y-4">
+              <form onSubmit={handleAddressSubmit} className="space-y-4">
                 <h2 className="font-cinzel text-base font-bold text-[#D4AF37] uppercase tracking-wider pb-3 border-b border-white/10">
                   1. Contact & Delivery Destination
                 </h2>
+
+                {/* Saved Palace Addresses (if authenticated patron has saved addresses) */}
+                {savedAddresses.length > 0 && (
+                  <div className="space-y-2 pb-2">
+                    <label className="text-[#D8BE99] uppercase text-[11px] font-cinzel font-bold flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span>Saved Palace Addresses</span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {savedAddresses.map((addr) => {
+                        const isSelected = addressId === addr.id;
+                        return (
+                          <div
+                            key={addr.id}
+                            onClick={() => handleSelectSavedAddress(addr)}
+                            className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-[#F2D675]'
+                                : 'bg-black/40 border-white/10 text-[#D8BE99] hover:border-white/30'
+                            }`}
+                          >
+                            <div className="font-bold font-cinzel flex items-center justify-between">
+                              <span>{addr.label || 'Delivery Address'}</span>
+                              {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#D4AF37]" />}
+                            </div>
+                            <p className="line-clamp-1 text-[11px] text-[#F3E6D0]">{addr.addressLine1}</p>
+                            <p className="text-[10px] text-neutral-400">{addr.city}, {addr.countryCode || addr.country}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1 sm:col-span-2">
@@ -582,7 +765,7 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      onChange={(e) => handleAddressFieldChange('fullName', e.target.value)}
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
@@ -593,7 +776,7 @@ export default function CheckoutPage() {
                       type="email"
                       required
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) => handleAddressFieldChange('email', e.target.value)}
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
@@ -604,7 +787,7 @@ export default function CheckoutPage() {
                       type="tel"
                       required
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => handleAddressFieldChange('phone', e.target.value)}
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
@@ -615,7 +798,7 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      onChange={(e) => handleAddressFieldChange('address', e.target.value)}
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
@@ -626,7 +809,7 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={(e) => handleAddressFieldChange('city', e.target.value)}
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
                     />
                   </div>
@@ -637,19 +820,55 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                      onChange={(e) => handleAddressFieldChange('country', e.target.value)}
                       className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-[#D8BE99] uppercase">Postal Code</label>
+                    <input
+                      type="text"
+                      value={formData.postalCode}
+                      onChange={(e) => handleAddressFieldChange('postalCode', e.target.value)}
+                      placeholder="e.g. 1000 or 00000"
+                      className="w-full bg-black/60 border border-[#D4AF37]/30 px-3 py-2.5 rounded text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none font-mono"
                     />
                   </div>
                 </div>
 
+                {/* Step 1 Error Alerts */}
+                {addressError && (
+                  <div role="alert" className="p-3 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                    <span>{addressError}</span>
+                  </div>
+                )}
+
+                {quotesError && (
+                  <div role="alert" className="p-3 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                    <span>{quotesError}</span>
+                  </div>
+                )}
+
                 <div className="pt-4 flex justify-end">
                   <button
                     type="submit"
-                    className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] transition-colors flex items-center gap-2"
+                    disabled={processing || loadingQuotes}
+                    className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] disabled:opacity-50 transition-colors flex items-center gap-2 cursor-pointer"
                   >
-                    <span>Continue to Shipping Options</span>
-                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                    {processing || loadingQuotes ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Verifying & Quoting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Continue to Shipping Options</span>
+                        <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -657,7 +876,7 @@ export default function CheckoutPage() {
 
             {/* STEP 2: Shipping Method Selection */}
             {step === 2 && (
-              <form onSubmit={handleNextStep} className="space-y-4">
+              <form onSubmit={handleShippingSubmit} className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <h2 className="font-cinzel text-base font-bold text-[#D4AF37] uppercase tracking-wider">
                     2. Select Insured Shipping Method
@@ -667,52 +886,30 @@ export default function CheckoutPage() {
                   </span>
                 </div>
 
+                {quotesError && (
+                  <div role="alert" className="p-3 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                    <span>{quotesError}</span>
+                  </div>
+                )}
+
                 {loadingQuotes ? (
                   <div className="p-8 text-center space-y-2 bg-black/40 border border-white/10 rounded-xl">
                     <Truck className="w-5 h-5 animate-pulse text-[#D4AF37] mx-auto" />
                     <p className="text-xs font-cinzel text-[#D8BE99]">Calculating real-time carrier quotes...</p>
                   </div>
                 ) : shippingQuotes.length === 0 ? (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-xl border border-[#D4AF37]/40 bg-black/60 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="shippingMethod"
-                          checked={true}
-                          readOnly
-                          className="accent-[#D4AF37] w-4 h-4"
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border bg-amber-950/80 text-[#F2D675] border-[#D4AF37]/40">
-                              ROYAL
-                            </span>
-                            <span className="font-cinzel font-bold text-xs text-[#F3E6D0]">
-                              Insured Royal Courier Delivery
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#D8BE99]">
-                            2-4 business days • Insured temperature-controlled transport
-                          </p>
-                        </div>
-                      </div>
-                      <span className="font-mono text-xs font-bold text-[#D4AF37]">€10.00</span>
-                    </div>
+                  <div className="space-y-4 p-6 bg-black/40 border border-white/10 rounded-xl text-center">
+                    <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto" />
+                    <p className="text-xs font-cinzel text-[#F3E6D0]">
+                      No shipping methods are available for the selected address. Please choose a different delivery address.
+                    </p>
                     <button
                       type="button"
-                      onClick={() => {
-                        shippingService.getQuotes({ addressId: addressId || 0 }).then(res => {
-                          const opts = res?.options || [];
-                          if (opts.length > 0) {
-                            setShippingQuotes(opts);
-                            setSelectedQuote(opts[0]);
-                          }
-                        });
-                      }}
-                      className="w-full py-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#F2D675] text-[11px] font-cinzel tracking-wider rounded-lg transition-all text-center"
+                      onClick={() => setStep(1)}
+                      className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer"
                     >
-                      ↻ Refresh Real-Time Carrier Rates
+                      Return to Address Details
                     </button>
                   </div>
                 ) : (
@@ -726,6 +923,9 @@ export default function CheckoutPage() {
                           onClick={() => {
                             setSelectedQuote(opt);
                             setFormData(prev => ({ ...prev, shippingMethod: opt.shippingMethod }));
+                            if (import.meta.env.DEV) {
+                              console.log('[Checkout] Selected shipping option:', opt);
+                            }
                           }}
                           className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-300 ${
                             isSelected
@@ -790,13 +990,25 @@ export default function CheckoutPage() {
                   >
                     Back
                   </button>
-                  <button
-                    type="submit"
-                    className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] transition-colors flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>Continue to Payment</span>
-                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-                  </button>
+                  {shippingQuotes.length > 0 && (
+                    <button
+                      type="submit"
+                      disabled={processing || !selectedQuote}
+                      className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:bg-[#F2D675] disabled:opacity-50 transition-colors flex items-center gap-2 cursor-pointer"
+                    >
+                      {processing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continue to Payment</span>
+                          <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </form>
             )}
@@ -1074,8 +1286,13 @@ export default function CheckoutPage() {
                 <span className="font-mono text-[#F3E6D0]">€{totals.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[#D8BE99]">
-                <span>{selectedQuote?.shippingMethod || selectedQuote?.carrier || 'Shipping'}</span>
-                <span className="font-mono text-[#F3E6D0]">{shippingCost === 0 ? 'Complimentary' : `€${shippingCost.toFixed(2)}`}</span>
+                <span>{selectedQuote ? (selectedQuote.shippingMethod || selectedQuote.carrier || 'Shipping') : 'Shipping'}</span>
+                <span className="font-mono text-[#F3E6D0]">
+                  {selectedQuote
+                    ? (selectedQuote.isFree || shippingCost === 0 ? 'Complimentary' : `€${Number(shippingCost).toFixed(2)}`)
+                    : 'Calculated at step 2'
+                  }
+                </span>
               </div>
               {totals.discountAmount > 0 && (
                 <div className="flex justify-between text-emerald-400">

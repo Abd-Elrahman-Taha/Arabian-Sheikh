@@ -16,95 +16,47 @@ export const shippingApi = {
     const addrId =
       rawAddrId !== undefined &&
       rawAddrId !== null &&
-      !isNaN(Number(rawAddrId))
+      !isNaN(Number(rawAddrId)) &&
+      Number(rawAddrId) > 0
         ? Number(rawAddrId)
-        : 0;
+        : null;
 
-    // Endpoints to attempt (/Shipping/quotes matching ASP.NET controller casing, /shipping/quotes fallback)
-    const endpointsToTry = [
-      ENDPOINTS.SHIPPING.QUOTES,
-      '/Shipping/quotes',
-      '/shipping/quotes'
-    ];
-    const uniqueEndpoints = [...new Set(endpointsToTry)];
-
-    for (const ep of uniqueEndpoints) {
-      try {
-        const response = await apiClient.post(
-          ep,
-          { addressId: addrId },
-          { requiresAuth: false }
-        );
-
-        const rawOptions =
-          response?.options || (Array.isArray(response) ? response : []);
-        if (Array.isArray(rawOptions) && rawOptions.length > 0) {
-          return {
-            options: rawOptions.map(normalizeShippingOption).filter(Boolean),
-            fromBackend: true,
-          };
-        }
-      } catch (err) {
-        console.warn(
-          `POST ${ep} failed (addressId=${addrId}):`,
-          err?.message || err
-        );
-      }
+    if (!addrId) {
+      throw new Error('A valid shipping address is required before requesting delivery quotes.');
     }
 
-    // ─── Display-only fallback ─────────────────────────────────────────────────
-    // isMockFallback: true  → these MUST NOT be sent as quoteId to POST /api/Orders
-    // quoteId: null          → explicitly null so order.api.js skips it
-    // They exist only to give the UI something to show when the backend quote call fails.
-    const makeFallback = (raw) => ({
-      ...normalizeShippingOption(raw),
-      quoteId: null,
-      isMockFallback: true,
-    });
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Requesting shipping quote:', addrId);
+    }
 
-    return {
-      options: [
-        makeFallback({
-          shippingMethodId: 1,
-          shippingCompanyId: 3,
-          carrier: 'ECONT',
-          shippingMethod: 'ECONT Standard Delivery',
-          shippingFee: 5.0,
-          currency: 'EUR',
-          estimatedDeliveryDays: 3,
-          minDeliveryDays: 2,
-          maxDeliveryDays: 4,
-          isFree: false,
-          rateSource: 'ECONT',
-        }),
-        makeFallback({
-          shippingMethodId: 2,
-          shippingCompanyId: 3,
-          carrier: 'ECONT',
-          shippingMethod: 'ECONT Priority Express',
-          shippingFee: 12.0,
-          currency: 'EUR',
-          estimatedDeliveryDays: 1,
-          minDeliveryDays: 1,
-          maxDeliveryDays: 2,
-          isFree: false,
-          rateSource: 'ECONT',
-        }),
-        makeFallback({
-          shippingMethodId: 3,
-          shippingCompanyId: 1,
-          carrier: 'DHL Express',
-          shippingMethod: 'DHL Royal Air Delivery',
-          shippingFee: 15.0,
-          currency: 'EUR',
-          estimatedDeliveryDays: 2,
-          minDeliveryDays: 1,
-          maxDeliveryDays: 3,
-          isFree: false,
-        }),
-      ],
-      fromBackend: false,
-    };
+    // Call official backend endpoint
+    const response = await apiClient.post(
+      ENDPOINTS.SHIPPING.QUOTES,
+      { addressId: addrId },
+      { requiresAuth: true }
+    );
+
+    const rawOptions =
+      response?.options || (Array.isArray(response) ? response : []);
+
+    const topLevelQuoteId = response?.quoteId || null;
+
+    const options = (Array.isArray(rawOptions) ? rawOptions : [])
+      .map(item => {
+        const norm = normalizeShippingOption(item);
+        if (!norm) return null;
+        if (!norm.quoteId && topLevelQuoteId) {
+          norm.quoteId = topLevelQuoteId;
+        }
+        return norm;
+      })
+      .filter(Boolean);
+
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Shipping quote received:', options);
+    }
+
+    return { options };
   },
 };
 

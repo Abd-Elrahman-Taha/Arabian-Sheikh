@@ -49,11 +49,15 @@ export const checkoutApi = {
    * Request body: { shippingMethodId: number, quoteId: string }
    */
   async setCheckoutShipping(payload, queryParams = {}) {
-    const shippingMethodId = Number(payload?.shippingMethodId || (typeof payload === 'number' ? payload : 1));
+    const shippingMethodId = Number(payload?.shippingMethodId || (typeof payload === 'number' ? payload : null));
     const quoteId = payload?.quoteId || (typeof payload === 'string' ? payload : undefined);
 
+    if (!shippingMethodId || isNaN(shippingMethodId)) {
+      throw new Error('Valid shippingMethodId is required.');
+    }
+
     const body = {
-      shippingMethodId: isNaN(shippingMethodId) ? 1 : shippingMethodId,
+      shippingMethodId,
       ...(quoteId ? { quoteId } : {})
     };
 

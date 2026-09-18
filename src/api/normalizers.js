@@ -422,10 +422,14 @@ export function normalizeShippingOption(raw) {
     ? Number(opt.estimatedDeliveryDays)
     : (minDays && maxDays ? `${minDays}-${maxDays}` : (minDays || maxDays || 3));
 
+  const shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
+    ? Number(opt.shippingMethodId)
+    : (typeof opt.id === 'number' ? opt.id : null);
+
   return {
     quoteId,
-    shippingMethodId: Number(opt.shippingMethodId) || (typeof opt.id === 'number' ? opt.id : 1),
-    shippingCompanyId: Number(opt.shippingCompanyId) || 3,
+    shippingMethodId,
+    shippingCompanyId: opt.shippingCompanyId !== undefined && opt.shippingCompanyId !== null ? Number(opt.shippingCompanyId) : null,
     carrier,
     carrierName: carrier,
     shippingMethod,

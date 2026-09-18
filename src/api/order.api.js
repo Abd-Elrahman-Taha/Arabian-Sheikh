@@ -31,13 +31,24 @@ export const orderApi = {
     const idempKey = (isUuid(idempotencyKey) ? idempotencyKey.trim() : null)
       || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '00000000-0000-4000-8000-' + Math.random().toString(16).slice(2, 14).padEnd(12, '0'));
 
-    // quoteId: Backend contract requires non-empty GUID issued by /api/shipping/quotes
-    const resolvedQuoteId = isUuid(payload.quoteId) ? payload.quoteId.trim() : null;
-
     // addressId MUST be a real backend address ID
     const resolvedAddressId = Number(payload.addressId) || null;
     if (!resolvedAddressId) {
       throw new Error('A valid addressId is required to create an order.');
+    }
+
+    // quoteId: Backend contract requires non-empty GUID issued by /api/shipping/quotes
+    const resolvedQuoteId = isUuid(payload.quoteId) ? payload.quoteId.trim() : null;
+    if (!resolvedQuoteId) {
+      throw new Error('Unable to create the order because the shipping quote is missing. Please recalculate shipping and try again.');
+    }
+
+    // shippingMethodId MUST be a valid number from the backend quote
+    const resolvedShippingMethodId = payload.shippingMethodId !== undefined && payload.shippingMethodId !== null && !isNaN(Number(payload.shippingMethodId))
+      ? Number(payload.shippingMethodId)
+      : null;
+    if (!resolvedShippingMethodId) {
+      throw new Error('A shipping method must be selected.');
     }
 
     // paymentMethod: 'stripe' or 'cod' (case-insensitive)
@@ -51,11 +62,15 @@ export const orderApi = {
     // Strict compliance with CreateOrderRequest
     const body = {
       addressId: resolvedAddressId,
-      shippingMethodId: Number(payload.shippingMethodId) || 1,
+      shippingMethodId: resolvedShippingMethodId,
+      quoteId: resolvedQuoteId,
       paymentMethod,
-      couponCode,
-      ...(resolvedQuoteId ? { quoteId: resolvedQuoteId } : {})
+      couponCode
     };
+
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Submitting order payload:', body);
+    }
 
     const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, body, {
       headers: {
@@ -63,6 +78,11 @@ export const orderApi = {
       },
       requiresAuth: true
     });
+
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Order successfully created:', response);
+    }
+
     return normalizeOrder(response);
   },
 
