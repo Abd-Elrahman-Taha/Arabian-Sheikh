@@ -140,7 +140,12 @@ export default function AccountOrders() {
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-[#3A2116]/30 gap-2 text-sm">
                 <div>
-                  <span className="font-cinzel font-bold text-[#D4AF37] text-base sm:text-lg">{o.id}</span>
+                  <Link
+                    to={`/account/orders/${o.id}`}
+                    className="font-cinzel font-bold text-[#D4AF37] text-base sm:text-lg hover:underline cursor-pointer"
+                  >
+                    {o.id}
+                  </Link>
                   <span className="text-[#D8BE99] ml-3 font-mono text-xs sm:text-sm">{dateStr}</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -175,18 +180,24 @@ export default function AccountOrders() {
                 </div>
                 <div className="flex items-center gap-4">
                   <Link
+                    to={`/account/orders/${o.id}`}
+                    className="font-cinzel text-xs uppercase tracking-wider font-bold text-[#D4AF37] flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    Order Details & Returns
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link
                     to={`/order-tracking/${o.id}`}
-                    className="font-cinzel text-xs uppercase tracking-wider font-bold text-[#D4AF37] flex items-center gap-1 hover:underline"
+                    className="font-cinzel text-xs uppercase tracking-wider font-bold text-[#D8BE99] flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     <Truck className="w-3.5 h-3.5" />
-                    Track Order
+                    Track
                   </Link>
                   <Link
                     to={`/order-confirmation/${o.id}`}
-                    className="font-cinzel text-xs uppercase tracking-wider font-bold text-[#F3E6D0] flex items-center gap-1 hover:underline"
+                    className="font-cinzel text-xs uppercase tracking-wider font-bold text-[#F3E6D0] flex items-center gap-1 hover:underline cursor-pointer"
                   >
-                    View Receipt
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    Receipt
                   </Link>
                 </div>
               </div>
