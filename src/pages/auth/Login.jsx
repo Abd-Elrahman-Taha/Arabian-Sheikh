@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Lock, Mail, ArrowRight, KeyRound, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
-import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
 
 export default function Login({ returnPath }) {
   const { navigate } = useRouter();
@@ -127,18 +126,6 @@ export default function Login({ returnPath }) {
             <span>{loading ? 'Authenticating...' : t('auth.login')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center my-4">
-            <div className="border-t border-[#D4AF37]/25 w-full" />
-            <span className="bg-[#0B0A08] px-3 text-[10px] uppercase font-cinzel tracking-widest text-[#D8BE99]/70 shrink-0">
-              {t('common.or') || 'OR'}
-            </span>
-            <div className="border-t border-[#D4AF37]/25 w-full" />
-          </div>
-
-          {/* Google Sign In / Gmail Suggestion Button */}
-          <GoogleAuthButton mode="signin" returnPath={returnPath} />
         </form>
 
         {/* Signup Link */}
