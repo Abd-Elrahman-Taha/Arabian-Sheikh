@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck, Phone, Globe } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 import { WORLD_COUNTRIES, POPULAR_COUNTRIES, findCountryByCode } from '../../utils/countries';
+import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
 
 export default function Signup() {
   const { navigate } = useRouter();
@@ -263,7 +264,7 @@ export default function Signup() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1 cursor-pointer"
                 aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -349,7 +350,7 @@ export default function Signup() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1 cursor-pointer"
                 aria-label="Toggle confirm password visibility"
               >
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -365,6 +366,18 @@ export default function Signup() {
             <span>{loading ? 'Registering...' : t('auth.signup')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center my-4">
+            <div className="border-t border-[#D4AF37]/25 w-full" />
+            <span className="bg-[#0B0A08] px-3 text-[10px] uppercase font-cinzel tracking-widest text-[#D8BE99]/70 shrink-0">
+              {t('common.or') || 'OR'}
+            </span>
+            <div className="border-t border-[#D4AF37]/25 w-full" />
+          </div>
+
+          {/* Google Sign Up / Register with Google */}
+          <GoogleAuthButton mode="signup" />
         </form>
 
         <div className="text-center text-xs text-[#D8BE99] pt-4 border-t border-[#D4AF37]/20 font-medium">

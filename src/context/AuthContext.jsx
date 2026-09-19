@@ -46,6 +46,12 @@ export function AuthProvider({ children }) {
     return loggedUser;
   };
 
+  const googleLogin = async (idToken) => {
+    const loggedUser = await authService.googleLogin(idToken);
+    setUser(loggedUser);
+    return loggedUser;
+  };
+
   const signup = async (payload) => {
     const newUser = await authService.signup(payload);
     setUser(newUser);
@@ -86,6 +92,7 @@ export function AuthProvider({ children }) {
         isSuperAdmin,
         loading,
         login,
+        googleLogin,
         signup,
         logout,
         updateProfile,

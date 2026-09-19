@@ -95,6 +95,21 @@ export const authService = {
     throw new Error('Invalid email or password, or account does not exist.');
   },
 
+  async googleLogin(idToken) {
+    try {
+      const user = await authApi.googleLogin(idToken);
+      if (user && (user.id || user.email)) {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        return user;
+      }
+      throw new Error('Google authentication returned invalid user data.');
+    } catch (err) {
+      console.error('Google login error:', err);
+      throw err;
+    }
+  },
+
   async signup({ name, email, password, phone = '', countryCode = '', preferredLanguage = 'En' }) {
     const cleanEmail = email.toLowerCase().trim();
 

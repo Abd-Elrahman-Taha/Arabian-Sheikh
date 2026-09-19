@@ -3,8 +3,9 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { Lock, Mail, ArrowRight, KeyRound } from 'lucide-react';
+import { Lock, Mail, ArrowRight, KeyRound, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
+import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
 
 export default function Login({ returnPath }) {
   const { navigate } = useRouter();
@@ -14,6 +15,7 @@ export default function Login({ returnPath }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -85,14 +87,22 @@ export default function Login({ returnPath }) {
             </div>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
+                className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-3 pl-10 pr-10 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
               />
-              <KeyRound className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <KeyRound className="w-4 h-4 text-[#D4AF37] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D8BE99]/70 hover:text-[#F2D675] transition-colors p-1 cursor-pointer"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -117,6 +127,18 @@ export default function Login({ returnPath }) {
             <span>{loading ? 'Authenticating...' : t('auth.login')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center my-4">
+            <div className="border-t border-[#D4AF37]/25 w-full" />
+            <span className="bg-[#0B0A08] px-3 text-[10px] uppercase font-cinzel tracking-widest text-[#D8BE99]/70 shrink-0">
+              {t('common.or') || 'OR'}
+            </span>
+            <div className="border-t border-[#D4AF37]/25 w-full" />
+          </div>
+
+          {/* Google Sign In / Gmail Suggestion Button */}
+          <GoogleAuthButton mode="signin" returnPath={returnPath} />
         </form>
 
         {/* Signup Link */}
