@@ -164,15 +164,6 @@ export default function Header({ onOpenSearch }) {
               <div className={`flex items-center gap-6 normal-case text-xs tracking-normal ${
                 isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
               }`}>
-                <Link
-                  to="/discovery"
-                  className={`transition-colors flex items-center gap-1 font-cinzel uppercase tracking-[0.15em] text-[11px] relative group ${
-                    isDark ? 'hover:text-[#D4AF37]' : 'hover:text-[#5A3517] font-bold'
-                  }`}
-                >
-                  <span>Fragrance Finder Quiz</span>
-                  <span className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.8)] rounded-full opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100 transition-all duration-300" />
-                </Link>
                 {isAdmin && (
                   <Link
                     to="/admin"

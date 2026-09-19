@@ -707,9 +707,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Card 3: Navigates to Fragrance Discovery Quiz (/discovery) */}
+          {/* Card 3: Navigates to Boutique Catalog (/shop) */}
           <div
-            onClick={() => navigate('/discovery')}
+            onClick={() => navigate('/shop')}
             className={`group relative h-80 sm:h-96 rounded-3xl overflow-hidden border-2 shadow-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5 ${
               isDark
                 ? 'border-[#F2D675] bg-gradient-to-br from-[#D4AF37]/55 via-[#F2D675]/35 to-[#8C6239]/65 hover:border-[#FFFDF8] shadow-[0_14px_45px_rgba(212,175,55,0.45)] hover:shadow-[0_22px_65px_rgba(242,214,117,0.75)]'
@@ -718,28 +718,28 @@ export default function Home() {
           >
             <img
               src="/editorial/imperial_monograph.jpg"
-              alt={language === 'ar' ? 'اختبار اكتشاف العطر' : language === 'bg' ? 'Откриване на Аромат' : language === 'es' ? 'Descubrimiento Olfativo' : 'Fragrance Discovery'}
+              alt={language === 'ar' ? 'المتجر الملكي الكامل' : language === 'bg' ? 'Кралски Бутик' : language === 'es' ? 'Boutique Real' : 'Sovereign Boutique'}
               className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-80 group-hover:opacity-100"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/50 to-transparent" />
             <div className="absolute bottom-0 inset-x-0 p-6 sm:p-7 space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#F2D675] font-cinzel font-bold block">
-                {language === 'ar' ? 'مستشار العطور • DISCOVERY' : language === 'bg' ? 'Търсач на Аромати' : language === 'es' ? 'Buscador de Fragancias' : 'FRAGRANCE FINDER'}
+                {language === 'ar' ? 'المتجر الملكي • BOUTIQUE' : language === 'bg' ? 'Кралски Бутик' : language === 'es' ? 'Boutique Real' : 'HAUTE BOUTIQUE'}
               </span>
               <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#F3E6D0] group-hover:text-[#D4AF37] transition-colors leading-tight">
-                {language === 'ar' ? 'اختبار اكتشاف العطر' : language === 'bg' ? 'Откриване на Аромат' : language === 'es' ? 'Descubrimiento Olfativo' : 'Fragrance Discovery'}
+                {language === 'ar' ? 'استكشف التحف العطرية' : language === 'bg' ? 'Открийте Всички Творения' : language === 'es' ? 'Explorar Todas las Creaciones' : 'Explore All Creations'}
               </h3>
               <p className="text-xs text-[#D8BE99] line-clamp-2 leading-relaxed font-sans">
                 {language === 'ar'
-                  ? 'خض اختباراً تفاعلياً ليكشف لك مستشارنا عن العطر الأنسب لشخصيتك ومناسبتك.'
+                  ? 'تصفح المجموعة الكاملة من العطور النادرة، دهن العود العتيق، والبخور الإمبراطوري.'
                   : language === 'bg'
-                  ? 'Направете нашия интерактивен тест, за да откриете аромата за вашата персона.'
+                  ? 'Разгледайте пълната селекция от редки аромати, див уд и имперски бахур.'
                   : language === 'es'
-                  ? 'Realice nuestro cuestionario interactivo para encontrar el frasco ideal para usted.'
-                  : 'Take our bespoke interactive quiz to find the signature flacon tailored to your royal persona.'}
+                  ? 'Explore la colección completa de fragancias raras, oud salvaje y bakhoor imperial.'
+                  : 'Browse the complete private collection of rare extraits, Assamese agarwood, and royal bakhoor.'}
               </p>
               <div className="pt-1 flex items-center gap-1.5 text-[11px] font-cinzel font-bold text-[#D4AF37] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
-                <span>{language === 'ar' ? 'بدء اختبار العطور' : language === 'bg' ? 'Започнете теста' : language === 'es' ? 'Iniciar Cuestionario' : 'Start Discovery Quiz'}</span>
+                <span>{language === 'ar' ? 'دخول المتجر' : language === 'bg' ? 'Към Бутика' : language === 'es' ? 'Ver Catálogo' : 'Enter Boutique'}</span>
                 <span className="rtl:rotate-180">→</span>
               </div>
             </div>
@@ -916,10 +916,10 @@ export default function Home() {
                       Matched <strong className="text-[#D4AF37] text-base">{discoveryMatches.length}</strong> creations:
                     </span>
                     <Link
-                      to="/discovery"
+                      to="/shop"
                       className="text-[#D4AF37] hover:text-[#B8860B] font-cinzel font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 transition-colors"
                     >
-                      <span>Take Full Guided Journey</span>
+                      <span>Explore All Creations</span>
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>

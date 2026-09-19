@@ -567,7 +567,12 @@ export default function CheckoutPage() {
     );
   }
 
-  const dynamicShippingCost = selectedQuote ? Number(selectedQuote.cost) || 0 : 0;
+  const isBulgaria = (formData.countryCode || 'BG').toUpperCase() === 'BG';
+  const qualifiesForBulgariaFreeShipping = isBulgaria && totals.subtotal > 49;
+
+  const dynamicShippingCost = selectedQuote
+    ? (qualifiesForBulgariaFreeShipping ? 0 : (Number(selectedQuote.cost) || 0))
+    : 0;
   const shippingCost = dynamicShippingCost;
   const grandTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0) + dynamicShippingCost);
 
@@ -781,7 +786,7 @@ export default function CheckoutPage() {
       throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
     }
 
-    const orderShippingCost = Number(selectedQuote?.cost) || 0;
+    const orderShippingCost = qualifiesForBulgariaFreeShipping ? 0 : (Number(selectedQuote?.cost) || 0);
 
     // Retrieve authoritative address snapshot from backend for order record
     let authoritativeAddress = {
@@ -1189,6 +1194,21 @@ export default function CheckoutPage() {
                   1. Contact & Delivery Destination
                 </h2>
 
+                {/* Bulgaria Free Delivery Notice */}
+                <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#0B0A08] to-[#1A1208] border border-[#D4AF37]/35 text-xs flex items-center justify-between gap-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-[#D4AF37]">
+                    <Truck className="w-4 h-4 shrink-0" />
+                    <span className="font-cinzel font-bold text-[11px] uppercase tracking-wider">Bulgaria Delivery Privilege</span>
+                  </div>
+                  <span className="text-[11px] text-[#D8BE99]">
+                    {totals.subtotal > 49 ? (
+                      <span className="text-emerald-400 font-bold">✓ Free Delivery Unlocked for Bulgaria (Orders &gt; €49)</span>
+                    ) : (
+                      <span>Orders above €49 receive <strong>Free Delivery in Bulgaria</strong> (Exclusive option)</span>
+                    )}
+                  </span>
+                </div>
+
                 {/* Saved Palace Addresses (if authenticated patron has saved addresses) */}
                 {savedAddresses.length > 0 && (
                   <div className="space-y-2 pb-2">
@@ -1471,6 +1491,15 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {qualifiesForBulgariaFreeShipping && (
+                  <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs flex items-center gap-2.5 text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>
+                      <strong>Bulgaria Free Delivery Applied:</strong> Your order qualifies for 100% complimentary delivery (orders over €49).
+                    </span>
+                  </div>
+                )}
+
                 {loadingQuotes ? (
                   <div className="p-8 text-center space-y-2 bg-black/40 border border-white/10 rounded-xl">
                     <Truck className="w-5 h-5 animate-pulse text-[#D4AF37] mx-auto" />
@@ -1539,9 +1568,22 @@ export default function CheckoutPage() {
                             </label>
                           </div>
                           <div className="text-right">
-                            <span className="font-mono text-xs font-bold text-[#D4AF37]">
-                              €{Number(opt.cost).toFixed(2)}
-                            </span>
+                            {qualifiesForBulgariaFreeShipping ? (
+                              <div className="space-y-0.5">
+                                <span className="font-mono text-xs font-bold text-emerald-400">
+                                  FREE
+                                </span>
+                                {Number(opt.cost) > 0 && (
+                                  <span className="block font-mono text-[10px] text-neutral-400 line-through">
+                                    €{Number(opt.cost).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="font-mono text-xs font-bold text-[#D4AF37]">
+                                €{Number(opt.cost).toFixed(2)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
@@ -1903,10 +1945,15 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-[#D8BE99]">
                 <span>{selectedQuote ? (selectedQuote.shippingMethod || selectedQuote.carrier || 'Shipping') : 'Shipping'}</span>
                 <span className="font-mono text-[#F3E6D0]">
-                  {selectedQuote
-                    ? `€${Number(shippingCost).toFixed(2)}`
-                    : 'Calculated at step 2'
-                  }
+                  {selectedQuote ? (
+                    qualifiesForBulgariaFreeShipping ? (
+                      <span className="text-emerald-400 font-bold">FREE (Bulgaria &gt; €49)</span>
+                    ) : (
+                      `€${Number(shippingCost).toFixed(2)}`
+                    )
+                  ) : (
+                    'Calculated at step 2'
+                  )}
                 </span>
               </div>
               {totals.discountAmount > 0 && (

@@ -85,11 +85,10 @@ export default function CartDrawer() {
     navigate('/cart');
   };
 
-  const freeShippingThreshold = 100; // €100 for complimentary DHL shipping
-  const freeShippingProgress = Math.min(
-    100,
-    Math.round((totals.subtotal / freeShippingThreshold) * 100)
-  );
+  const bulgariaFreeThreshold = 49;
+  const isBulgariaFreeUnlocked = totals.subtotal >= bulgariaFreeThreshold;
+  const bulgariaFreeRemaining = Math.max(0, bulgariaFreeThreshold - totals.subtotal);
+  const bulgariaProgress = Math.min(100, Math.round((totals.subtotal / bulgariaFreeThreshold) * 100));
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
@@ -128,27 +127,37 @@ export default function CartDrawer() {
             </button>
           </div>
 
-          {/* Free Shipping Progress Bar */}
+          {/* Free Shipping Bulgaria Notice & Progress Bar */}
           <div className={`px-5 py-3 border-b ${
             isDark ? 'bg-black/40 border-white/10 text-[#D8BE99]' : 'bg-[#DECABB] border-[#D4AF37]/20 text-[#4A2A14]'
           }`}>
-            {totals.subtotal >= freeShippingThreshold ? (
-              <div className="flex items-center gap-2 text-xs text-[#D4AF37] font-bold">
-                <Sparkles className="w-4 h-4 shrink-0" />
-                <span>You unlocked Complimentary DHL Express Delivery!</span>
+            {isBulgariaFreeUnlocked ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-[#D4AF37] font-bold">
+                  <Sparkles className="w-4 h-4 shrink-0 text-[#D4AF37]" />
+                  <span>Free Delivery in Bulgaria Unlocked! (Orders over €49)</span>
+                </div>
+                <p className="text-[10px] text-[#D8BE99]/80 pl-6">
+                  *Free delivery applies exclusively to shipments within Bulgaria.
+                </p>
               </div>
             ) : (
               <div className="space-y-1.5">
                 <div className="flex justify-between text-[11px]">
-                  <span>Add <strong>€{(freeShippingThreshold - totals.subtotal).toFixed(2)}</strong> for Free DHL Express</span>
-                  <span className="font-mono text-[#D4AF37] font-bold">{freeShippingProgress}%</span>
+                  <span>
+                    Add <strong>€{bulgariaFreeRemaining.toFixed(2)}</strong> for <strong>Free Delivery in Bulgaria</strong>
+                  </span>
+                  <span className="font-mono text-[#D4AF37] font-bold">{bulgariaProgress}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#D4AF37] transition-all duration-500"
-                    style={{ width: `${freeShippingProgress}%` }}
+                    className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F2D675] transition-all duration-500"
+                    style={{ width: `${bulgariaProgress}%` }}
                   />
                 </div>
+                <p className="text-[10px] text-[#D8BE99]/80">
+                  Orders over €49 qualify for free delivery (Bulgaria option only).
+                </p>
               </div>
             )}
           </div>

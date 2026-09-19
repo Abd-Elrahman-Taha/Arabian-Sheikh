@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { wishlistService } from '../services/wishlistService';
 import { productService } from '../services/productService';
 import { useToast } from './ToastContext';
@@ -9,88 +9,173 @@ const WishlistContext = createContext();
 
 export function WishlistProvider({ children }) {
   const { isAuthenticated } = useAuth();
-  const { success, info } = useToast();
-  const { addToCart, openAuthModal } = useCart();
+  const { success, error, info } = useToast();
+  const { addToCart, openAuthModal, refreshCart } = useCart();
 
-  // wishlistIds — array of product IDs saved by the user
-  const [wishlistIds, setWishlistIds] = useState(() => wishlistService.getWishlist());
-  // wishlistProducts — full product objects resolved from IDs
+  // wishlistItems — raw items from backend GET /api/wishlist
+  const [wishlistItems, setWishlistItems] = useState([]);
+  // wishlistProducts — enriched items with catalog data for rich UI
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [heartAnimatedId, setHeartAnimatedId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Whenever the saved IDs change, resolve them to full product objects
+  // Hydrate wishlist from backend GET /api/wishlist
+  const fetchWishlist = useCallback(async () => {
+    if (!isAuthenticated) {
+      setWishlistItems([]);
+      setWishlistProducts([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const items = await wishlistService.getWishlist();
+      setWishlistItems(Array.isArray(items) ? items : []);
+    } catch (err) {
+      console.warn('[WishlistContext] Failed to load wishlist:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
   useEffect(() => {
-    if (wishlistIds.length === 0) {
+    fetchWishlist();
+  }, [fetchWishlist]);
+
+  // Enrich wishlist items with product catalog data whenever wishlistItems change
+  useEffect(() => {
+    if (wishlistItems.length === 0) {
       setWishlistProducts([]);
       return;
     }
 
-    // Try to resolve from the local product cache first (sync, instant)
     const allCached = productService.getAllProductsSync({});
-    const resolved = wishlistIds
-      .map(id => allCached.find(p => String(p.id) === String(id)))
-      .filter(Boolean);
+    const enriched = wishlistItems.map(item => {
+      const pId = Number(item.productId || item.id);
+      const matchedCatalog = allCached.find(p => Number(p.id || p.productId) === pId || p.slug === item.productId || String(p.id) === String(item.productId));
 
-    if (resolved.length === wishlistIds.length) {
-      setWishlistProducts(resolved);
-    } else {
-      // Some products aren't in cache yet — fetch from API then resolve
-      productService.getAllProducts({}).then(all => {
-        const fromApi = wishlistIds
-          .map(id => all.find(p => String(p.id) === String(id)))
-          .filter(Boolean);
-        setWishlistProducts(fromApi);
-      }).catch(() => {
-        setWishlistProducts(resolved); // fall back to whatever we found in cache
-      });
-    }
-  }, [wishlistIds]);
+      const img = item.imageUrl || item.image || matchedCatalog?.cutoutImage || matchedCatalog?.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp';
 
-  const toggleWishlist = (product) => {
+      return {
+        ...(matchedCatalog || {}),
+        ...item,
+        id: item.id || matchedCatalog?.id,
+        productId: pId || matchedCatalog?.id,
+        name: item.productName || matchedCatalog?.name || 'Imperial Creation',
+        productName: item.productName || matchedCatalog?.name || 'Imperial Creation',
+        price: item.price !== undefined && item.price !== null ? Number(item.price) : (matchedCatalog?.price || 0),
+        currency: item.currency || 'EUR',
+        imageUrl: img,
+        image: img,
+        cutoutImage: img,
+        images: [img],
+        tier: item.tier || matchedCatalog?.tier || matchedCatalog?.perfumeCategoryName || 'Standard'
+      };
+    });
+
+    setWishlistProducts(enriched);
+  }, [wishlistItems]);
+
+  const wishlistIds = wishlistItems.map(item => Number(item.productId || item.id)).filter(id => !isNaN(id) && id > 0);
+
+  const isInWishlist = useCallback((productId) => {
+    if (!productId) return false;
+    const targetId = Number(productId);
+    return wishlistItems.some(item => {
+      const pId = Number(item.productId || item.id);
+      return (!isNaN(targetId) && pId === targetId) || String(item.productId) === String(productId) || String(item.id) === String(productId);
+    });
+  }, [wishlistItems]);
+
+  const toggleWishlist = useCallback(async (product) => {
     if (!isAuthenticated) {
       openAuthModal();
       return;
     }
 
-    const isSaved = wishlistIds.includes(product.id);
-    const updated = wishlistService.toggleWishlist(product.id);
-    setWishlistIds(updated);
+    if (!product) return;
+    const pId = Number(product.productId || product.id || product.numericId);
+    if (!pId || isNaN(pId)) {
+      error('Could not identify product for wishlist.');
+      return;
+    }
 
-    setHeartAnimatedId(product.id);
+    const isSaved = isInWishlist(pId);
+    setHeartAnimatedId(pId);
     setTimeout(() => setHeartAnimatedId(null), 500);
 
-    if (isSaved) {
-      info(`Removed ${product.name} from your saved creations.`);
-    } else {
-      success(`Saved ${product.name} to your Private Vault.`);
+    try {
+      if (isSaved) {
+        await wishlistService.removeItem(pId);
+        info(`Removed ${product.name || 'Creation'} from your saved vault.`);
+      } else {
+        await wishlistService.addItem(pId);
+        success(`Saved ${product.name || 'Creation'} to your Private Vault.`);
+      }
+      await fetchWishlist();
+    } catch (err) {
+      console.error('[WishlistContext] Toggle error:', err);
+      error(err.message || 'Failed to update wishlist.');
     }
-  };
+  }, [isAuthenticated, isInWishlist, openAuthModal, fetchWishlist, success, info, error]);
 
-  const removeFromWishlist = (productId) => {
-    const updated = wishlistService.removeFromWishlist(productId);
-    setWishlistIds(updated);
-  };
+  const removeFromWishlist = useCallback(async (productId) => {
+    const pId = Number(productId);
+    if (!pId || isNaN(pId)) return;
 
-  const isInWishlist = (productId) => wishlistIds.includes(productId);
-
-  const moveToCart = (product, size = '100ml') => {
-    const added = addToCart(product, size, 1);
-    if (added) {
-      removeFromWishlist(product.id);
+    try {
+      await wishlistService.removeItem(pId);
+      info('Item removed from your saved vault.');
+      await fetchWishlist();
+    } catch (err) {
+      console.error('[WishlistContext] Remove error:', err);
+      error('Failed to remove item from wishlist.');
     }
-  };
+  }, [fetchWishlist, info, error]);
+
+  const moveToCart = useCallback(async (product, size = '60 ml') => {
+    if (!product) return;
+    const pId = Number(product.productId || product.id || product.numericId);
+
+    try {
+      if (isAuthenticated) {
+        await wishlistService.moveToCart(pId);
+        if (refreshCart) {
+          await refreshCart();
+        }
+      } else {
+        addToCart(product, size, 1);
+        await removeFromWishlist(pId);
+      }
+      success(`Moved ${product.name || product.productName || 'Creation'} to your bag.`);
+      await fetchWishlist();
+    } catch (err) {
+      console.error('[WishlistContext] Move to cart error:', err);
+      // Fallback: addToCart directly and remove from wishlist
+      try {
+        const added = addToCart(product, size, 1);
+        if (added) {
+          await removeFromWishlist(pId);
+          success(`Moved ${product.name || 'Creation'} to your bag.`);
+        }
+      } catch (fallbackErr) {
+        error(fallbackErr.message || 'Failed to move creation to bag.');
+      }
+    }
+  }, [isAuthenticated, addToCart, removeFromWishlist, refreshCart, fetchWishlist, success, error]);
 
   return (
     <WishlistContext.Provider
       value={{
-        wishlist: wishlistProducts,   // full product objects for the UI
-        wishlistIds,                  // raw IDs for isInWishlist checks
+        wishlist: wishlistProducts,
+        wishlistIds,
         wishlistCount: wishlistProducts.length,
+        loading,
         toggleWishlist,
         removeFromWishlist,
         isInWishlist,
         moveToCart,
-        heartAnimatedId
+        heartAnimatedId,
+        refreshWishlist: fetchWishlist
       }}
     >
       {children}
@@ -105,3 +190,5 @@ export function useWishlist() {
   }
   return context;
 }
+
+export default WishlistContext;

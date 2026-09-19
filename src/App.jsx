@@ -21,7 +21,6 @@ import GenderCategory from './pages/GenderCategory';
 import Collections from './pages/Collections';
 import ProductDetail from './pages/ProductDetail';
 import BundleDetail from './pages/BundleDetail';
-import Discovery from './pages/Discovery';
 import Compare from './pages/Compare';
 import ThePalace from './pages/ThePalace';
 import TheHouse from './pages/TheHouse';
@@ -173,8 +172,6 @@ function MainRouter() {
         return <Home />;
       case currentPath.startsWith('/shop'):
         return <Shop />;
-      case currentPath === '/discovery':
-        return <Discovery />;
       case currentPath === '/compare':
         return <Compare />;
       case currentPath === '/men':

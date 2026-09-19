@@ -8,7 +8,7 @@ import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 export default function AccountWishlist() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
-  const { wishlist, wishlistIds, removeFromWishlist } = useWishlist();
+  const { wishlist, wishlistIds, removeFromWishlist, moveToCart } = useWishlist();
   const { addToCart } = useCart();
 
   if (wishlist.length === 0) {
@@ -40,35 +40,47 @@ export default function AccountWishlist() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-        {wishlist.map((item) => (
-          <div key={item.id} className="p-5 bg-[#21130D] border border-[#3A2116]/60 rounded-xl flex flex-col justify-between space-y-3.5 shadow-lg">
-            <img
-              src={item.cutoutImage || item.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
-              alt={item.name}
-              className="h-36 mx-auto object-contain"
-            />
-            <div>
-              <h4 className="font-cinzel font-bold text-sm sm:text-base text-[#F3E6D0] line-clamp-1">{item.name}</h4>
-              <p className="font-mono text-sm sm:text-base text-[#D4AF37] font-bold mt-0.5">
-                {item.price != null ? `€${Number(item.price).toFixed(2)}` : '—'}
-              </p>
-            </div>
+        {wishlist.map((item) => {
+          const resolvedTier = item.tier ||
+            item.perfumeCategoryName ||
+            (Number(item.perfumeCategoryId) === 1 ? 'Standard' : Number(item.perfumeCategoryId) === 2 ? 'Premium' : Number(item.perfumeCategoryId) === 3 ? 'Luxury' : (item.price >= 250 ? 'Luxury' : item.price >= 130 ? 'Premium' : 'Standard'));
+
+          return (
+            <div key={item.id} className="p-5 bg-[#21130D] border border-[#3A2116]/60 rounded-xl flex flex-col justify-between space-y-3.5 shadow-lg relative">
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-xs">
+                  {resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}
+                </span>
+              </div>
+              <img
+                src={item.cutoutImage || item.images?.[0] || '/products/luxury_designs/07_arabian_gold.webp'}
+                alt={item.name}
+                className="h-36 mx-auto object-contain"
+              />
+              <div>
+                <h4 className="font-cinzel font-bold text-sm sm:text-base text-[#F3E6D0] line-clamp-1">{item.name}</h4>
+                <p className="font-mono text-sm sm:text-base text-[#D4AF37] font-bold mt-0.5">
+                  {item.price != null ? `€${Number(item.price).toFixed(2)}` : '—'}
+                </p>
+              </div>
             <div className="flex gap-2 pt-3 border-t border-[#3A2116]/40">
               <button
-                onClick={() => addToCart(item, '60 ml', 1)}
+                onClick={() => moveToCart(item, '60 ml')}
                 className="flex-1 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors rounded-lg cursor-pointer"
               >
                 Add to Bag
               </button>
               <button
-                onClick={() => removeFromWishlist(item.id)}
-                className="p-2 bg-[#21130D] text-[#D8BE99] hover:text-rose-400 border border-[#3A2116]/50"
+                onClick={() => removeFromWishlist(item.productId || item.id)}
+                className="p-2 bg-[#21130D] text-[#D8BE99] hover:text-rose-400 border border-[#3A2116]/50 cursor-pointer"
+                title="Remove from Vault"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-        ))}
+        );
+      })}
       </div>
     </div>
   );

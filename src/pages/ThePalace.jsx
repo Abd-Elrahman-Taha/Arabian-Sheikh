@@ -673,16 +673,6 @@ export default function ThePalace() {
           >
             Enter the Sovereign Boutique
           </Link>
-          <Link
-            to="/discovery"
-            className={`w-full sm:w-auto px-10 py-4 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.25em] transition-all duration-300 shadow-md ${
-              isDark
-                ? 'bg-black/60 hover:bg-[#21130D] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#F3E6D0] hover:text-[#F2D675]'
-                : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] hover:bg-white border border-[#D4AF37]/50 hover:border-[#D4AF37] text-[#120B06] hover:text-[#8C6239]'
-            }`}
-          >
-            Fragrance Finder Quiz
-          </Link>
         </div>
       </section>
 

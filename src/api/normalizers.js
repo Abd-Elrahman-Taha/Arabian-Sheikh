@@ -72,12 +72,28 @@ export function normalizeProduct(raw) {
   const subcategoryName = typeof p.subcategory === 'object' ? p.subcategory?.name : (p.subcategoryName || p.subcategory || null);
   const perfumeCategoryName = typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : (p.perfumeCategoryName || p.perfumeCategory || null);
 
-  // Derive tier dynamically from backend perfumeCategory object, perfumeCategoryName, or p.tier
+  // Derive tier dynamically from backend perfumeCategory object, perfumeCategoryName, perfumeCategoryId, p.tier, or price
   let derivedTier = null;
   if (perfumeCategoryName) {
     derivedTier = String(perfumeCategoryName).trim();
   } else if (p.tier) {
     derivedTier = String(p.tier).trim();
+  } else if (p.perfumeCategoryId || (p.perfumeCategory && p.perfumeCategory.id)) {
+    const pcid = Number(p.perfumeCategoryId || p.perfumeCategory.id);
+    if (pcid === 1) derivedTier = 'Standard';
+    else if (pcid === 2) derivedTier = 'Premium';
+    else if (pcid === 3) derivedTier = 'Luxury';
+  }
+
+  // Ensure every product has a valid resolved tier (Standard, Premium, Luxury, etc.)
+  if (!derivedTier) {
+    if (finalPrice >= 250) {
+      derivedTier = 'Luxury';
+    } else if (finalPrice >= 130) {
+      derivedTier = 'Premium';
+    } else {
+      derivedTier = 'Standard';
+    }
   }
 
   // Price coming directly from backend API endpoints (zero hardcoded values):

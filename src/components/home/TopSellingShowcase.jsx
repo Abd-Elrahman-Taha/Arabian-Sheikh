@@ -150,6 +150,9 @@ export default function TopSellingShowcase({ products = [] }) {
           {displayProducts.map((product, idx) => {
             const isSaved = isInWishlist(product.id);
             const imageSrc = product.image || product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';
+            const resolvedTier = product.tier ||
+              product.perfumeCategoryName ||
+              (Number(product.perfumeCategoryId) === 1 ? 'Standard' : Number(product.perfumeCategoryId) === 2 ? 'Premium' : Number(product.perfumeCategoryId) === 3 ? 'Luxury' : (product.price >= 250 ? 'Luxury' : product.price >= 130 ? 'Premium' : 'Standard'));
 
             return (
               <div
@@ -164,7 +167,7 @@ export default function TopSellingShowcase({ products = [] }) {
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D4AF37] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider shadow-sm">
                     <Crown className="w-3 h-3" />
-                    <span>{product.tier ? `${product.tier} Tier` : 'Best Seller'}</span>
+                    <span>{resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}</span>
                   </span>
 
                   <button

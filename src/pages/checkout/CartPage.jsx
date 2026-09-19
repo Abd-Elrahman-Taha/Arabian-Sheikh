@@ -94,26 +94,36 @@ export default function CartPage() {
             {/* Free Shipping Banner */}
             <ScrollReveal direction="left" delay={0.1}>
               <div className="p-4 bg-[var(--color-desert-light)] border border-[var(--color-terracotta-deep)]/25 space-y-2 shadow-sm">
-              {totals.subtotal >= totals.freeShippingThreshold ? (
-                <div className="flex items-center gap-2 text-xs text-[var(--color-terracotta)] font-bold">
-                  <Sparkles className="w-4 h-4 shrink-0" />
-                  <span>{t('cart.freeShippingQualify')}</span>
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-[var(--color-terracotta-deep)] font-medium">
-                    <span>{t('cart.freeShippingRemaining', { amount: `$${totals.freeShippingRemaining}` })}</span>
-                    <span className="font-mono text-[var(--color-terracotta)] font-bold">{freeShippingProgress}%</span>
+                {totals.subtotal >= 49 ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-[var(--color-terracotta)] font-bold">
+                      <Sparkles className="w-4 h-4 shrink-0 text-[var(--color-terracotta)]" />
+                      <span>Free Delivery in Bulgaria Unlocked! (Orders over €49)</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--color-terracotta-deep)]">
+                      *Free delivery applies exclusively to shipments within Bulgaria.
+                    </p>
                   </div>
-                  <div className="w-full h-1.5 bg-[var(--color-desert-primary)]/40 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#3A2116] to-[#3A2116] transition-all duration-500"
-                      style={{ width: `${freeShippingProgress}%` }}
-                    />
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs text-[var(--color-terracotta-deep)] font-medium">
+                      <span>Add <strong>€{(49 - totals.subtotal).toFixed(2)}</strong> for <strong>Free Delivery in Bulgaria</strong> (orders over €49)</span>
+                      <span className="font-mono text-[var(--color-terracotta)] font-bold">
+                        {Math.min(100, Math.round((totals.subtotal / 49) * 100))}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[var(--color-desert-primary)]/40 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#D4AF37] to-[#8C6239] transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.round((totals.subtotal / 49) * 100))}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[var(--color-terracotta-deep)]/80">
+                      *Free delivery on orders over €49 is exclusively available for deliveries in Bulgaria.
+                    </p>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             </ScrollReveal>
 
             {/* Line Items Table */}

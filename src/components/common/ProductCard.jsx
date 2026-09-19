@@ -71,10 +71,15 @@ export default function ProductCard({ product, onCompare }) {
   const imageSrc = product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';
 
   // Tier color styling
+  const resolvedTier = product.tier ||
+    product.perfumeCategoryName ||
+    (product.perfumeCategory && (typeof product.perfumeCategory === 'object' ? product.perfumeCategory.name : product.perfumeCategory)) ||
+    (Number(product.perfumeCategoryId) === 1 ? 'Standard' : Number(product.perfumeCategoryId) === 2 ? 'Premium' : Number(product.perfumeCategoryId) === 3 ? 'Luxury' : (currentPrice >= 250 ? 'Luxury' : currentPrice >= 130 ? 'Premium' : 'Standard'));
+
   const tierBadges = {
     Luxury: 'bg-gradient-to-r from-amber-500 to-amber-700 text-black font-bold border border-amber-300 shadow-md',
     Premium: 'bg-gradient-to-r from-blue-900 to-indigo-900 text-blue-100 font-bold border border-blue-400/50 shadow-md',
-    Standard: 'bg-neutral-800 text-neutral-100 font-bold border border-neutral-600 shadow-md',
+    Standard: isDark ? 'bg-[#1F1914] text-[#F3E6D0] font-bold border border-[#D4AF37]/50 shadow-md' : 'bg-neutral-800 text-neutral-100 font-bold border border-neutral-600 shadow-md',
     Royal: isDark ? 'bg-[#180F08] text-[#F5EAD3] border border-[#D4AF37]/50' : 'bg-[#E2D5BC] text-[#704622] border border-[#A8853B]/40',
     Imperial: 'bg-gradient-to-r from-purple-900 to-purple-950 text-amber-200 font-bold border border-amber-400/50',
     Signature: 'bg-[#1A1813] text-[#F2D675] font-bold border border-[#D4AF37]/50',
@@ -98,12 +103,11 @@ export default function ProductCard({ product, onCompare }) {
             <span>-{discountPct}%</span>
           </span>
         ) : null}
-        {product.tier && (
-          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[product.tier] || tierBadges[String(product.tier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
-            {product.tier.toLowerCase().includes('tier') ? product.tier : `${product.tier} Tier`}
-          </span>
-        )}
-        {product.featured && !product.tier && (
+        {/* Tier Badge - Always visible on every card */}
+        <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[resolvedTier] || tierBadges[String(resolvedTier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
+          {resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}
+        </span>
+        {product.featured && (
           <span className="bg-[#D4AF37] text-black text-[10px] font-bold font-cinzel tracking-widest uppercase px-2 py-0.5 rounded-full shadow-md">
             {t('shop.featured') || 'Featured'}
           </span>
