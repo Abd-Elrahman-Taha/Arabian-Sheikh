@@ -107,7 +107,24 @@ export const ADMIN_PAYMENT_STATUSES = [
   'Refunded'
 ];
 
+/**
+ * Returns formatted order code matching Admin Dashboard display (e.g. #ORD-12345 or #12345)
+ * @param {object|string|number} order
+ * @returns {string}
+ */
+export function formatOrderCode(order) {
+  if (!order) return '';
+  const code = typeof order === 'object' ? (order.orderNumber || order.id || '') : String(order);
+  const clean = String(code).trim();
+  if (!clean) return '';
+  return clean.startsWith('#') ? clean : `#${clean}`;
+}
+
 export const orderService = {
+  formatOrderCode(order) {
+    return formatOrderCode(order);
+  },
+
   recordPlacedOrderId(id) {
     recordPlacedOrderId(id);
   },

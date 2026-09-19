@@ -144,7 +144,7 @@ export default function AccountOrders() {
                     to={`/account/orders/${o.id}`}
                     className="font-cinzel font-bold text-[#D4AF37] text-base sm:text-lg hover:underline cursor-pointer"
                   >
-                    {o.id}
+                    {orderService.formatOrderCode(o)}
                   </Link>
                   <span className="text-[#D8BE99] ml-3 font-mono text-xs sm:text-sm">{dateStr}</span>
                 </div>

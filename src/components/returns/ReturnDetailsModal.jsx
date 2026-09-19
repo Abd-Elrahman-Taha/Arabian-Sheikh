@@ -179,7 +179,7 @@ export default function ReturnDetailsModal({
             </div>
             {returnDetails?.orderNumber && (
               <p className="text-xs text-[#D8BE99] mt-0.5">
-                Associated Order: <span className="font-mono text-[#F3E6D0]">#{returnDetails.orderNumber}</span>
+                Associated Order: <span className="font-mono text-[#F3E6D0]">{returnDetails.orderNumber ? (String(returnDetails.orderNumber).startsWith('#') ? returnDetails.orderNumber : `#${returnDetails.orderNumber}`) : (String(returnDetails.orderId).startsWith('#') ? returnDetails.orderId : `#${returnDetails.orderId}`)}</span>
               </p>
             )}
           </div>

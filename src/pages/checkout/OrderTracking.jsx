@@ -235,7 +235,7 @@ export default function OrderTracking() {
               {t('tracking.title')}
             </h1>
             <p className="text-xs text-[#D8BE99] font-mono font-semibold mt-1">
-              {t('tracking.orderId', { id: orderId })}
+              {t('tracking.orderId', { id: orderService.formatOrderCode(order || orderId) })}
             </p>
           </div>
 

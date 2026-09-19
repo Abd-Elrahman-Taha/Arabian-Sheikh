@@ -231,7 +231,7 @@ export default function OrderDetail() {
             <span>Back to All Orders</span>
           </button>
           <h2 className="font-cinzel text-2xl font-bold uppercase text-[var(--color-earth-dark)]">
-            Order Reference: {order.orderNumber || order.id}
+            Order Reference: {orderService.formatOrderCode(order)}
           </h2>
           <div className="flex flex-wrap items-center gap-3 mt-1.5">
             <span className="text-xs text-[var(--color-terracotta-deep)] font-mono font-medium">
@@ -540,7 +540,7 @@ export default function OrderDetail() {
             </div>
 
             <p className="text-xs text-[#D8BE99] leading-relaxed">
-              Are you certain you wish to request cancellation for Order <strong className="text-[#F3E6D0]">#{order.orderNumber || order.id}</strong>? Once accepted, logistics and warehouse dispatch will be terminated.
+              Are you certain you wish to request cancellation for Order <strong className="text-[#F3E6D0]">{orderService.formatOrderCode(order)}</strong>? Once accepted, logistics and warehouse dispatch will be terminated.
             </p>
 
             <form onSubmit={handleConfirmCancel} className="space-y-4">

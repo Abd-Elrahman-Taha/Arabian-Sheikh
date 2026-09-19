@@ -108,7 +108,7 @@ export default function OrderConfirmation() {
           <div className="p-6 rounded-2xl bg-black/60 border border-[#D4AF37]/30 text-xs font-sans space-y-3 text-left shadow-inner">
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <span className="text-[#D8BE99] font-medium">{t('confirmation.orderNumber')}:</span>
-              <span className="font-cinzel font-bold text-sm text-[#F2D675]">{orderId}</span>
+              <span className="font-cinzel font-bold text-sm text-[#F2D675]">{orderService.formatOrderCode(order || orderId)}</span>
             </div>
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <span className="text-[#D8BE99] font-medium">Fulfillment Status:</span>

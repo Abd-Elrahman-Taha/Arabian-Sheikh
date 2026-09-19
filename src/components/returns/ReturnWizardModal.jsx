@@ -288,7 +288,7 @@ export default function ReturnWizardModal({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
-                Order #{orderNumber || orderId}
+                Order {orderNumber ? (String(orderNumber).startsWith('#') ? orderNumber : `#${orderNumber}`) : (String(orderId).startsWith('#') ? orderId : `#${orderId}`)}
               </span>
               <h2 className="font-cinzel text-lg font-bold uppercase tracking-wider text-[#F3E6D0]">
                 Request Return & Refund
@@ -370,7 +370,7 @@ export default function ReturnWizardModal({
                   Return Request Submitted
                 </h3>
                 <p className="text-xs text-[#D8BE99] max-w-md mx-auto leading-relaxed">
-                  Your return request for Order <strong className="text-[#F3E6D0]">#{orderNumber || orderId}</strong> has been received and is currently under review by our royal concierges.
+                  Your return request for Order <strong className="text-[#F3E6D0]">{orderNumber ? (String(orderNumber).startsWith('#') ? orderNumber : `#${orderNumber}`) : (String(orderId).startsWith('#') ? orderId : `#${orderId}`)}</strong> has been received and is currently under review by our royal concierges.
                 </p>
                 <div className="p-3 bg-black/40 border border-white/10 rounded-xl inline-block text-xs font-mono text-[#D4AF37]">
                   Return Reference ID: #{successReturn.id}

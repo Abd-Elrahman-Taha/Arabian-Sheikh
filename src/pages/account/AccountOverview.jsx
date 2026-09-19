@@ -196,7 +196,9 @@ export default function AccountOverview() {
                 >
                   <div>
                     <div className="flex items-center gap-3">
-                      <span className="font-cinzel font-bold text-base sm:text-lg text-[#F3E6D0]">{order.id}</span>
+                      <span className="font-cinzel font-bold text-base sm:text-lg text-[#F3E6D0]">
+                        {orderService.formatOrderCode(order)}
+                      </span>
                       <span className={`px-3 py-0.5 text-xs font-mono rounded-full border font-bold uppercase ${badgeClass}`}>
                         {formatOrderStatus(displayStatus)}
                       </span>
