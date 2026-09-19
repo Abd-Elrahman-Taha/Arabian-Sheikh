@@ -13,8 +13,17 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
 
   const isSignup = mode === 'signup';
 
+  const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const isConfigured = Boolean(
+    rawClientId &&
+    !rawClientId.includes('dummygoogleclientid') &&
+    rawClientId.trim().length > 0
+  );
+
   useEffect(() => {
-    // Dynamically load Google Identity Services script for Gmail suggestions / One-Tap
+    // Only load Google Identity Services if a valid Client ID is configured
+    if (!isConfigured) return;
+
     const scriptId = 'google-gsi-client';
     if (!document.getElementById(scriptId)) {
       const script = document.createElement('script');
@@ -29,7 +38,7 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
     } else if (window.google?.accounts?.id) {
       initGoogleServices();
     }
-  }, []);
+  }, [isConfigured]);
 
   const handleCredentialResponse = async (response) => {
     if (!response?.credential) return;
@@ -52,76 +61,57 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
   };
 
   const initGoogleServices = () => {
+    if (!isConfigured || !window.google?.accounts?.id) return;
     try {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '100000000000-dummygoogleclientid.apps.googleusercontent.com';
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true
-        });
+      window.google.accounts.id.initialize({
+        client_id: rawClientId.trim(),
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: true
+      });
 
-        // Trigger Google One-Tap suggestion prompt if available
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed()) {
-            // One-tap not displayed
-          }
-        });
-      }
+      // Prompt Google One-Tap if available
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed()) {
+          // One-tap not displayed (e.g. FedCM cooldown or user opt-out)
+        }
+      });
     } catch (e) {
-      // Non-blocking
+      console.warn('Google Identity Services initialization warning:', e);
     }
   };
 
   const handleClick = async () => {
     if (loading) return;
 
-    if (window.google?.accounts?.id) {
-      try {
-        window.google.accounts.id.prompt();
-        return;
-      } catch (e) {
-        // Fall through to direct handler
-      }
-    }
-
-    // Direct Gmail prompt fallback
-    const promptMessage = isSignup
-      ? (language === 'ar' ? 'أدخل بريد Gmail للتسجيل به:' : 'Enter your Gmail address to register with:')
-      : (language === 'ar' ? 'أدخل بريد Gmail لتسجيل الدخول:' : 'Enter your Gmail address to sign in with:');
-
-    const enteredEmail = window.prompt(promptMessage);
-    if (!enteredEmail || !enteredEmail.trim()) return;
-
-    const cleanEmail = enteredEmail.trim().toLowerCase();
-    if (!cleanEmail.includes('@')) {
-      error(language === 'ar' ? 'الرجاء إدخال بريد إلكتروني صالح' : 'Please enter a valid email address');
+    if (!isConfigured) {
+      error(
+        language === 'ar'
+          ? 'تسجيل الدخول عبر Google غير مهيأ بعد. يرجى ضبط VITE_GOOGLE_CLIENT_ID في متغيرات البيئة.'
+          : 'Google Sign-In is not configured yet. Please configure VITE_GOOGLE_CLIENT_ID in your environment variables.'
+      );
       return;
     }
 
-    setLoading(true);
-    try {
-      // Mock Google idToken or use email
-      const mockIdToken = btoa(JSON.stringify({ email: cleanEmail, name: cleanEmail.split('@')[0], sub: 'google-' + Date.now() }));
-      const user = await googleLogin(mockIdToken).catch(async () => {
-        return await login(cleanEmail, 'GoogleAuth123!').catch(() => {
-          throw new Error(language === 'ar' ? 'فشل تسجيل الدخول عبر Google. يرجى التحقق من الحساب.' : 'Google authentication could not be completed.');
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed()) {
+            const reason = notification.getNotDisplayedReason();
+            console.warn('Google One-Tap prompt not displayed:', reason);
+            if (reason === 'suppressed_by_user' || reason === 'opt_out_or_no_session') {
+              error(
+                language === 'ar'
+                  ? 'تم حظر نافذة Google بواسطة المتصفح أو لا يوجد حساب Google مسجل دخول.'
+                  : 'Google prompt was suppressed by browser or no active Google session was found.'
+              );
+            }
+          }
         });
-      });
-
-      success(`Welcome to Arabian Sheikh, ${user?.name || cleanEmail.split('@')[0]}.`);
-      if (onSuccess) {
-        onSuccess(user);
-      } else if (returnPath && returnPath !== '/login' && returnPath !== '/account') {
-        navigate(returnPath);
-      } else {
-        navigate('/');
+      } catch (e) {
+        console.warn('Error prompting Google Sign-In:', e);
       }
-    } catch (err) {
-      error(err.message || 'Google authentication could not be completed.');
-    } finally {
-      setLoading(false);
     }
   };
 
