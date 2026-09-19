@@ -72,11 +72,11 @@ export default function ProductCard({ product, onCompare }) {
   const imageSrc = product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';
 
   // Dynamic Tier Resolution from Backend / perfumeCategoryService
-  const resolvedTier = perfumeCategoryService.getTierForProduct(product) ||
-    product.tier ||
+  const resolvedTier = product.tier ||
     product.perfumeCategoryName ||
     (product.perfumeCategory && (typeof product.perfumeCategory === 'object' ? product.perfumeCategory.name : product.perfumeCategory)) ||
-    null;
+    perfumeCategoryService.getTierForProduct(product) ||
+    (Number(product.perfumeCategoryId) === 1 ? 'Standard' : Number(product.perfumeCategoryId) === 2 ? 'Premium' : Number(product.perfumeCategoryId) === 3 ? 'Luxury' : (currentPrice >= 250 ? 'Luxury' : currentPrice >= 130 ? 'Premium' : 'Standard'));
 
   const tierBadges = {
     Luxury: 'bg-gradient-to-r from-amber-500 to-amber-700 text-black font-bold border border-amber-300 shadow-md',
@@ -105,12 +105,10 @@ export default function ProductCard({ product, onCompare }) {
             <span>-{discountPct}%</span>
           </span>
         ) : null}
-        {/* Tier Badge - Dynamically rendered if product has a tier */}
-        {resolvedTier && (
-          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[resolvedTier] || tierBadges[String(resolvedTier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
-            {resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}
-          </span>
-        )}
+        {/* Tier Badge - Always visible on every card on all devices */}
+        <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[resolvedTier] || tierBadges[String(resolvedTier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
+          {resolvedTier && resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier || 'Standard'} Tier`}
+        </span>
         {product.featured && (
           <span className="bg-[#D4AF37] text-black text-[10px] font-bold font-cinzel tracking-widest uppercase px-2 py-0.5 rounded-full shadow-md">
             {t('shop.featured') || 'Featured'}

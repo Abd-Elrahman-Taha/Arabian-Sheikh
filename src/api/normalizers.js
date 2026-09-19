@@ -93,15 +93,33 @@ export function normalizeProduct(raw) {
   }
 
   // Derive tier dynamically from backend perfume categories / tiers
-  let derivedTier = perfumeCategoryService.getTierForProduct({
-    ...p,
-    price: finalPrice,
-    categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
-    category: categoryName,
-    perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
-    perfumeCategoryName: perfumeCategoryName,
-    tier: p.tier
-  }) || (perfumeCategoryName ? String(perfumeCategoryName).trim() : null) || (p.tier ? String(p.tier).trim() : null);
+  let derivedTier = (perfumeCategoryName ? String(perfumeCategoryName).trim() : null)
+    || (p.perfumeCategory && typeof p.perfumeCategory === 'object' ? String(p.perfumeCategory.name).trim() : null)
+    || (p.tier ? String(p.tier).trim() : null)
+    || null;
+
+  if (!derivedTier) {
+    derivedTier = perfumeCategoryService.getTierForProduct({
+      ...p,
+      price: finalPrice,
+      categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
+      category: categoryName,
+      perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
+      perfumeCategoryName: perfumeCategoryName,
+      tier: p.tier
+    });
+  }
+
+  // Ensure EVERY product on EVERY device has a valid resolved tier
+  if (!derivedTier) {
+    const pcid = Number(p.perfumeCategoryId || (p.perfumeCategory && p.perfumeCategory.id));
+    if (pcid === 1) derivedTier = 'Standard';
+    else if (pcid === 2) derivedTier = 'Premium';
+    else if (pcid === 3) derivedTier = 'Luxury';
+    else if (finalPrice >= 250) derivedTier = 'Luxury';
+    else if (finalPrice >= 130) derivedTier = 'Premium';
+    else derivedTier = 'Standard';
+  }
 
   const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || finalPrice) : null);
   const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > finalPrice));
