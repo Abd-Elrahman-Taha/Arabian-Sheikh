@@ -807,9 +807,11 @@ export default function CheckoutPage() {
       const msg = err?.message || 'Failed to place order. Please try again.';
       if (
         err?.code === 'INVALID_SHIPPING_METHOD' ||
+        err?.code === 'SHIPPING_QUOTE_MISMATCH' ||
+        err?.code === 'QUOTE_MISMATCH' ||
         msg.includes('INVALID_SHIPPING_METHOD') ||
-        msg.includes('Quote no longer matches') ||
-        err?.code === 'QUOTE_MISMATCH'
+        msg.includes('SHIPPING_QUOTE_MISMATCH') ||
+        msg.includes('Quote no longer matches')
       ) {
         setQuotesError('Shipping quote expired or no longer matches order parameters. Please re-select your delivery method.');
         await fetchQuotesForAddress(addressId, cart?.discountCode);
@@ -889,9 +891,11 @@ export default function CheckoutPage() {
       const msg = err?.message || 'Failed to prepare payment. Please try again.';
       if (
         err?.code === 'INVALID_SHIPPING_METHOD' ||
+        err?.code === 'SHIPPING_QUOTE_MISMATCH' ||
+        err?.code === 'QUOTE_MISMATCH' ||
         msg.includes('INVALID_SHIPPING_METHOD') ||
-        msg.includes('Quote no longer matches') ||
-        err?.code === 'QUOTE_MISMATCH'
+        msg.includes('SHIPPING_QUOTE_MISMATCH') ||
+        msg.includes('Quote no longer matches')
       ) {
         setQuotesError('Shipping quote expired or no longer matches order parameters. Please re-select your delivery method.');
         await fetchQuotesForAddress(addressId, cart?.discountCode);

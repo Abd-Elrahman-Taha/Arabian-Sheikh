@@ -30,12 +30,7 @@ export const shippingApi = {
     }
 
     const requestBody = {
-      addressId: addrId,
-      ...(payload.countryCode ? { countryCode: String(payload.countryCode).trim() } : {}),
-      ...(payload.postalCode ? { postalCode: String(payload.postalCode).trim() } : {}),
-      ...(payload.city ? { city: String(payload.city).trim() } : {}),
-      ...(Array.isArray(payload.items) && payload.items.length > 0 ? { items: payload.items } : {}),
-      ...(payload.couponCode ? { couponCode: String(payload.couponCode).trim() } : {})
+      addressId: addrId
     };
 
     // Call official backend endpoint with optional AbortSignal

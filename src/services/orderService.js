@@ -459,12 +459,7 @@ export const orderService = {
           throw new Error('No valid address found for this customer. Please add a shipping address first.');
         }
 
-        // 2. Ensure items exist in server-side cart
-        if (Array.isArray(orderPayload.items) && orderPayload.items.length > 0) {
-          await cartApi.syncCart(orderPayload.items);
-        }
-
-        // 3. Strict guards before calling POST /api/Orders
+        // 2. Strict guards before calling POST /api/Orders
         if (!numericAddressId) {
           throw new Error('A valid shipping address is required.');
         }
@@ -484,13 +479,52 @@ export const orderService = {
 
         const orderKey = orderPayload.idempotencyKey || newOrderKey();
 
-        apiOrder = await orderApi.createOrder({
-          addressId: numericAddressId,
-          shippingMethodId,
-          quoteId: rawQuoteId.trim(),
-          paymentMethod: orderPayload.paymentMethod || 'cod',
-          couponCode: orderPayload.discountCode || orderPayload.couponCode || null
-        }, orderKey);
+        try {
+          apiOrder = await orderApi.createOrder({
+            addressId: numericAddressId,
+            shippingMethodId,
+            quoteId: rawQuoteId.trim(),
+            paymentMethod: orderPayload.paymentMethod || 'cod',
+            couponCode: orderPayload.discountCode || orderPayload.couponCode || null
+          }, orderKey);
+        } catch (firstErr) {
+          const errMsg = firstErr?.message || '';
+          const isQuoteMismatch =
+            firstErr?.code === 'SHIPPING_QUOTE_MISMATCH' ||
+            firstErr?.code === 'QUOTE_MISMATCH' ||
+            errMsg.includes('Quote no longer matches') ||
+            errMsg.includes('SHIPPING_QUOTE_MISMATCH') ||
+            firstErr?.status === 422;
+
+          if (isQuoteMismatch) {
+            console.warn('[orderService] Quote mismatch detected, auto-refreshing quote and retrying...', firstErr);
+            try {
+              const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId });
+              const freshOptions = freshQuotes?.options || [];
+              const matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === shippingMethodId) || freshOptions[0];
+              const freshQuoteId = matchedOption?.quoteId || freshQuotes?.quoteId;
+
+              if (freshQuoteId) {
+                const retryMethodId = Number(matchedOption?.shippingMethodId || matchedOption?.id) || shippingMethodId;
+                console.log('[orderService] Retrying order with fresh quote:', { freshQuoteId, retryMethodId });
+                apiOrder = await orderApi.createOrder({
+                  addressId: numericAddressId,
+                  shippingMethodId: retryMethodId,
+                  quoteId: freshQuoteId.trim(),
+                  paymentMethod: orderPayload.paymentMethod || 'cod',
+                  couponCode: orderPayload.discountCode || orderPayload.couponCode || null
+                }, newOrderKey());
+              } else {
+                throw firstErr;
+              }
+            } catch (retryErr) {
+              console.error('[orderService] Retry with fresh quote failed:', retryErr);
+              throw retryErr;
+            }
+          } else {
+            throw firstErr;
+          }
+        }
       } catch (e) {
         console.error('Real API create order error:', e);
         throw e; // Fail fast so caller receives the real backend error instead of phantom mock
