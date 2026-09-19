@@ -19,7 +19,7 @@ export const userService = {
   getWishlist() {
     if (typeof window === 'undefined') return [];
     const data = localStorage.getItem(WISHLIST_STORAGE_KEY);
-    if (!data) return ['as-oud-royal-01', 'as-amber-malaki-02'];
+    if (!data) return [];
     try {
       return JSON.parse(data);
     } catch {

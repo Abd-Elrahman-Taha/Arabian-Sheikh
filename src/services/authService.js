@@ -1,4 +1,3 @@
-import { INITIAL_USERS } from './mockData';
 import { authApi } from '../api/auth.api';
 import { apiClient, tokenManager } from '../api/client';
 import { liveCloudSync } from './liveCloudSync';
@@ -9,15 +8,12 @@ const CURRENT_USER_KEY = 'arabian_sheikh_current_user';
 function loadUsers() {
   const data = typeof window !== 'undefined' ? localStorage.getItem(USERS_STORAGE_KEY) : null;
   if (!data) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
-    }
-    return INITIAL_USERS;
+    return [];
   }
   try {
-    return JSON.parse(data);
+    return JSON.parse(data) || [];
   } catch {
-    return INITIAL_USERS;
+    return [];
   }
 }
 

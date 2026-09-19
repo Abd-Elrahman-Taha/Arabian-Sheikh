@@ -1,4 +1,3 @@
-import { INITIAL_ORDERS } from './mockData';
 import { orderApi } from '../api/order.api';
 import { shippingApi } from '../api/shipping.api';
 import { checkoutApi } from '../api/checkout.api';
@@ -18,12 +17,12 @@ function loadOrders() {
   if (data) {
     try {
       const parsed = JSON.parse(data);
-      base = Array.isArray(parsed) && parsed.length > 0 ? parsed : (inMemoryOrders || [...INITIAL_ORDERS]);
+      base = Array.isArray(parsed) ? parsed : (inMemoryOrders || []);
     } catch {
-      base = inMemoryOrders || [...INITIAL_ORDERS];
+      base = inMemoryOrders || [];
     }
   } else {
-    base = inMemoryOrders || [...INITIAL_ORDERS];
+    base = inMemoryOrders || [];
   }
 
   // Merge live cloud orders

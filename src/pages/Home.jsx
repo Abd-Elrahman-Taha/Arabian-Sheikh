@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, Link } from '../router/RouterContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { productService } from '../services/productService';
@@ -64,62 +64,92 @@ export default function Home() {
   const firstCollectionRef = useRef(null);
   const flaconShowcaseRef = useRef(null);
 
-  const heroFlacons = [
-    {
-      id: 'as-luxury-arabian-gold',
-      slug: 'arabian-gold-luxury',
-      tier: 'Luxury',
-      name: 'Arabian Gold Sovereign',
-      arabicName: 'ذهب عربي سيادي',
-      spanishName: 'Arabian Gold Sovereign',
-      bulgarianName: 'Арабско Злато',
-      price: 55,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'Liquid 24K gold distilled with precious Assam agarwood, sparkling diamond accord, and royal amber.',
-      spanishTagline: 'Oro líquido de 24K con maderas preciosas de Assam y ámbar real.',
-      bulgarianTagline: 'Течно 24К злато, дестилирано със скъпоценен уд от Асам, искрящ диамантен акорд и кралски кехлибар.',
-      arabicTagline: 'ذهب خالص عيار 24 قيراط مقطر مع دهن عود أسامي عتيق وعنبر ملكي فاخر.',
-      notes: 'Kashmiri Saffron • Wild Assamese Oud • Ambergris • Taif Royal Rose',
-      color: '#D4AF37',
-      image: '/products/black_diamond_flacon.webp'
-    },
-    {
-      id: 'as-royal-millionaire',
-      slug: 'millionaire-royal',
-      tier: 'Royal',
-      name: 'Millionaire',
-      arabicName: 'مليونير',
-      spanishName: 'Millionaire',
-      bulgarianName: 'Милионер',
-      price: 40,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'Dark charisma, power, and magnetic sophistication with noble woods and spiced warmth.',
-      spanishTagline: 'Carisma oscuro, poder y sofisticación magnética con maderas nobles.',
-      bulgarianTagline: 'Тъмна харизма, мощ и магнетично излъчване с благородна дървесина и подправки.',
-      arabicTagline: 'كاريزما طاغية وقوة ملكية مع أرقى الأخشاب والجلود والتوابل النبيلة.',
-      notes: 'Cardamom Infusion • Smoky Leather Accord • Aged Sandalwood • Warm Amber',
-      color: '#F2D675',
-      image: '/products/millionaire_flacon.webp'
-    },
-    {
-      id: 'as-classic-ana-sukkar',
-      slug: 'ana-sukkar-classic',
-      tier: 'Classic',
-      name: 'Ana Sukkar',
-      arabicName: 'أنا سكر',
-      spanishName: 'Ana Sukkar',
-      bulgarianName: 'Ана Сукар',
-      price: 30,
-      size: '60 ml / 2.0 fl oz',
-      tagline: 'Velvety sweetness, delicate petals, spun sugar, and comforting Madagascar vanilla.',
-      spanishTagline: 'Dulzura aterciopelada, pétalos delicados, azúcar hilado y vainilla de Madagascar.',
-      bulgarianTagline: 'Кадифена сладост, нежни венчелистчета, захарен памук и ванилия от Мадагаскар.',
-      arabicTagline: 'حلاوة مخملية آسرة مع غزل البنات وزهر البرتقال وعبير فانيليا مدغشقر.',
-      notes: 'Spun Sugar Nectar • Orange Blossom Petals • Gourmet Vanilla Cream • White Musk',
-      color: '#ECC557',
-      image: '/products/ana_sukkar_flacon.webp'
+  const heroFlacons = useMemo(() => {
+    const flaconImages = [
+      '/products/black_diamond_flacon.webp',
+      '/products/millionaire_flacon.webp',
+      '/products/ana_sukkar_flacon.webp'
+    ];
+    if (!allProducts || allProducts.length === 0) {
+      return [
+        {
+          id: 1,
+          slug: 'sauvage',
+          tier: 'Luxury',
+          name: 'Arabian Gold Sovereign',
+          arabicName: 'ذهب عربي سيادي',
+          spanishName: 'Arabian Gold Sovereign',
+          bulgarianName: 'Арабско Злато',
+          price: 55,
+          size: '60 ml / 2.0 fl oz',
+          tagline: 'Liquid 24K gold distilled with precious Assam agarwood, sparkling diamond accord, and royal amber.',
+          spanishTagline: 'Oro líquido de 24K con maderas preciosas de Assam y ámbar real.',
+          bulgarianTagline: 'Течно 24К злато, дестилирано със скъпоценен уд от Асам, искрящ диамантен акорд и кралски кехлибар.',
+          arabicTagline: 'ذهب خالص عيار 24 قيراط مقطر مع دهن عود أسامي عتيق وعنبر ملكي فاخر.',
+          notes: 'Kashmiri Saffron • Wild Assamese Oud • Ambergris • Taif Royal Rose',
+          color: '#D4AF37',
+          image: '/products/black_diamond_flacon.webp'
+        },
+        {
+          id: 2,
+          slug: 'coco-mademoiselle',
+          tier: 'Royal',
+          name: 'Millionaire',
+          arabicName: 'مليونير',
+          spanishName: 'Millionaire',
+          bulgarianName: 'Милионер',
+          price: 40,
+          size: '60 ml / 2.0 fl oz',
+          tagline: 'Dark charisma, power, and magnetic sophistication with noble woods and spiced warmth.',
+          spanishTagline: 'Carisma oscuro, poder y sofisticación magnética con maderas nobles.',
+          bulgarianTagline: 'Тъмна харизма, мощ и магнетично излъчване с благородна дървесина и подправки.',
+          arabicTagline: 'كاريزما طاغية وقوة ملكية مع أرقى الأخشاب والجلود والتوابل النبيلة.',
+          notes: 'Cardamom Infusion • Smoky Leather Accord • Aged Sandalwood • Warm Amber',
+          color: '#F2D675',
+          image: '/products/millionaire_flacon.webp'
+        },
+        {
+          id: 3,
+          slug: 'oud-wood',
+          tier: 'Classic',
+          name: 'Ana Sukkar',
+          arabicName: 'أنا سكر',
+          spanishName: 'Ana Sukkar',
+          bulgarianName: 'Ана Сукар',
+          price: 30,
+          size: '60 ml / 2.0 fl oz',
+          tagline: 'Velvety sweetness, delicate petals, spun sugar, and comforting Madagascar vanilla.',
+          spanishTagline: 'Dulzura aterciopelada, pétalos delicados, azúcar hilado y vainilla de Madagascar.',
+          bulgarianTagline: 'Кадифена сладост, нежни венчелистчета, захарен памук и ванилия от Мадагаскар.',
+          arabicTagline: 'حلاوة مخملية آسرة مع غزل البنات وزهر البرتقال وعبير فانيليا مدغشقر.',
+          notes: 'Spun Sugar Nectar • Orange Blossom Petals • Gourmet Vanilla Cream • White Musk',
+          color: '#ECC557',
+          image: '/products/ana_sukkar_flacon.webp'
+        }
+      ];
     }
-  ];
+    return allProducts.slice(0, 3).map((p, idx) => ({
+      ...p,
+      id: p.id,
+      slug: p.slug || String(p.id),
+      tier: p.tier || (idx === 0 ? 'Luxury' : idx === 1 ? 'Royal' : 'Classic'),
+      name: p.name || `Creation ${idx + 1}`,
+      arabicName: p.arabicName || p.name,
+      spanishName: p.spanishName || p.name,
+      bulgarianName: p.bulgarianName || p.name,
+      price: p.price || 0,
+      size: p.size || '60 ml / 2.0 fl oz',
+      tagline: p.tagline || p.description || (idx === 0 ? 'Liquid 24K gold distilled with precious Assam agarwood and royal amber.' : idx === 1 ? 'Dark charisma, power, and magnetic sophistication with noble woods.' : 'Velvety sweetness, delicate petals, and comforting Madagascar vanilla.'),
+      spanishTagline: p.spanishTagline || p.description || '',
+      bulgarianTagline: p.bulgarianTagline || p.description || '',
+      arabicTagline: p.arabicTagline || p.description || '',
+      notes: Array.isArray(p.topNotes) && p.topNotes.length > 0 
+        ? p.topNotes.join(' • ') 
+        : (p.notes || (Array.isArray(p.heartNotes) ? p.heartNotes.join(' • ') : 'Kashmiri Saffron • Wild Oud • Ambergris')),
+      color: p.color || (idx === 0 ? '#D4AF37' : idx === 1 ? '#F2D675' : '#ECC557'),
+      image: (p.imageUrl && !p.imageUrl.includes('luxury_designs/07_arabian_gold')) ? p.imageUrl : flaconImages[idx % flaconImages.length]
+    }));
+  }, [allProducts]);
 
   const stats = [
     {

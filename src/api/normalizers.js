@@ -72,6 +72,24 @@ export function normalizeProduct(raw) {
   const subcategoryName = typeof p.subcategory === 'object' ? p.subcategory?.name : (p.subcategoryName || p.subcategory || null);
   const perfumeCategoryName = typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : (p.perfumeCategoryName || p.perfumeCategory || null);
 
+  // Price coming directly from backend API endpoints (zero hardcoded values):
+  // 1. Direct p.price from backend
+  // 2. p.perfumeCategory.price from backend object
+  // 3. p.perfumeCategoryPrice
+  // 4. p.tierPrice
+  let finalPrice = 0;
+  if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price)) && Number(p.price) > 0) {
+    finalPrice = Number(p.price);
+  } else if (p.perfumeCategory && p.perfumeCategory.price !== undefined && !isNaN(Number(p.perfumeCategory.price))) {
+    finalPrice = Number(p.perfumeCategory.price);
+  } else if (p.perfumeCategoryPrice !== undefined && !isNaN(Number(p.perfumeCategoryPrice))) {
+    finalPrice = Number(p.perfumeCategoryPrice);
+  } else if (p.tierPrice !== undefined && !isNaN(Number(p.tierPrice))) {
+    finalPrice = Number(p.tierPrice);
+  } else if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price))) {
+    finalPrice = Number(p.price);
+  }
+
   // Derive tier dynamically from backend perfumeCategory object, perfumeCategoryName, perfumeCategoryId, p.tier, or price
   let derivedTier = null;
   if (perfumeCategoryName) {
@@ -94,24 +112,6 @@ export function normalizeProduct(raw) {
     } else {
       derivedTier = 'Standard';
     }
-  }
-
-  // Price coming directly from backend API endpoints (zero hardcoded values):
-  // 1. Direct p.price from backend
-  // 2. p.perfumeCategory.price from backend object
-  // 3. p.perfumeCategoryPrice
-  // 4. p.tierPrice
-  let finalPrice = 0;
-  if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price)) && Number(p.price) > 0) {
-    finalPrice = Number(p.price);
-  } else if (p.perfumeCategory && p.perfumeCategory.price !== undefined && !isNaN(Number(p.perfumeCategory.price))) {
-    finalPrice = Number(p.perfumeCategory.price);
-  } else if (p.perfumeCategoryPrice !== undefined && !isNaN(Number(p.perfumeCategoryPrice))) {
-    finalPrice = Number(p.perfumeCategoryPrice);
-  } else if (p.tierPrice !== undefined && !isNaN(Number(p.tierPrice))) {
-    finalPrice = Number(p.tierPrice);
-  } else if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price))) {
-    finalPrice = Number(p.price);
   }
 
   const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || finalPrice) : null);
