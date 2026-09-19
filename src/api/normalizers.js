@@ -1,3 +1,5 @@
+import { perfumeCategoryService } from '../services/perfumeCategoryService';
+
 /**
  * Arabian Sheikh - Data Transfer Object (DTO) Normalizers
  * 
@@ -90,29 +92,16 @@ export function normalizeProduct(raw) {
     finalPrice = Number(p.price);
   }
 
-  // Derive tier dynamically from backend perfumeCategory object, perfumeCategoryName, perfumeCategoryId, p.tier, or price
-  let derivedTier = null;
-  if (perfumeCategoryName) {
-    derivedTier = String(perfumeCategoryName).trim();
-  } else if (p.tier) {
-    derivedTier = String(p.tier).trim();
-  } else if (p.perfumeCategoryId || (p.perfumeCategory && p.perfumeCategory.id)) {
-    const pcid = Number(p.perfumeCategoryId || p.perfumeCategory.id);
-    if (pcid === 1) derivedTier = 'Standard';
-    else if (pcid === 2) derivedTier = 'Premium';
-    else if (pcid === 3) derivedTier = 'Luxury';
-  }
-
-  // Ensure every product has a valid resolved tier (Standard, Premium, Luxury, etc.)
-  if (!derivedTier) {
-    if (finalPrice >= 250) {
-      derivedTier = 'Luxury';
-    } else if (finalPrice >= 130) {
-      derivedTier = 'Premium';
-    } else {
-      derivedTier = 'Standard';
-    }
-  }
+  // Derive tier dynamically from backend perfume categories / tiers
+  let derivedTier = perfumeCategoryService.getTierForProduct({
+    ...p,
+    price: finalPrice,
+    categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
+    category: categoryName,
+    perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
+    perfumeCategoryName: perfumeCategoryName,
+    tier: p.tier
+  }) || (perfumeCategoryName ? String(perfumeCategoryName).trim() : null) || (p.tier ? String(p.tier).trim() : null);
 
   const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || finalPrice) : null);
   const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > finalPrice));

@@ -1,13 +1,37 @@
 import { perfumeCategoryApi } from '../api/perfumeCategory.api';
 import { tokenManager } from '../api/client';
 
+const TIERS_STORAGE_KEY = 'arabian_sheikh_perfume_tiers';
+
 const DEFAULT_TIERS = [
   { id: 1, name: 'Standard', price: 100, notes: 'Standard Perfume Tier' },
   { id: 2, name: 'Premium', price: 150, notes: 'Premium Perfume Tier' },
   { id: 3, name: 'Luxury', price: 300, notes: 'Luxury Perfume Tier' }
 ];
 
-let cachedTiers = [...DEFAULT_TIERS];
+function loadStoredTiers() {
+  if (typeof window === 'undefined') return DEFAULT_TIERS;
+  try {
+    const raw = localStorage.getItem(TIERS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (_) {}
+  return DEFAULT_TIERS;
+}
+
+function saveStoredTiers(tiers) {
+  if (typeof window === 'undefined' || !Array.isArray(tiers)) return;
+  try {
+    localStorage.setItem(TIERS_STORAGE_KEY, JSON.stringify(tiers));
+    window.dispatchEvent(new CustomEvent('arabian_sheikh_tiers_updated', { detail: tiers }));
+  } catch (_) {}
+}
+
+let cachedTiers = loadStoredTiers();
 
 export const perfumeCategoryService = {
   handleApiError(err, fallbackMessage = 'An unexpected error occurred.') {
@@ -41,12 +65,70 @@ export const perfumeCategoryService = {
   },
 
   getCachedTiers() {
+    if (typeof window !== 'undefined') {
+      const stored = loadStoredTiers();
+      if (stored && stored.length > 0) {
+        cachedTiers = stored;
+      }
+    }
     return cachedTiers;
   },
 
   getTierById(id) {
     if (!id) return null;
-    return cachedTiers.find(t => Number(t.id) === Number(id)) || null;
+    const tiers = this.getCachedTiers();
+    return tiers.find(t => Number(t.id) === Number(id)) || null;
+  },
+
+  getTierByName(name) {
+    if (!name) return null;
+    const cleanName = String(name).trim().toLowerCase();
+    const tiers = this.getCachedTiers();
+    return tiers.find(t => t.name?.toLowerCase() === cleanName) || null;
+  },
+
+  getTierByPrice(price) {
+    if (price === undefined || price === null || isNaN(Number(price))) return null;
+    const numPrice = Number(price);
+    const tiers = this.getCachedTiers();
+    return tiers.find(t => Number(t.price) === numPrice) || null;
+  },
+
+  getTierForProduct(product) {
+    if (!product) return null;
+    const tiers = this.getCachedTiers();
+
+    // 1. Check if product has an explicit perfumeCategoryId
+    const pcid = product.perfumeCategoryId || (product.perfumeCategory && typeof product.perfumeCategory === 'object' ? product.perfumeCategory.id : null);
+    if (pcid) {
+      const match = tiers.find(t => Number(t.id) === Number(pcid));
+      if (match) return match.name;
+    }
+
+    // 2. Check if product has perfumeCategoryName or perfumeCategory object name
+    const catName = product.perfumeCategoryName || (product.perfumeCategory && typeof product.perfumeCategory === 'object' ? product.perfumeCategory.name : (typeof product.perfumeCategory === 'string' ? product.perfumeCategory : null));
+    if (catName && typeof catName === 'string') {
+      const match = tiers.find(t => t.name.toLowerCase() === catName.trim().toLowerCase());
+      if (match) return match.name;
+      return catName.trim();
+    }
+
+    // 3. Check if product has product.tier
+    if (product.tier && typeof product.tier === 'string' && product.tier.trim()) {
+      const match = tiers.find(t => t.name.toLowerCase() === product.tier.trim().toLowerCase());
+      if (match) return match.name;
+      return product.tier.trim();
+    }
+
+    // 4. Match against tier prices if it's a perfume
+    const isPerfume = Number(product.categoryId) === 1 || product.category === 'perfume' || product.category === 'perfumes' || (product.category && typeof product.category === 'object' && Number(product.category.id) === 1);
+    const price = Number(product.price);
+    if (isPerfume && !isNaN(price) && price > 0) {
+      const match = tiers.find(t => Number(t.price) === price);
+      if (match) return match.name;
+    }
+
+    return null;
   },
 
   getTierPrice(id) {
@@ -55,7 +137,7 @@ export const perfumeCategoryService = {
   },
 
   getStorePerfumeCategories() {
-    return { items: cachedTiers };
+    return { items: this.getCachedTiers() };
   },
 
   async getAdminPerfumeCategories(params = {}) {
@@ -78,6 +160,7 @@ export const perfumeCategoryService = {
       const items = response?.items || (Array.isArray(response) ? response : []);
       if (items.length > 0) {
         cachedTiers = items;
+        saveStoredTiers(cachedTiers);
       }
       return {
         items,
@@ -122,11 +205,16 @@ export const perfumeCategoryService = {
     }
 
     try {
-      return await perfumeCategoryApi.adminCreatePerfumeCategory({
+      const created = await perfumeCategoryApi.adminCreatePerfumeCategory({
         name: payload.name.trim(),
         price,
         notes: payload.notes ? payload.notes.trim() : null
       });
+      if (created) {
+        cachedTiers = [...cachedTiers.filter(t => t.id !== created.id), created];
+        saveStoredTiers(cachedTiers);
+      }
+      return created;
     } catch (err) {
       this.handleApiError(err, 'Failed to create perfume pricing tier.');
     }
@@ -142,11 +230,15 @@ export const perfumeCategoryService = {
     }
 
     try {
-      return await perfumeCategoryApi.adminUpdatePerfumeCategory(id, {
+      const updated = await perfumeCategoryApi.adminUpdatePerfumeCategory(id, {
         name: payload.name.trim(),
         price,
         notes: payload.notes ? payload.notes.trim() : null
       });
+      const updatedItem = updated || { id, name: payload.name.trim(), price, notes: payload.notes ? payload.notes.trim() : null };
+      cachedTiers = cachedTiers.map(t => Number(t.id) === Number(id) ? { ...t, ...updatedItem } : t);
+      saveStoredTiers(cachedTiers);
+      return updatedItem;
     } catch (err) {
       this.handleApiError(err, 'Failed to update perfume pricing tier.');
     }
@@ -154,7 +246,10 @@ export const perfumeCategoryService = {
 
   async deletePerfumeCategory(id) {
     try {
-      return await perfumeCategoryApi.adminDeletePerfumeCategory(id);
+      const res = await perfumeCategoryApi.adminDeletePerfumeCategory(id);
+      cachedTiers = cachedTiers.filter(t => Number(t.id) !== Number(id));
+      saveStoredTiers(cachedTiers);
+      return res;
     } catch (err) {
       this.handleApiError(err, 'Failed to delete perfume pricing tier.');
     }

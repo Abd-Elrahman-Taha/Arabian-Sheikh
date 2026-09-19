@@ -14,6 +14,7 @@ import {
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BlurText from '../common/BlurText';
+import { perfumeCategoryService } from '../../services/perfumeCategoryService';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -267,9 +268,11 @@ export default function HorizontalCollectionShowcase({
             const topNote = product.notes?.top?.[0] || product.topNotes?.[0] || 'Rare Resins';
             const heartNote = product.notes?.heart?.[0] || product.heartNotes?.[0] || 'Taif Rose';
 
-            const resolvedTier = product.tier ||
+            const resolvedTier = perfumeCategoryService.getTierForProduct(product) ||
+              product.tier ||
               product.perfumeCategoryName ||
-              (Number(product.perfumeCategoryId) === 1 ? 'Standard' : Number(product.perfumeCategoryId) === 2 ? 'Premium' : Number(product.perfumeCategoryId) === 3 ? 'Luxury' : (product.price >= 250 ? 'Luxury' : product.price >= 130 ? 'Premium' : 'Standard'));
+              (product.perfumeCategory && (typeof product.perfumeCategory === 'object' ? product.perfumeCategory.name : product.perfumeCategory)) ||
+              null;
 
             return (
               <div
@@ -284,9 +287,11 @@ export default function HorizontalCollectionShowcase({
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-4">
-                    <span className="px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-sm">
-                      {resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}
-                    </span>
+                    {resolvedTier ? (
+                      <span className="px-3 py-1 rounded-full text-[11px] font-cinzel font-bold uppercase tracking-wider bg-[#D4AF37] text-black shadow-sm">
+                        {resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}
+                      </span>
+                    ) : <span />}
 
                     <button
                       onClick={(e) => {

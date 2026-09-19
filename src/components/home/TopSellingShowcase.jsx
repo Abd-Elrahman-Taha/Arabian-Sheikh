@@ -15,6 +15,7 @@ import {
   Crown
 } from 'lucide-react';
 import BlurText from '../common/BlurText';
+import { perfumeCategoryService } from '../../services/perfumeCategoryService';
 
 export default function TopSellingShowcase({ products = [] }) {
   const { navigate } = useRouter();
@@ -150,9 +151,11 @@ export default function TopSellingShowcase({ products = [] }) {
           {displayProducts.map((product, idx) => {
             const isSaved = isInWishlist(product.id);
             const imageSrc = product.image || product.originalImage || product.images?.[0] || product.cutoutImage || '/products/luxury_designs/07_arabian_gold.webp';
-            const resolvedTier = product.tier ||
+            const resolvedTier = perfumeCategoryService.getTierForProduct(product) ||
+              product.tier ||
               product.perfumeCategoryName ||
-              (Number(product.perfumeCategoryId) === 1 ? 'Standard' : Number(product.perfumeCategoryId) === 2 ? 'Premium' : Number(product.perfumeCategoryId) === 3 ? 'Luxury' : (product.price >= 250 ? 'Luxury' : product.price >= 130 ? 'Premium' : 'Standard'));
+              (product.perfumeCategory && (typeof product.perfumeCategory === 'object' ? product.perfumeCategory.name : product.perfumeCategory)) ||
+              null;
 
             return (
               <div
@@ -165,10 +168,12 @@ export default function TopSellingShowcase({ products = [] }) {
               >
                 {/* Top Badges */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D4AF37] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider shadow-sm">
-                    <Crown className="w-3 h-3" />
-                    <span>{resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}</span>
-                  </span>
+                  {resolvedTier ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D4AF37] text-black font-cinzel font-bold text-[10px] uppercase tracking-wider shadow-sm">
+                      <Crown className="w-3 h-3" />
+                      <span>{resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}</span>
+                    </span>
+                  ) : <span />}
 
                   <button
                     onClick={() => toggleWishlist(product)}
