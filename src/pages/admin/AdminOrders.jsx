@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../../i18n/LanguageContext';
 import {
   orderService,
@@ -85,6 +86,20 @@ export default function AdminOrders() {
 
   const [retryingOrderId, setRetryingOrderId] = useState(null);
   const [copiedText, setCopiedText] = useState(null);
+
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setDetailsModalOrder(null);
+        setTrackingModalData(null);
+        setStatusModalOrder(null);
+        setCancelModalOrder(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Copy helper
   const handleCopy = (text, label = 'Copied') => {
@@ -801,9 +816,12 @@ export default function AdminOrders() {
       {/* ========================================================================= */}
       {/* MODAL 1: DEEP PURCHASE CYCLE & ORDER DETAILS DRAWER                      */}
       {/* ========================================================================= */}
-      {detailsModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto">
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl overflow-hidden text-[#F3E6D0]">
+      {detailsModalOrder && typeof document !== 'undefined' && createPortal(
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setDetailsModalOrder(null); }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
+        >
+          <div className="relative z-[10000] w-full max-w-4xl max-h-[90vh] flex flex-col bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl overflow-hidden text-[#F3E6D0]">
             {/* Modal Header */}
             <div className="flex items-start justify-between p-5 border-b border-[#D4AF37]/25 bg-gradient-to-r from-black via-[#16120B] to-black">
               <div>
@@ -1333,15 +1351,19 @@ export default function AdminOrders() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* MODAL 2: CARRIER LOGISTICS & AIRWAY TRACKING                             */}
       {/* ========================================================================= */}
-      {trackingModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-lg bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4">
+      {trackingModalData && typeof document !== 'undefined' && createPortal(
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setTrackingModalData(null); }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+        >
+          <div className="relative z-[10000] w-full max-w-lg bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4">
             <div className="flex items-start justify-between border-b border-[#D4AF37]/25 pb-3">
               <div>
                 <h3 className="font-cinzel text-lg font-bold text-[#F2D675] flex items-center gap-2">
@@ -1427,17 +1449,21 @@ export default function AdminOrders() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* MODAL 3: STATUS TRANSITION & AUDIT NOTE                                  */}
       {/* ========================================================================= */}
-      {statusModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+      {statusModalOrder && typeof document !== 'undefined' && createPortal(
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setStatusModalOrder(null); }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+        >
           <form
             onSubmit={handleSubmitStatusUpdate}
-            className="w-full max-w-md bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4"
+            className="relative z-[10000] w-full max-w-md bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4"
           >
             <div className="flex items-start justify-between border-b border-[#D4AF37]/25 pb-3">
               <div>
@@ -1503,17 +1529,21 @@ export default function AdminOrders() {
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* MODAL 4: CANCEL ORDER                                                    */}
       {/* ========================================================================= */}
-      {cancelModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+      {cancelModalOrder && typeof document !== 'undefined' && createPortal(
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setCancelModalOrder(null); }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+        >
           <form
             onSubmit={handleSubmitCancelOrder}
-            className="w-full max-w-md bg-[#0B0A08] border border-rose-500/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4"
+            className="relative z-[10000] w-full max-w-md bg-[#0B0A08] border border-rose-500/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4"
           >
             <div className="flex items-start justify-between border-b border-rose-500/25 pb-3">
               <div>
@@ -1569,7 +1599,8 @@ export default function AdminOrders() {
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

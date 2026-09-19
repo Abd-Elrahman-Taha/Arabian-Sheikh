@@ -50,7 +50,13 @@ export const cartApi = {
    */
   async addItem(productId, quantity = 1) {
     const numId = Number(productId);
-    const qty = Number(quantity);
+    const qty = Math.max(1, Number(quantity) || 1);
+
+    if (isNaN(numId) || numId <= 0) {
+      console.error('[Cart] Invalid productId provided to addItem:', { productId, quantity });
+      throw new Error(`Invalid product identifier (${productId}) for cart addition.`);
+    }
+
     if (import.meta.env.DEV) {
       console.log('[Cart] Adding item', { productId: numId, quantity: qty });
     }

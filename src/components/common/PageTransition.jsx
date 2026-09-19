@@ -23,7 +23,8 @@ export default function PageTransition({ children }) {
         opacity: 1,
         y: 0,
         duration: 0.45,
-        ease: 'power2.out'
+        ease: 'power2.out',
+        clearProps: 'transform'
       }
     );
 

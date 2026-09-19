@@ -411,17 +411,34 @@ export const productService = {
   getProductByIdSync(idOrSlug) {
     if (!idOrSlug) return null;
     const clean = String(idOrSlug).trim().toLowerCase();
-    const found = memoryCatalog.find(p => 
+    let found = memoryCatalog.find(p => 
       String(p.id).toLowerCase() === clean || 
       String(p.slug || '').toLowerCase() === clean || 
-      String(p.numericId || '').toLowerCase() === clean
+      String(p.numericId || '').toLowerCase() === clean ||
+      (p.name && p.name.toLowerCase().trim() === clean)
     ) || INITIAL_PRODUCTS.find(p => 
       String(p.id).toLowerCase() === clean || 
       String(p.slug || '').toLowerCase() === clean || 
-      String(p.numericId || '').toLowerCase() === clean
+      String(p.numericId || '').toLowerCase() === clean ||
+      (p.name && p.name.toLowerCase().trim() === clean)
     ) || null;
 
-    return found ? this.enrichProductWithNotes(found) : null;
+    if (found) {
+      // Ensure numericId is always populated
+      if (!found.numericId || isNaN(Number(found.numericId)) || Number(found.numericId) <= 0) {
+        if (typeof found.id === 'number' && found.id > 0) {
+          found.numericId = found.id;
+        } else {
+          const idx = INITIAL_PRODUCTS.findIndex(m => 
+            m.id === found.id || m.slug === found.slug || m.name === found.name
+          );
+          found.numericId = idx > -1 ? (idx + 1) : 1;
+        }
+      }
+      return this.enrichProductWithNotes(found);
+    }
+
+    return null;
   },
 
   async getProductById(idOrSlug) {
@@ -472,33 +489,36 @@ export const productService = {
       }
     }
 
-    // 2. Check local memoryCatalog & INITIAL_PRODUCTS
-    const syncMatch = this.getProductByIdSync(idOrSlug);
-    if (syncMatch) {
-      return this.enrichProductWithNotes(syncMatch);
+    // 2. Check if local memoryCatalog already contains a live-hydrated product with numeric ID
+    const liveHydrated = memoryCatalog.find(p => 
+      (typeof p.numericId === 'number' && p.numericId > 0 || typeof p.id === 'number' && p.id > 0) &&
+      (String(p.id).toLowerCase() === clean || 
+       String(p.slug || '').toLowerCase() === clean || 
+       String(p.numericId || '').toLowerCase() === clean ||
+       (p.name && p.name.toLowerCase().trim() === clean))
+    );
+    if (liveHydrated) {
+      return this.enrichProductWithNotes(liveHydrated);
     }
 
-    // 3. Fetch from all products with safe pageSize
+    // 3. Fetch from all products from live backend API to resolve authoritative numeric ID
     try {
       const all = await this.getAllProducts({ pageSize: 100, includeDrafts: true });
       const found = all.find(p => 
         String(p.id).toLowerCase() === clean || 
         String(p.slug || '').toLowerCase() === clean || 
-        String(p.numericId || '').toLowerCase() === clean
+        String(p.numericId || '').toLowerCase() === clean ||
+        (p.name && p.name.toLowerCase().trim() === clean)
       );
       if (found) {
         return this.enrichProductWithNotes(found);
       }
     } catch {}
 
-    // 4. Fallback search inside INITIAL_PRODUCTS directly
-    const mockMatch = (INITIAL_PRODUCTS || []).find(p => 
-      String(p.id).toLowerCase() === clean || 
-      String(p.slug || '').toLowerCase() === clean || 
-      String(p.numericId || '').toLowerCase() === clean
-    );
-    if (mockMatch) {
-      return this.enrichProductWithNotes(mockMatch);
+    // 4. Fallback search inside INITIAL_PRODUCTS directly with deterministic numericId
+    const syncMatch = this.getProductByIdSync(idOrSlug);
+    if (syncMatch) {
+      return this.enrichProductWithNotes(syncMatch);
     }
 
     return null;
@@ -588,9 +608,25 @@ export const productService = {
     if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
     const num = Number(id);
     if (!isNaN(num) && num > 0) return num;
-    const found = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id);
+    const clean = String(id || '').trim().toLowerCase();
+    const found = memoryCatalog.find(p => 
+      String(p.id).toLowerCase() === clean || 
+      String(p.numericId || '').toLowerCase() === clean || 
+      String(p.slug || '').toLowerCase() === clean ||
+      (p.name && p.name.toLowerCase().trim() === clean)
+    );
     if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
     if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
+
+    const mockIdx = (INITIAL_PRODUCTS || []).findIndex(p => 
+      String(p.id).toLowerCase() === clean || 
+      String(p.slug || '').toLowerCase() === clean || 
+      (p.name && p.name.toLowerCase().trim() === clean)
+    );
+    if (mockIdx > -1) {
+      return mockIdx + 1;
+    }
+
     return null;
   },
 

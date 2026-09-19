@@ -15,15 +15,20 @@ import {
   XCircle,
   AlertCircle,
   Copy,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function OrderTracking() {
-  const { currentPath, navigate } = useRouter();
+  const { currentPath, queryParams, navigate } = useRouter();
   const { t } = useTranslation();
 
-  const orderId = currentPath.split('/order-tracking/')[1]?.split('?')[0] || null;
+  const pathId = currentPath.split('/order-tracking/')[1]?.split('?')[0]?.split('#')[0]?.trim() || null;
+  const queryId = queryParams?.get ? (queryParams.get('id') || queryParams.get('orderId') || queryParams.get('trackingNumber')) : null;
+  const orderId = pathId || queryId || null;
+
+  const [manualOrderId, setManualOrderId] = useState('');
 
   const [order, setOrder] = useState(null);
   const [trackingData, setTrackingData] = useState(null);
@@ -159,6 +164,60 @@ export default function OrderTracking() {
   const cancelNote = order?.timeline?.find(t => String(t.status).toLowerCase().includes('cancel'))?.title ||
     order?.statusHistory?.find(h => String(h.toStatus || h.status).toLowerCase().includes('cancel'))?.note || '';
 
+  if (!orderId) {
+    return (
+      <div className="pt-36 sm:pt-44 pb-20 max-w-xl mx-auto px-4 text-[#F3E6D0] animate-fade-in text-center space-y-8">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center text-[#F2D675] shadow-xl">
+          <Truck className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="font-cinzel text-2xl sm:text-3xl font-bold uppercase text-[#F3E6D0] tracking-wide">
+            Track Imperial Dispatch
+          </h1>
+          <p className="text-xs sm:text-sm text-[#D8BE99] max-w-md mx-auto">
+            Enter your Sovereign Order Reference or Courier Airway number to view real-time transit checkpoints.
+          </p>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const clean = manualOrderId.trim();
+            if (clean) {
+              navigate(`/order-tracking/${encodeURIComponent(clean)}`);
+            }
+          }}
+          className="flex items-center gap-2 max-w-md mx-auto bg-black/60 border border-[#D4AF37]/40 rounded-2xl p-2 shadow-2xl backdrop-blur-md"
+        >
+          <Search className="w-5 h-5 text-[#D4AF37] ml-2 shrink-0" />
+          <input
+            type="text"
+            value={manualOrderId}
+            onChange={(e) => setManualOrderId(e.target.value)}
+            placeholder="e.g. 1024 or ECONT tracking"
+            className="flex-1 bg-transparent px-3 py-2 text-xs sm:text-sm text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:outline-none"
+            autoFocus
+          />
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md"
+          >
+            Track
+          </button>
+        </form>
+
+        <div className="pt-4">
+          <button
+            onClick={() => navigate('/account/orders')}
+            className="text-xs text-[#D4AF37] hover:underline font-cinzel cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> View Your Order History
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-36 sm:pt-40 pb-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in text-[#F3E6D0]">
       {/* Header */}
@@ -194,7 +253,7 @@ export default function OrderTracking() {
               ) : (
                 <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
               )}
-              {currentStatus.replace(/([A-Z])/g, ' $1').trim().replace(/_/g, ' ')}
+              {String(displayStatus || 'Pending').replace(/([A-Z])/g, ' $1').trim().replace(/_/g, ' ')}
             </span>
           </div>
         </div>

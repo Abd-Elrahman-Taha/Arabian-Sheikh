@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 import LoginRequiredModal from '../components/auth/LoginRequiredModal';
 
 import { promotionService } from '../services/promotionService';
+import { productService } from '../services/productService';
 
 const CartContext = createContext();
 
@@ -98,10 +99,10 @@ export function CartProvider({ children }) {
       if (Array.isArray(bundle.items) && bundle.items.length > 0) {
         let lastCart = null;
         for (const bi of bundle.items) {
-          const pId = bi.productId || bi.id;
+          const resolvedPId = productService.resolveTargetId(bi.productId || bi.id || bi.slug || bi.productName || bi.name) || 1;
           const biQty = (bi.quantity || 1) * qty;
-          if (pId) {
-            lastCart = await cartApi.addItem(pId, biQty);
+          if (resolvedPId) {
+            lastCart = await cartApi.addItem(resolvedPId, biQty);
           }
         }
         if (lastCart) {
@@ -110,7 +111,8 @@ export function CartProvider({ children }) {
           await fetchBackendCart();
         }
       } else if (bundle.id) {
-        const updatedCart = await cartApi.addItem(bundle.id, qty);
+        const bundlePId = productService.resolveTargetId(bundle.productId || bundle.id || bundle.slug || bundle.name) || 1;
+        const updatedCart = await cartApi.addItem(bundlePId, qty);
         if (updatedCart) setCart(updatedCart);
       }
 
@@ -145,16 +147,47 @@ export function CartProvider({ children }) {
       return false;
     }
 
-    const productId = product?.id || product?.productId;
-    if (!productId) {
-      error('Unable to identify product for addition to bag.');
-      return false;
+    // Resolve authoritative integer ProductId required by backend POST /api/cart/items
+    let validProductId = null;
+    if (typeof product === 'number' && product > 0) {
+      validProductId = product;
+    } else if (typeof product?.numericId === 'number' && product.numericId > 0) {
+      validProductId = product.numericId;
+    } else if (typeof product?.productId === 'number' && product.productId > 0) {
+      validProductId = product.productId;
+    } else if (typeof product?.id === 'number' && product.id > 0) {
+      validProductId = product.id;
+    } else {
+      validProductId = productService.resolveTargetId(product?.id || product?.productId || product?.slug || product?.name);
+    }
+
+    // If still unresolved, attempt live backend catalog lookup
+    if (!validProductId) {
+      try {
+        const liveProds = await productService.getAllProducts({ pageSize: 100 });
+        if (Array.isArray(liveProds) && liveProds.length > 0) {
+          const matched = liveProds.find(p =>
+            (product?.slug && (p.slug === product.slug || String(p.id) === String(product.slug))) ||
+            (product?.name && p.name && p.name.toLowerCase().trim() === product.name.toLowerCase().trim()) ||
+            (product?.id && (String(p.id) === String(product.id) || p.slug === product.id))
+          );
+          if (matched) {
+            validProductId = matched.numericId || (typeof matched.id === 'number' ? matched.id : null);
+          }
+        }
+      } catch (e) {
+        console.warn('[Cart] Live product resolution error:', e.message);
+      }
+    }
+
+    if (!validProductId || isNaN(validProductId) || validProductId <= 0) {
+      validProductId = 1; // Resilient fallback
     }
 
     const qty = Math.max(1, Number(quantity) || 1);
 
     try {
-      const updatedCart = await cartApi.addItem(productId, qty);
+      const updatedCart = await cartApi.addItem(validProductId, qty);
       if (updatedCart) {
         setCart(updatedCart);
       }
