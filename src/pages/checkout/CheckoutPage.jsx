@@ -1260,12 +1260,8 @@ export default function CheckoutPage() {
                             </label>
                           </div>
                           <div className="text-right">
-                            <span className={`font-mono text-xs font-bold ${
-                              Number(opt.cost) > 0 ? 'text-[#D4AF37]' : 'text-emerald-400'
-                            }`}>
-                              {Number(opt.cost) > 0
-                                ? `${opt.currency === 'EUR' ? '€' : (opt.currency || '€') + ' '}${Number(opt.cost).toFixed(2)}`
-                                : (opt.isFree ? 'Free Delivery' : '€0.00')}
+                            <span className="font-mono text-xs font-bold text-[#D4AF37]">
+                              €{Number(opt.cost).toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -1581,7 +1577,7 @@ export default function CheckoutPage() {
                 <span>{selectedQuote ? (selectedQuote.shippingMethod || selectedQuote.carrier || 'Shipping') : 'Shipping'}</span>
                 <span className="font-mono text-[#F3E6D0]">
                   {selectedQuote
-                    ? (selectedQuote.isFree || shippingCost === 0 ? 'Complimentary' : `€${Number(shippingCost).toFixed(2)}`)
+                    ? `€${Number(shippingCost).toFixed(2)}`
                     : 'Calculated at step 2'
                   }
                 </span>

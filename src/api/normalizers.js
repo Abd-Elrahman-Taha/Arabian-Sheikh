@@ -444,19 +444,33 @@ export function normalizeShippingOption(raw) {
   const quoteId = opt.quoteId && typeof opt.quoteId === 'string' ? opt.quoteId.trim() : null;
   const carrier = opt.carrier || opt.carrierName || opt.shippingCompany || opt.companyName || 'ECONT';
   const shippingMethod = opt.shippingMethod || opt.methodName || opt.name || opt.serviceName || opt.title || 'Standard Delivery';
+  const isExpress = String(shippingMethod).toLowerCase().includes('express') || String(shippingMethod).toLowerCase().includes('exp');
+
   const rawFee = opt.shippingFee !== undefined
     ? opt.shippingFee
     : (opt.cost !== undefined
       ? opt.cost
       : (opt.price !== undefined
         ? opt.price
-        : (opt.fee !== undefined ? opt.fee : 0)));
-  const fee = Number(rawFee) || 0;
-  const minDays = opt.minDeliveryDays !== undefined ? Number(opt.minDeliveryDays) : null;
-  const maxDays = opt.maxDeliveryDays !== undefined ? Number(opt.maxDeliveryDays) : null;
-  const estDays = opt.estimatedDeliveryDays !== undefined
-    ? Number(opt.estimatedDeliveryDays)
-    : (minDays && maxDays ? `${minDays}-${maxDays}` : (minDays || maxDays || 3));
+        : (opt.fee !== undefined ? opt.fee : null)));
+
+  // Compliant with Handoff Guide (Section 4.6 & Section 14):
+  // Standard Delivery: 5.00 EUR (2-4 business days)
+  // Express Delivery: 12.00 EUR (1-2 business days)
+  let fee = Number(rawFee);
+  if (isNaN(fee) || fee <= 0) {
+    fee = isExpress ? 12.00 : 5.00;
+  }
+
+  const minDays = opt.minDeliveryDays !== undefined && opt.minDeliveryDays !== null
+    ? Number(opt.minDeliveryDays)
+    : (isExpress ? 1 : 2);
+  const maxDays = opt.maxDeliveryDays !== undefined && opt.maxDeliveryDays !== null
+    ? Number(opt.maxDeliveryDays)
+    : (isExpress ? 2 : 4);
+  const estDays = opt.estimatedDeliveryDays !== undefined && opt.estimatedDeliveryDays !== null
+    ? String(opt.estimatedDeliveryDays)
+    : `${minDays}-${maxDays}`;
 
   let shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
     ? Number(opt.shippingMethodId)
@@ -475,15 +489,14 @@ export function normalizeShippingOption(raw) {
   // If shippingMethodId is omitted by POST /api/shipping/quotes, map deterministically based on carrier and method
   if (!shippingMethodId) {
     const cUpper = String(carrier).toUpperCase();
-    const mUpper = String(shippingMethod).toUpperCase();
     if (cUpper.includes('ECONT')) {
       shippingCompanyId = shippingCompanyId || 3;
-      shippingMethodId = mUpper.includes('EXP') ? 4 : 3;
+      shippingMethodId = isExpress ? 2 : 1;
     } else if (cUpper.includes('SPEEDY')) {
       shippingCompanyId = shippingCompanyId || 2;
-      shippingMethodId = mUpper.includes('EXP') ? 2 : 1;
+      shippingMethodId = isExpress ? 2 : 1;
     } else {
-      shippingMethodId = 1;
+      shippingMethodId = isExpress ? 2 : 1;
     }
   }
 
@@ -502,7 +515,7 @@ export function normalizeShippingOption(raw) {
     estimatedDeliveryDays: estDays,
     minDeliveryDays: minDays,
     maxDeliveryDays: maxDays,
-    isFree: Boolean(opt.isFree !== undefined ? opt.isFree : fee === 0),
+    isFree: false,
     rateSource: opt.rateSource || null
   };
 }
