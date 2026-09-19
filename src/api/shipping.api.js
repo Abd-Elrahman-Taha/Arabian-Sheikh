@@ -26,13 +26,21 @@ export const shippingApi = {
     }
 
     if (import.meta.env.DEV) {
-      console.log('[Checkout] Requesting shipping quote:', addrId);
+      console.log('[Checkout] Requesting shipping quote:', addrId, payload);
     }
+
+    const requestBody = {
+      addressId: addrId,
+      ...(payload.countryCode ? { countryCode: String(payload.countryCode).trim() } : {}),
+      ...(payload.postalCode ? { postalCode: String(payload.postalCode).trim() } : {}),
+      ...(payload.city ? { city: String(payload.city).trim() } : {}),
+      ...(Array.isArray(payload.items) && payload.items.length > 0 ? { items: payload.items } : {})
+    };
 
     // Call official backend endpoint
     const response = await apiClient.post(
       ENDPOINTS.SHIPPING.QUOTES,
-      { addressId: addrId },
+      requestBody,
       { requiresAuth: true }
     );
 

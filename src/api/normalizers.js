@@ -444,7 +444,14 @@ export function normalizeShippingOption(raw) {
   const quoteId = opt.quoteId && typeof opt.quoteId === 'string' ? opt.quoteId.trim() : null;
   const carrier = opt.carrier || opt.carrierName || opt.shippingCompany || opt.companyName || 'ECONT';
   const shippingMethod = opt.shippingMethod || opt.methodName || opt.name || opt.serviceName || opt.title || 'Standard Delivery';
-  const fee = Number(opt.shippingFee !== undefined ? opt.shippingFee : (opt.cost !== undefined ? opt.cost : (opt.fee !== undefined ? opt.fee : 0)));
+  const rawFee = opt.shippingFee !== undefined
+    ? opt.shippingFee
+    : (opt.cost !== undefined
+      ? opt.cost
+      : (opt.price !== undefined
+        ? opt.price
+        : (opt.fee !== undefined ? opt.fee : 0)));
+  const fee = Number(rawFee) || 0;
   const minDays = opt.minDeliveryDays !== undefined ? Number(opt.minDeliveryDays) : null;
   const maxDays = opt.maxDeliveryDays !== undefined ? Number(opt.maxDeliveryDays) : null;
   const estDays = opt.estimatedDeliveryDays !== undefined
@@ -490,12 +497,13 @@ export function normalizeShippingOption(raw) {
     methodName: shippingMethod,
     shippingFee: fee,
     cost: fee,
+    price: fee,
     currency: opt.currency || 'EUR',
     estimatedDeliveryDays: estDays,
     minDeliveryDays: minDays,
     maxDeliveryDays: maxDays,
-    isFree: Boolean(opt.isFree || fee === 0),
-    rateSource: opt.rateSource || carrier
+    isFree: Boolean(opt.isFree !== undefined ? opt.isFree : fee === 0),
+    rateSource: opt.rateSource || null
   };
 }
 

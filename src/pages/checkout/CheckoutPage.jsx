@@ -409,7 +409,17 @@ export default function CheckoutPage() {
 
       let res;
       try {
-        res = await shippingService.getQuotes({ addressId: currentAddrId });
+        const quoteParams = {
+          addressId: currentAddrId,
+          countryCode: activeAddress?.countryCode || selectedAddress?.countryCode || formData.countryCode || 'BG',
+          postalCode: activeAddress?.postalCode || selectedAddress?.postalCode || formData.postalCode || '',
+          city: activeAddress?.city || selectedAddress?.city || formData.city || '',
+          items: items.map(it => ({
+            productId: it.productId || it.numericId || it.id,
+            quantity: it.quantity || 1
+          }))
+        };
+        res = await shippingService.getQuotes(quoteParams);
       } catch (quoteErr) {
         console.error('[Checkout] Shipping quote fetch error:', quoteErr);
         const errMsg = quoteErr?.message || '';
@@ -1250,15 +1260,12 @@ export default function CheckoutPage() {
                           </div>
                           <div className="text-right">
                             <span className={`font-mono text-xs font-bold ${
-                              opt.isFree || opt.cost === 0 ? 'text-emerald-400' : 'text-[#D4AF37]'
+                              Number(opt.cost) > 0 ? 'text-[#D4AF37]' : 'text-emerald-400'
                             }`}>
-                              {opt.isFree || opt.cost === 0 ? 'FREE' : `€${Number(opt.cost).toFixed(2)}`}
+                              {Number(opt.cost) > 0
+                                ? `${opt.currency === 'EUR' ? '€' : (opt.currency || '€') + ' '}${Number(opt.cost).toFixed(2)}`
+                                : (opt.isFree ? 'Free Delivery' : '€0.00')}
                             </span>
-                            {opt.rateSource && (
-                              <div className="text-[9px] font-mono text-neutral-500 uppercase tracking-wider">
-                                {opt.rateSource}
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
