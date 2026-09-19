@@ -2,7 +2,6 @@ import { productApi } from '../api/product.api';
 import { perfumeCategoryService } from './perfumeCategoryService';
 import { promotionApi } from '../api/promotion.api';
 import { promotionService } from './promotionService';
-import { INITIAL_PRODUCTS } from './mockData';
 
 // Purge any legacy device-specific discount overrides so backend promotions are the sole source of truth
 if (typeof window !== 'undefined') {
@@ -11,7 +10,7 @@ if (typeof window !== 'undefined') {
   } catch {}
 }
 
-let memoryCatalog = Array.isArray(INITIAL_PRODUCTS) ? [...INITIAL_PRODUCTS] : [];
+let memoryCatalog = [];
 
 export const productService = {
   /**
@@ -310,9 +309,7 @@ export const productService = {
         console.warn('Backend promotions enrichment error:', e.message);
       }
 
-      if (items.length > 0) {
-        memoryCatalog = items;
-      }
+      memoryCatalog = items;
       return this.applyFilters(memoryCatalog, filters);
     } catch (err) {
       console.warn('API getAllProducts error:', err.message);
@@ -343,34 +340,7 @@ export const productService = {
       return enriched;
     }
 
-    // 2. Match against INITIAL_PRODUCTS by name or slug
-    const cleanName = (enriched.name || '').toLowerCase().trim();
-    const cleanSlug = (enriched.slug || '').toLowerCase().trim();
-    const mockMatch = (INITIAL_PRODUCTS || []).find(m => 
-      (m.name && m.name.toLowerCase().trim() === cleanName) ||
-      (m.slug && m.slug.toLowerCase().trim() === cleanSlug) ||
-      (m.arabicName && enriched.arabicName && m.arabicName === enriched.arabicName) ||
-      String(m.id) === String(enriched.id)
-    );
-
-    if (mockMatch && (mockMatch.topNotes || mockMatch.notes)) {
-      const top = mockMatch.topNotes || mockMatch.notes?.top || [];
-      const heart = mockMatch.heartNotes || mockMatch.notes?.heart || [];
-      const base = mockMatch.baseNotes || mockMatch.notes?.base || [];
-      enriched.topNotes = top;
-      enriched.heartNotes = heart;
-      enriched.baseNotes = base;
-      enriched.notes = { top, heart, base };
-      if (!enriched.longevity) enriched.longevity = mockMatch.longevity || '18+ Hours';
-      if (!enriched.sillage) enriched.sillage = mockMatch.sillage || 'Magnificent Imperial Sillage';
-      if (!enriched.season) enriched.season = mockMatch.season || ['Autumn', 'Winter', 'Evening / Gala'];
-      if (!enriched.occasion) enriched.occasion = mockMatch.occasion || ['Royal Galas', 'Evening Soirée', 'Sovereign Events'];
-      if (!enriched.fragranceFamily) enriched.fragranceFamily = mockMatch.fragranceFamily || mockMatch.scentFamily || 'Oriental Woody';
-      if (!enriched.concentration) enriched.concentration = mockMatch.concentration || 'Extrait de Parfum (30% Sillage Oil)';
-      return enriched;
-    }
-
-    // 3. Try parsing from ingredients if present (e.g. "Rare Oud, Amber Crystals, Taif Rose, White Musk")
+    // 2. Try parsing from ingredients if present (e.g. "Rare Oud, Amber Crystals, Taif Rose, White Musk")
     if (enriched.ingredients && typeof enriched.ingredients === 'string' && enriched.ingredients.trim()) {
       const parts = enriched.ingredients.split(/[,،•\n]+/).map(s => s.trim()).filter(Boolean);
       if (parts.length >= 3) {
@@ -419,23 +389,12 @@ export const productService = {
       String(p.slug || '').toLowerCase() === clean || 
       String(p.numericId || '').toLowerCase() === clean ||
       (p.name && p.name.toLowerCase().trim() === clean)
-    ) || INITIAL_PRODUCTS.find(p => 
-      String(p.id).toLowerCase() === clean || 
-      String(p.slug || '').toLowerCase() === clean || 
-      String(p.numericId || '').toLowerCase() === clean ||
-      (p.name && p.name.toLowerCase().trim() === clean)
     ) || null;
 
     if (found) {
-      // Ensure numericId is always populated
       if (!found.numericId || isNaN(Number(found.numericId)) || Number(found.numericId) <= 0) {
         if (typeof found.id === 'number' && found.id > 0) {
           found.numericId = found.id;
-        } else {
-          const idx = INITIAL_PRODUCTS.findIndex(m => 
-            m.id === found.id || m.slug === found.slug || m.name === found.name
-          );
-          found.numericId = idx > -1 ? (idx + 1) : 1;
         }
       }
       return this.enrichProductWithNotes(found);
@@ -517,12 +476,6 @@ export const productService = {
         return this.enrichProductWithNotes(found);
       }
     } catch {}
-
-    // 4. Fallback search inside INITIAL_PRODUCTS directly with deterministic numericId
-    const syncMatch = this.getProductByIdSync(idOrSlug);
-    if (syncMatch) {
-      return this.enrichProductWithNotes(syncMatch);
-    }
 
     return null;
   },
@@ -620,15 +573,6 @@ export const productService = {
     );
     if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
     if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
-
-    const mockIdx = (INITIAL_PRODUCTS || []).findIndex(p => 
-      String(p.id).toLowerCase() === clean || 
-      String(p.slug || '').toLowerCase() === clean || 
-      (p.name && p.name.toLowerCase().trim() === clean)
-    );
-    if (mockIdx > -1) {
-      return mockIdx + 1;
-    }
 
     return null;
   },
