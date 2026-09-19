@@ -4,20 +4,23 @@ import { adminService } from '../../services/adminService';
 import { useToast } from '../../context/ToastContext';
 import { Save, ShieldCheck, Truck, Lock, Globe } from 'lucide-react';
 
+import { setCustomStripePublishableKey, getStripePublishableKey } from '../../services/paymentService';
+
 export default function AdminSettings() {
   const { t } = useTranslation();
   const { success } = useToast();
 
   const [settings, setSettings] = useState(() => {
     const saved = adminService.getSettings();
+    const currentKey = getStripePublishableKey();
     return {
       ...saved,
       currency: 'EUR',
       freeShippingThreshold: 100,
       expressShippingFee: 15,
       stripeTestMode: true,
-      stripePublishableKey: 'pk_test_sample_arabiansheikh_key',
-      stripeSecretKey: 'sk_test_sample_arabiansheikh_secret',
+      stripePublishableKey: currentKey || saved?.stripePublishableKey || '',
+      stripeSecretKey: saved?.stripeSecretKey || '',
       dhlTestMode: true,
       dhlAccountNumber: 'DHL-EXP-889021',
       dhlApiKey: 'dhl_test_api_key_andalusia'
@@ -27,6 +30,9 @@ export default function AdminSettings() {
   const handleSave = (e) => {
     e.preventDefault();
     adminService.saveSettings(settings);
+    if (settings.stripePublishableKey) {
+      setCustomStripePublishableKey(settings.stripePublishableKey);
+    }
     success('Admin parameters & API credentials saved.');
   };
 

@@ -11,12 +11,38 @@ import { paymentApi } from '../api/payment.api';
  * - Stripe.js singleton loader
  */
 
-// ─── Stripe.js Singleton ───────────────────────────────────────
-// loadStripe is called ONCE at module scope, never inside render
-const stripePublishableKey = import.meta.env?.VITE_STRIPE_PUBLISHABLE_KEY || '';
-export const stripePromise = stripePublishableKey
-  ? loadStripe(stripePublishableKey)
-  : null;
+// ─── Stripe.js Dynamic Singleton ───────────────────────────────
+// Caches loadStripe promises per publishable key, allowing runtime updates
+const stripePromiseCache = new Map();
+
+export function getStripePublishableKey() {
+  try {
+    const saved = localStorage.getItem('arabian_sheikh_stripe_pub_key');
+    if (saved && saved.trim()) return saved.trim();
+  } catch {}
+  return (import.meta.env?.VITE_STRIPE_PUBLISHABLE_KEY || '').trim();
+}
+
+export function setCustomStripePublishableKey(key) {
+  try {
+    if (key && key.trim()) {
+      localStorage.setItem('arabian_sheikh_stripe_pub_key', key.trim());
+    } else {
+      localStorage.removeItem('arabian_sheikh_stripe_pub_key');
+    }
+  } catch {}
+}
+
+export function getStripePromise(customKey) {
+  const key = (customKey || getStripePublishableKey()).trim();
+  if (!key) return null;
+  if (!stripePromiseCache.has(key)) {
+    stripePromiseCache.set(key, loadStripe(key));
+  }
+  return stripePromiseCache.get(key);
+}
+
+export const stripePromise = getStripePromise();
 
 // ─── Idempotency Key Helpers ───────────────────────────────────
 

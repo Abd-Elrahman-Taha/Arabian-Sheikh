@@ -1414,6 +1414,12 @@ export default function CheckoutPage() {
                     paymentId={paymentIdState}
                     onConfirmed={handleStripeConfirmed}
                     onError={handleStripeError}
+                    onSwitchToCod={() => {
+                      setFormData(prev => ({ ...prev, paymentMethod: 'COD' }));
+                      setPaymentStatus(null);
+                      setClientSecret(null);
+                      setStep(3);
+                    }}
                   />
                 )}
 
