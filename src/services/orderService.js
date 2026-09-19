@@ -581,7 +581,8 @@ export const orderService = {
       || apiOrder?.shippingSnapshot?.shippingCompanyName 
       || apiOrder?.shippingSnapshot?.carrier 
       || apiOrder?.carrier 
-      || (orderPayload.shippingMethodId === 1 || orderPayload.shippingMethodId === 2 ? 'Speedy' : (orderPayload.shippingMethodId === 3 || orderPayload.shippingMethodId === 4 ? 'ECONT' : 'Carrier'));
+      || apiOrder?.shipping?.shippingCompanyName
+      || 'Carrier';
     const resolvedShippingMethod = orderPayload.shippingMethod || apiOrder?.shippingSnapshot?.shippingMethod || 'Standard Delivery';
 
     const customerName = orderPayload.customerName || apiOrder?.customer?.name || 'Valued Patron';
@@ -815,7 +816,7 @@ export const orderService = {
     return {
       orderId: numId || orderId,
       shipmentId: order?.shipmentId || null,
-      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || (order?.shippingMethodId === 1 || order?.shippingMethodId === 2 ? 'Speedy' : (order?.shippingMethodId === 3 || order?.shippingMethodId === 4 ? 'ECONT' : 'Carrier')),
+      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || order?.shipping?.shippingCompanyName || 'Carrier',
       trackingNumber: trkNumber,
       currentStatus: curStatus,
       carrierStatus: null,
@@ -853,7 +854,7 @@ export const orderService = {
     const order = this.getOrderByIdSync(orderId);
     return {
       orderId,
-      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || (order?.shippingMethodId === 1 || order?.shippingMethodId === 2 ? 'Speedy' : (order?.shippingMethodId === 3 || order?.shippingMethodId === 4 ? 'ECONT' : 'Carrier')),
+      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || order?.shipping?.shippingCompanyName || 'Carrier',
       trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null,
       status: order?.orderStatus || order?.status || 'Processing',
       events: (order?.timeline || []).map(t => ({

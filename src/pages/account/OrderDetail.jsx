@@ -275,7 +275,7 @@ export default function OrderDetail() {
   const isShippedOrOut = ['shipped', 'outfordelivery'].includes(normStatus);
 
   const trackingNumber = order.trackingCode || order.dhlTrackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
-  const carrierName = order.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || (order.shippingMethodId === 1 || order.shippingMethodId === 2 ? 'Speedy' : (order.shippingMethodId === 3 || order.shippingMethodId === 4 ? 'ECONT' : 'Carrier'));
+  const carrierName = order.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || 'Carrier';
   const shipmentStatus = order.shipmentStatus || (normStatus === 'shipped' ? 'Shipped' : (normStatus === 'delivered' ? 'Delivered' : (normStatus === 'outfordelivery' ? 'OutForDelivery' : 'Pending')));
 
   // Address normalization

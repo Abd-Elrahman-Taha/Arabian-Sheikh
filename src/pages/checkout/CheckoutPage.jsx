@@ -382,7 +382,7 @@ export default function CheckoutPage() {
       if (matchingOpt) {
         const updatedOpt = {
           ...matchingOpt,
-          carrier: matchingOpt.carrier || selectedQuote?.carrier || (chosenMethodId === 1 || chosenMethodId === 2 ? 'Speedy' : 'Carrier'),
+          carrier: matchingOpt.carrier || selectedQuote?.carrier || matchingOpt.shippingMethod || 'Carrier',
           quoteId: freshQuoteId || matchingOpt.quoteId
         };
         setSelectedQuote(updatedOpt);
@@ -851,7 +851,7 @@ export default function CheckoutPage() {
       total: grandTotal,
       quoteId: activeQuoteId,
       shippingMethodId,
-      carrier: selectedQuote?.carrier || (shippingMethodId === 1 || shippingMethodId === 2 ? 'Speedy' : (shippingMethodId === 3 || shippingMethodId === 4 ? 'ECONT' : 'Carrier')),
+      carrier: selectedQuote?.carrier || selectedQuote?.carrierName || selectedQuote?.shippingMethod || 'Carrier',
       shippingAddress: authoritativeAddress,
       paymentMethod: getApiPaymentMethod()
     });

@@ -59,7 +59,7 @@ export default function OrderTracking() {
           || item?.carrier 
           || item?.shippingSnapshot?.shippingCompanyName 
           || item?.shippingSnapshot?.carrier 
-          || (item?.shippingMethodId === 1 || item?.shippingMethodId === 2 ? 'Speedy' : (item?.shippingMethodId === 3 || item?.shippingMethodId === 4 ? 'ECONT' : 'Carrier'));
+          || 'Carrier';
         const realStatus = deliv?.shipmentStatus || trk?.currentStatus || item?.shipmentStatus || null;
         const realTrackingNum = deliv?.trackingNumber || trk?.trackingNumber || item?.trackingCode || item?.shippingSnapshot?.trackingNumber || null;
         const realCarrierStatus = deliv?.carrierStatus || trk?.carrierStatus || null;
@@ -293,7 +293,7 @@ export default function OrderTracking() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase tracking-wider text-[#D8BE99]/80 block font-mono font-semibold">
-                  Carrier: {trackingData?.carrier || order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || (order?.shippingMethodId === 1 || order?.shippingMethodId === 2 ? 'Speedy' : (order?.shippingMethodId === 3 || order?.shippingMethodId === 4 ? 'ECONT' : 'Carrier'))}
+                  Carrier: {trackingData?.carrier || order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || 'Carrier'}
                 </span>
                 <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
                   shippingService.getShipmentStatusBadge(trackingData?.currentStatus || order?.shipmentStatus || 'Pending')
@@ -525,7 +525,7 @@ export default function OrderTracking() {
                 <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>Dispatch Security</span>
               </h4>
-              <p>Carrier: {trackingData?.carrier || order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || (order?.shippingMethodId === 1 || order?.shippingMethodId === 2 ? 'Speedy' : (order?.shippingMethodId === 3 || order?.shippingMethodId === 4 ? 'ECONT' : 'Carrier'))}</p>
+              <p>Carrier: {trackingData?.carrier || order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || 'Carrier'}</p>
               <p>Service: {order?.shippingMethod || order?.shippingSnapshot?.shippingMethod || 'Standard Delivery'}</p>
               <p>Signature: Mandatory upon Handover</p>
             </div>

@@ -546,43 +546,28 @@ export function normalizeShippingOption(raw) {
         ? Number(opt.shippingCompany.id)
         : null));
 
-  // Determine carrier and company mapping if missing from API response
+  // Determine carrier and company mapping strictly from API response without assuming method IDs
   if (!carrier) {
     const mUpper = String(shippingMethod || '').toUpperCase();
-    if (mUpper.includes('SPEEDY') || shippingCompanyId === 2 || shippingMethodId === 1 || shippingMethodId === 2) {
-      carrier = 'Speedy';
-      shippingCompanyId = shippingCompanyId || 2;
-    } else if (mUpper.includes('ECONT') || shippingCompanyId === 3 || shippingMethodId === 3 || shippingMethodId === 4) {
+    if (mUpper.includes('ECONT')) {
       carrier = 'ECONT';
-      shippingCompanyId = shippingCompanyId || 3;
-    } else if (mUpper.includes('DHL') || shippingCompanyId === 1) {
+    } else if (mUpper.includes('SPEEDY')) {
+      carrier = 'Speedy';
+    } else if (mUpper.includes('DHL')) {
       carrier = 'DHL Express';
-      shippingCompanyId = shippingCompanyId || 1;
+    } else if (opt.companyName || opt.shippingCompanyName) {
+      carrier = opt.companyName || opt.shippingCompanyName;
     } else {
-      carrier = 'Carrier';
+      carrier = shippingMethod || 'Carrier';
     }
   }
 
   if (!shippingMethod) {
-    shippingMethod = `${carrier} ${isExpress ? 'Express' : 'Standard'}`;
+    shippingMethod = carrier ? `${carrier} ${isExpress ? 'Express' : 'Standard'}` : 'Standard Delivery';
   }
 
-  // Exact mapping verified against live backend:
-  // ECONT Express -> Method 4, Company 3
-  // ECONT Standard -> Method 3, Company 3
-  // SPEEDY Express -> Method 2, Company 2
-  // SPEEDY Standard -> Method 1, Company 2
   if (!shippingMethodId) {
-    const cUpper = String(carrier).toUpperCase();
-    if (cUpper.includes('SPEEDY')) {
-      shippingCompanyId = shippingCompanyId || 2;
-      shippingMethodId = isExpress ? 2 : 1;
-    } else if (cUpper.includes('ECONT')) {
-      shippingCompanyId = shippingCompanyId || 3;
-      shippingMethodId = isExpress ? 4 : 3;
-    } else {
-      shippingMethodId = isExpress ? 4 : 3;
-    }
+    shippingMethodId = Number(opt.id || opt.methodId || opt.serviceId || 1);
   }
 
   return {
