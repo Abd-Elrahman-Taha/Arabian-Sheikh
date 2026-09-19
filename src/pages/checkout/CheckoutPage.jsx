@@ -409,11 +409,12 @@ export default function CheckoutPage() {
 
       let res;
       try {
+        const selectedSavedAddr = savedAddresses.find(a => Number(a.id) === Number(currentAddrId));
         const quoteParams = {
           addressId: currentAddrId,
-          countryCode: activeAddress?.countryCode || selectedAddress?.countryCode || formData.countryCode || 'BG',
-          postalCode: activeAddress?.postalCode || selectedAddress?.postalCode || formData.postalCode || '',
-          city: activeAddress?.city || selectedAddress?.city || formData.city || '',
+          countryCode: selectedSavedAddr?.countryCode || formData.countryCode || 'BG',
+          postalCode: selectedSavedAddr?.postalCode || formData.postalCode || '',
+          city: selectedSavedAddr?.city || formData.city || '',
           items: items.map(it => ({
             productId: it.productId || it.numericId || it.id,
             quantity: it.quantity || 1
