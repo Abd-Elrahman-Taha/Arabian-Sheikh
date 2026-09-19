@@ -22,6 +22,7 @@ import { shippingService } from '../../services/shippingService';
 import { checkoutApi } from '../../api/checkout.api';
 import { addressApi } from '../../api/address.api';
 import { cartApi } from '../../api/cart.api';
+import { normalizeShippingOption } from '../../api/normalizers';
 import { useToast } from '../../context/ToastContext';
 import StripePaymentForm from '../../components/checkout/StripePaymentForm';
 import {
@@ -98,14 +99,14 @@ export default function CheckoutPage() {
     try {
       await applyDiscount(code);
       setCouponCode('');
-      // Invalidate existing quotes immediately because quote parameters changed
-      setShippingQuotes([]);
-      setSelectedQuote(null);
+      
       if (addressId) {
-        await fetchQuotesForAddress(addressId, code);
-      }
-      if (step > 2) {
-        setStep(2);
+        const currentMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id) || undefined;
+        // Section 4 - Option 1: Re-fetch Checkout Summary with applied promo code
+        const summary = await syncCheckoutWithBackend(addressId, currentMethodId, code);
+        if (!summary || !summary.shippingOptions || summary.shippingOptions.length === 0) {
+          await fetchQuotesForAddress(addressId, code);
+        }
       }
     } catch {
       // Toast notification handled by CartContext
@@ -116,14 +117,13 @@ export default function CheckoutPage() {
 
   const handleRemoveCoupon = async () => {
     removeDiscount();
-    // Invalidate existing quotes immediately because quote parameters changed
-    setShippingQuotes([]);
-    setSelectedQuote(null);
     if (addressId) {
-      await fetchQuotesForAddress(addressId, null);
-    }
-    if (step > 2) {
-      setStep(2);
+      const currentMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id) || undefined;
+      // Section 4 - Option 1: Re-fetch Checkout Summary without promo code
+      const summary = await syncCheckoutWithBackend(addressId, currentMethodId, '');
+      if (!summary || !summary.shippingOptions || summary.shippingOptions.length === 0) {
+        await fetchQuotesForAddress(addressId, null);
+      }
     }
   };
 
@@ -329,6 +329,71 @@ export default function CheckoutPage() {
       if (thisRequestId === quoteRequestIdRef.current) {
         setLoadingQuotes(false);
       }
+    }
+  };
+
+  // Authoritative sync with backend GET /api/checkout (Section 4 - Option 1)
+  // Refreshes totals and retrieves fresh QuoteId matching current cart + promo state
+  const syncCheckoutWithBackend = async (targetAddrId, targetMethodId, currentCouponCode) => {
+    const rawId = Number(targetAddrId || addressId);
+    if (!rawId || isNaN(rawId) || rawId <= 0) {
+      return null;
+    }
+
+    try {
+      const coupon = currentCouponCode !== undefined
+        ? (currentCouponCode ? String(currentCouponCode).trim() : undefined)
+        : (cart?.discountCode ? String(cart.discountCode).trim() : undefined);
+
+      const summary = await checkoutApi.getCheckout({
+        addressId: rawId,
+        shippingMethodId: targetMethodId || Number(selectedQuote?.shippingMethodId || selectedQuote?.id) || undefined,
+        couponCode: coupon
+      });
+
+      if (!summary) return null;
+
+      // Extract fresh shipping options from summary
+      const rawOptions = summary.shippingOptions || [];
+      const validOptions = (Array.isArray(rawOptions) ? rawOptions : [])
+        .map(normalizeShippingOption)
+        .filter(opt => opt && opt.shippingMethodId);
+
+      if (validOptions.length > 0) {
+        setShippingQuotes(validOptions);
+      }
+
+      // Extract fresh quoteId
+      const selectedMethodObj = summary.selectedShippingMethod
+        ? normalizeShippingOption(summary.selectedShippingMethod)
+        : null;
+
+      const chosenMethodId = targetMethodId || Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
+
+      const matchingOpt = (chosenMethodId ? validOptions.find(o => Number(o.shippingMethodId || o.id) === Number(chosenMethodId)) : null)
+        || selectedMethodObj
+        || validOptions[0];
+
+      const freshQuoteId = selectedMethodObj?.quoteId
+        || matchingOpt?.quoteId
+        || (summary.quoteId ? String(summary.quoteId) : null);
+
+      if (matchingOpt) {
+        const updatedOpt = {
+          ...matchingOpt,
+          quoteId: freshQuoteId || matchingOpt.quoteId
+        };
+        setSelectedQuote(updatedOpt);
+        setFormData(prev => ({
+          ...prev,
+          shippingMethod: updatedOpt.shippingMethod || updatedOpt.methodName || prev.shippingMethod
+        }));
+      }
+
+      return summary;
+    } catch (err) {
+      console.warn('[Checkout] Failed to sync checkout with backend:', err);
+      return null;
     }
   };
 
@@ -621,9 +686,9 @@ export default function CheckoutPage() {
   const handleShippingSubmit = async (e) => {
     if (e) e.preventDefault();
     const resolvedMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
-    const resolvedQuoteId = selectedQuote?.quoteId;
+    let resolvedQuoteId = selectedQuote?.quoteId;
 
-    if (!resolvedMethodId || isNaN(resolvedMethodId) || !resolvedQuoteId) {
+    if (!resolvedMethodId || isNaN(resolvedMethodId)) {
       const err = 'Please select a valid shipping method before proceeding.';
       setQuotesError(err);
       error(err);
@@ -632,11 +697,30 @@ export default function CheckoutPage() {
 
     setProcessing(true);
     try {
+      const currentCoupon = cart?.discountCode ? String(cart.discountCode).trim() : undefined;
+
+      // 1. Commit shipping selection via PUT /api/checkout/shipping (Section 4 - Option 2)
+      await checkoutApi.setCheckoutShipping({
+        shippingMethodId: resolvedMethodId,
+        quoteId: resolvedQuoteId
+      }, {
+        addressId: addressId || undefined,
+        couponCode: currentCoupon
+      }).catch(syncErr => {
+        console.warn('[Checkout] Checkout shipping sync notice:', syncErr?.message || syncErr);
+      });
+
+      // 2. Re-fetch checkout summary (Section 4 - Option 1) to obtain fresh QuoteId bound to net balance
+      const summary = await syncCheckoutWithBackend(addressId, resolvedMethodId, currentCoupon);
+      if (summary?.selectedShippingMethod?.quoteId) {
+        resolvedQuoteId = summary.selectedShippingMethod.quoteId;
+      }
+
       if (import.meta.env.DEV) {
-        console.log('[Checkout] Confirming shipping selection:', {
+        console.log('[Checkout] Confirmed shipping selection:', {
           shippingMethodId: resolvedMethodId,
           quoteId: resolvedQuoteId,
-          carrier: selectedQuote.carrier
+          carrier: selectedQuote?.carrier
         });
       }
 
@@ -666,16 +750,38 @@ export default function CheckoutPage() {
       throw new Error('A valid delivery address is required.');
     }
 
-    if (!selectedQuote?.quoteId) {
-      throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
-    }
-
-    const shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
+    const shippingMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
     if (!shippingMethodId || isNaN(shippingMethodId)) {
       throw new Error('A valid shipping method must be selected. Please recalculate shipping options.');
     }
 
-    const orderShippingCost = Number(selectedQuote.cost) || 0;
+    // Always ensure we have the most authoritative, fresh QuoteId before submitting the order
+    let activeQuoteId = selectedQuote?.quoteId;
+    const currentCoupon = cart?.discountCode ? String(cart.discountCode).trim() : undefined;
+
+    try {
+      const summary = await checkoutApi.getCheckout({
+        addressId,
+        shippingMethodId,
+        couponCode: currentCoupon
+      });
+      const freshQuoteId = summary?.selectedShippingMethod?.quoteId
+        || summary?.shippingOptions?.find(o => Number(o.shippingMethodId || o.id) === shippingMethodId)?.quoteId;
+      if (freshQuoteId) {
+        activeQuoteId = freshQuoteId;
+        if (selectedQuote) {
+          setSelectedQuote(prev => ({ ...prev, quoteId: freshQuoteId }));
+        }
+      }
+    } catch (syncErr) {
+      console.warn('[Checkout] Pre-order checkout summary refresh notice:', syncErr?.message || syncErr);
+    }
+
+    if (!activeQuoteId) {
+      throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
+    }
+
+    const orderShippingCost = Number(selectedQuote?.cost) || 0;
 
     // Retrieve authoritative address snapshot from backend for order record
     let authoritativeAddress = {
@@ -717,9 +823,9 @@ export default function CheckoutPage() {
       console.log('[Checkout] Creating order with verified parameters:', {
         addressId,
         shippingMethodId,
-        quoteId: selectedQuote.quoteId,
+        quoteId: activeQuoteId,
         paymentMethod: getApiPaymentMethod(),
-        couponCode: cart?.discountCode || null
+        couponCode: currentCoupon || null
       });
     }
 
@@ -732,13 +838,13 @@ export default function CheckoutPage() {
       items,
       subtotal: totals.subtotal,
       discountAmount: totals.discountAmount,
-      discountCode: cart.discountCode,
+      discountCode: currentCoupon || null,
       shipping: orderShippingCost,
       shippingCost: orderShippingCost,
       total: grandTotal,
-      quoteId: selectedQuote.quoteId,
+      quoteId: activeQuoteId,
       shippingMethodId,
-      carrier: selectedQuote.carrier || 'ECONT',
+      carrier: selectedQuote?.carrier || 'ECONT',
       shippingAddress: authoritativeAddress,
       paymentMethod: getApiPaymentMethod()
     });

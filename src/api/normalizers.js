@@ -454,14 +454,13 @@ export function normalizeShippingOption(raw) {
         ? opt.price
         : (opt.fee !== undefined ? opt.fee : null)));
 
-  // Compliant with Handoff Guide (Section 4.6 & Section 14):
-  // Standard Delivery: 5.00 EUR (2-4 business days)
-  // Express Delivery: 12.00 EUR (1-2 business days)
   let fee = Number(rawFee);
-  if (isNaN(fee) || fee <= 0) {
+  if (opt.isFree === true || rawFee === 0 || rawFee === '0' || opt.isFreeDelivery) {
+    fee = 0;
+  } else if (isNaN(fee) || rawFee === undefined || rawFee === null || fee < 0) {
     fee = isExpress ? 12.00 : 5.00;
   }
-  const isFree = fee === 0;
+  const isFree = fee === 0 || Boolean(opt.isFree);
 
   const minDays = opt.minDeliveryDays !== undefined && opt.minDeliveryDays !== null
     ? Number(opt.minDeliveryDays)

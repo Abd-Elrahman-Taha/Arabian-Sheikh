@@ -1,6 +1,7 @@
 import { INITIAL_ORDERS } from './mockData';
 import { orderApi } from '../api/order.api';
 import { shippingApi } from '../api/shipping.api';
+import { checkoutApi } from '../api/checkout.api';
 import { addressApi } from '../api/address.api';
 import { cartApi } from '../api/cart.api';
 import { apiClient } from '../api/client';
@@ -497,22 +498,47 @@ export const orderService = {
             firstErr?.status === 422;
 
           if (isQuoteMismatch) {
-            console.warn('[orderService] Quote mismatch detected, auto-refreshing quote and retrying...', firstErr);
+            console.warn('[orderService] Quote mismatch detected, auto-refreshing via GET /api/checkout and retrying...', firstErr);
             try {
-              const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId });
-              const freshOptions = freshQuotes?.options || [];
-              const matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === shippingMethodId) || freshOptions[0];
-              const freshQuoteId = matchedOption?.quoteId || freshQuotes?.quoteId;
+              const currentCoupon = orderPayload.discountCode || orderPayload.couponCode || undefined;
+
+              // 1. Fetch fresh authoritative checkout summary with promo code applied (Section 4 - Option 1)
+              const summary = await checkoutApi.getCheckout({
+                addressId: numericAddressId,
+                shippingMethodId,
+                couponCode: currentCoupon
+              }).catch(() => null);
+
+              let freshQuoteId = summary?.selectedShippingMethod?.quoteId
+                || summary?.shippingOptions?.find(o => Number(o.shippingMethodId || o.id) === shippingMethodId)?.quoteId;
+
+              // 2. Fallback to shippingApi if checkout summary didn't return quoteId
+              if (!freshQuoteId) {
+                const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId });
+                const freshOptions = freshQuotes?.options || [];
+                const matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === shippingMethodId) || freshOptions[0];
+                freshQuoteId = matchedOption?.quoteId || freshQuotes?.quoteId;
+              }
 
               if (freshQuoteId) {
-                const retryMethodId = Number(matchedOption?.shippingMethodId || matchedOption?.id) || shippingMethodId;
-                console.log('[orderService] Retrying order with fresh quote:', { freshQuoteId, retryMethodId });
+                const retryMethodId = Number(shippingMethodId);
+                console.log('[orderService] Retrying order with authoritative fresh quote:', { freshQuoteId, retryMethodId, coupon: currentCoupon });
+
+                // Commit to checkout shipping session (Section 4 - Option 2)
+                await checkoutApi.setCheckoutShipping({
+                  shippingMethodId: retryMethodId,
+                  quoteId: freshQuoteId.trim()
+                }, {
+                  addressId: numericAddressId,
+                  couponCode: currentCoupon
+                }).catch(() => {});
+
                 apiOrder = await orderApi.createOrder({
                   addressId: numericAddressId,
                   shippingMethodId: retryMethodId,
                   quoteId: freshQuoteId.trim(),
                   paymentMethod: orderPayload.paymentMethod || 'cod',
-                  couponCode: orderPayload.discountCode || orderPayload.couponCode || null
+                  couponCode: currentCoupon || null
                 }, newOrderKey());
               } else {
                 throw firstErr;

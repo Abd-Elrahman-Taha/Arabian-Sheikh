@@ -20,8 +20,10 @@ export const checkoutApi = {
     const query = {};
     if (params.addressId) query.addressId = Number(params.addressId);
     if (params.shippingMethodId) query.shippingMethodId = Number(params.shippingMethodId);
-    if (params.couponCode) query.couponCode = String(params.couponCode);
-    const response = await apiClient.get(ENDPOINTS.CHECKOUT.GET, { params: query });
+    if (params.couponCode && String(params.couponCode).trim()) {
+      query.couponCode = String(params.couponCode).trim();
+    }
+    const response = await apiClient.get(ENDPOINTS.CHECKOUT.GET, { params: query, requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
@@ -39,7 +41,7 @@ export const checkoutApi = {
       return null;
     }
 
-    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_ADDRESS, { addressId });
+    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_ADDRESS, { addressId }, { requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
@@ -65,9 +67,9 @@ export const checkoutApi = {
     const addrId = queryParams.addressId || payload?.addressId;
     if (addrId) params.addressId = Number(addrId);
     const coupon = queryParams.couponCode || payload?.couponCode;
-    if (coupon) params.couponCode = String(coupon);
+    if (coupon && String(coupon).trim()) params.couponCode = String(coupon).trim();
 
-    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_SHIPPING, body, { params });
+    const response = await apiClient.put(ENDPOINTS.CHECKOUT.SET_SHIPPING, body, { params, requiresAuth: true });
     return normalizeObjectKeys(response);
   },
 
