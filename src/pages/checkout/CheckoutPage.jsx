@@ -43,7 +43,8 @@ import {
   Briefcase,
   Phone,
   Globe,
-  Building
+  Building,
+  ShoppingBag
 } from 'lucide-react';
 
 export const COUNTRIES = [
@@ -323,12 +324,31 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="pt-36 pb-24 text-center max-w-md mx-auto px-4 space-y-4 text-[#F3E6D0]">
-        <h2 className="font-cinzel text-2xl font-bold">Your Shopping Bag is Empty</h2>
-        <p className="text-xs text-[#D8BE99]">Add your desired flacons before proceeding to royal checkout.</p>
-        <Link to="/shop" className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel text-xs uppercase font-bold tracking-wider inline-block">
-          Return to Boutique
-        </Link>
+      <div className="relative min-h-screen text-[#F3E6D0] pt-36 pb-24 flex items-center justify-center overflow-hidden">
+        {/* Grand Sovereign Palace Background Image */}
+        <div className="fixed inset-0 z-0 select-none pointer-events-none overflow-hidden">
+          <picture className="w-full h-full">
+            <source media="(max-width: 767px)" type="image/webp" srcSet="/editorial/arabian_palace_phone_opt.webp" />
+            <source type="image/webp" srcSet="/editorial/arabian_palace_desktop_opt.webp" />
+            <img
+              src="/editorial/arabian_palace_desktop_opt.jpg"
+              alt="Arabian Palace"
+              className="w-full h-full object-cover filter brightness-[0.88] contrast-[1.05]"
+            />
+          </picture>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(242,214,117,0.25),transparent_70%)] pointer-events-none" />
+        </div>
+        <div className="relative z-10 text-center max-w-md mx-auto px-8 py-12 rounded-2xl bg-[#0B0A08]/80 backdrop-blur-2xl border border-[#D4AF37]/40 space-y-5 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(212,175,55,0.15)]">
+          <div className="w-16 h-16 rounded-full border-2 border-[#D4AF37]/50 bg-[#D4AF37]/10 flex items-center justify-center mx-auto text-[#D4AF37]">
+            <ShoppingBag className="w-8 h-8" />
+          </div>
+          <h2 className="font-cinzel text-2xl font-bold text-[#F3E6D0]">Your Shopping Bag is Empty</h2>
+          <p className="text-xs text-[#D8BE99]">Add your desired flacons before proceeding to royal checkout.</p>
+          <Link to="/shop" className="px-8 py-3 bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel text-xs uppercase font-bold tracking-wider inline-block rounded-full shadow-lg transition-colors cursor-pointer">
+            Return to Boutique
+          </Link>
+        </div>
       </div>
     );
   }
@@ -857,41 +877,75 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F3E6D0] pt-28 sm:pt-32 pb-6">
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+    <div className="relative min-h-screen text-[#F3E6D0] pt-28 sm:pt-32 pb-16 overflow-hidden">
+      {/* Grand Sovereign Palace Background Image from Landing Page */}
+      <div className="fixed inset-0 z-0 select-none pointer-events-none overflow-hidden">
+        <picture className="w-full h-full">
+          <source
+            media="(max-width: 767px)"
+            type="image/webp"
+            srcSet="/editorial/arabian_palace_phone_opt.webp"
+          />
+          <source
+            media="(max-width: 767px)"
+            srcSet="/editorial/arabian_palace_phone_opt.jpg"
+          />
+          <source
+            type="image/webp"
+            srcSet="/editorial/arabian_palace_desktop_opt.webp"
+          />
+          <img
+            src="/editorial/arabian_palace_desktop_opt.jpg"
+            alt="The Grand Sovereign Palace of Arabian Sheikh"
+            className="w-full h-full object-cover object-center scale-105 filter brightness-[0.88] contrast-[1.05]"
+            loading="eager"
+            fetchPriority="high"
+          />
+        </picture>
+
+        {/* Cheerful Golden Radiant Bloom & Ambient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/75 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(242,214,117,0.25),transparent_65%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_60%,rgba(212,175,55,0.18),transparent_50%)] pointer-events-none" />
+      </div>
+
+      <div className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Header */}
-        <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-cinzel">
-            <Lock className="w-3.5 h-3.5" />
-            <span>256-Bit Encrypted Royal Checkout</span>
+        <div className="text-center max-w-xl mx-auto mb-10 space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/45 text-xs uppercase tracking-[0.25em] text-[#F2D675] font-cinzel backdrop-blur-md shadow-md">
+            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>256-Bit Encrypted Sovereign Checkout</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-cinzel font-bold text-[#F3E6D0]">
-            Complete Your Sovereign Acquisition
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-cinzel font-bold text-[#F3E6D0] drop-shadow-md">
+            Complete Your Royal Acquisition
           </h1>
+          <p className="text-xs text-[#D8BE99] font-cinzel tracking-wider">
+            Experience the pinnacle of Arabian haute perfumerie
+          </p>
         </div>
 
         {/* Multi-step Header */}
-        <div className="max-w-2xl mx-auto mb-12 flex items-center justify-between text-xs font-cinzel uppercase tracking-wider">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#D4AF37] font-bold' : 'text-neutral-600'}`}>
-            <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">1</span>
+        <div className="max-w-2xl mx-auto mb-10 px-6 py-3.5 rounded-full bg-[#0B0A08]/60 backdrop-blur-xl border border-[#D4AF37]/30 shadow-lg flex items-center justify-between text-xs font-cinzel uppercase tracking-wider">
+          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#D4AF37] font-bold' : 'text-neutral-500'}`}>
+            <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] ${step >= 1 ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]' : 'border-neutral-600'}`}>1</span>
             <span>Contact & Shipping</span>
           </div>
-          <div className="w-12 h-px bg-white/10" />
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#D4AF37] font-bold' : 'text-neutral-600'}`}>
-            <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">2</span>
+          <div className="w-8 sm:w-12 h-px bg-white/10" />
+          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#D4AF37] font-bold' : 'text-neutral-500'}`}>
+            <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] ${step >= 2 ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]' : 'border-neutral-600'}`}>2</span>
             <span>Delivery</span>
           </div>
-          <div className="w-12 h-px bg-white/10" />
-          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-[#D4AF37] font-bold' : 'text-neutral-600'}`}>
-            <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">3</span>
+          <div className="w-8 sm:w-12 h-px bg-white/10" />
+          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-[#D4AF37] font-bold' : 'text-neutral-500'}`}>
+            <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] ${step >= 3 ? 'border-[#D4AF37] bg-[#D4AF37]/20 text-[#F2D675]' : 'border-neutral-600'}`}>3</span>
             <span>Payment</span>
           </div>
           {step === 4 && (
             <>
-              <div className="w-12 h-px bg-white/10" />
+              <div className="w-8 sm:w-12 h-px bg-white/10" />
               <div className="flex items-center gap-2 text-[#D4AF37] font-bold">
-                <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px]">4</span>
+                <span className="w-6 h-6 rounded-full border border-[#D4AF37] bg-[#D4AF37]/20 flex items-center justify-center text-[10px] text-[#F2D675]">4</span>
                 <span>Confirm</span>
               </div>
             </>
@@ -901,7 +955,7 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
           {/* Form Area */}
-          <div className="lg:col-span-7 bg-[#0B0A08] border border-[#D4AF37]/20 p-8 shadow-2xl space-y-6">
+          <div className="lg:col-span-7 bg-[#0B0A08]/75 backdrop-blur-2xl border border-[#D4AF37]/35 p-6 sm:p-8 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6),0_0_30px_rgba(212,175,55,0.12)] space-y-6">
             
             {/* STEP 1: Contact & Address */}
             {step === 1 && (
@@ -1490,7 +1544,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Order Summary Column */}
-          <div className="lg:col-span-5 bg-[#0B0A08] border border-[#D4AF37]/20 p-6 shadow-2xl space-y-6">
+          <div className="lg:col-span-5 bg-[#0B0A08]/75 backdrop-blur-2xl border border-[#D4AF37]/35 p-6 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6),0_0_30px_rgba(212,175,55,0.12)] space-y-6 sticky top-32">
             <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[#D4AF37] pb-3 border-b border-white/10">
               Order Summary ({items.length} {items.some(i => i.isBundle) ? 'Creations & Suites' : 'Flacons'})
             </h3>

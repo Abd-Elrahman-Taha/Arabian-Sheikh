@@ -13,12 +13,56 @@ import { productService } from '../services/productService';
 const CartContext = createContext();
 
 const PENDING_CART_KEY = 'arabian_sheikh_pending_cart_intent';
+const APPLIED_COUPON_KEY = 'arabian_sheikh_applied_coupon';
+
+function getSavedCoupon() {
+  try {
+    const raw = sessionStorage.getItem(APPLIED_COUPON_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCoupon(couponData) {
+  try {
+    if (couponData && couponData.discountCode) {
+      sessionStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(couponData));
+    } else {
+      sessionStorage.removeItem(APPLIED_COUPON_KEY);
+    }
+  } catch {}
+}
+
+function mergeWithSavedDiscount(newCartData, prevCart = null) {
+  if (!newCartData) return newCartData;
+  const saved = getSavedCoupon();
+  const code = prevCart?.discountCode || saved?.discountCode || null;
+  const percent = prevCart?.discountPercent !== undefined && prevCart?.discountPercent !== null
+    ? prevCart.discountPercent
+    : (saved?.discountPercent || 0);
+  const fixed = prevCart?.discountFixed !== undefined && prevCart?.discountFixed !== null
+    ? prevCart.discountFixed
+    : (saved?.discountFixed || 0);
+  const giftWrap = prevCart?.giftWrap !== undefined ? prevCart.giftWrap : false;
+
+  return {
+    ...newCartData,
+    discountCode: code,
+    discountPercent: percent,
+    discountFixed: fixed,
+    giftWrap
+  };
+}
 
 export function CartProvider({ children }) {
   const { isAuthenticated, user, isAdmin } = useAuth();
   const { success, error, info } = useToast();
 
-  const [cart, setCart] = useState(() => cartService.getInitialCart());
+  const [cart, setCart] = useState(() => {
+    const initial = cartService.getInitialCart();
+    return mergeWithSavedDiscount(initial);
+  });
   const [loading, setLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -46,7 +90,7 @@ export function CartProvider({ children }) {
   const fetchBackendCart = useCallback(async () => {
     const customerToken = tokenManager.getToken(false);
     if (!isAuthenticated || isAdmin || !customerToken) {
-      setCart(cartService.getInitialCart());
+      setCart(prev => mergeWithSavedDiscount(cartService.getInitialCart(), prev));
       return;
     }
     setLoading(true);
@@ -56,14 +100,14 @@ export function CartProvider({ children }) {
       }
       const remoteCart = await cartApi.getCart();
       if (remoteCart) {
-        setCart(remoteCart);
+        setCart(prev => mergeWithSavedDiscount(remoteCart, prev));
       }
     } catch (err) {
       if (err?.status === 401) {
         if (import.meta.env.DEV) {
           console.warn('[Cart] Unauthorized (401) fetching cart, resetting to empty');
         }
-        setCart(cartService.getInitialCart());
+        setCart(prev => mergeWithSavedDiscount(cartService.getInitialCart(), prev));
       } else if (err?.status === 403) {
         console.error('[Cart] Forbidden (403) accessing cart');
       } else {
@@ -115,14 +159,14 @@ export function CartProvider({ children }) {
           }
         }
         if (lastCart) {
-          setCart(lastCart);
+          setCart(prev => mergeWithSavedDiscount(lastCart, prev));
         } else {
           await fetchBackendCart();
         }
       } else if (bundle.id) {
         const bundlePId = productService.resolveTargetId(bundle.productId || bundle.id || bundle.slug || bundle.name) || 1;
         const updatedCart = await cartApi.addItem(bundlePId, qty);
-        if (updatedCart) setCart(updatedCart);
+        if (updatedCart) setCart(prev => mergeWithSavedDiscount(updatedCart, prev));
       }
 
       setCartBadgeAnimated(true);
@@ -210,7 +254,7 @@ export function CartProvider({ children }) {
     try {
       const updatedCart = await cartApi.addItem(validProductId, qty);
       if (updatedCart) {
-        setCart(updatedCart);
+        setCart(prev => mergeWithSavedDiscount(updatedCart, prev));
       }
       setCartBadgeAnimated(true);
       setTimeout(() => setCartBadgeAnimated(false), 500);
@@ -263,12 +307,12 @@ export function CartProvider({ children }) {
       if (newQty <= 0) {
         const updatedCart = await cartApi.removeItem(itemId);
         if (updatedCart) {
-          setCart(updatedCart);
+          setCart(prev => mergeWithSavedDiscount(updatedCart, prev));
         }
       } else {
         const updatedCart = await cartApi.updateItem(itemId, newQty);
         if (updatedCart) {
-          setCart(updatedCart);
+          setCart(prev => mergeWithSavedDiscount(updatedCart, prev));
         }
       }
       setCartBadgeAnimated(true);
@@ -295,7 +339,7 @@ export function CartProvider({ children }) {
     try {
       const updatedCart = await cartApi.removeItem(itemId);
       if (updatedCart) {
-        setCart(updatedCart);
+        setCart(prev => mergeWithSavedDiscount(updatedCart, prev));
       }
       info('Creation removed from your bag.');
     } catch (err) {
@@ -321,11 +365,17 @@ export function CartProvider({ children }) {
 
     try {
       const discount = await discountService.validateCode(codeStr, totals.subtotal, bagItems);
+      const isPercent = (discount.type || '').toLowerCase() === 'percentage';
+      const val = Number(discount.value) || Number(discount.discountAmount) || 0;
+      const discountData = {
+        discountCode: discount.code,
+        discountPercent: isPercent ? val : 0,
+        discountFixed: !isPercent ? val : 0
+      };
+      saveCoupon(discountData);
       setCart(prev => ({
         ...prev,
-        discountCode: discount.code,
-        discountPercent: discount.type === 'percentage' ? discount.value : 0,
-        discountFixed: discount.type === 'fixed' ? discount.value : 0
+        ...discountData
       }));
       success(`Privilege code '${discount.code}' applied successfully.`);
       return discount;
@@ -336,6 +386,7 @@ export function CartProvider({ children }) {
   }, [cart.items, totals.subtotal, success, error]);
 
   const removeDiscount = useCallback(() => {
+    saveCoupon(null);
     setCart(prev => ({
       ...prev,
       discountCode: null,
@@ -347,6 +398,7 @@ export function CartProvider({ children }) {
   // Clear cart via DELETE /api/cart
   const clearCart = useCallback(async () => {
     try {
+      saveCoupon(null);
       if (isAuthenticated) {
         await cartApi.clearCart();
       }

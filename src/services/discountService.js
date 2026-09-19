@@ -206,11 +206,12 @@ export const discountService = {
       // 1. Try remote validation endpoint
       const remote = await discountApi.validateCoupon(cleanCode);
       if (remote && remote.valid) {
+        const val = Number(remote.value || remote.discountAmount || 0);
         return {
           code: remote.code || cleanCode,
-          type: (remote.type || 'percentage').toLowerCase(),
-          value: Number(remote.value) || 0,
-          discountAmount: Number(remote.discountAmount) || 0,
+          type: (remote.type || (remote.value !== undefined ? 'percentage' : 'fixed')).toLowerCase(),
+          value: val,
+          discountAmount: Number(remote.discountAmount || val) || 0,
           message: remote.message || 'Privilege code applied successfully.'
         };
       }
