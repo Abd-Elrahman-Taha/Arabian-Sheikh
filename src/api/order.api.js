@@ -2,14 +2,17 @@ import apiClient from './client';
 import ENDPOINTS from './endpoints';
 import { normalizeOrder, normalizeReturn, normalizeObjectKeys, normalizeTrackingResponse } from './normalizers';
 
-function toNumericId(id) {
+export function toNumericId(id) {
   if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
   if (typeof id === 'string') {
-    const cleaned = id.trim();
+    const cleaned = id.replace(/^(ORD[-_]?|#)/i, '').trim();
     if (/^\d+$/.test(cleaned)) {
       const n = Number(cleaned);
       if (!isNaN(n) && n > 0) return n;
     }
+  }
+  if (typeof id === 'object' && id !== null) {
+    return toNumericId(id.numericId ?? id.id ?? id.orderNumber);
   }
   return null;
 }
@@ -156,7 +159,9 @@ export const orderApi = {
    */
   async cancelOrder(id, reason = '') {
     const numericId = toNumericId(id);
-    if (!numericId) return { status: 'CancelPending' };
+    if (!numericId) {
+      throw new Error(`Valid numeric order ID is required to cancel an order. Received: ${id}`);
+    }
     const response = await apiClient.post(
       ENDPOINTS.ORDERS.CANCEL(numericId),
       { reason: reason || 'Customer cancellation request' },

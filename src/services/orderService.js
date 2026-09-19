@@ -1,4 +1,4 @@
-import { orderApi } from '../api/order.api';
+import { orderApi, toNumericId } from '../api/order.api';
 import { shippingApi } from '../api/shipping.api';
 import { checkoutApi } from '../api/checkout.api';
 import { addressApi } from '../api/address.api';
@@ -404,8 +404,7 @@ export const orderService = {
   async getOrderById(id) {
     const local = this.getOrderByIdSync(id);
 
-    const numId = Number(id);
-    const validNumericId = !isNaN(numId) && numId > 0 ? numId : (local?.numericId ? Number(local.numericId) : null);
+    const validNumericId = toNumericId(id) || toNumericId(local?.numericId) || toNumericId(local?.id) || toNumericId(local?.orderNumber);
 
     if (!apiClient.isMockEnabled() && validNumericId) {
       try {
@@ -419,9 +418,9 @@ export const orderService = {
             return idStr === target || numStr === target;
           });
 
-          // If local has a newer status updated by admin, preserve it!
+          // Remote is the authoritative source of truth from the backend!
+          const merged = { ...local, ...remote };
           const localStatus = local?.orderStatus || local?.status;
-          const merged = { ...remote, ...local };
           if (localStatus && localStatus !== 'Pending' && remote.orderStatus === 'Pending') {
             merged.orderStatus = localStatus;
             merged.status = localStatus;
@@ -778,24 +777,75 @@ export const orderService = {
   },
 
   async customerCancelOrder(orderId, reason = '') {
-    const numId = Number(orderId);
+    const local = this.getOrderByIdSync(orderId);
+    const resolvedNumId = toNumericId(orderId) 
+      || toNumericId(local?.numericId) 
+      || toNumericId(local?.id) 
+      || toNumericId(local?.orderNumber);
+
     let cancelRes = null;
-    if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
+    if (resolvedNumId && !apiClient.isMockEnabled()) {
       try {
-        cancelRes = await orderApi.cancelOrder(numId, reason);
+        cancelRes = await orderApi.cancelOrder(resolvedNumId, reason);
       } catch (e) {
-        console.warn('Customer cancelOrder API fallback:', e.message);
+        console.error('Customer cancelOrder API error:', e);
+        throw e;
       }
     }
+
     const resolvedStatus = cancelRes?.orderStatus || 'Cancelled';
-    return this.updateOrderStatus(orderId, resolvedStatus, reason ? `Cancellation request: ${reason}` : 'Cancellation requested by patron');
+    const targetKey = String(typeof orderId === 'object' && orderId !== null ? (orderId.orderNumber || orderId.id) : orderId).replace(/^#/, '').toLowerCase().trim();
+
+    // Update in local store
+    const orders = loadOrders();
+    const index = orders.findIndex(o => {
+      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+      return idStr === targetKey || numStr === targetKey || (resolvedNumId && (Number(o.id) === resolvedNumId || Number(o.numericId) === resolvedNumId));
+    });
+
+    let updatedOrder = null;
+    if (index > -1) {
+      orders[index].status = resolvedStatus;
+      orders[index].orderStatus = resolvedStatus;
+      orders[index].updatedAt = new Date().toISOString();
+      if (!orders[index].timeline) orders[index].timeline = [];
+      orders[index].timeline.push({
+        status: resolvedStatus,
+        title: `Order Cancelled${reason ? `: ${reason}` : ''}`,
+        timestamp: new Date().toISOString()
+      });
+      saveOrders(orders);
+      updatedOrder = orders[index];
+    } else {
+      updatedOrder = {
+        id: resolvedNumId || orderId,
+        orderStatus: resolvedStatus,
+        status: resolvedStatus,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    // Sync in liveCloudSync
+    await liveCloudSync.updateOrderStatus(targetKey, resolvedStatus).catch(() => {});
+
+    // Dispatch update event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
+        detail: { orderId: targetKey, order: updatedOrder }
+      }));
+    }
+
+    return updatedOrder;
   },
 
   async getDeliveryStatus(orderId) {
-    const numId = Number(orderId);
-    if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
+    const local = this.getOrderByIdSync(orderId);
+    const validNumericId = toNumericId(orderId) || toNumericId(local?.numericId) || toNumericId(local?.id) || toNumericId(local?.orderNumber);
+
+    if (validNumericId && !apiClient.isMockEnabled()) {
       try {
-        const status = await orderApi.getDeliveryStatus(numId);
+        const status = await orderApi.getDeliveryStatus(validNumericId);
         if (status) return status;
       } catch (e) {
         if (import.meta.env.DEV) {
@@ -803,9 +853,9 @@ export const orderService = {
         }
       }
     }
-    const order = this.getOrderByIdSync(orderId);
+    const order = local || this.getOrderByIdSync(orderId);
     return {
-      orderId: numId || orderId,
+      orderId: validNumericId || orderId,
       orderStatus: order?.orderStatus || order?.status || 'Processing',
       shipmentStatus: order?.shipmentStatus || null,
       carrierStatus: null,
@@ -814,10 +864,12 @@ export const orderService = {
   },
 
   async getCustomerTracking(orderId) {
-    const numId = Number(orderId);
-    if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
+    const local = this.getOrderByIdSync(orderId);
+    const validNumericId = toNumericId(orderId) || toNumericId(local?.numericId) || toNumericId(local?.id) || toNumericId(local?.orderNumber);
+
+    if (validNumericId && !apiClient.isMockEnabled()) {
       try {
-        const tracking = await orderApi.trackOrder(numId);
+        const tracking = await orderApi.trackOrder(validNumericId);
         if (tracking) {
           return tracking;
         }
@@ -828,19 +880,24 @@ export const orderService = {
       }
     }
 
-    const order = this.getOrderByIdSync(orderId);
+    const order = local || this.getOrderByIdSync(orderId);
     const trkNumber = order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null;
     const curStatus = order?.shipmentStatus || null;
 
     return {
-      orderId: numId || orderId,
+      orderId: validNumericId || orderId,
       shipmentId: order?.shipmentId || null,
       carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || order?.shipping?.shippingCompanyName || 'Carrier',
       trackingNumber: trkNumber,
       currentStatus: curStatus,
       carrierStatus: null,
       expectedDeliveryDate: order?.expectedDeliveryDate || null,
-      events: []
+      events: Array.isArray(order?.timeline) ? order.timeline.map(t => ({
+        status: t.status || 'Updated',
+        description: t.title || t.description || null,
+        location: t.location || null,
+        occurredAt: t.timestamp || t.date || new Date().toISOString()
+      })) : []
     };
   },
 

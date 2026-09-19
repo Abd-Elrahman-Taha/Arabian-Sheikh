@@ -112,6 +112,7 @@ export default function OrderDetail() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
 
   // Returns & Refunds State
   const [eligibility, setEligibility] = useState(null);
@@ -321,8 +322,9 @@ export default function OrderDetail() {
   const handleConfirmCancel = async (e) => {
     e.preventDefault();
     setCancelling(true);
+    setCancelError(null);
     try {
-      const res = await orderService.customerCancelOrder(order.id, cancelReason);
+      const res = await orderService.customerCancelOrder(order, cancelReason);
       const updatedStatus = res?.orderStatus || res?.status || 'Cancelled';
       setOrder(prev => ({
         ...prev,
@@ -330,8 +332,10 @@ export default function OrderDetail() {
         status: updatedStatus
       }));
       setCancelModalOpen(false);
+      await refreshOrderData();
     } catch (err) {
       console.warn('Failed to cancel order:', err);
+      setCancelError(err?.message || 'This order cannot be cancelled at this time.');
     } finally {
       setCancelling(false);
     }
@@ -419,7 +423,7 @@ export default function OrderDetail() {
               {/* Cancel Button */}
               {isCancellable && (
                 <button
-                  onClick={() => { setCancelReason(''); setCancelModalOpen(true); }}
+                  onClick={() => { setCancelReason(''); setCancelError(null); setCancelModalOpen(true); }}
                   className="px-4 py-2.5 border border-rose-500/40 hover:border-rose-500 text-rose-300 hover:text-rose-200 bg-rose-950/30 text-xs font-cinzel font-bold uppercase tracking-wider flex items-center gap-2 transition-all rounded-full cursor-pointer shadow-sm hover:shadow-rose-900/20"
                   title="Request cancellation for this order"
                 >
@@ -881,6 +885,13 @@ export default function OrderDetail() {
             <p className="text-xs text-[#D8BE99] leading-relaxed">
               Are you certain you wish to cancel Order <strong className="text-[#F3E6D0] font-mono">{formattedOrderCode}</strong>? Once confirmed, warehouse dispatch and logistics packaging will be immediately halted.
             </p>
+
+            {cancelError && (
+              <div className="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{cancelError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleConfirmCancel} className="space-y-4">
               <div>
