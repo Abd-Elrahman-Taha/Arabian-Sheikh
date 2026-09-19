@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { cartService } from '../services/cartService';
 import { discountService } from '../services/discountService';
 import { cartApi } from '../api/cart.api';
+import { tokenManager } from '../api/client';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import LoginRequiredModal from '../components/auth/LoginRequiredModal';
@@ -14,7 +15,7 @@ const CartContext = createContext();
 const PENDING_CART_KEY = 'arabian_sheikh_pending_cart_intent';
 
 export function CartProvider({ children }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const { success, error, info } = useToast();
 
   const [cart, setCart] = useState(() => cartService.getInitialCart());
@@ -43,7 +44,8 @@ export function CartProvider({ children }) {
 
   // Hydrate cart from live backend API whenever authentication status or user changes
   const fetchBackendCart = useCallback(async () => {
-    if (!isAuthenticated) {
+    const customerToken = tokenManager.getToken(false);
+    if (!isAuthenticated || isAdmin || !customerToken) {
       setCart(cartService.getInitialCart());
       return;
     }
@@ -70,7 +72,7 @@ export function CartProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isAdmin]);
 
   useEffect(() => {
     fetchBackendCart();
@@ -80,7 +82,14 @@ export function CartProvider({ children }) {
 
   // Add Curated Bundle Suites to backend cart
   const addBundleToCart = useCallback(async (bundle, quantity = 1) => {
-    if (!isAuthenticated) {
+    if (isAdmin) {
+      error('Administrator accounts cannot place customer orders. Please sign in with a customer account.');
+      setAuthModalOpen(true);
+      return false;
+    }
+
+    const customerToken = tokenManager.getToken(false);
+    if (!isAuthenticated || !customerToken) {
       const intent = { bundle, isBundle: true, quantity };
       setPendingItem(intent);
       try {
@@ -124,10 +133,15 @@ export function CartProvider({ children }) {
       return true;
     } catch (err) {
       console.error('[Cart] Failed to add bundle to backend cart:', err);
-      error(err?.message || 'Failed to add suite to bag. Please try again.');
+      if (err?.status === 401 || err?.status === 403) {
+        setAuthModalOpen(true);
+        error('Your session has expired. Please sign in again to add items to your bag.');
+      } else {
+        error(err?.message || 'Failed to add suite to bag. Please try again.');
+      }
       return false;
     }
-  }, [isAuthenticated, fetchBackendCart, success, error]);
+  }, [isAuthenticated, isAdmin, fetchBackendCart, success, error]);
 
   // Add Product to backend cart
   const addToCart = useCallback(async (product, size = '100ml', quantity = 1) => {
@@ -135,7 +149,14 @@ export function CartProvider({ children }) {
       return addBundleToCart(product, quantity);
     }
 
-    if (!isAuthenticated) {
+    if (isAdmin) {
+      error('Administrator accounts cannot place customer orders. Please sign in with a customer account.');
+      setAuthModalOpen(true);
+      return false;
+    }
+
+    const customerToken = tokenManager.getToken(false);
+    if (!isAuthenticated || !customerToken) {
       const intent = { product, size, quantity };
       setPendingItem(intent);
       try {
@@ -199,10 +220,15 @@ export function CartProvider({ children }) {
       return true;
     } catch (err) {
       console.error('[Cart] Failed to add item to backend cart:', err);
-      error(err?.message || 'Failed to add item to bag. Please try again.');
+      if (err?.status === 401 || err?.status === 403) {
+        setAuthModalOpen(true);
+        error('Your session has expired. Please sign in again to add items to your bag.');
+      } else {
+        error(err?.message || 'Failed to add item to bag. Please try again.');
+      }
       return false;
     }
-  }, [isAuthenticated, addBundleToCart, success, error]);
+  }, [isAuthenticated, isAdmin, addBundleToCart, success, error]);
 
   // Handle pending cart additions when user logs in
   useEffect(() => {

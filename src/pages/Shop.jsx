@@ -88,7 +88,7 @@ export default function Shop() {
         const [catsData, brandsData, tiersData] = await Promise.all([
           categoryService.getStoreCategories(language).catch(() => []),
           brandService.getStoreBrands(language).catch(() => []),
-          perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 }).catch(() => ({ items: [] }))
+          perfumeCategoryService.getStorePerfumeCategories()
         ]);
 
         if (isMounted) {

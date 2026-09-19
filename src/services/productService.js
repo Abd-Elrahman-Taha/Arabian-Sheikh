@@ -219,8 +219,11 @@ export const productService = {
       try {
         let tiers = perfumeCategoryService.getCachedTiers();
         if (!tiers || tiers.length === 0) {
-          const tiersRes = await perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 }).catch(() => null);
-          tiers = tiersRes?.items || [];
+          tiers = [
+            { id: 1, name: 'Standard', price: 100, notes: 'Standard Perfume Tier' },
+            { id: 2, name: 'Premium', price: 150, notes: 'Premium Perfume Tier' },
+            { id: 3, name: 'Luxury', price: 300, notes: 'Luxury Perfume Tier' }
+          ];
         }
         if (Array.isArray(tiers) && tiers.length > 0) {
           const tierById = new Map();

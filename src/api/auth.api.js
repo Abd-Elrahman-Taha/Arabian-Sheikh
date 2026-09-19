@@ -40,7 +40,6 @@ export const authApi = {
     if (response?.tokens?.accessToken || response?.token || response?.accessToken) {
       const t = response?.tokens?.accessToken || response?.token || response?.accessToken;
       tokenManager.setAdminToken(t);
-      tokenManager.setToken(t);
     }
     if (response?.tokens?.refreshToken || response?.refreshToken) {
       tokenManager.setRefreshToken(response?.tokens?.refreshToken || response?.refreshToken);

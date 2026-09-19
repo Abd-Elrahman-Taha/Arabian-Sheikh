@@ -45,6 +45,31 @@ export function isTokenExpired(token) {
   }
 }
 
+// Helper to check if a JWT belongs to an Admin account
+export function isTokenAdmin(token) {
+  if (!token || typeof token !== 'string') return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+    const roles = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload.role || payload.roles;
+    if (Array.isArray(roles) && (roles.includes('Admin') || roles.includes('SuperAdmin'))) return true;
+    if (typeof roles === 'string' && roles.toLowerCase().includes('admin')) return true;
+    if (payload.email && (payload.email.toLowerCase().includes('admin') || payload.email.toLowerCase().includes('perfumestore'))) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 let adminTokenPromise = null;
 
 // Token Management Utilities
@@ -54,12 +79,22 @@ export const tokenManager = {
 
     if (isAdminEndpoint) {
       const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
-      if (adminToken && !isTokenExpired(adminToken)) {
+      if (adminToken && !isTokenExpired(adminToken) && isTokenAdmin(adminToken)) {
         return adminToken;
       }
+      return null; // Strict isolation: never send customer token to admin endpoint
     }
 
+    // Customer Endpoint:
     let t = localStorage.getItem(TOKEN_KEY);
+
+    // If an Admin token was mistakenly placed in customer slot, migrate & clear it
+    if (t && isTokenAdmin(t)) {
+      localStorage.setItem(ADMIN_TOKEN_KEY, t);
+      localStorage.removeItem(TOKEN_KEY);
+      t = null;
+    }
+
     if (t && isTokenExpired(t)) {
       localStorage.removeItem(TOKEN_KEY);
       t = null;
@@ -70,10 +105,13 @@ export const tokenManager = {
         const rawUser = localStorage.getItem('arabian_sheikh_current_user');
         if (rawUser) {
           const u = JSON.parse(rawUser);
-          const candidate = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
-          if (candidate && !isTokenExpired(candidate)) {
-            t = candidate;
-            localStorage.setItem(TOKEN_KEY, t);
+          const isAdmin = Boolean(u.role === 'ADMIN' || u.role === 'SUPER_ADMIN' || u.isSuperAdmin);
+          if (!isAdmin) {
+            const candidate = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
+            if (candidate && !isTokenExpired(candidate) && !isTokenAdmin(candidate)) {
+              t = candidate;
+              localStorage.setItem(TOKEN_KEY, t);
+            }
           }
         }
       } catch {}
@@ -83,14 +121,19 @@ export const tokenManager = {
 
   setToken: (token) => {
     if (typeof window !== 'undefined' && token) {
-      localStorage.setItem(TOKEN_KEY, token);
+      if (isTokenAdmin(token)) {
+        // If an admin token is passed here, store it in the admin slot
+        localStorage.setItem(ADMIN_TOKEN_KEY, token);
+      } else {
+        localStorage.setItem(TOKEN_KEY, token);
+      }
     }
   },
 
   setAdminToken: (token) => {
     if (typeof window !== 'undefined' && token) {
       localStorage.setItem(ADMIN_TOKEN_KEY, token);
-      localStorage.setItem(TOKEN_KEY, token);
+      // Strictly avoid writing admin token to customer TOKEN_KEY
     }
   },
 
@@ -360,15 +403,14 @@ async function request(endpoint, options = {}, attempt = 0) {
     // Handle HTTP Error Codes
     if (!response.ok) {
       // 401 Unauthorized / 403 Forbidden Auto-Recovery: Refresh Admin or Customer tokens
-      if ((response.status === 401 || (response.status === 403 && isAdminEndpoint)) && requiresAuth && !options._retryCount) {
-        if (isAdminEndpoint || response.status === 403) {
-          tokenManager.clearAdminToken();
-          const freshToken = await tokenManager.ensureAdminToken(true);
-          if (freshToken) {
-            return await request(endpoint, { ...options, _retryCount: true });
-          }
-        } else {
-          // Attempt silent customer token refresh
+      if (isAdminEndpoint && (response.status === 401 || response.status === 403) && requiresAuth && !options._retryCount) {
+        tokenManager.clearAdminToken();
+        const freshToken = await tokenManager.ensureAdminToken(true);
+        if (freshToken) {
+          return await request(endpoint, { ...options, _retryCount: true });
+        }
+      } else if (!isAdminEndpoint && response.status === 401 && requiresAuth && !options._retryCount) {
+        // Attempt silent customer token refresh
           const refreshToken = tokenManager.getRefreshToken();
           if (refreshToken) {
             try {
@@ -396,7 +438,6 @@ async function request(endpoint, options = {}, attempt = 0) {
             }
           }
         }
-      }
 
       let errorMessage = data?.detail || data?.message || data?.error || data?.title;
       if (data?.errors && typeof data.errors === 'object') {

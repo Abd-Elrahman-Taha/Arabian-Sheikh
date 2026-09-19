@@ -1,4 +1,5 @@
 import { perfumeCategoryApi } from '../api/perfumeCategory.api';
+import { tokenManager } from '../api/client';
 
 const DEFAULT_TIERS = [
   { id: 1, name: 'Standard', price: 100, notes: 'Standard Perfume Tier' },
@@ -53,7 +54,25 @@ export const perfumeCategoryService = {
     return tier && tier.price !== undefined ? Number(tier.price) : null;
   },
 
+  getStorePerfumeCategories() {
+    return { items: cachedTiers };
+  },
+
   async getAdminPerfumeCategories(params = {}) {
+    // Only attempt admin fetch if an admin token is actually present
+    const adminToken = tokenManager.getToken(true);
+    if (!adminToken) {
+      return {
+        items: cachedTiers,
+        page: 1,
+        pageSize: cachedTiers.length,
+        totalCount: cachedTiers.length,
+        totalPages: 1,
+        hasPreviousPage: false,
+        hasNextPage: false
+      };
+    }
+
     try {
       const response = await perfumeCategoryApi.adminGetPerfumeCategories(params);
       const items = response?.items || (Array.isArray(response) ? response : []);
@@ -70,6 +89,17 @@ export const perfumeCategoryService = {
         hasNextPage: Boolean(response?.hasNextPage)
       };
     } catch (err) {
+      if (err?.status === 403 || err?.response?.status === 403 || err?.status === 401 || err?.response?.status === 401) {
+        return {
+          items: cachedTiers,
+          page: 1,
+          pageSize: cachedTiers.length,
+          totalCount: cachedTiers.length,
+          totalPages: 1,
+          hasPreviousPage: false,
+          hasNextPage: false
+        };
+      }
       this.handleApiError(err, 'Failed to fetch perfume pricing tiers.');
     }
   },
