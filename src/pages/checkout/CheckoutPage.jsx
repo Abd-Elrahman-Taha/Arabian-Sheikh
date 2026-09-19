@@ -640,19 +640,6 @@ export default function CheckoutPage() {
         });
       }
 
-      // Best-effort non-blocking sync with backend checkout session if authenticated
-      if (user) {
-        checkoutApi.setCheckoutShipping({
-          shippingMethodId: resolvedMethodId,
-          quoteId: resolvedQuoteId
-        }, {
-          addressId: addressId || undefined,
-          couponCode: cart?.discountCode || undefined
-        }).catch(syncErr => {
-          console.warn('[Checkout] Checkout shipping sync notice (non-blocking):', syncErr?.message || syncErr);
-        });
-      }
-
       setStep(3);
       window.scrollTo({ top: 120, behavior: 'smooth' });
     } catch (err) {

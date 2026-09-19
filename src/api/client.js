@@ -458,6 +458,11 @@ async function request(endpoint, options = {}, attempt = 0) {
   } catch (err) {
     clearTimeout(timeoutId);
 
+    // If caller intentionally aborted this request, rethrow immediately without retrying
+    if (options?.signal?.aborted) {
+      throw err;
+    }
+
     // Auto-retry transient network errors (e.g. Failed to fetch or Abort timeout while server starts)
     if (attempt < MAX_RETRIES && (err.name === 'AbortError' || err.message?.toLowerCase().includes('failed to fetch') || err.message?.toLowerCase().includes('network'))) {
       const waitMs = (attempt + 1) * 1200;
