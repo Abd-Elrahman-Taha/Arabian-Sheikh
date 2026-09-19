@@ -11,7 +11,7 @@ export const shippingApi = {
    *   fromBackend=true  → quoteIds are real backend UUIDs, safe to use in POST /api/Orders
    *   fromBackend=false → fallback display-only quotes, do NOT send quoteId to backend
    */
-  async getQuotes(payload = {}) {
+  async getQuotes(payload = {}, options = {}) {
     const rawAddrId = payload.addressId;
     const addrId =
       rawAddrId !== undefined &&
@@ -38,11 +38,11 @@ export const shippingApi = {
       ...(payload.couponCode ? { couponCode: String(payload.couponCode).trim() } : {})
     };
 
-    // Call official backend endpoint
+    // Call official backend endpoint with optional AbortSignal
     const response = await apiClient.post(
       ENDPOINTS.SHIPPING.QUOTES,
       requestBody,
-      { requiresAuth: true }
+      { requiresAuth: true, signal: options?.signal }
     );
 
     const rawOptions =
@@ -50,7 +50,7 @@ export const shippingApi = {
 
     const topLevelQuoteId = response?.quoteId || null;
 
-    const options = (Array.isArray(rawOptions) ? rawOptions : [])
+    const optionsList = (Array.isArray(rawOptions) ? rawOptions : [])
       .map(item => {
         const norm = normalizeShippingOption(item);
         if (!norm) return null;
@@ -62,11 +62,12 @@ export const shippingApi = {
       .filter(Boolean);
 
     if (import.meta.env.DEV) {
-      console.log('[Checkout] Shipping quote received:', options);
+      console.log('[Checkout] Shipping quote received:', optionsList);
     }
 
-    return { options };
+    return { options: optionsList, quoteId: topLevelQuoteId };
   },
 };
 
 export default shippingApi;
+

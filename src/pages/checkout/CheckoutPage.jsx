@@ -87,18 +87,43 @@ export default function CheckoutPage() {
   const [paymentStatus, setPaymentStatus] = useState(null); // 'preparing' | 'ready' | 'polling' | 'paid' | 'failed' | 'timeout'
   const [paymentError, setPaymentError] = useState(null);
   const pollAbortRef = useRef(null);
+  const quoteAbortRef = useRef(null);
+  const quoteRequestIdRef = useRef(0);
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
-    if (!couponCode.trim()) return;
+    const code = couponCode.trim();
+    if (!code) return;
     setCouponLoading(true);
     try {
-      await applyDiscount(couponCode.trim());
+      await applyDiscount(code);
       setCouponCode('');
+      // Invalidate existing quotes immediately because quote parameters changed
+      setShippingQuotes([]);
+      setSelectedQuote(null);
+      if (addressId) {
+        await fetchQuotesForAddress(addressId, code);
+      }
+      if (step > 2) {
+        setStep(2);
+      }
     } catch {
       // Toast notification handled by CartContext
     } finally {
       setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    removeDiscount();
+    // Invalidate existing quotes immediately because quote parameters changed
+    setShippingQuotes([]);
+    setSelectedQuote(null);
+    if (addressId) {
+      await fetchQuotesForAddress(addressId, null);
+    }
+    if (step > 2) {
+      setStep(2);
     }
   };
 
@@ -192,6 +217,121 @@ export default function CheckoutPage() {
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
 
+  // Centralized Quote Fetching with In-Flight Cancellation and Race-Condition Protection
+  const fetchQuotesForAddress = async (targetAddrId, currentCouponCode) => {
+    const rawId = Number(targetAddrId);
+    if (!rawId || isNaN(rawId) || rawId <= 0) {
+      setShippingQuotes([]);
+      setSelectedQuote(null);
+      return null;
+    }
+
+    // Cancel any previous in-flight quote request
+    if (quoteAbortRef.current) {
+      quoteAbortRef.current.abort();
+    }
+    const abortController = new AbortController();
+    quoteAbortRef.current = abortController;
+    quoteRequestIdRef.current += 1;
+    const thisRequestId = quoteRequestIdRef.current;
+
+    setLoadingQuotes(true);
+    setQuotesError(null);
+
+    try {
+      // 1. Fetch authoritative address snapshot from backend for stable destination parameters
+      let destCountry = formData.countryCode || 'BG';
+      let destPostal = formData.postalCode || '';
+      let destCity = formData.city || '';
+
+      try {
+        const snapshot = await addressApi.getAddressSnapshot(rawId);
+        if (snapshot) {
+          destCountry = snapshot.countryCode || destCountry;
+          destPostal = snapshot.postalCode || destPostal;
+          destCity = snapshot.city || destCity;
+        }
+      } catch (snapErr) {
+        const savedMatch = savedAddresses.find(a => Number(a.id) === rawId);
+        if (savedMatch) {
+          destCountry = savedMatch.countryCode || destCountry;
+          destPostal = savedMatch.postalCode || destPostal;
+          destCity = savedMatch.city || destCity;
+        }
+      }
+
+      // 2. Ensure cart state is synchronized on backend before quoting
+      if (Array.isArray(items) && items.length > 0) {
+        await cartApi.syncCart(items).catch(err => {
+          console.warn('[Checkout] Cart sync before quotes notice:', err?.message || err);
+        });
+      }
+
+      const quoteParams = {
+        addressId: rawId,
+        countryCode: destCountry,
+        postalCode: destPostal,
+        city: destCity,
+        couponCode: currentCouponCode !== undefined ? (currentCouponCode || undefined) : (cart?.discountCode || undefined),
+        items: items.map(it => ({
+          productId: it.productId || it.numericId || it.id,
+          quantity: it.quantity || 1
+        }))
+      };
+
+      const res = await shippingService.getQuotes(quoteParams, { signal: abortController.signal });
+
+      // If a newer request was dispatched while this was in-flight, discard
+      if (thisRequestId !== quoteRequestIdRef.current) {
+        return null;
+      }
+
+      const rawOpts = res?.options || [];
+      // Filter strictly for options that have a valid shippingMethodId
+      const validOpts = rawOpts.filter(opt => {
+        const mid = Number(opt.shippingMethodId || opt.id);
+        return mid && !isNaN(mid) && mid > 0;
+      });
+
+      if (validOpts.length === 0) {
+        setShippingQuotes([]);
+        setSelectedQuote(null);
+        setQuotesError('No shipping methods are available for the selected address. Please choose a different delivery address.');
+        return [];
+      }
+
+      setShippingQuotes(validOpts);
+
+      // Preserve previous selection if still available, otherwise select first valid option
+      setSelectedQuote(prevSelected => {
+        if (!prevSelected) return validOpts[0];
+        const prevId = Number(prevSelected.shippingMethodId || prevSelected.id);
+        const matched = validOpts.find(o => Number(o.shippingMethodId || o.id) === prevId && (!prevSelected.carrier || o.carrier === prevSelected.carrier));
+        return matched || validOpts[0];
+      });
+
+      return validOpts;
+    } catch (err) {
+      if (abortController.signal.aborted || thisRequestId !== quoteRequestIdRef.current) {
+        return null;
+      }
+      console.error('[Checkout] Shipping quote fetch error:', err);
+      const errMsg = err?.message || '';
+      if (err?.code === 'CART_EMPTY' || errMsg.toLowerCase().includes('empty')) {
+        setQuotesError('Your cart is empty. Please add products before continuing to checkout.');
+      } else {
+        setQuotesError(errMsg || 'Failed to load shipping quotes. Please check your address details.');
+      }
+      setShippingQuotes([]);
+      setSelectedQuote(null);
+      return null;
+    } finally {
+      if (thisRequestId === quoteRequestIdRef.current) {
+        setLoadingQuotes(false);
+      }
+    }
+  };
+
   // Load authenticated patron saved addresses if available
   useEffect(() => {
     let active = true;
@@ -222,6 +362,7 @@ export default function CheckoutPage() {
           if (import.meta.env.DEV) {
             console.log('[Checkout] Loaded saved addresses:', list);
           }
+          fetchQuotesForAddress(defaultAddr.id, cart?.discountCode);
         }
       } catch (e) {
         // guest or unauthenticated
@@ -275,6 +416,9 @@ export default function CheckoutPage() {
       if (pollAbortRef.current) {
         pollAbortRef.current.abort();
       }
+      if (quoteAbortRef.current) {
+        quoteAbortRef.current.abort();
+      }
     };
   }, []);
 
@@ -301,9 +445,14 @@ export default function CheckoutPage() {
     setSelectedQuote(null);
     setQuotesError(null);
     setAddressError(null);
+    if (step > 1) {
+      setStep(1);
+    }
     if (import.meta.env.DEV) {
       console.log('[Checkout] Selected saved address:', addr.id, addr);
     }
+    // Fetch quotes immediately for the newly selected address
+    fetchQuotesForAddress(addr.id, cart?.discountCode);
   };
 
   // Handle manual address input changes
@@ -415,63 +564,15 @@ export default function CheckoutPage() {
         console.warn('[Checkout] Checkout address sync notice:', err?.message || err);
       });
 
-      // 3. Sync local cart items with backend before requesting shipping quotes
-      if (import.meta.env.DEV) {
-        console.log('[Checkout] Syncing cart before quotes:', items);
-      }
-      await cartApi.syncCart(items);
+      // 3. Fetch fresh quotes for this address
+      const opts = await fetchQuotesForAddress(currentAddrId, cart?.discountCode);
 
-      // 4. Request real shipping quotes from backend
-      setLoadingQuotes(true);
-      if (import.meta.env.DEV) {
-        console.log('[Checkout] Requesting quotes for address ID:', currentAddrId);
-      }
-
-      let res;
-      try {
-        const selectedSavedAddr = savedAddresses.find(a => Number(a.id) === Number(currentAddrId));
-        const quoteParams = {
-          addressId: currentAddrId,
-          countryCode: selectedSavedAddr?.countryCode || formData.countryCode || 'BG',
-          postalCode: selectedSavedAddr?.postalCode || formData.postalCode || '',
-          city: selectedSavedAddr?.city || formData.city || '',
-          couponCode: cart?.discountCode || undefined,
-          items: items.map(it => ({
-            productId: it.productId || it.numericId || it.id,
-            quantity: it.quantity || 1
-          }))
-        };
-        res = await shippingService.getQuotes(quoteParams);
-      } catch (quoteErr) {
-        console.error('[Checkout] Shipping quote fetch error:', quoteErr);
-        const errMsg = quoteErr?.message || '';
-        if (quoteErr?.code === 'CART_EMPTY' || errMsg.toLowerCase().includes('empty')) {
-          setQuotesError('Your cart is empty. Please add products before continuing to checkout.');
-        } else {
-          setQuotesError(errMsg || 'Failed to load shipping quotes. Please check your address details.');
-        }
+      if (!opts || opts.length === 0) {
         setProcessing(false);
-        setLoadingQuotes(false);
-        return; // STOP! Never proceed without quotes!
+        return; // STOP! fetchQuotesForAddress already sets quotesError
       }
 
-      const opts = res?.options || [];
-      if (opts.length === 0) {
-        setQuotesError('No shipping methods are available for the selected address. Please choose a different delivery address.');
-        setProcessing(false);
-        setLoadingQuotes(false);
-        return; // STOP!
-      }
-
-      // 5. Valid quotes returned: set state and advance to Step 2
-      setShippingQuotes(opts);
-      setSelectedQuote(opts[0]);
-      setFormData(prev => ({ ...prev, shippingMethod: opts[0].shippingMethod }));
-      if (import.meta.env.DEV) {
-        console.log('[Checkout] Shipping quotes received:', opts);
-        console.log('[Checkout] Default selected quote:', opts[0]);
-      }
-
+      // 4. Valid quotes returned: advance to Step 2
       setStep(2);
       window.scrollTo({ top: 120, behavior: 'smooth' });
     } catch (generalErr) {
@@ -481,7 +582,6 @@ export default function CheckoutPage() {
       error(msg);
     } finally {
       setProcessing(false);
-      setLoadingQuotes(false);
     }
   };
 
@@ -520,15 +620,10 @@ export default function CheckoutPage() {
   // ─── STEP 2: Shipping method selection submit ─────────────────
   const handleShippingSubmit = async (e) => {
     if (e) e.preventDefault();
-    let resolvedMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
+    const resolvedMethodId = Number(selectedQuote?.shippingMethodId || selectedQuote?.id);
     const resolvedQuoteId = selectedQuote?.quoteId;
 
-    if (!resolvedMethodId || isNaN(resolvedMethodId)) {
-      const isExpress = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase().includes('EXP');
-      resolvedMethodId = isExpress ? 2 : 1;
-    }
-
-    if (!resolvedQuoteId || !resolvedMethodId) {
+    if (!resolvedMethodId || isNaN(resolvedMethodId) || !resolvedQuoteId) {
       const err = 'Please select a valid shipping method before proceeding.';
       setQuotesError(err);
       error(err);
@@ -557,6 +652,20 @@ export default function CheckoutPage() {
           });
         } catch (syncErr) {
           console.warn('[Checkout] Checkout shipping sync notice:', syncErr?.message || syncErr);
+          const syncMsg = syncErr?.message || '';
+          if (
+            syncErr?.code === 'INVALID_SHIPPING_METHOD' ||
+            syncMsg.includes('INVALID_SHIPPING_METHOD') ||
+            syncMsg.includes('not available') ||
+            syncMsg.includes('Quote no longer matches') ||
+            syncErr?.code === 'QUOTE_MISMATCH'
+          ) {
+            setQuotesError(syncMsg || 'Selected shipping method is no longer valid. Refreshing available options...');
+            error(syncMsg || 'Selected shipping method is no longer valid.');
+            await fetchQuotesForAddress(addressId, cart?.discountCode);
+            setProcessing(false);
+            return;
+          }
         }
       }
 
@@ -590,16 +699,48 @@ export default function CheckoutPage() {
       throw new Error('A valid shipping quote is required before creating an order. Please recalculate shipping.');
     }
 
-    let shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
+    const shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
     if (!shippingMethodId || isNaN(shippingMethodId)) {
-      const isExpress = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase().includes('EXP');
-      shippingMethodId = isExpress ? 2 : 1;
-    }
-    if (!shippingMethodId || isNaN(shippingMethodId)) {
-      throw new Error('A valid shipping method must be selected.');
+      throw new Error('A valid shipping method must be selected. Please recalculate shipping options.');
     }
 
     const orderShippingCost = Number(selectedQuote.cost) || 0;
+
+    // Retrieve authoritative address snapshot from backend for order record
+    let authoritativeAddress = {
+      label: formData.label || 'Home',
+      customLabel: formData.customLabel || '',
+      fullName: finalName,
+      phone: formData.phone,
+      countryCode: formData.countryCode || 'BG',
+      country: selectedCountry?.name || 'Bulgaria',
+      region: formData.region || formData.city || 'Sofia City',
+      city: formData.city,
+      addressLine1: formData.addressLine1 || formData.address,
+      addressLine2: formData.addressLine2 || '',
+      address: formData.addressLine1 || formData.address,
+      postalCode: formData.postalCode,
+    };
+
+    try {
+      const snapshot = await addressApi.getAddressSnapshot(addressId);
+      if (snapshot) {
+        authoritativeAddress = {
+          ...authoritativeAddress,
+          fullName: snapshot.fullName || authoritativeAddress.fullName,
+          phone: snapshot.phone || authoritativeAddress.phone,
+          countryCode: snapshot.countryCode || authoritativeAddress.countryCode,
+          region: snapshot.region || authoritativeAddress.region,
+          city: snapshot.city || authoritativeAddress.city,
+          addressLine1: snapshot.addressLine1 || authoritativeAddress.addressLine1,
+          addressLine2: snapshot.addressLine2 || authoritativeAddress.addressLine2,
+          address: snapshot.addressLine1 || authoritativeAddress.address,
+          postalCode: snapshot.postalCode || authoritativeAddress.postalCode,
+        };
+      }
+    } catch (snapErr) {
+      console.warn('[Checkout] Failed to fetch snapshot for order creation, using form data:', snapErr);
+    }
 
     if (import.meta.env.DEV) {
       console.log('[Checkout] Creating order with verified parameters:', {
@@ -616,7 +757,7 @@ export default function CheckoutPage() {
       userId: user?.id || null,
       customerEmail: finalEmail,
       customerName: finalName,
-      customerPhone: formData.phone,
+      customerPhone: authoritativeAddress.phone,
       items,
       subtotal: totals.subtotal,
       discountAmount: totals.discountAmount,
@@ -627,20 +768,7 @@ export default function CheckoutPage() {
       quoteId: selectedQuote.quoteId,
       shippingMethodId,
       carrier: selectedQuote.carrier || 'ECONT',
-      shippingAddress: {
-        label: formData.label || 'Home',
-        customLabel: formData.customLabel || '',
-        fullName: finalName,
-        phone: formData.phone,
-        countryCode: formData.countryCode || 'BG',
-        country: selectedCountry?.name || 'Bulgaria',
-        region: formData.region || formData.city || 'Sofia City',
-        city: formData.city,
-        addressLine1: formData.addressLine1 || formData.address,
-        addressLine2: formData.addressLine2 || '',
-        address: formData.addressLine1 || formData.address,
-        postalCode: formData.postalCode,
-      },
+      shippingAddress: authoritativeAddress,
       paymentMethod: getApiPaymentMethod()
     });
 
@@ -706,6 +834,16 @@ export default function CheckoutPage() {
     } catch (err) {
       console.error('[Checkout] COD order placement error:', err);
       const msg = err?.message || 'Failed to place order. Please try again.';
+      if (
+        err?.code === 'INVALID_SHIPPING_METHOD' ||
+        msg.includes('INVALID_SHIPPING_METHOD') ||
+        msg.includes('Quote no longer matches') ||
+        err?.code === 'QUOTE_MISMATCH'
+      ) {
+        setQuotesError('Shipping quote expired or no longer matches order parameters. Please re-select your delivery method.');
+        await fetchQuotesForAddress(addressId, cart?.discountCode);
+        setStep(2);
+      }
       setPaymentError(msg);
       error(msg);
     } finally {
@@ -778,6 +916,16 @@ export default function CheckoutPage() {
     } catch (err) {
       console.error('[Checkout] Stripe payment setup error:', err);
       const msg = err?.message || 'Failed to prepare payment. Please try again.';
+      if (
+        err?.code === 'INVALID_SHIPPING_METHOD' ||
+        msg.includes('INVALID_SHIPPING_METHOD') ||
+        msg.includes('Quote no longer matches') ||
+        err?.code === 'QUOTE_MISMATCH'
+      ) {
+        setQuotesError('Shipping quote expired or no longer matches order parameters. Please re-select your delivery method.');
+        await fetchQuotesForAddress(addressId, cart?.discountCode);
+        setStep(2);
+      }
       setPaymentError(msg);
       setPaymentStatus(null);
       error(msg);
@@ -1590,7 +1738,7 @@ export default function CheckoutPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={removeDiscount}
+                    onClick={handleRemoveCoupon}
                     className="text-[11px] text-red-400 hover:text-red-300 underline font-medium cursor-pointer"
                   >
                     Remove

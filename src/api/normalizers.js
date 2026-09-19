@@ -486,19 +486,7 @@ export function normalizeShippingOption(raw) {
     ? Number(opt.shippingCompanyId)
     : null;
 
-  // If shippingMethodId is omitted by POST /api/shipping/quotes, map deterministically based on carrier and method
-  if (!shippingMethodId) {
-    const cUpper = String(carrier).toUpperCase();
-    if (cUpper.includes('ECONT')) {
-      shippingCompanyId = shippingCompanyId || 3;
-      shippingMethodId = isExpress ? 2 : 1;
-    } else if (cUpper.includes('SPEEDY')) {
-      shippingCompanyId = shippingCompanyId || 2;
-      shippingMethodId = isExpress ? 2 : 1;
-    } else {
-      shippingMethodId = isExpress ? 2 : 1;
-    }
-  }
+  // Never fabricate or guess shippingMethodId (e.g. 2 or 1); only accept backend-provided IDs
 
   return {
     quoteId,

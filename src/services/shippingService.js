@@ -77,10 +77,11 @@ export const shippingService = {
 
   /**
    * Request live carrier shipping quotes (ECONT, DHL, etc.)
-   * @param {object} params { addressId, countryCode, postalCode, items }
+   * @param {object} params { addressId, countryCode, postalCode, items, couponCode }
+   * @param {object} [options] { signal }
    */
-  async getQuotes(params = {}) {
-    return await shippingApi.getQuotes(params);
+  async getQuotes(params = {}, options = {}) {
+    return await shippingApi.getQuotes(params, options);
   }
 };
 
