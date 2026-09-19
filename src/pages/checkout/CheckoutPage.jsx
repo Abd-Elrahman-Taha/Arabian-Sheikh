@@ -372,6 +372,7 @@ export default function CheckoutPage() {
 
       const matchingOpt = (chosenMethodId ? validOptions.find(o => Number(o.shippingMethodId || o.id) === Number(chosenMethodId)) : null)
         || selectedMethodObj
+        || selectedQuote
         || validOptions[0];
 
       const freshQuoteId = selectedMethodObj?.quoteId
@@ -381,6 +382,7 @@ export default function CheckoutPage() {
       if (matchingOpt) {
         const updatedOpt = {
           ...matchingOpt,
+          carrier: matchingOpt.carrier || selectedQuote?.carrier || (chosenMethodId === 1 || chosenMethodId === 2 ? 'Speedy' : 'Carrier'),
           quoteId: freshQuoteId || matchingOpt.quoteId
         };
         setSelectedQuote(updatedOpt);
@@ -849,7 +851,7 @@ export default function CheckoutPage() {
       total: grandTotal,
       quoteId: activeQuoteId,
       shippingMethodId,
-      carrier: selectedQuote?.carrier || 'ECONT',
+      carrier: selectedQuote?.carrier || (shippingMethodId === 1 || shippingMethodId === 2 ? 'Speedy' : (shippingMethodId === 3 || shippingMethodId === 4 ? 'ECONT' : 'Carrier')),
       shippingAddress: authoritativeAddress,
       paymentMethod: getApiPaymentMethod()
     });
@@ -1523,7 +1525,10 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     {shippingQuotes.map((opt, idx) => {
                       const isSelected = isOptionSelected(opt);
-                      const isEcont = String(opt.carrier || '').toUpperCase().includes('ECONT');
+                      const carrierUpper = String(opt.carrier || '').toUpperCase();
+                      const isEcont = carrierUpper.includes('ECONT');
+                      const isSpeedy = carrierUpper.includes('SPEEDY');
+                      const isDhl = carrierUpper.includes('DHL');
                       const optionKey = `shipping-quote-${opt.shippingMethodId ?? opt.id ?? idx}-${idx}`;
                       const inputId = `shipping-radio-${opt.shippingMethodId ?? opt.id ?? idx}-${idx}`;
 
@@ -1552,6 +1557,10 @@ export default function CheckoutPage() {
                                 <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
                                   isEcont
                                     ? 'bg-amber-950/80 text-[#F2D675] border-[#D4AF37]/40'
+                                    : isSpeedy
+                                    ? 'bg-blue-950/80 text-blue-300 border-blue-500/40'
+                                    : isDhl
+                                    ? 'bg-yellow-950/80 text-yellow-300 border-yellow-500/40'
                                     : 'bg-neutral-900 text-neutral-300 border-neutral-600/40'
                                 }`}>
                                   {opt.carrier}

@@ -465,9 +465,42 @@ export function normalizeShippingOption(raw) {
   const opt = normalizeObjectKeys(raw);
   // quoteId must only come from quoteId, never opt.id (opt.id is the method/option ID)
   const quoteId = opt.quoteId && typeof opt.quoteId === 'string' ? opt.quoteId.trim() : null;
-  const carrier = opt.carrier || opt.carrierName || opt.shippingCompany || opt.companyName || 'ECONT';
-  const shippingMethod = opt.shippingMethod || opt.methodName || opt.name || opt.serviceName || opt.title || 'Standard Delivery';
-  const isExpress = String(shippingMethod).toLowerCase().includes('express') || String(shippingMethod).toLowerCase().includes('exp');
+
+  // 1. Resolve carrier name directly from API (supporting all backend naming variants)
+  let carrier = null;
+  if (typeof opt.carrier === 'string' && opt.carrier.trim()) {
+    carrier = opt.carrier.trim();
+  } else if (typeof opt.carrierName === 'string' && opt.carrierName.trim()) {
+    carrier = opt.carrierName.trim();
+  } else if (typeof opt.shippingCompanyName === 'string' && opt.shippingCompanyName.trim()) {
+    carrier = opt.shippingCompanyName.trim();
+  } else if (typeof opt.companyName === 'string' && opt.companyName.trim()) {
+    carrier = opt.companyName.trim();
+  } else if (opt.shippingCompany && typeof opt.shippingCompany === 'object' && opt.shippingCompany.name) {
+    carrier = String(opt.shippingCompany.name).trim();
+  } else if (typeof opt.shippingCompany === 'string' && opt.shippingCompany.trim()) {
+    carrier = opt.shippingCompany.trim();
+  } else if (opt.company && typeof opt.company === 'object' && opt.company.name) {
+    carrier = String(opt.company.name).trim();
+  }
+
+  // 2. Resolve shipping method name directly from API
+  let shippingMethod = null;
+  if (typeof opt.shippingMethod === 'string' && opt.shippingMethod.trim()) {
+    shippingMethod = opt.shippingMethod.trim();
+  } else if (typeof opt.shippingMethodName === 'string' && opt.shippingMethodName.trim()) {
+    shippingMethod = opt.shippingMethodName.trim();
+  } else if (typeof opt.methodName === 'string' && opt.methodName.trim()) {
+    shippingMethod = opt.methodName.trim();
+  } else if (typeof opt.serviceName === 'string' && opt.serviceName.trim()) {
+    shippingMethod = opt.serviceName.trim();
+  } else if (typeof opt.name === 'string' && opt.name.trim()) {
+    shippingMethod = opt.name.trim();
+  } else if (typeof opt.title === 'string' && opt.title.trim()) {
+    shippingMethod = opt.title.trim();
+  }
+
+  const isExpress = String(shippingMethod || '').toLowerCase().includes('express') || String(shippingMethod || '').toLowerCase().includes('exp');
 
   const rawFee = opt.shippingFee !== undefined
     ? opt.shippingFee
@@ -507,7 +540,32 @@ export function normalizeShippingOption(raw) {
 
   let shippingCompanyId = opt.shippingCompanyId !== undefined && opt.shippingCompanyId !== null && !isNaN(Number(opt.shippingCompanyId))
     ? Number(opt.shippingCompanyId)
-    : null;
+    : (opt.companyId !== undefined && opt.companyId !== null && !isNaN(Number(opt.companyId))
+      ? Number(opt.companyId)
+      : (opt.shippingCompany && typeof opt.shippingCompany === 'object' && opt.shippingCompany.id
+        ? Number(opt.shippingCompany.id)
+        : null));
+
+  // Determine carrier and company mapping if missing from API response
+  if (!carrier) {
+    const mUpper = String(shippingMethod || '').toUpperCase();
+    if (mUpper.includes('SPEEDY') || shippingCompanyId === 2 || shippingMethodId === 1 || shippingMethodId === 2) {
+      carrier = 'Speedy';
+      shippingCompanyId = shippingCompanyId || 2;
+    } else if (mUpper.includes('ECONT') || shippingCompanyId === 3 || shippingMethodId === 3 || shippingMethodId === 4) {
+      carrier = 'ECONT';
+      shippingCompanyId = shippingCompanyId || 3;
+    } else if (mUpper.includes('DHL') || shippingCompanyId === 1) {
+      carrier = 'DHL Express';
+      shippingCompanyId = shippingCompanyId || 1;
+    } else {
+      carrier = 'Carrier';
+    }
+  }
+
+  if (!shippingMethod) {
+    shippingMethod = `${carrier} ${isExpress ? 'Express' : 'Standard'}`;
+  }
 
   // Exact mapping verified against live backend:
   // ECONT Express -> Method 4, Company 3
@@ -516,12 +574,12 @@ export function normalizeShippingOption(raw) {
   // SPEEDY Standard -> Method 1, Company 2
   if (!shippingMethodId) {
     const cUpper = String(carrier).toUpperCase();
-    if (cUpper.includes('ECONT')) {
-      shippingCompanyId = shippingCompanyId || 3;
-      shippingMethodId = isExpress ? 4 : 3;
-    } else if (cUpper.includes('SPEEDY')) {
+    if (cUpper.includes('SPEEDY')) {
       shippingCompanyId = shippingCompanyId || 2;
       shippingMethodId = isExpress ? 2 : 1;
+    } else if (cUpper.includes('ECONT')) {
+      shippingCompanyId = shippingCompanyId || 3;
+      shippingMethodId = isExpress ? 4 : 3;
     } else {
       shippingMethodId = isExpress ? 4 : 3;
     }

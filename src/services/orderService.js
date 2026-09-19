@@ -577,7 +577,11 @@ export const orderService = {
     const orderId = apiOrder?.id || `ORD-${randomNum}`;
     const orderNum = apiOrder?.orderNumber || (typeof orderId === 'string' && orderId.startsWith('ORD-') ? orderId : `ORD-${orderId}`);
     const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || apiOrder?.trackingNumber || null;
-    const resolvedCarrier = orderPayload.carrier || apiOrder?.shippingSnapshot?.shippingCompanyName || apiOrder?.shippingSnapshot?.carrier || apiOrder?.carrier || 'ECONT';
+    const resolvedCarrier = orderPayload.carrier 
+      || apiOrder?.shippingSnapshot?.shippingCompanyName 
+      || apiOrder?.shippingSnapshot?.carrier 
+      || apiOrder?.carrier 
+      || (orderPayload.shippingMethodId === 1 || orderPayload.shippingMethodId === 2 ? 'Speedy' : (orderPayload.shippingMethodId === 3 || orderPayload.shippingMethodId === 4 ? 'ECONT' : 'Carrier'));
     const resolvedShippingMethod = orderPayload.shippingMethod || apiOrder?.shippingSnapshot?.shippingMethod || 'Standard Delivery';
 
     const customerName = orderPayload.customerName || apiOrder?.customer?.name || 'Valued Patron';
@@ -811,7 +815,7 @@ export const orderService = {
     return {
       orderId: numId || orderId,
       shipmentId: order?.shipmentId || null,
-      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || 'ECONT',
+      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || (order?.shippingMethodId === 1 || order?.shippingMethodId === 2 ? 'Speedy' : (order?.shippingMethodId === 3 || order?.shippingMethodId === 4 ? 'ECONT' : 'Carrier')),
       trackingNumber: trkNumber,
       currentStatus: curStatus,
       carrierStatus: null,
@@ -849,7 +853,7 @@ export const orderService = {
     const order = this.getOrderByIdSync(orderId);
     return {
       orderId,
-      carrier: order?.shippingSnapshot?.carrier || order?.carrier || 'ECONT',
+      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || (order?.shippingMethodId === 1 || order?.shippingMethodId === 2 ? 'Speedy' : (order?.shippingMethodId === 3 || order?.shippingMethodId === 4 ? 'ECONT' : 'Carrier')),
       trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null,
       status: order?.orderStatus || order?.status || 'Processing',
       events: (order?.timeline || []).map(t => ({
