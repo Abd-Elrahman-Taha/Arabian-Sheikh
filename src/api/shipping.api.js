@@ -1,6 +1,6 @@
 import apiClient from './client';
 import ENDPOINTS from './endpoints';
-import { normalizeShippingOption } from './normalizers';
+import { normalizeShippingOption, normalizeObjectKeys } from './normalizers';
 
 export const shippingApi = {
   /**
@@ -43,35 +43,52 @@ export const shippingApi = {
       );
     } catch (err) {
       if (options?.signal?.aborted) throw err;
-      console.warn('[Checkout] POST /api/Shipping/quotes failed, attempting fallback endpoints:', err?.message || err);
+      console.warn('[Checkout] POST /api/Shipping/quotes notice:', err?.message || err);
     }
 
-    // Extract options from any possible response shape returned by ASP.NET backend
+    const normResponse = normalizeObjectKeys(response);
+
+    // Extract options from normalized or raw response
     let rawOptions =
+      normResponse?.options ||
+      normResponse?.shippingOptions ||
+      normResponse?.items ||
+      normResponse?.quotes ||
+      normResponse?.data ||
+      normResponse?.methods ||
+      normResponse?.shippingMethods ||
       response?.options ||
+      response?.Options ||
       response?.shippingOptions ||
-      response?.items ||
+      response?.ShippingOptions ||
       response?.quotes ||
-      response?.data ||
-      response?.methods ||
-      response?.shippingMethods ||
-      (Array.isArray(response) ? response : []);
+      response?.Quotes ||
+      (Array.isArray(normResponse) ? normResponse : (Array.isArray(response) ? response : []));
 
-    let topLevelQuoteId = response?.quoteId || response?.id || null;
+    let topLevelQuoteId =
+      normResponse?.quoteId ||
+      normResponse?.id ||
+      response?.quoteId ||
+      response?.QuoteId ||
+      response?.id ||
+      null;
 
-    // Fallback 1: If POST /api/Shipping/quotes returned no options, check GET /api/checkout with addressId
+    // Fallback: If quotes endpoint returned no options, retrieve session quotes via GET /api/checkout
     if (!rawOptions || rawOptions.length === 0) {
       try {
-        const checkoutSummary = await apiClient.get(ENDPOINTS.CHECKOUT.GET, {
+        const rawCheckout = await apiClient.get(ENDPOINTS.CHECKOUT.GET, {
           params: { addressId: addrId },
           requiresAuth: true,
           signal: options?.signal
         });
+        const checkoutSummary = normalizeObjectKeys(rawCheckout);
         const summaryOptions =
           checkoutSummary?.shippingOptions ||
           checkoutSummary?.options ||
           checkoutSummary?.items ||
+          checkoutSummary?.quotes ||
           checkoutSummary?.methods;
+
         if (Array.isArray(summaryOptions) && summaryOptions.length > 0) {
           rawOptions = summaryOptions;
           if (!topLevelQuoteId) {
@@ -79,23 +96,6 @@ export const shippingApi = {
           }
         }
       } catch (chkErr) {
-        // Non-blocking fallback
-      }
-    }
-
-    // Fallback 2: If still empty, check GET /api/Shipping/options (all available shipping carriers & rates)
-    if (!rawOptions || rawOptions.length === 0) {
-      try {
-        const globalOptions = await apiClient.get(ENDPOINTS.SHIPPING.OPTIONS, {
-          params: { addressId: addrId },
-          requiresAuth: false,
-          signal: options?.signal
-        });
-        const list = globalOptions?.items || (Array.isArray(globalOptions) ? globalOptions : globalOptions?.options);
-        if (Array.isArray(list) && list.length > 0) {
-          rawOptions = list;
-        }
-      } catch (optErr) {
         // Non-blocking fallback
       }
     }

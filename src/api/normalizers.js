@@ -11,9 +11,12 @@ import { perfumeCategoryService } from '../services/perfumeCategoryService';
  * and frontend entity representations.
  */
 
-// Helper to convert snake_case to camelCase
+// Helper to convert PascalCase, snake_case, and kebab-case to camelCase
 function toCamel(str) {
-  return str.replace(/([-_][a-z])/ig, ($1) => {
+  if (!str || typeof str !== 'string') return str;
+  // Lowercase first character for PascalCase -> camelCase
+  const lowerFirst = str.charAt(0).toLowerCase() + str.slice(1);
+  return lowerFirst.replace(/([-_][a-z])/ig, ($1) => {
     return $1.toUpperCase()
       .replace('-', '')
       .replace('_', '');
