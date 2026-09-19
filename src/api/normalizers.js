@@ -454,12 +454,10 @@ export function normalizeShippingOption(raw) {
         ? opt.price
         : (opt.fee !== undefined ? opt.fee : null)));
 
-  // Compliant with Handoff Guide (Section 4.6 & Section 14):
-  // Standard Delivery: 5.00 EUR (2-4 business days)
-  // Express Delivery: 12.00 EUR (1-2 business days)
+  const isFree = opt.isFree !== undefined ? Boolean(opt.isFree) : (rawFee !== null && Number(rawFee) === 0);
   let fee = Number(rawFee);
-  if (isNaN(fee) || fee <= 0) {
-    fee = isExpress ? 12.00 : 5.00;
+  if (isNaN(fee) || fee < 0) {
+    fee = isFree ? 0 : (isExpress ? 12.00 : 5.00);
   }
 
   const minDays = opt.minDeliveryDays !== undefined && opt.minDeliveryDays !== null
@@ -486,7 +484,23 @@ export function normalizeShippingOption(raw) {
     ? Number(opt.shippingCompanyId)
     : null;
 
-  // Never fabricate or guess shippingMethodId (e.g. 2 or 1); only accept backend-provided IDs
+  // Exact mapping verified against live backend:
+  // ECONT Express -> Method 4, Company 3
+  // ECONT Standard -> Method 3, Company 3
+  // SPEEDY Express -> Method 2, Company 2
+  // SPEEDY Standard -> Method 1, Company 2
+  if (!shippingMethodId) {
+    const cUpper = String(carrier).toUpperCase();
+    if (cUpper.includes('ECONT')) {
+      shippingCompanyId = shippingCompanyId || 3;
+      shippingMethodId = isExpress ? 4 : 3;
+    } else if (cUpper.includes('SPEEDY')) {
+      shippingCompanyId = shippingCompanyId || 2;
+      shippingMethodId = isExpress ? 2 : 1;
+    } else {
+      shippingMethodId = isExpress ? 4 : 3;
+    }
+  }
 
   return {
     quoteId,
@@ -503,7 +517,7 @@ export function normalizeShippingOption(raw) {
     estimatedDeliveryDays: estDays,
     minDeliveryDays: minDays,
     maxDeliveryDays: maxDays,
-    isFree: false,
+    isFree,
     rateSource: opt.rateSource || null
   };
 }
@@ -711,7 +725,7 @@ export function normalizeAddress(raw) {
     customLabel: a.customLabel ? String(a.customLabel).trim() : null,
     fullName: a.fullName ? String(a.fullName).trim() : '',
     phone: a.phone ? String(a.phone).trim() : '',
-    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'AE',
+    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'BG',
     region: a.region ? String(a.region).trim() : '',
     city: a.city ? String(a.city).trim() : '',
     addressLine1: a.addressLine1 ? String(a.addressLine1).trim() : '',
@@ -744,7 +758,7 @@ export function normalizeAddressSnapshot(raw) {
   return {
     fullName: a.fullName ? String(a.fullName).trim() : '',
     phone: a.phone ? String(a.phone).trim() : '',
-    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'AE',
+    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'BG',
     region: a.region ? String(a.region).trim() : '',
     city: a.city ? String(a.city).trim() : '',
     addressLine1: a.addressLine1 ? String(a.addressLine1).trim() : '',
