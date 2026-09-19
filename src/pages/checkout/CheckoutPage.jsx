@@ -1028,13 +1028,20 @@ export default function CheckoutPage() {
 
     paymentService.pollUntilTerminal(paymentId, {
       signal: controller.signal,
+      orderId: orderId || orderIdState,
     }).then(result => {
       handlePaymentResult(result, orderId);
     }).catch(err => {
       if (err.message === 'PAYMENT_POLL_TIMEOUT') {
         setPaymentStatus('timeout');
+      } else if (err.message === 'PAYMENT_POLL_AUTH_ERROR') {
+        setPaymentStatus('unverified');
+        setPaymentError('Payment was submitted to Stripe, but status could not be verified automatically due to session expiration. If your card was charged, your order is recorded.');
+      } else if (err.message === 'PAYMENT_NOT_FOUND') {
+        setPaymentStatus('unverified');
+        setPaymentError('Payment record is taking longer to register. Please check your order in My Orders.');
       } else if (err.message !== 'PAYMENT_POLL_ABORTED') {
-        setPaymentError(err.message);
+        setPaymentError(err.message || 'Payment confirmation error.');
         setPaymentStatus('failed');
       }
     });
@@ -1737,6 +1744,48 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {/* Unverified / Auth Issue but Payment Submitted */}
+                {paymentStatus === 'unverified' && (
+                  <div className="p-8 rounded-xl bg-[#0B0A08]/90 border border-amber-500/40 text-center space-y-5 shadow-2xl">
+                    <div className="w-16 h-16 rounded-full border-2 border-amber-400 bg-amber-950/50 flex items-center justify-center mx-auto">
+                      <AlertTriangle className="w-8 h-8 text-amber-400" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-cinzel text-base font-bold text-[#F3E6D0]">
+                        Payment Submitted — Verification Needed
+                      </h3>
+                      <p className="text-xs text-[#D8BE99] max-w-md mx-auto leading-relaxed">
+                        {paymentError || 'Your payment was submitted to Stripe. We could not verify the final status automatically. If your card was charged, your order has been received.'}
+                      </p>
+                    </div>
+                    {orderIdState && (
+                      <p className="text-[11px] font-mono text-[#D4AF37]">
+                        Order Reference: #{orderIdState}
+                      </p>
+                    )}
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/account/orders')}
+                        className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-colors cursor-pointer"
+                      >
+                        View My Orders
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (paymentIdState || orderIdState) {
+                            startPolling(paymentIdState, orderIdState);
+                          }
+                        }}
+                        className="px-6 py-2.5 border border-[#D4AF37]/40 bg-black/50 text-[#F3E6D0] font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:border-[#D4AF37] transition-colors cursor-pointer"
+                      >
+                        Check Again
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stripe inline error on form */}
                 {paymentError && paymentStatus === 'ready' && (
                   <div role="alert" className="p-3 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs">
@@ -1744,8 +1793,8 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Back button (only if form is showing, not during polling) */}
-                {(paymentStatus === 'ready' || paymentStatus === 'failed') && (
+                {/* Back button (only if form is showing or unverified/failed/timeout, not during active polling) */}
+                {(paymentStatus === 'ready' || paymentStatus === 'failed' || paymentStatus === 'unverified' || paymentStatus === 'timeout') && (
                   <div className="pt-4">
                     <button
                       type="button"

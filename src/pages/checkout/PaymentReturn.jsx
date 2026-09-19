@@ -52,6 +52,7 @@ export default function PaymentReturn() {
       try {
         const result = await paymentService.pollUntilTerminal(Number(paymentId), {
           signal: controller.signal,
+          orderId: orderId ? Number(orderId) : undefined,
           onStatusUpdate: (p) => setPayment(p),
         });
 
@@ -77,6 +78,12 @@ export default function PaymentReturn() {
       } catch (err) {
         if (err.message === 'PAYMENT_POLL_TIMEOUT') {
           setStatus('timeout');
+        } else if (err.message === 'PAYMENT_POLL_AUTH_ERROR') {
+          setStatus('unverified');
+          setErrorMessage('Your payment was submitted to Stripe, but final status could not be verified automatically due to session expiration. If your card was charged, your order has been received.');
+        } else if (err.message === 'PAYMENT_NOT_FOUND') {
+          setStatus('unverified');
+          setErrorMessage('Payment record is taking longer to register. Please check your order in My Orders.');
         } else if (err.message !== 'PAYMENT_POLL_ABORTED') {
           setStatus('error');
           setErrorMessage(err.message || 'An unexpected error occurred.');
@@ -90,12 +97,28 @@ export default function PaymentReturn() {
 
   // Manual re-check for timeout/pending states
   async function handleRecheck() {
-    if (!paymentId) return;
     setStatus('polling');
     try {
-      const result = await paymentService.getPaymentStatus(Number(paymentId));
-      setPayment(result);
-      if (isTerminalStatus(result.status)) {
+      let result = null;
+      if (paymentId) {
+        try {
+          result = await paymentService.getPaymentStatus(Number(paymentId));
+        } catch (pErr) {
+          console.warn('[PaymentReturn] Direct payment recheck error:', pErr?.message);
+        }
+      }
+      if (!result && orderId) {
+        const order = await orderService.getOrderById(orderId);
+        if (order) {
+          result = {
+            status: order.paymentStatus === 'Paid' ? 'Paid' : order.paymentStatus,
+            amount: order.total,
+            currency: order.currency
+          };
+        }
+      }
+      if (result && isTerminalStatus(result.status)) {
+        setPayment(result);
         if (result.status === 'Paid') {
           setStatus('paid');
           clearPaymentSession(orderId);
@@ -181,6 +204,40 @@ export default function PaymentReturn() {
                 className="px-8 py-3 border border-[#D4AF37]/40 bg-black/50 text-[#F3E6D0] font-cinzel font-bold text-xs uppercase tracking-wider rounded-full cursor-pointer"
               >
                 My Orders
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Unverified / Auth Issue but Payment Submitted */}
+        {status === 'unverified' && (
+          <div className="rounded-2xl bg-[#0B0A08]/90 border border-amber-500/40 p-10 text-center space-y-5 shadow-2xl">
+            <div className="w-16 h-16 rounded-full border-2 border-amber-400 bg-amber-950/50 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-8 h-8 text-amber-400" />
+            </div>
+            <h1 className="font-cinzel text-xl font-bold text-[#F3E6D0]">
+              Payment Submitted — Verification Needed
+            </h1>
+            <p className="text-xs text-[#D8BE99] max-w-md mx-auto leading-relaxed">
+              {errorMessage || 'Your payment was submitted to Stripe. We could not verify the final status automatically. If your card was charged, your order has been received.'}
+            </p>
+            {(orderId || paymentId) && (
+              <p className="text-[11px] font-mono text-[#D4AF37]">
+                {orderId ? `Order Reference: #${orderId}` : ''} {paymentId ? `(Payment #${paymentId})` : ''}
+              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+              <button
+                onClick={() => navigate('/account/orders')}
+                className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-colors cursor-pointer"
+              >
+                View My Orders
+              </button>
+              <button
+                onClick={handleRecheck}
+                className="px-8 py-3 border border-[#D4AF37]/40 bg-black/50 text-[#F3E6D0] font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:border-[#D4AF37] transition-colors cursor-pointer"
+              >
+                Check Again
               </button>
             </div>
           </div>

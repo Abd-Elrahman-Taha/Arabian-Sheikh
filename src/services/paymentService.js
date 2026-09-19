@@ -1,5 +1,6 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { paymentApi } from '../api/payment.api';
+import { orderApi } from '../api/order.api';
 
 /**
  * Arabian Sheikh - Payment Service
@@ -144,12 +145,14 @@ export const paymentService = {
    * @param {object} [options]
    * @param {AbortSignal} [options.signal] - Optional abort signal to cancel polling
    * @param {function} [options.onStatusUpdate] - Called with each poll result
+   * @param {number} [options.orderId] - Optional customer order ID for fallback verification
    * @returns {Promise<{id, orderId, provider, providerPaymentId, amount, currency, status, paidAt}>}
    * @throws {Error} with message 'PAYMENT_POLL_TIMEOUT' if budget exceeded
    * @throws {Error} with message 'PAYMENT_POLL_ABORTED' if signal aborted
+   * @throws {Error} with message 'PAYMENT_POLL_AUTH_ERROR' if unauthenticated or session expired
    */
   async pollUntilTerminal(paymentId, options = {}) {
-    const { signal, onStatusUpdate } = options;
+    const { signal, onStatusUpdate, orderId } = options;
     const started = Date.now();
     const FAST_PHASE_MS = 60_000;
     const TOTAL_BUDGET_MS = FAST_PHASE_MS + 360_000; // 7 minutes total
@@ -174,18 +177,96 @@ export const paymentService = {
       }
 
       try {
-        const payment = await this.getPaymentStatus(paymentId);
-        
-        if (onStatusUpdate) {
-          onStatusUpdate(payment);
+        let payment = null;
+        let isAuthError = false;
+
+        if (paymentId) {
+          try {
+            payment = await this.getPaymentStatus(paymentId);
+          } catch (err) {
+            const status = err?.status;
+            const code = err?.code;
+            const msg = err?.message || '';
+
+            // Check if backend returned 401 Unauthorized or 403 Forbidden
+            if (status === 401 || status === 403 || code === 'UNAUTHORIZED' || msg.includes('Admin authentication is required')) {
+              isAuthError = true;
+              console.warn('[paymentService] Auth error on payment endpoint (status 401/403):', msg);
+            } else if (status === 404 || code === 'PAYMENT_NOT_FOUND') {
+              console.warn('[paymentService] Payment ID not found on backend (status 404):', paymentId);
+            } else {
+              // Transient or network error on getPaymentStatus
+              console.warn('[paymentService] Transient payment poll error (will retry):', msg);
+            }
+          }
         }
 
-        if (isTerminalStatus(payment.status)) {
-          return payment;
+        // If payment status succeeded, check if terminal
+        if (payment) {
+          if (onStatusUpdate) {
+            onStatusUpdate(payment);
+          }
+          if (isTerminalStatus(payment.status)) {
+            return payment;
+          }
         }
+
+        // If payment status endpoint was not terminal, or failed with auth/404, fallback to checking the customer order
+        if (orderId && (!payment || isAuthError)) {
+          try {
+            const order = await orderApi.getOrderById(orderId);
+            if (order) {
+              const payStatus = order.paymentStatus;
+              const ordStatus = order.orderStatus || order.status;
+
+              // Synthesize payment object from order
+              const synthesizedPayment = {
+                id: paymentId || order.payments?.[0]?.id || orderId,
+                orderId: order.id || orderId,
+                provider: 'stripe',
+                providerPaymentId: order.payments?.[0]?.providerPaymentId || null,
+                amount: order.total,
+                currency: order.currency || 'EUR',
+                status: (payStatus === 'Paid' || ordStatus === 'Processing' || ordStatus === 'Confirmed')
+                  ? 'Paid'
+                  : (payStatus === 'Failed' || ordStatus === 'Cancelled')
+                    ? 'Failed'
+                    : payStatus || 'Pending',
+                paidAt: (payStatus === 'Paid' || ordStatus === 'Processing' || ordStatus === 'Confirmed') ? new Date().toISOString() : null
+              };
+
+              if (onStatusUpdate) {
+                onStatusUpdate(synthesizedPayment);
+              }
+
+              if (isTerminalStatus(synthesizedPayment.status)) {
+                return synthesizedPayment;
+              }
+            }
+          } catch (orderErr) {
+            const orderStatus = orderErr?.status;
+            const orderCode = orderErr?.code;
+            const orderMsg = orderErr?.message || '';
+
+            if (orderStatus === 401 || orderStatus === 403 || orderCode === 'UNAUTHORIZED') {
+              // Both payment endpoint and order endpoint failed with auth error!
+              // Abort immediately: user is not authenticated or token expired.
+              throw new Error('PAYMENT_POLL_AUTH_ERROR');
+            }
+            console.warn('[paymentService] Order fallback check notice:', orderMsg);
+          }
+        }
+
+        // If payment endpoint threw auth error and we have no orderId, abort immediately!
+        if (isAuthError && !orderId) {
+          throw new Error('PAYMENT_POLL_AUTH_ERROR');
+        }
+
       } catch (err) {
-        // On network errors during polling, keep trying (don't break the loop)
-        console.warn('Payment poll error (will retry):', err.message);
+        if (err.message === 'PAYMENT_POLL_ABORTED' || err.message === 'PAYMENT_POLL_AUTH_ERROR') {
+          throw err;
+        }
+        console.warn('[paymentService] Payment poll cycle error (will retry):', err.message);
       }
 
       const elapsed = Date.now() - started;
