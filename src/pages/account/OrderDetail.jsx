@@ -3,8 +3,11 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
-import { Truck, ArrowLeft, Printer, AlertCircle, Copy, Check, XCircle, Clock, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Truck, ArrowLeft, Printer, AlertCircle, Copy, Check, XCircle, Clock, ExternalLink, ShieldCheck, RotateCcw } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
+import returnsService from '../../services/returnsService';
+import ReturnWizardModal from '../../components/returns/ReturnWizardModal';
+import ReturnDetailsModal from '../../components/returns/ReturnDetailsModal';
 
 function formatOrderStatus(status = '') {
   if (!status) return 'Pending';
@@ -43,15 +46,50 @@ export default function OrderDetail() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
 
+  // Returns & Refunds State
+  const [eligibility, setEligibility] = useState(null);
+  const [orderReturns, setOrderReturns] = useState([]);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [selectedReturnId, setSelectedReturnId] = useState(null);
+
   const orderId = currentPath.split('/account/orders/')[1]?.split('?')[0];
+
+  const refreshOrderData = async () => {
+    if (!orderId) return;
+    try {
+      const [item, deliv, elig, ret] = await Promise.allSettled([
+        orderService.getOrderById(orderId),
+        orderService.getDeliveryStatus(orderId),
+        returnsService.checkEligibility(orderId),
+        returnsService.getOrderReturns(orderId)
+      ]);
+      const orderData = item.status === 'fulfilled' ? item.value : null;
+      const delivData = deliv.status === 'fulfilled' ? deliv.value : null;
+
+      if (orderData) {
+        setOrder({
+          ...orderData,
+          shipmentStatus: delivData?.shipmentStatus || orderData.shipmentStatus || null,
+          trackingCode: delivData?.trackingNumber || orderData.trackingCode || null,
+          carrierStatus: delivData?.carrierStatus || orderData.carrierStatus || null
+        });
+      }
+      if (elig.status === 'fulfilled') setEligibility(elig.value);
+      if (ret.status === 'fulfilled') setOrderReturns(ret.value || []);
+    } catch (err) {
+      console.warn('Failed to refresh order data:', err);
+    }
+  };
 
   useEffect(() => {
     async function load() {
       if (!orderId) return;
       try {
-        const [item, deliv] = await Promise.allSettled([
+        const [item, deliv, elig, ret] = await Promise.allSettled([
           orderService.getOrderById(orderId),
-          orderService.getDeliveryStatus(orderId)
+          orderService.getDeliveryStatus(orderId),
+          returnsService.checkEligibility(orderId),
+          returnsService.getOrderReturns(orderId)
         ]);
         const orderData = item.status === 'fulfilled' ? item.value : null;
         const delivData = deliv.status === 'fulfilled' ? deliv.value : null;
@@ -64,6 +102,8 @@ export default function OrderDetail() {
             carrierStatus: delivData?.carrierStatus || orderData.carrierStatus || null
           });
         }
+        if (elig.status === 'fulfilled') setEligibility(elig.value);
+        if (ret.status === 'fulfilled') setOrderReturns(ret.value || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -226,6 +266,18 @@ export default function OrderDetail() {
             </span>
           )}
 
+          {/* Return Request Button */}
+          {eligibility?.eligible && (eligibility?.eligibleItems?.length > 0) && (
+            <button
+              onClick={() => setWizardOpen(true)}
+              className="px-3.5 py-2 bg-[#D4AF37]/20 border border-[#D4AF37]/60 hover:bg-[#D4AF37] text-white hover:text-black text-xs font-cinzel font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer rounded shadow-sm"
+              title="Request a return or refund for this order"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Request Return</span>
+            </button>
+          )}
+
           <Link
             to={`/order-tracking/${order.orderNumber || order.id}`}
             className="luxury-btn-gold px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
@@ -257,6 +309,32 @@ export default function OrderDetail() {
                 {cancelNote || 'This acquisition was cancelled. If payment was settled, a refund will be processed to your original settlement method.'}
               </p>
             </div>
+          </div>
+        </ScrollReveal>
+      )}
+
+      {/* Return Eligibility Banner */}
+      {eligibility?.eligible && (
+        <ScrollReveal direction="up">
+          <div className="p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start sm:items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5 sm:mt-0" />
+              <div>
+                <span className="font-cinzel font-bold text-[#F3E6D0] uppercase tracking-wider block">
+                  Royal Return Privilege Active
+                </span>
+                <span className="text-[#D8BE99]">
+                  {eligibility.reason || 'This order is eligible for return.'}
+                  {eligibility.daysRemaining !== null ? ` (${eligibility.daysRemaining} days remaining)` : ''}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setWizardOpen(true)}
+              className="luxury-btn-gold px-4 py-1.5 text-[11px] font-cinzel font-bold uppercase tracking-wider shrink-0 cursor-pointer"
+            >
+              Start Return
+            </button>
           </div>
         </ScrollReveal>
       )}
@@ -394,6 +472,56 @@ export default function OrderDetail() {
         </ScrollReveal>
       </div>
 
+      {/* Return Requests & Inquiries History */}
+      {orderReturns && orderReturns.length > 0 && (
+        <ScrollReveal direction="up" delay={0.25}>
+          <div className="space-y-4">
+            <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-[var(--color-terracotta)]">
+              Return Requests & Inquiries ({orderReturns.length})
+            </h3>
+
+            <div className="divide-y divide-[var(--color-terracotta-deep)]/20 border border-[var(--color-terracotta-deep)]/25 bg-[var(--color-desert-primary)]/30 rounded-xl overflow-hidden">
+              {orderReturns.map(ret => {
+                const retStatus = returnsService.RETURN_STATUSES[ret.status] || {
+                  label: ret.status,
+                  badgeClass: 'bg-neutral-800 text-neutral-300 border-neutral-700'
+                };
+
+                return (
+                  <div key={ret.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-[var(--color-earth-dark)]">
+                          Return #{ret.id}
+                        </span>
+                        <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-full uppercase border ${retStatus.badgeClass}`}>
+                          {retStatus.label}
+                        </span>
+                      </div>
+                      <p className="text-[var(--color-terracotta-deep)] font-medium">
+                        Submitted on {new Date(ret.createdAt).toLocaleDateString()} &bull; {ret.items?.length || 0} item(s)
+                      </p>
+                      {ret.totalRefundAmount > 0 && (
+                        <p className="font-mono text-emerald-600 font-bold">
+                          Refund: €{ret.totalRefundAmount.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedReturnId(ret.id)}
+                      className="px-4 py-2 bg-[#D4AF37]/20 border border-[#D4AF37]/50 hover:bg-[#D4AF37] text-white hover:text-black font-cinzel font-bold text-xs uppercase tracking-wider transition-colors rounded cursor-pointer self-start sm:self-auto"
+                    >
+                      View Details & Evidence
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
+
       {/* Royal Cancellation Confirmation Modal */}
       {cancelModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -449,6 +577,28 @@ export default function OrderDetail() {
           </div>
         </div>
       )}
+
+      {/* Customer Return Wizard Modal */}
+      <ReturnWizardModal
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        eligibility={eligibility}
+        onSuccess={() => {
+          refreshOrderData();
+        }}
+      />
+
+      {/* Customer Return Details Modal */}
+      <ReturnDetailsModal
+        isOpen={Boolean(selectedReturnId)}
+        onClose={() => setSelectedReturnId(null)}
+        returnId={selectedReturnId}
+        onUpdated={() => {
+          refreshOrderData();
+        }}
+      />
     </div>
   );
 }

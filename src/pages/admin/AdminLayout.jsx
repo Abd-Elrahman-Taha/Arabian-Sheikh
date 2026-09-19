@@ -24,7 +24,9 @@ import {
   LogOut,
   ExternalLink,
   Menu,
-  X
+  X,
+  RotateCcw,
+  DollarSign
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -55,6 +57,8 @@ export default function AdminLayout({ children }) {
       title: 'Operations',
       links: [
         { to: '/admin/orders', label: t('admin.orders') || 'Orders', icon: ShoppingBag },
+        { to: '/admin/returns', label: 'Returns', icon: RotateCcw, aliases: ['/admin/return-requests'] },
+        { to: '/admin/refunds', label: 'Refunds', icon: DollarSign, aliases: ['/admin/refund-requests'] },
         { to: '/admin/inventory', label: t('admin.inventory') || 'Inventory', icon: Warehouse },
         { to: '/admin/users', label: t('admin.users') || 'Customers', icon: Users },
         { to: '/admin/reviews', label: 'Reviews Moderation', icon: Star, aliases: ['/admin/review-moderation', '/dashboard/reviews'] },

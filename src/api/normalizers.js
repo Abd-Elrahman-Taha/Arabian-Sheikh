@@ -557,21 +557,138 @@ export function normalizeTrackingResponse(raw) {
 }
 
 /**
- * Return Request Normalizer (Compliant with ReturnResponse)
+ * Return Eligibility Normalizer (Customer)
+ */
+export function normalizeReturnEligibility(raw) {
+  if (!raw) return { eligible: false, reason: 'Return eligibility information unavailable.' };
+  const d = normalizeObjectKeys(raw);
+  const eligibleItems = Array.isArray(d.eligibleItems)
+    ? d.eligibleItems.map(item => {
+        const i = normalizeObjectKeys(item);
+        return {
+          orderItemId: Number(i.orderItemId || i.id || 0),
+          productName: i.productName || 'Imperial Creation',
+          productImageUrl: cleanImageUrl(i.productImageUrl || i.imageUrl || i.image),
+          unitPrice: Number(i.unitPrice || 0),
+          orderedQuantity: Number(i.orderedQuantity || i.quantity || 1),
+          eligibleQuantity: Number(i.eligibleQuantity !== undefined ? i.eligibleQuantity : (i.quantity || 1)),
+          currency: i.currency || 'EUR'
+        };
+      })
+    : [];
+
+  return {
+    orderId: Number(d.orderId || 0),
+    eligible: Boolean(d.eligible),
+    reason: d.reason || (d.eligible ? 'Order is eligible for return.' : 'This order is outside the return window.'),
+    deliveredAt: d.deliveredAt || null,
+    returnDeadline: d.returnDeadline || null,
+    daysRemaining: d.daysRemaining !== undefined && d.daysRemaining !== null ? Number(d.daysRemaining) : null,
+    eligibleItems
+  };
+}
+
+/**
+ * Return Item Normalizer
+ */
+export function normalizeReturnItem(raw) {
+  if (!raw) return null;
+  const item = normalizeObjectKeys(raw);
+  const photos = Array.isArray(item.photos)
+    ? item.photos.map(p => {
+        if (typeof p === 'string') return { id: p, photoId: p, url: cleanImageUrl(p) };
+        const np = normalizeObjectKeys(p);
+        return {
+          id: np.id || np.photoId,
+          photoId: np.photoId || np.id,
+          url: cleanImageUrl(np.url || np.photoUrl)
+        };
+      })
+    : [];
+
+  return {
+    id: item.id !== undefined && item.id !== null ? item.id : null,
+    orderItemId: Number(item.orderItemId || item.id || 0),
+    productName: item.productName || 'Imperial Flacon',
+    productImageUrl: cleanImageUrl(item.productImageUrl || item.imageUrl || item.image),
+    image: cleanImageUrl(item.productImageUrl || item.imageUrl || item.image),
+    unitPrice: Number(item.unitPrice || 0),
+    quantity: Number(item.quantity || 1),
+    reason: item.reason || 'Other',
+    reasonNote: item.reasonNote || '',
+    status: item.status || 'Pending',
+    refundAmount: Number(item.refundAmount || 0),
+    rejectionReason: item.rejectionReason || null,
+    paidAt: item.paidAt || null,
+    paidByAdmin: item.paidByAdmin || null,
+    photos
+  };
+}
+
+/**
+ * Return Request Normalizer (Customer & Admin)
  */
 export function normalizeReturn(raw) {
   if (!raw) return null;
   const ret = normalizeObjectKeys(raw);
+  const items = Array.isArray(ret.items)
+    ? ret.items.map(normalizeReturnItem).filter(Boolean)
+    : [];
+
   return {
-    id: ret.id,
-    orderId: ret.orderId,
-    orderItemId: ret.orderItemId,
-    reason: ret.reason,
-    status: ret.status || 'PendingReturn',
-    rejectionReason: ret.rejectionReason || null,
-    requiresPhoto: Boolean(ret.requiresPhoto),
-    returnLabelUrl: ret.returnLabelUrl || null,
-    requestedAt: ret.requestedAt || new Date().toISOString()
+    id: ret.id !== undefined && ret.id !== null ? ret.id : null,
+    orderId: ret.orderId !== undefined ? Number(ret.orderId) : null,
+    orderNumber: ret.orderNumber || (ret.orderId ? `ORD-${ret.orderId}` : ''),
+    status: ret.status || 'PendingReview',
+    createdAt: ret.createdAt || ret.requestedAt || new Date().toISOString(),
+    reviewedAt: ret.reviewedAt || null,
+    totalRefundAmount: Number(ret.totalRefundAmount || 0),
+    currency: ret.currency || 'EUR',
+    items,
+    // Admin specific fields
+    customer: ret.customer || null,
+    customerName: ret.customerName || ret.customer?.name || 'Valued Patron',
+    customerEmail: ret.customerEmail || ret.customer?.email || '',
+    customerPhone: ret.customerPhone || ret.customer?.phone || '',
+    bankAccountNumber: ret.bankAccountNumber || '',
+    bankAccountHolderName: ret.bankAccountHolderName || '',
+    bankName: ret.bankName || '',
+    reviewedBy: ret.reviewedBy || null
+  };
+}
+
+/**
+ * Admin Refund Item Normalizer
+ */
+export function normalizeRefund(raw) {
+  if (!raw) return null;
+  const ref = normalizeObjectKeys(raw);
+  const approvedItems = Array.isArray(ref.approvedItems)
+    ? ref.approvedItems.map(normalizeReturnItem).filter(Boolean)
+    : (Array.isArray(ref.items) ? ref.items.map(normalizeReturnItem).filter(Boolean) : []);
+
+  return {
+    id: ref.id !== undefined && ref.id !== null ? ref.id : null,
+    returnRequestId: Number(ref.returnRequestId || ref.returnId || 0),
+    orderNumber: ref.orderNumber || (ref.orderId ? `ORD-${ref.orderId}` : ''),
+    customer: ref.customer || ref.customerName || 'Valued Patron',
+    email: ref.email || ref.customerEmail || '',
+    bankAccount: ref.bankAccount || ref.bankAccountNumber || '',
+    bankAccountNumber: ref.bankAccountNumber || ref.bankAccount || '',
+    accountHolder: ref.accountHolder || ref.bankAccountHolderName || '',
+    bankAccountHolderName: ref.bankAccountHolderName || ref.accountHolder || '',
+    bankName: ref.bankName || '',
+    reviewedDate: ref.reviewedDate || ref.reviewedAt || null,
+    reviewedBy: ref.reviewedBy || null,
+    currency: ref.currency || 'EUR',
+    approvedItems,
+    quantity: Number(ref.quantity || (approvedItems.reduce((sum, i) => sum + (i.quantity || 1), 0)) || 1),
+    unitPrice: Number(ref.unitPrice || 0),
+    refundAmount: Number(ref.refundAmount ?? ref.totalRefundAmount ?? 0),
+    totalRefundAmount: Number(ref.totalRefundAmount ?? ref.refundAmount ?? 0),
+    paidAt: ref.paidAt || null,
+    paidByAdmin: ref.paidByAdmin || null,
+    isPaid: Boolean(ref.isPaid || ref.paidAt)
   };
 }
 

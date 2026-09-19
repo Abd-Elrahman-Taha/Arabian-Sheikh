@@ -143,8 +143,12 @@ export const ENDPOINTS = {
 
   // Returns
   RETURNS: {
-    DETAILS: (id) => `/returns/${id}`,
-    UPLOAD_PHOTOS: (id) => `/returns/${id}/photos`
+    STAGE_PHOTO: '/Returns/photos/staging',
+    DETAILS: (id) => `/Returns/${id}`,
+    CANCEL: (id) => `/Returns/${id}/cancel`,
+    ADD_PHOTO: (returnId, itemId) => `/Returns/${returnId}/items/${itemId}/photos`,
+    DELETE_PHOTO: (returnId, itemId, photoId) => `/Returns/${returnId}/items/${itemId}/photos/${photoId}`,
+    UPLOAD_PHOTOS: (id) => `/Returns/${id}/photos`
   },
 
   // Notifications
@@ -309,6 +313,7 @@ export const ENDPOINTS = {
     // Refunds
     REFUNDS: {
       LIST: '/admin/refunds',
+      MARK_PAID: (itemId) => `/admin/refunds/${itemId}/mark-paid`,
       REQUEST: (paymentId) => `/admin/payments/${paymentId}/refunds`,
       PROCESS: (refundId) => `/admin/refunds/${refundId}/process`,
       COMPLETE: (refundId) => `/admin/refunds/${refundId}/complete`
@@ -318,6 +323,8 @@ export const ENDPOINTS = {
     RETURNS: {
       LIST: '/admin/returns',
       DETAILS: (id) => `/admin/returns/${id}`,
+      REVIEW: (id) => `/admin/returns/${id}/review`,
+      CORRECT_REFUND: (returnId, itemId) => `/admin/returns/${returnId}/items/${itemId}/correct-refund-amount`,
       APPROVE: (id) => `/admin/returns/${id}/approve`,
       REJECT: (id) => `/admin/returns/${id}/reject`,
       INSPECT: (id) => `/admin/returns/${id}/inspect`,
