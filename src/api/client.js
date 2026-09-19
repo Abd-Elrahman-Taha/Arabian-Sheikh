@@ -409,8 +409,9 @@ async function request(endpoint, options = {}, attempt = 0) {
         if (freshToken) {
           return await request(endpoint, { ...options, _retryCount: true });
         }
-      } else if (!isAdminEndpoint && response.status === 401 && requiresAuth && !options._retryCount) {
-        // Attempt silent customer token refresh
+      } else if (!isAdminEndpoint && response.status === 401 && requiresAuth) {
+        if (!options._retryCount) {
+          // Attempt silent customer token refresh
           const refreshToken = tokenManager.getRefreshToken();
           if (refreshToken) {
             try {
@@ -432,12 +433,39 @@ async function request(endpoint, options = {}, attempt = 0) {
                 if (newAccessToken) {
                   return await request(endpoint, { ...options, _retryCount: true });
                 }
+              } else {
+                // Refresh token was rejected (401/400)
+                tokenManager.clearTokens();
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('arabian_sheikh_current_user');
+                  window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+                }
               }
             } catch (refErr) {
               console.warn('[client] Silent customer token refresh failed:', refErr?.message);
+              tokenManager.clearTokens();
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('arabian_sheikh_current_user');
+                window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+              }
+            }
+          } else {
+            // No refresh token available, session is expired
+            tokenManager.clearTokens();
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('arabian_sheikh_current_user');
+              window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
             }
           }
+        } else {
+          // 401 persists even after retry: clear stale session
+          tokenManager.clearTokens();
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('arabian_sheikh_current_user');
+            window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+          }
         }
+      }
 
       let errorMessage = data?.detail || data?.message || data?.error || data?.title;
       if (data?.errors && typeof data.errors === 'object') {

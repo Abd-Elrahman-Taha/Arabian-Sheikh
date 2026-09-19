@@ -125,6 +125,15 @@ export function CartProvider({ children }) {
   const totals = cartService.calculateTotals(cart, activePromos);
 
   // Add Curated Bundle Suites to backend cart
+  const handleCloseAuthModal = useCallback(() => {
+    setAuthModalOpen(false);
+    setPendingItem(null);
+    try {
+      sessionStorage.removeItem(PENDING_CART_KEY);
+    } catch {}
+  }, []);
+
+  // Add Curated Bundle Suites to backend cart
   const addBundleToCart = useCallback(async (bundle, quantity = 1) => {
     if (isAdmin) {
       error('Administrator accounts cannot place customer orders. Please sign in with a customer account.');
@@ -134,6 +143,13 @@ export function CartProvider({ children }) {
 
     const customerToken = tokenManager.getToken(false);
     if (!isAuthenticated || !customerToken) {
+      if (isAuthenticated && !customerToken) {
+        tokenManager.clearTokens();
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
+      }
       const intent = { bundle, isBundle: true, quantity };
       setPendingItem(intent);
       try {
@@ -178,6 +194,11 @@ export function CartProvider({ children }) {
     } catch (err) {
       console.error('[Cart] Failed to add bundle to backend cart:', err);
       if (err?.status === 401 || err?.status === 403) {
+        tokenManager.clearTokens();
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
         setAuthModalOpen(true);
         error('Your session has expired. Please sign in again to add items to your bag.');
       } else {
@@ -201,6 +222,13 @@ export function CartProvider({ children }) {
 
     const customerToken = tokenManager.getToken(false);
     if (!isAuthenticated || !customerToken) {
+      if (isAuthenticated && !customerToken) {
+        tokenManager.clearTokens();
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
+      }
       const intent = { product, size, quantity };
       setPendingItem(intent);
       try {
@@ -265,6 +293,11 @@ export function CartProvider({ children }) {
     } catch (err) {
       console.error('[Cart] Failed to add item to backend cart:', err);
       if (err?.status === 401 || err?.status === 403) {
+        tokenManager.clearTokens();
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('arabian_sheikh_current_user');
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+        }
         setAuthModalOpen(true);
         error('Your session has expired. Please sign in again to add items to your bag.');
       } else {
@@ -274,14 +307,17 @@ export function CartProvider({ children }) {
     }
   }, [isAuthenticated, isAdmin, addBundleToCart, success, error]);
 
-  // Handle pending cart additions when user logs in
+  // Handle pending cart additions when user logs in with a valid token
   useEffect(() => {
-    if (isAuthenticated && pendingItem) {
-      const { product, bundle, isBundle, size, quantity } = pendingItem;
+    const customerToken = tokenManager.getToken(false);
+    if (isAuthenticated && customerToken && pendingItem) {
+      const itemToProcess = pendingItem;
+      // Immediately clear pending item to break any re-trigger loop
       sessionStorage.removeItem(PENDING_CART_KEY);
       setPendingItem(null);
       setAuthModalOpen(false);
 
+      const { product, bundle, isBundle, size, quantity } = itemToProcess;
       if (isBundle && bundle) {
         addBundleToCart(bundle, quantity || 1);
       } else if (product) {
@@ -436,7 +472,7 @@ export function CartProvider({ children }) {
         refreshCart: fetchBackendCart,
         cartBadgeAnimated,
         openAuthModal: () => setAuthModalOpen(true),
-        closeAuthModal: () => setAuthModalOpen(false)
+        closeAuthModal: handleCloseAuthModal
       }}
     >
       {children}
@@ -444,7 +480,7 @@ export function CartProvider({ children }) {
       {/* Global Login Required Modal for Cart Action */}
       <LoginRequiredModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={handleCloseAuthModal}
         pendingItem={pendingItem}
         onAuthenticatedAdd={(prod, sz, qty) => addToCart(prod, sz, qty)}
       />

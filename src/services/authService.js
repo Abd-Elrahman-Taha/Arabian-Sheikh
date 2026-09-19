@@ -224,8 +224,11 @@ export const authService = {
         return merged;
       }
     } catch (e) {
-      // Background profile refresh failed (network offline, cold start, expired token, etc.)
-      // Retain active session so refresh doesn't log out the user
+      if (e?.status === 401 || e?.status === 403) {
+        this.logout();
+        return null;
+      }
+      // Background profile refresh failed (network offline, cold start, etc.)
       console.warn('[authService] Background profile refresh warning, maintaining local session:', e?.message || e);
     }
 

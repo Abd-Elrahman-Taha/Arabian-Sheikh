@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { Lock, Sparkles, X, ArrowRight, UserPlus, LogIn, ShoppingBag } from 'lucide-react';
+import { authService } from '../../services/authService';
+import { Lock, Sparkles, X, UserPlus, LogIn } from 'lucide-react';
 
 export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAuthenticatedAdd }) {
   const { navigate } = useRouter();
@@ -12,39 +13,67 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
 
   if (!isOpen) return null;
 
-  const handleGoToLogin = () => {
-    onClose();
+  const handleGoToLogin = (e) => {
+    e?.stopPropagation?.();
+    if (onClose) onClose();
     navigate('/login');
   };
 
-  const handleGoToSignup = () => {
-    onClose();
+  const handleGoToSignup = (e) => {
+    e?.stopPropagation?.();
+    if (onClose) onClose();
     navigate('/signup');
   };
 
-  const handleQuickDemoLogin = async () => {
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget && onClose) {
+      onClose();
+    }
+  };
+
+  const handleQuickDemoLogin = async (e) => {
+    e?.stopPropagation?.();
     setQuickLoginLoading(true);
     try {
-      const user = await login('sheikh.user@luxury.com', 'user123');
-      success(`Welcome to the Palace, ${user.name}.`);
-      onClose();
+      let user = null;
+      try {
+        user = await login('demo.patron@arabiansheikh.com', 'DemoPatron123!');
+      } catch (loginErr) {
+        try {
+          user = await authService.signup({
+            name: 'Royal Guest',
+            email: 'demo.patron@arabiansheikh.com',
+            password: 'DemoPatron123!',
+            phone: '+1234567890',
+            countryCode: 'BG'
+          });
+        } catch {
+          throw loginErr;
+        }
+      }
+      success(`Welcome to the Palace, ${user?.name || 'Honored Guest'}.`);
+      if (onClose) onClose();
       if (onAuthenticatedAdd && pendingItem) {
         onAuthenticatedAdd(pendingItem.product, pendingItem.size, pendingItem.quantity);
       }
     } catch (err) {
-      error(err.message || 'Demo login failed.');
+      error(err.message || 'Quick sign-in unavailable. Please use Sign In or Create Account.');
     } finally {
       setQuickLoginLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      onClick={handleBackdropClick}
+    >
       <div
         className="relative w-full max-w-lg bg-[var(--color-desert-light)] border border-[var(--color-terracotta)]/40 p-6 sm:p-8 shadow-2xl space-y-6 overflow-hidden text-[var(--color-earth-dark)]"
         style={{
           boxShadow: '0 25px 60px -15px rgba(93, 29, 1, 0.4), 0 0 35px rgba(180, 86, 37, 0.25)'
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Top Gold Corner Accents */}
         <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#3A2116]" />
@@ -54,7 +83,11 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
 
         {/* Close Button */}
         <button
-          onClick={onClose}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onClose) onClose();
+          }}
           className="absolute top-4 right-4 p-2 text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-colors focus:outline-none cursor-pointer"
           aria-label="Close dialog"
         >
@@ -124,6 +157,7 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
         <div className="space-y-2.5 pt-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
+              type="button"
               onClick={handleGoToLogin}
               className="luxury-btn-gold py-3 text-xs flex items-center justify-center gap-2 cursor-pointer font-bold"
             >
@@ -131,6 +165,7 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
               <span>SIGN IN</span>
             </button>
             <button
+              type="button"
               onClick={handleGoToSignup}
               className="luxury-btn-outline py-3 text-xs flex items-center justify-center gap-2 cursor-pointer font-bold"
             >
@@ -140,7 +175,11 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
           </div>
 
           <button
-            onClick={onClose}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onClose) onClose();
+            }}
             className="w-full py-2.5 text-xs uppercase tracking-widest font-cinzel text-[var(--color-terracotta-deep)] hover:text-[var(--color-earth-dark)] transition-colors cursor-pointer text-center font-bold"
           >
             CONTINUE SHOPPING
