@@ -435,6 +435,7 @@ export default function CheckoutPage() {
           countryCode: selectedSavedAddr?.countryCode || formData.countryCode || 'BG',
           postalCode: selectedSavedAddr?.postalCode || formData.postalCode || '',
           city: selectedSavedAddr?.city || formData.city || '',
+          couponCode: cart?.discountCode || undefined,
           items: items.map(it => ({
             productId: it.productId || it.numericId || it.id,
             quantity: it.quantity || 1
@@ -523,15 +524,8 @@ export default function CheckoutPage() {
     const resolvedQuoteId = selectedQuote?.quoteId;
 
     if (!resolvedMethodId || isNaN(resolvedMethodId)) {
-      const cUpper = String(selectedQuote?.carrier || '').toUpperCase();
-      const mUpper = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase();
-      if (cUpper.includes('ECONT')) {
-        resolvedMethodId = mUpper.includes('EXP') ? 4 : 3;
-      } else if (cUpper.includes('SPEEDY')) {
-        resolvedMethodId = mUpper.includes('EXP') ? 2 : 1;
-      } else {
-        resolvedMethodId = 1;
-      }
+      const isExpress = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase().includes('EXP');
+      resolvedMethodId = isExpress ? 2 : 1;
     }
 
     if (!resolvedQuoteId || !resolvedMethodId) {
@@ -553,15 +547,17 @@ export default function CheckoutPage() {
 
       // Sync selection with backend checkout session if authenticated
       if (user) {
-        await checkoutApi.setCheckoutShipping({
-          shippingMethodId: resolvedMethodId,
-          quoteId: resolvedQuoteId
-        }, {
-          addressId: addressId || undefined,
-          couponCode: cart?.discountCode || undefined
-        }).catch(err => {
-          console.warn('[Checkout] Checkout shipping sync notice:', err?.message || err);
-        });
+        try {
+          await checkoutApi.setCheckoutShipping({
+            shippingMethodId: resolvedMethodId,
+            quoteId: resolvedQuoteId
+          }, {
+            addressId: addressId || undefined,
+            couponCode: cart?.discountCode || undefined
+          });
+        } catch (syncErr) {
+          console.warn('[Checkout] Checkout shipping sync notice:', syncErr?.message || syncErr);
+        }
       }
 
       setStep(3);
@@ -596,15 +592,8 @@ export default function CheckoutPage() {
 
     let shippingMethodId = Number(selectedQuote.shippingMethodId || selectedQuote.id);
     if (!shippingMethodId || isNaN(shippingMethodId)) {
-      const cUpper = String(selectedQuote?.carrier || '').toUpperCase();
-      const mUpper = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase();
-      if (cUpper.includes('ECONT')) {
-        shippingMethodId = mUpper.includes('EXP') ? 4 : 3;
-      } else if (cUpper.includes('SPEEDY')) {
-        shippingMethodId = mUpper.includes('EXP') ? 2 : 1;
-      } else {
-        shippingMethodId = 1;
-      }
+      const isExpress = String(selectedQuote?.shippingMethod || selectedQuote?.methodName || '').toUpperCase().includes('EXP');
+      shippingMethodId = isExpress ? 2 : 1;
     }
     if (!shippingMethodId || isNaN(shippingMethodId)) {
       throw new Error('A valid shipping method must be selected.');

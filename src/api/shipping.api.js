@@ -34,7 +34,8 @@ export const shippingApi = {
       ...(payload.countryCode ? { countryCode: String(payload.countryCode).trim() } : {}),
       ...(payload.postalCode ? { postalCode: String(payload.postalCode).trim() } : {}),
       ...(payload.city ? { city: String(payload.city).trim() } : {}),
-      ...(Array.isArray(payload.items) && payload.items.length > 0 ? { items: payload.items } : {})
+      ...(Array.isArray(payload.items) && payload.items.length > 0 ? { items: payload.items } : {}),
+      ...(payload.couponCode ? { couponCode: String(payload.couponCode).trim() } : {})
     };
 
     // Call official backend endpoint
@@ -49,7 +50,7 @@ export const shippingApi = {
 
     const topLevelQuoteId = response?.quoteId || null;
 
-    let options = (Array.isArray(rawOptions) ? rawOptions : [])
+    const options = (Array.isArray(rawOptions) ? rawOptions : [])
       .map(item => {
         const norm = normalizeShippingOption(item);
         if (!norm) return null;
@@ -59,39 +60,6 @@ export const shippingApi = {
         return norm;
       })
       .filter(Boolean);
-
-    // Sync with GET /api/checkout to verify and merge authoritative backend shippingOptions if available
-    try {
-      const checkoutData = await apiClient.get(ENDPOINTS.CHECKOUT.GET, {
-        params: { addressId: addrId },
-        requiresAuth: true
-      });
-      const checkoutOptions = checkoutData?.shippingOptions || [];
-      if (Array.isArray(checkoutOptions) && checkoutOptions.length > 0) {
-        options = options.map(opt => {
-          const match = checkoutOptions.find(co => {
-            const coCarrier = String(co.carrier || co.carrierName || co.shippingCompany || '').toLowerCase();
-            const optCarrier = String(opt.carrier || '').toLowerCase();
-            const coMethod = String(co.shippingMethod || co.methodName || co.name || '').toLowerCase();
-            const optMethod = String(opt.shippingMethod || '').toLowerCase();
-            const expressMatch = (coMethod.includes('express') || coMethod.includes('exp')) ===
-                                 (optMethod.includes('express') || optMethod.includes('exp'));
-            return (coCarrier.includes(optCarrier) || optCarrier.includes(coCarrier)) && expressMatch;
-          });
-          if (match) {
-            return {
-              ...opt,
-              quoteId: match.quoteId || opt.quoteId,
-              shippingMethodId: Number(match.shippingMethodId || match.id || opt.shippingMethodId),
-              shippingCompanyId: Number(match.shippingCompanyId || opt.shippingCompanyId)
-            };
-          }
-          return opt;
-        });
-      }
-    } catch {
-      // Non-critical, options already normalized with deterministic IDs
-    }
 
     if (import.meta.env.DEV) {
       console.log('[Checkout] Shipping quote received:', options);
