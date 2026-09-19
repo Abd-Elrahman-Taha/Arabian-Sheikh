@@ -41,10 +41,7 @@ export const shippingApi = {
       .filter(Boolean);
 
     const requestBody = {
-      countryCode,
-      postalCode,
-      items,
-      ...(addrId ? { addressId: addrId } : {})
+      addressId: addrId
     };
 
     if (import.meta.env.DEV) {

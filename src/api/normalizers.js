@@ -570,7 +570,10 @@ export function normalizeShippingOption(raw) {
   }
 
   if (!shippingMethodId) {
-    shippingMethodId = Number(opt.id || opt.methodId || opt.serviceId || 1);
+    const fallbackId = opt.id ?? opt.methodId ?? opt.serviceId;
+    shippingMethodId = fallbackId !== undefined && fallbackId !== null && !isNaN(Number(fallbackId)) && Number(fallbackId) > 0
+      ? Number(fallbackId)
+      : null;
   }
 
   return {
