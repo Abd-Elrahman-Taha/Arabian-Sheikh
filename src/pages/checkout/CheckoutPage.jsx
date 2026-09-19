@@ -269,9 +269,9 @@ export default function CheckoutPage() {
 
       const quoteParams = {
         addressId: rawId,
-        countryCode: destCountry,
-        postalCode: destPostal,
-        city: destCity,
+        countryCode: destCountry || formData.countryCode || 'BG',
+        postalCode: destPostal || formData.postalCode || '1000',
+        city: destCity || formData.city || 'Sofia',
         couponCode: currentCouponCode !== undefined ? (currentCouponCode || undefined) : (cart?.discountCode || undefined),
         items: items.map(it => ({
           productId: it.productId || it.numericId || it.id,

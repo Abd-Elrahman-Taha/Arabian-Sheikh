@@ -25,13 +25,31 @@ export const shippingApi = {
       throw new Error('A valid shipping address is required before requesting delivery quotes.');
     }
 
-    if (import.meta.env.DEV) {
-      console.log('[Checkout] Requesting shipping quote:', addrId, payload);
-    }
+    // Format payload strictly compliant with Section 4.6 (ShippingQuoteRequest)
+    const countryCode = String(payload.countryCode || 'BG').trim().toUpperCase();
+    const postalCode = String(payload.postalCode || '1000').trim();
+    
+    // Extract valid items for shipping calculation
+    const rawItems = Array.isArray(payload.items) ? payload.items : [];
+    const items = rawItems
+      .map(item => {
+        const pId = Number(item.productId ?? item.numericId ?? item.id);
+        const qty = Math.max(1, Number(item.quantity) || 1);
+        if (!pId || isNaN(pId)) return null;
+        return { productId: pId, quantity: qty };
+      })
+      .filter(Boolean);
 
     const requestBody = {
-      addressId: addrId
+      countryCode,
+      postalCode,
+      items,
+      ...(addrId ? { addressId: addrId } : {})
     };
+
+    if (import.meta.env.DEV) {
+      console.log('[Checkout] Requesting shipping quote with body:', requestBody);
+    }
 
     let response = null;
     try {
@@ -43,7 +61,7 @@ export const shippingApi = {
       );
     } catch (err) {
       if (options?.signal?.aborted) throw err;
-      console.warn('[Checkout] POST /api/Shipping/quotes notice:', err?.message || err);
+      console.warn('[Checkout] POST /api/shipping/quotes notice:', err?.message || err);
     }
 
     const normResponse = normalizeObjectKeys(response);

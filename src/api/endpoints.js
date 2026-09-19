@@ -117,8 +117,7 @@ export const ENDPOINTS = {
     SHIPPING_OPTIONS: '/Shipping/options'
   },
   SHIPPING: {
-    QUOTES: '/Shipping/quotes',
-    OPTIONS: '/Shipping/options'
+    QUOTES: '/shipping/quotes'
   },
 
   // Payments (Stripe)
