@@ -128,16 +128,16 @@ export const ENDPOINTS = {
 
   // Orders
   ORDERS: {
-    CREATE: '/orders',
-    LIST: '/orders',
-    DETAILS: (id) => `/orders/${id}`,
-    TRACKING: (id) => `/orders/${id}/tracking`,
-    DELIVERY_STATUS: (id) => `/orders/${id}/delivery-status`,
-    CANCEL: (id) => `/orders/${id}/cancel`,
-    RETURN_ELIGIBILITY: (orderId) => `/orders/${orderId}/return-eligibility`,
-    CREATE_RETURN: (orderId) => `/orders/${orderId}/returns`,
-    RETURNS: (orderId) => `/orders/${orderId}/returns`,
-    REFUNDS: (orderId) => `/orders/${orderId}/refunds`
+    CREATE: '/Orders',
+    LIST: '/Orders',
+    DETAILS: (id) => `/Orders/${id}`,
+    TRACKING: (id) => `/Orders/${id}/tracking`,
+    DELIVERY_STATUS: (id) => `/Orders/${id}/delivery-status`,
+    CANCEL: (id) => `/Orders/${id}/cancel`,
+    RETURN_ELIGIBILITY: (orderId) => `/Orders/${orderId}/return-eligibility`,
+    CREATE_RETURN: (orderId) => `/Orders/${orderId}/returns`,
+    RETURNS: (orderId) => `/Orders/${orderId}/returns`,
+    REFUNDS: (orderId) => `/Orders/${orderId}/refunds`
   },
 
   // Returns

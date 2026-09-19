@@ -116,6 +116,16 @@ export const tokenManager = {
         }
       } catch {}
     }
+
+    // Fallback: If customer token is not present, check if an admin token exists
+    // so an administrator testing or managing customer flows is properly authenticated
+    if (!t) {
+      const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+      if (adminToken && !isTokenExpired(adminToken)) {
+        return adminToken;
+      }
+    }
+
     return t || null;
   },
 

@@ -162,9 +162,10 @@ export const orderApi = {
     if (!numericId) {
       throw new Error(`Valid numeric order ID is required to cancel an order. Received: ${id}`);
     }
+    const cleanReason = typeof reason === 'string' && reason.trim() ? reason.trim() : 'Customer cancellation request';
     const response = await apiClient.post(
       ENDPOINTS.ORDERS.CANCEL(numericId),
-      { reason: reason || 'Customer cancellation request' },
+      { reason: cleanReason },
       { requiresAuth: true }
     );
     return normalizeObjectKeys(response);
@@ -300,9 +301,10 @@ export const orderApi = {
   async adminCancelOrder(id, reason = '') {
     const numericId = toNumericId(id);
     if (!numericId) return null;
+    const cleanReason = typeof reason === 'string' && reason.trim() ? reason.trim() : 'Cancelled by administrator';
     const response = await apiClient.post(
       ENDPOINTS.ADMIN.ORDERS.CANCEL(numericId),
-      { reason },
+      { reason: cleanReason },
       { requiresAuth: true }
     );
     return normalizeObjectKeys(response);

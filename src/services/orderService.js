@@ -766,14 +766,18 @@ export const orderService = {
   },
 
   async cancelOrder(orderId, reason = '') {
-    if (!apiClient.isMockEnabled()) {
+    const resolvedNumId = toNumericId(orderId);
+    let cancelRes = null;
+    if (resolvedNumId && !apiClient.isMockEnabled()) {
       try {
-        await orderApi.adminCancelOrder(orderId, reason);
+        cancelRes = await orderApi.adminCancelOrder(resolvedNumId, reason);
       } catch (e) {
-        console.warn('Real API cancel order fallback:', e.message);
+        console.error('Admin cancelOrder API error:', e);
+        throw e;
       }
     }
-    return this.updateOrderStatus(orderId, 'Cancelled', reason ? `Cancellation reason: ${reason}` : 'Cancelled by administrator');
+    const resolvedStatus = cancelRes?.orderStatus || 'Cancelled';
+    return this.updateOrderStatus(orderId, resolvedStatus, reason ? `Cancellation reason: ${reason}` : 'Cancelled by administrator');
   },
 
   async customerCancelOrder(orderId, reason = '') {
