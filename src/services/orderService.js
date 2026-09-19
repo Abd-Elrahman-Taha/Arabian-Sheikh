@@ -679,14 +679,16 @@ export const orderService = {
 
   async customerCancelOrder(orderId, reason = '') {
     const numId = Number(orderId);
+    let cancelRes = null;
     if (!isNaN(numId) && numId > 0 && !apiClient.isMockEnabled()) {
       try {
-        await orderApi.cancelOrder(numId, reason);
+        cancelRes = await orderApi.cancelOrder(numId, reason);
       } catch (e) {
         console.warn('Customer cancelOrder API fallback:', e.message);
       }
     }
-    return this.updateOrderStatus(orderId, 'CancelPending', reason ? `Cancellation request: ${reason}` : 'Cancellation requested by patron');
+    const resolvedStatus = cancelRes?.orderStatus || 'Cancelled';
+    return this.updateOrderStatus(orderId, resolvedStatus, reason ? `Cancellation request: ${reason}` : 'Cancellation requested by patron');
   },
 
   async getDeliveryStatus(orderId) {

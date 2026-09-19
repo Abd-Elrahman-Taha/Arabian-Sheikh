@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from '../../router/RouterContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
+import { shippingService } from '../../services/shippingService';
 import { Package, Truck, ChevronRight } from 'lucide-react';
 
 function getStatusStyle(status = '') {
@@ -121,8 +122,14 @@ export default function AccountOrders() {
 
       <div className="space-y-5">
         {orders.map((o) => {
-          const displayStatus = o.orderStatus || o.status || 'Pending';
-          const statusClass = getStatusStyle(displayStatus);
+          const hasShipmentStatus = Boolean(o.shipmentStatus);
+          const displayStatus = o.shipmentStatus || o.orderStatus || o.status || 'Pending';
+          const statusClass = hasShipmentStatus
+            ? shippingService.getShipmentStatusBadge(o.shipmentStatus)
+            : getStatusStyle(displayStatus);
+          const statusLabel = hasShipmentStatus
+            ? shippingService.getShipmentStatusLabel(o.shipmentStatus)
+            : formatOrderStatus(displayStatus);
           const dateStr = o.date || o.createdAt
             ? new Date(o.date || o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
             : '—';
@@ -137,8 +144,8 @@ export default function AccountOrders() {
                   <span className="text-[#D8BE99] ml-3 font-mono text-xs sm:text-sm">{dateStr}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 text-xs font-mono uppercase font-bold rounded-full ${statusClass}`}>
-                    {formatOrderStatus(displayStatus)}
+                  <span className={`px-3 py-1 text-xs font-mono uppercase font-bold rounded-full border ${statusClass}`}>
+                    {statusLabel}
                   </span>
                   <span className="font-cinzel font-bold text-[#F3E6D0] text-base sm:text-lg">
                     €{Number(o.total || 0).toFixed(2)}

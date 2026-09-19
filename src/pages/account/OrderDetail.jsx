@@ -49,8 +49,21 @@ export default function OrderDetail() {
     async function load() {
       if (!orderId) return;
       try {
-        const item = await orderService.getOrderById(orderId);
-        setOrder(item);
+        const [item, deliv] = await Promise.allSettled([
+          orderService.getOrderById(orderId),
+          orderService.getDeliveryStatus(orderId)
+        ]);
+        const orderData = item.status === 'fulfilled' ? item.value : null;
+        const delivData = deliv.status === 'fulfilled' ? deliv.value : null;
+
+        if (orderData) {
+          setOrder({
+            ...orderData,
+            shipmentStatus: delivData?.shipmentStatus || orderData.shipmentStatus || null,
+            trackingCode: delivData?.trackingNumber || orderData.trackingCode || null,
+            carrierStatus: delivData?.carrierStatus || orderData.carrierStatus || null
+          });
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -149,11 +162,12 @@ export default function OrderDetail() {
     e.preventDefault();
     setCancelling(true);
     try {
-      await orderService.customerCancelOrder(order.id, cancelReason);
+      const res = await orderService.customerCancelOrder(order.id, cancelReason);
+      const updatedStatus = res?.orderStatus || res?.status || 'Cancelled';
       setOrder(prev => ({
         ...prev,
-        orderStatus: 'CancelPending',
-        status: 'CancelPending'
+        orderStatus: updatedStatus,
+        status: updatedStatus
       }));
       setCancelModalOpen(false);
     } catch (err) {
@@ -205,7 +219,7 @@ export default function OrderDetail() {
           {isShippedOrOut && (
             <span
               className="px-3 py-1.5 border border-neutral-700/50 bg-neutral-900/40 text-neutral-400 text-[11px] font-cinzel flex items-center gap-1.5 rounded cursor-not-allowed"
-              title="Orders already shipped or out for delivery cannot be cancelled"
+              title="This order cannot be cancelled because it has already shipped. You can request a return after delivery."
             >
               <Truck className="w-3 h-3 text-neutral-500" />
               <span>Shipped (Non-cancellable)</span>

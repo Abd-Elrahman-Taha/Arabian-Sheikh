@@ -76,6 +76,37 @@ export const shippingService = {
   },
 
   /**
+   * Check if order can be cancelled by customer (Section 9)
+   * Pending / Processing -> cancellable
+   * Shipped / OutForDelivery / Delivered / Cancelled -> not cancellable
+   * @param {string} orderStatus
+   */
+  canCancelOrder(orderStatus) {
+    if (!orderStatus) return true;
+    const s = String(orderStatus).toLowerCase().replace(/[\s_-]+/g, '');
+    return s === 'pending' || s === 'processing';
+  },
+
+  /**
+   * Get cancellation eligibility or restriction message (Section 9)
+   * @param {string} orderStatus
+   */
+  getCancellationMessage(orderStatus) {
+    if (!orderStatus) return '';
+    const s = String(orderStatus).toLowerCase().replace(/[\s_-]+/g, '');
+    if (s === 'shipped' || s === 'outfordelivery') {
+      return 'This order cannot be cancelled because it has already shipped. You can request a return after delivery.';
+    }
+    if (s === 'delivered') {
+      return 'This order has already been delivered. You may request a return within 14 days.';
+    }
+    if (s === 'cancelled') {
+      return 'This order has already been cancelled.';
+    }
+    return '';
+  },
+
+  /**
    * Request live carrier shipping quotes (ECONT, DHL, etc.)
    * @param {object} params { addressId, countryCode, postalCode, items, couponCode }
    * @param {object} [options] { signal }

@@ -438,7 +438,7 @@ export default function OrderTracking() {
               <Package className="w-8 h-8 text-[#D4AF37]/40 mx-auto" />
               <h4 className="font-cinzel text-sm font-bold text-[#F3E6D0]">Tracking In Preparation</h4>
               <p className="text-xs text-[#D8BE99] max-w-md mx-auto leading-relaxed">
-                Your order is currently being prepared for carrier pickup. Full milestone timestamps and locations will appear here as the courier scans your package.
+                Tracking information will be available once your order ships.
               </p>
             </div>
           ) : (

@@ -539,6 +539,9 @@ export function normalizeTrackingResponse(raw) {
     };
   });
 
+  // Section 7: Display tracking timeline in chronological order (oldest first, newest last)
+  events.sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
+
   return {
     orderId: t.orderId ? Number(t.orderId) : null,
     shipmentId: t.shipmentId ? Number(t.shipmentId) : null,

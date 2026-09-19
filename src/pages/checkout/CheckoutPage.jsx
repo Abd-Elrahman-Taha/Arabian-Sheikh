@@ -640,33 +640,17 @@ export default function CheckoutPage() {
         });
       }
 
-      // Sync selection with backend checkout session if authenticated
+      // Best-effort non-blocking sync with backend checkout session if authenticated
       if (user) {
-        try {
-          await checkoutApi.setCheckoutShipping({
-            shippingMethodId: resolvedMethodId,
-            quoteId: resolvedQuoteId
-          }, {
-            addressId: addressId || undefined,
-            couponCode: cart?.discountCode || undefined
-          });
-        } catch (syncErr) {
-          console.warn('[Checkout] Checkout shipping sync notice:', syncErr?.message || syncErr);
-          const syncMsg = syncErr?.message || '';
-          if (
-            syncErr?.code === 'INVALID_SHIPPING_METHOD' ||
-            syncMsg.includes('INVALID_SHIPPING_METHOD') ||
-            syncMsg.includes('not available') ||
-            syncMsg.includes('Quote no longer matches') ||
-            syncErr?.code === 'QUOTE_MISMATCH'
-          ) {
-            setQuotesError(syncMsg || 'Selected shipping method is no longer valid. Refreshing available options...');
-            error(syncMsg || 'Selected shipping method is no longer valid.');
-            await fetchQuotesForAddress(addressId, cart?.discountCode);
-            setProcessing(false);
-            return;
-          }
-        }
+        checkoutApi.setCheckoutShipping({
+          shippingMethodId: resolvedMethodId,
+          quoteId: resolvedQuoteId
+        }, {
+          addressId: addressId || undefined,
+          couponCode: cart?.discountCode || undefined
+        }).catch(syncErr => {
+          console.warn('[Checkout] Checkout shipping sync notice (non-blocking):', syncErr?.message || syncErr);
+        });
       }
 
       setStep(3);
