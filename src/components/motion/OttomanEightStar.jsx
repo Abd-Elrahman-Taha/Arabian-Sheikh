@@ -52,6 +52,7 @@ export default function OttomanEightStar({
           </linearGradient>
         </defs>
 
+
         {/* Main 8-Pointed Star: First Square (0 deg) */}
         <rect
           x="75"
@@ -77,12 +78,7 @@ export default function OttomanEightStar({
         />
 
         {/* Intermediate Octagram Interlacing Ring */}
-        <polygon
-          points="200,45 235,115 310,90 285,165 355,200 285,235 310,310 235,285 200,355 165,285 90,310 115,235 45,200 115,165 90,90 165,115"
-          stroke={`url(#${gradId})`}
-          strokeWidth="1.6"
-          opacity="0.75"
-        />
+       
 
         {/* Inner Secondary 8-Pointed Star (Rotated 22.5 deg) */}
         <rect
