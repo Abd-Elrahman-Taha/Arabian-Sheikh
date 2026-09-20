@@ -15,7 +15,6 @@ export default function OttomanEightStar({
 }) {
   const reactId = useId().replace(/[^a-zA-Z0-9]/g, '');
   const gradId = `goldOttomanGrad_${reactId}`;
-  const radialId = `goldRadialCenter_${reactId}`;
 
   return (
     <div
@@ -51,42 +50,7 @@ export default function OttomanEightStar({
             <stop offset="70%" stopColor="#8C6239" />
             <stop offset="100%" stopColor="#F2D675" />
           </linearGradient>
-
-          {/* Glowing Radial Gold */}
-          <radialGradient id={radialId} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFF9E0" stopOpacity="0.85" />
-            <stop offset="45%" stopColor="#D4AF37" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
-          </radialGradient>
         </defs>
-
-        {/* Outer Circular Astrolabe Boundary Ring */}
-        <circle
-          cx="200"
-          cy="200"
-          r="190"
-          stroke={`url(#${gradId})`}
-          strokeWidth="1.4"
-          strokeDasharray="4 6"
-          opacity="0.65"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="182"
-          stroke={`url(#${gradId})`}
-          strokeWidth="0.9"
-          opacity="0.45"
-        />
-
-        {/* 8 Radiating Cardinal & Ordinal Ray Spikes */}
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
-          <g key={`ray-${i}`} transform={`rotate(${angle} 200 200)`}>
-            <line x1="200" y1="10" x2="200" y2="42" stroke={`url(#${gradId})`} strokeWidth="1.8" strokeLinecap="round" />
-            <circle cx="200" cy="8" r="2.8" fill="#F2D675" />
-            <polygon points="200,18 195,34 205,34" fill={`url(#${gradId})`} opacity="0.85" />
-          </g>
-        ))}
 
         {/* Main 8-Pointed Star: First Square (0 deg) */}
         <rect
@@ -141,35 +105,6 @@ export default function OttomanEightStar({
           opacity="0.65"
           transform="rotate(67.5 200 200)"
         />
-
-        {/* Inner Rosette Floral Geometry */}
-        <circle cx="200" cy="200" r="60" stroke={`url(#${gradId})`} strokeWidth="1.3" opacity="0.75" />
-        <circle cx="200" cy="200" r="45" stroke={`url(#${gradId})`} strokeWidth="1.0" strokeDasharray="3 3" opacity="0.65" />
-
-        {/* Central 8-Petal Rosette */}
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => (
-          <ellipse
-            key={`petal-${i}`}
-            cx="200"
-            cy="172"
-            rx="10"
-            ry="24"
-            stroke={`url(#${gradId})`}
-            strokeWidth="1.2"
-            fill={`url(#${radialId})`}
-            opacity="0.85"
-            transform={`rotate(${deg} 200 200)`}
-          />
-        ))}
-
-        {/* Sacred Central 8-Point Core */}
-        <polygon
-          points="200,180 206,194 220,200 206,206 200,220 194,206 180,200 194,194"
-          fill={`url(#${gradId})`}
-          stroke="#FFF9E0"
-          strokeWidth="1"
-        />
-        <circle cx="200" cy="200" r="4.5" fill="#FFFDF0" />
       </svg>
 
       {/* Embedded CSS Animations */}
