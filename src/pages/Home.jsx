@@ -514,13 +514,13 @@ export default function Home() {
 
           {/* 1. TOP-LEFT Ottoman 8-Pointed Star Geometric Ornament */}
           {/* 1. TOP-LEFT Ottoman 8-Pointed Star Geometric Ornament */}
-          <div className="  absolute -top-20 -left-20 sm:-top-28 sm:-left-28 pointer-events-none transition-all duration-700 z-0">
-          <OttomanEightStar
-            size={640}
-            opacity={isDark ? 0.75 : 0.6}
-            rotateSpeed={80}
-          />
-          </div>
+          <div className="absolute -top-20 sm:-top-28 pointer-events-none transition-all duration-700 z-0 left-1/2 -translate-x-1/2 sm:left-auto sm:-left-28 sm:translate-x-0">
+  <OttomanEightStar
+    size={640}
+    opacity={isDark ? 0.75 : 0.6}
+    rotateSpeed={80}
+  />
+</div>
 
           {/* 2. BOTTOM-RIGHT Ottoman 8-Pointed Star Geometric Ornament */}
           <div className=" hidden sm:block absolute -bottom-20 -right-20 sm:-bottom-28 sm:-right-28 pointer-events-none transition-all duration-700 z-0">
