@@ -38,6 +38,125 @@ export function normalizeObjectKeys(obj) {
   }, {});
 }
 
+export const COUNTRY_NAMES = {
+  'BG': 'Bulgaria',
+  'AE': 'United Arab Emirates',
+  'SA': 'Saudi Arabia',
+  'EG': 'Egypt',
+  'KW': 'Kuwait',
+  'QA': 'Qatar',
+  'BH': 'Bahrain',
+  'OM': 'Oman',
+  'GB': 'United Kingdom',
+  'UK': 'United Kingdom',
+  'US': 'United States',
+  'USA': 'United States',
+  'DE': 'Germany',
+  'FR': 'France',
+  'IT': 'Italy',
+  'ES': 'Spain',
+  'CH': 'Switzerland',
+  'TR': 'Turkey',
+  'GR': 'Greece',
+  'RO': 'Romania',
+  'AT': 'Austria',
+  'BE': 'Belgium',
+  'NL': 'Netherlands',
+  'SE': 'Sweden',
+  'NO': 'Norway',
+  'DK': 'Denmark',
+  'PL': 'Poland',
+  'CZ': 'Czech Republic'
+};
+
+export const COUNTRY_CODE_MAP = {
+  'BULGARIA': 'BG',
+  'UNITED ARAB EMIRATES': 'AE',
+  'UAE': 'AE',
+  'SAUDI ARABIA': 'SA',
+  'EGYPT': 'EG',
+  'KUWAIT': 'KW',
+  'QATAR': 'QA',
+  'BAHRAIN': 'BH',
+  'OMAN': 'OM',
+  'UNITED KINGDOM': 'GB',
+  'UK': 'GB',
+  'UNITED STATES': 'US',
+  'USA': 'US',
+  'GERMANY': 'DE',
+  'FRANCE': 'FR',
+  'ITALY': 'IT',
+  'SPAIN': 'ES',
+  'SWITZERLAND': 'CH',
+  'TURKEY': 'TR',
+  'GREECE': 'GR',
+  'ROMANIA': 'RO',
+  'AUSTRIA': 'AT',
+  'BELGIUM': 'BE',
+  'NETHERLANDS': 'NL'
+};
+
+export function normalizeOrderAddress(rawAddr, fallbackName = '', fallbackPhone = '') {
+  if (!rawAddr || typeof rawAddr !== 'object') return null;
+  const a = normalizeObjectKeys(rawAddr);
+
+  const fullName = a.fullName || a.recipientName || a.name || a.contactName || fallbackName || '';
+  const phone = a.phone || a.phoneNumber || a.telephone || a.mobile || fallbackPhone || '';
+  const addressLine1 = a.addressLine1 || a.street || a.streetAddress || a.address || a.line1 || '';
+  const addressLine2 = a.addressLine2 || a.line2 || a.apartment || a.suite || a.building || a.floor || '';
+  const city = a.city || a.town || a.municipality || '';
+  const region = a.region || a.state || a.province || a.area || a.district || '';
+  const postalCode = a.postalCode || a.zipCode || a.zip || a.postcode || '';
+
+  let rawCountry = a.country || a.countryName || '';
+  let countryCode = (a.countryCode || '').toUpperCase().trim();
+
+  if (!countryCode && rawCountry) {
+    const uc = rawCountry.toUpperCase().trim();
+    if (uc.length === 2) {
+      countryCode = uc;
+    } else {
+      countryCode = COUNTRY_CODE_MAP[uc] || '';
+    }
+  }
+
+  let country = rawCountry && rawCountry.length > 2 ? rawCountry : '';
+  if (!country && countryCode) {
+    country = COUNTRY_NAMES[countryCode] || countryCode;
+  }
+  if (!country && !countryCode) {
+    country = rawCountry || '';
+  }
+
+  const formattedAddress = [
+    addressLine1,
+    addressLine2,
+    city,
+    region,
+    postalCode,
+    country
+  ].filter(Boolean).join(', ');
+
+  return {
+    ...a,
+    fullName,
+    recipientName: fullName,
+    phone,
+    addressLine1,
+    street: addressLine1,
+    address: addressLine1,
+    addressLine2,
+    city,
+    region,
+    state: region,
+    postalCode,
+    zipCode: postalCode,
+    countryCode,
+    country,
+    formattedAddress
+  };
+}
+
 /**
  * Ensures any image or asset URL is a fully qualified absolute URL compliant with ASP.NET backend validation
  */
@@ -342,12 +461,24 @@ export function normalizeOrder(raw) {
   
   // Extract customer info from nested customer or flat properties
   const customerObj = o.customer ? normalizeObjectKeys(o.customer) : null;
+  const rawAddrSource = o.shippingAddress 
+    || o.shippingAddressSnapshot 
+    || o.shippingSnapshot?.address 
+    || o.shippingSnapshot?.shippingAddress 
+    || o.address 
+    || o.deliveryAddress 
+    || o.customerAddress 
+    || (o.addressLine1 || o.street || o.city ? o : null)
+    || (customerObj?.shippingAddress || customerObj?.address || null);
+
   const resolvedCustomerName = customerObj?.name 
     || (customerObj?.firstName ? `${customerObj.firstName} ${customerObj.lastName || ''}`.trim() : '')
-    || o.customerName || o.patronName || o.userName || o.shippingAddress?.fullName || o.shippingAddress?.recipientName || 'Valued Patron';
+    || o.customerName || o.patronName || o.userName || rawAddrSource?.fullName || rawAddrSource?.recipientName || 'Valued Patron';
   const resolvedCustomerEmail = customerObj?.email || o.customerEmail || o.email || o.userEmail || '';
-  const resolvedCustomerPhone = customerObj?.phone || o.customerPhone || o.phone || o.shippingAddress?.phone || '';
+  const resolvedCustomerPhone = customerObj?.phone || o.customerPhone || o.phone || rawAddrSource?.phone || '';
   const resolvedUserId = customerObj?.id || o.userId || o.customerId || null;
+
+  const resolvedShippingAddress = rawAddrSource ? normalizeOrderAddress(rawAddrSource, resolvedCustomerName, resolvedCustomerPhone) : null;
 
   // Extract totals from nested totals or flat properties
   const totalsObj = o.totals ? normalizeObjectKeys(o.totals) : null;
@@ -360,6 +491,56 @@ export function normalizeOrder(raw) {
   // Tracking & Shipments
   const shipments = Array.isArray(o.shipments) ? o.shipments.map(normalizeObjectKeys) : [];
   const trackingNumber = shipments[0]?.trackingNumber || o.trackingNumber || o.trackingCode || o.shipping?.trackingNumber || o.dhlTrackingNumber || '';
+
+  // Audit & Purchase Cycle Sub-resources (Normalized upfront for payment status resolution)
+  const paymentsList = Array.isArray(o.payments)
+    ? o.payments.map(p => {
+        const np = normalizeObjectKeys(p);
+        return {
+          ...np,
+          status: np.status || np.paymentStatus || 'Pending',
+          attempts: Array.isArray(np.attempts) ? np.attempts.map(normalizeObjectKeys) : (Array.isArray(np.paymentAttempts) ? np.paymentAttempts.map(normalizeObjectKeys) : [])
+        };
+      })
+    : (o.payment ? [normalizeObjectKeys(o.payment)] : []);
+
+  const isStatusSuccess = (st) => {
+    if (!st) return false;
+    const s = String(st).trim().toLowerCase();
+    return s === 'paid' || s === 'succeeded' || s === 'success' || s === 'completed' || s === 'settled';
+  };
+  const isStatusFailed = (st) => {
+    if (!st) return false;
+    const s = String(st).trim().toLowerCase();
+    return s === 'failed' || s === 'declined' || s === 'cancelled' || s === 'canceled';
+  };
+  const isStatusRefunded = (st) => {
+    if (!st) return false;
+    const s = String(st).trim().toLowerCase();
+    return s.includes('refund');
+  };
+
+  const hasPaidPayment = paymentsList.some(p => isStatusSuccess(p.status) || (Array.isArray(p.attempts) && p.attempts.some(a => isStatusSuccess(a.status))));
+  const hasFailedPayment = paymentsList.some(p => isStatusFailed(p.status));
+  const rawPaymentStatus = o.paymentStatus || o.payment_status;
+  const rawOrderStatus = o.orderStatus || o.status || 'Pending';
+  const isOrderFulfilled = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(s => s.toLowerCase() === String(rawOrderStatus).toLowerCase());
+  const paymentMethodStr = String(o.paymentMethod || o.paymentMethodCode || '').toLowerCase();
+  const isCod = paymentMethodStr.includes('cod') || paymentMethodStr.includes('cash');
+
+  let resolvedPaymentStatus = 'Pending';
+  if (hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt || (isOrderFulfilled && !isCod)) {
+    resolvedPaymentStatus = 'Paid';
+  } else if (isStatusRefunded(rawPaymentStatus) || paymentsList.some(p => isStatusRefunded(p.status))) {
+    resolvedPaymentStatus = 'Refunded';
+  } else if (hasFailedPayment || isStatusFailed(rawPaymentStatus)) {
+    resolvedPaymentStatus = 'Failed';
+  } else if (rawPaymentStatus && rawPaymentStatus !== 'Pending') {
+    resolvedPaymentStatus = rawPaymentStatus;
+  }
+
+  const resolvedPaymentId = o.paymentId || paymentsList[0]?.id || paymentsList[0]?.paymentId || null;
+  const resolvedProviderPaymentId = o.providerPaymentId || paymentsList[0]?.providerPaymentId || paymentsList[0]?.transactionId || null;
 
   return {
     id: orderId,
@@ -375,8 +556,11 @@ export function normalizeOrder(raw) {
     currency,
     orderStatus: o.orderStatus || o.status || 'Pending',
     status: o.orderStatus || o.status || 'Pending',
-    paymentStatus: o.paymentStatus || 'Pending',
-    paymentMethodCode: o.paymentMethodCode || '',
+    paymentStatus: resolvedPaymentStatus,
+    paymentId: resolvedPaymentId,
+    providerPaymentId: resolvedProviderPaymentId,
+    paidAt: o.paidAt || (resolvedPaymentStatus === 'Paid' ? (o.updatedAt || o.createdAt || new Date().toISOString()) : null),
+    paymentMethodCode: o.paymentMethodCode || o.paymentMethod || '',
     compensationFailure: Boolean(o.compensationFailure),
     
     // Customer
@@ -430,7 +614,7 @@ export function normalizeOrder(raw) {
     }) : [],
 
     // Shipping & Address Snapshots
-    shippingAddress: o.shippingAddress ? normalizeObjectKeys(o.shippingAddress) : null,
+    shippingAddress: resolvedShippingAddress,
     shippingSnapshot: o.shippingSnapshot ? normalizeObjectKeys(o.shippingSnapshot) : null,
     couponSnapshot: o.couponSnapshot ? normalizeObjectKeys(o.couponSnapshot) : null,
     promotionSnapshot: o.promotionSnapshot ? normalizeObjectKeys(o.promotionSnapshot) : null,
@@ -442,17 +626,12 @@ export function normalizeOrder(raw) {
       trackingUrl: o.trackingUrl || ''
     },
     shipments,
+    trackingNumber: trackingNumber || o.trackingNumber || '',
     trackingCode: trackingNumber,
     dhlTrackingNumber: trackingNumber,
 
     // Audit & Purchase Cycle Sub-resources
-    payments: Array.isArray(o.payments) ? o.payments.map(p => {
-      const np = normalizeObjectKeys(p);
-      return {
-        ...np,
-        attempts: Array.isArray(np.attempts) ? np.attempts.map(normalizeObjectKeys) : []
-      };
-    }) : [],
+    payments: paymentsList,
     returns: Array.isArray(o.returns) ? o.returns.map(r => normalizeReturn(r)) : [],
     refunds: Array.isArray(o.refunds) ? o.refunds.map(normalizeObjectKeys) : [],
     statusHistory: Array.isArray(o.statusHistory) ? o.statusHistory.map(normalizeObjectKeys) : [],
@@ -913,18 +1092,38 @@ export function normalizeAddress(raw) {
     ? rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1)
     : 'Home';
 
+  let rawCountry = a.country || a.countryName || '';
+  let countryCode = (a.countryCode || '').toUpperCase().trim();
+  if (!countryCode && rawCountry) {
+    countryCode = rawCountry.length === 2 ? rawCountry.toUpperCase() : (COUNTRY_CODE_MAP[rawCountry.toUpperCase()] || 'BG');
+  }
+  if (!countryCode) countryCode = 'BG';
+
+  let country = rawCountry && rawCountry.length > 2 ? rawCountry : (COUNTRY_NAMES[countryCode] || countryCode || 'Bulgaria');
+
+  const addressLine1 = a.addressLine1 || a.street || a.streetAddress || a.address || a.line1 || '';
+  const addressLine2 = a.addressLine2 || a.line2 || a.apartment || a.suite || null;
+  const region = a.region || a.state || a.province || '';
+  const city = a.city || a.town || '';
+  const postalCode = a.postalCode || a.zipCode || a.zip || '';
+
   return {
     id: Number(a.id || 0),
     label: ['Home', 'Work', 'Other'].includes(label) ? label : 'Other',
     customLabel: a.customLabel ? String(a.customLabel).trim() : null,
     fullName: a.fullName ? String(a.fullName).trim() : '',
     phone: a.phone ? String(a.phone).trim() : '',
-    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'BG',
-    region: a.region ? String(a.region).trim() : '',
-    city: a.city ? String(a.city).trim() : '',
-    addressLine1: a.addressLine1 ? String(a.addressLine1).trim() : '',
-    addressLine2: a.addressLine2 ? String(a.addressLine2).trim() : null,
-    postalCode: a.postalCode ? String(a.postalCode).trim() : '',
+    countryCode,
+    country,
+    region,
+    state: region,
+    city,
+    addressLine1,
+    street: addressLine1,
+    address: addressLine1,
+    addressLine2,
+    postalCode,
+    zipCode: postalCode,
     isDefaultShipping: Boolean(a.isDefaultShipping ?? a.isDefault ?? false)
   };
 }
@@ -949,15 +1148,35 @@ export function normalizeAddressSnapshot(raw) {
   if (!raw) return null;
   const a = normalizeObjectKeys(raw);
 
+  let rawCountry = a.country || a.countryName || '';
+  let countryCode = (a.countryCode || '').toUpperCase().trim();
+  if (!countryCode && rawCountry) {
+    countryCode = rawCountry.length === 2 ? rawCountry.toUpperCase() : (COUNTRY_CODE_MAP[rawCountry.toUpperCase()] || 'BG');
+  }
+  if (!countryCode) countryCode = 'BG';
+
+  let country = rawCountry && rawCountry.length > 2 ? rawCountry : (COUNTRY_NAMES[countryCode] || countryCode || 'Bulgaria');
+
+  const addressLine1 = a.addressLine1 || a.street || a.streetAddress || a.address || a.line1 || '';
+  const addressLine2 = a.addressLine2 || a.line2 || a.apartment || a.suite || null;
+  const region = a.region || a.state || a.province || '';
+  const city = a.city || a.town || '';
+  const postalCode = a.postalCode || a.zipCode || a.zip || '';
+
   return {
     fullName: a.fullName ? String(a.fullName).trim() : '',
     phone: a.phone ? String(a.phone).trim() : '',
-    countryCode: a.countryCode ? String(a.countryCode).toUpperCase().trim() : 'BG',
-    region: a.region ? String(a.region).trim() : '',
-    city: a.city ? String(a.city).trim() : '',
-    addressLine1: a.addressLine1 ? String(a.addressLine1).trim() : '',
-    addressLine2: a.addressLine2 ? String(a.addressLine2).trim() : null,
-    postalCode: a.postalCode ? String(a.postalCode).trim() : ''
+    countryCode,
+    country,
+    region,
+    state: region,
+    city,
+    addressLine1,
+    street: addressLine1,
+    address: addressLine1,
+    addressLine2,
+    postalCode,
+    zipCode: postalCode
   };
 }
 

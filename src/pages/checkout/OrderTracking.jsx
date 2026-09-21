@@ -61,7 +61,7 @@ export default function OrderTracking() {
           || item?.shippingSnapshot?.carrier 
           || 'Carrier';
         const realStatus = deliv?.shipmentStatus || trk?.currentStatus || item?.shipmentStatus || null;
-        const realTrackingNum = deliv?.trackingNumber || trk?.trackingNumber || item?.trackingCode || item?.shippingSnapshot?.trackingNumber || null;
+        const realTrackingNum = deliv?.trackingNumber || trk?.trackingNumber || item?.trackingNumber || item?.trackingCode || item?.dhlTrackingNumber || item?.shippingSnapshot?.trackingNumber || null;
         const realCarrierStatus = deliv?.carrierStatus || trk?.carrierStatus || null;
         const realEvents = Array.isArray(trk?.events) ? trk.events : [];
 
@@ -302,14 +302,14 @@ export default function OrderTracking() {
                 </span>
               </div>
               <div className="mt-0.5">
-                {(trackingData?.trackingNumber || order?.trackingCode) ? (
+                {(trackingData?.trackingNumber || order?.trackingNumber || order?.trackingCode) ? (
                   <div className="flex items-center gap-2">
                     <span className="text-[#F3E6D0] font-mono font-bold text-sm">
-                      {trackingData?.trackingNumber || order?.trackingCode}
+                      {trackingData?.trackingNumber || order?.trackingNumber || order?.trackingCode}
                     </span>
                     <button
                       onClick={() => {
-                        const code = trackingData?.trackingNumber || order?.trackingCode;
+                        const code = trackingData?.trackingNumber || order?.trackingNumber || order?.trackingCode;
                         if (code) {
                           navigator.clipboard.writeText(code);
                           setCopiedTracking(true);
@@ -516,9 +516,10 @@ export default function OrderTracking() {
                 <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>Destination Residence</span>
               </h4>
-              <p className="font-bold text-[#F3E6D0] text-sm">{order.shippingAddress?.fullName}</p>
-              <p>{order.shippingAddress?.address}</p>
-              <p>{order.shippingAddress?.city}, {order.shippingAddress?.country}</p>
+              <p className="font-bold text-[#F3E6D0] text-sm">{order.shippingAddress?.fullName || 'Valued Patron'}</p>
+              <p>{order.shippingAddress?.addressLine1 || order.shippingAddress?.address || ''}</p>
+              {order.shippingAddress?.addressLine2 && <p>{order.shippingAddress?.addressLine2}</p>}
+              <p>{[order.shippingAddress?.city, order.shippingAddress?.region, order.shippingAddress?.country].filter(Boolean).join(', ')}</p>
             </div>
             <div className="space-y-1">
               <h4 className="font-cinzel text-xs font-bold uppercase text-[#F2D675] mb-2 flex items-center gap-2">

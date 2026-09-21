@@ -6,6 +6,10 @@ import {
   ADMIN_ORDER_STATUSES,
   ADMIN_PAYMENT_STATUSES
 } from '../../services/orderService';
+import { paymentApi } from '../../api/payment.api';
+import { toNumericId } from '../../api/order.api';
+import { isSuccessStatus, isFailedStatus } from '../../services/paymentService';
+import { COUNTRY_NAMES } from '../../api/normalizers';
 import { useToast } from '../../context/ToastContext';
 import {
   Search,
@@ -70,6 +74,7 @@ export default function AdminOrders() {
   // State: Modals & Drawers
   const [detailsModalOrder, setDetailsModalOrder] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [verifyingModalPayment, setVerifyingModalPayment] = useState(false);
   const [detailsActiveTab, setDetailsActiveTab] = useState('items'); // 'items' | 'shipping' | 'payments' | 'history'
 
   const [trackingModalData, setTrackingModalData] = useState(null);
@@ -152,15 +157,17 @@ export default function AdminOrders() {
     fetchOrders();
   }, [fetchOrders]);
 
-  // Real-time reactive listener: when an order is placed on any customer account or tab
+  // Real-time reactive listener: when an order is placed or updated on any account or tab
   useEffect(() => {
     const handleOrderEvent = () => {
       fetchOrders();
     };
     window.addEventListener('arabian_sheikh_order_created', handleOrderEvent);
+    window.addEventListener('arabian_sheikh_order_updated', handleOrderEvent);
     window.addEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
     return () => {
       window.removeEventListener('arabian_sheikh_order_created', handleOrderEvent);
+      window.removeEventListener('arabian_sheikh_order_updated', handleOrderEvent);
       window.removeEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
     };
   }, [fetchOrders]);
@@ -172,9 +179,34 @@ export default function AdminOrders() {
     setDetailsLoading(true);
     try {
       const detailed = await orderService.getAdminOrderDetails(order.id);
-      if (detailed) {
-        setDetailsModalOrder(detailed);
+      let resolvedOrder = detailed || order;
+
+      // Reconcile with payment gateway if payment status is not yet marked Paid
+      if (!isSuccessStatus(resolvedOrder.paymentStatus)) {
+        const numId = toNumericId(order.id) || toNumericId(order.numericId);
+        if (numId) {
+          try {
+            const payRes = await paymentApi.adminListPayments({ orderId: numId });
+            const paymentItems = Array.isArray(payRes) ? payRes : (payRes?.items || payRes?.data || []);
+            if (paymentItems.length > 0) {
+              const hasPaid = paymentItems.some(p => isSuccessStatus(p.status));
+              if (hasPaid) {
+                await orderService.markOrderPaid(order.id, paymentItems[0]);
+                resolvedOrder = {
+                  ...resolvedOrder,
+                  paymentStatus: 'Paid',
+                  paidAt: paymentItems[0]?.paidAt || resolvedOrder.paidAt || new Date().toISOString(),
+                  payments: paymentItems
+                };
+              }
+            }
+          } catch (pErr) {
+            console.warn('Payment check error:', pErr?.message);
+          }
+        }
       }
+
+      setDetailsModalOrder(resolvedOrder);
     } catch (err) {
       console.warn('Failed to load order deep details:', err.message);
     } finally {
@@ -182,13 +214,46 @@ export default function AdminOrders() {
     }
   };
 
+  const handleVerifyModalPayment = async () => {
+    if (!detailsModalOrder) return;
+    setVerifyingModalPayment(true);
+    try {
+      const numId = toNumericId(detailsModalOrder.id) || toNumericId(detailsModalOrder.numericId);
+      if (numId) {
+        const payRes = await paymentApi.adminListPayments({ orderId: numId });
+        const paymentItems = Array.isArray(payRes) ? payRes : (payRes?.items || payRes?.data || []);
+        if (paymentItems.length > 0) {
+          const hasPaid = paymentItems.some(p => isSuccessStatus(p.status));
+          if (hasPaid) {
+            await orderService.markOrderPaid(detailsModalOrder.id, paymentItems[0]);
+            setDetailsModalOrder(prev => ({
+              ...prev,
+              paymentStatus: 'Paid',
+              paidAt: paymentItems[0]?.paidAt || new Date().toISOString(),
+              payments: paymentItems
+            }));
+            fetchOrders();
+            success('Payment confirmed by gateway as Paid & Settled.');
+            return;
+          }
+        }
+      }
+      info(`Gateway status is: ${detailsModalOrder.paymentStatus || 'Pending'}`);
+    } catch (err) {
+      error(err?.message || 'Failed to verify payment status with gateway.');
+    } finally {
+      setVerifyingModalPayment(false);
+    }
+  };
+
   // Open Logistics Tracking Modal
   const handleOpenTracking = async (order) => {
+    const rawTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
     setTrackingModalData({
       orderId: order.id,
       orderNumber: order.orderNumber || order.id,
-      carrier: order.shippingSnapshot?.carrier || 'DHL Express',
-      trackingNumber: order.trackingCode || order.dhlTrackingNumber || order.shippingSnapshot?.trackingNumber || 'PENDING',
+      carrier: order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || order.carrier || 'DHL Express',
+      trackingNumber: rawTrackingNumber || 'PENDING',
       status: order.orderStatus || order.status || 'InTransit',
       events: []
     });
@@ -199,7 +264,8 @@ export default function AdminOrders() {
         setTrackingModalData(prev => ({
           ...prev,
           ...tracking,
-          orderNumber: order.orderNumber || order.id
+          orderNumber: order.orderNumber || order.id,
+          trackingNumber: tracking.trackingNumber || rawTrackingNumber || prev?.trackingNumber
         }));
       }
     } catch (err) {
@@ -300,13 +366,13 @@ export default function AdminOrders() {
 
   const getPaymentStatusBadge = (status = '') => {
     const s = String(status).toLowerCase();
-    if (s.includes('paid')) {
+    if (s.includes('paid') || s.includes('succeed') || s.includes('complet') || s.includes('settle')) {
       return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
     }
     if (s.includes('refund')) {
       return 'bg-purple-500/15 text-purple-300 border-purple-500/40';
     }
-    if (s.includes('fail') || s.includes('cancel')) {
+    if (s.includes('fail') || s.includes('cancel') || s.includes('declin')) {
       return 'bg-rose-500/15 text-rose-300 border-rose-500/40';
     }
     return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
@@ -618,8 +684,12 @@ export default function AdminOrders() {
                   const itemsCount = order.itemsCount || (Array.isArray(order.items) ? order.items.length : 0);
                   const orderTotal = order.totals?.total ?? order.total ?? 0;
                   const currency = order.totals?.currency || order.currency || 'EUR';
-                  const orderStatus = order.orderStatus || order.status || 'Pending';
-                  const paymentStatus = order.paymentStatus || (order.payments?.[0]?.status) || 'Pending';
+                  const rawPayStatus = order.paymentStatus;
+                  const hasPaidPayment = isSuccessStatus(rawPayStatus) || isSuccessStatus(order.payments?.[0]?.status) || Boolean(order.paidAt);
+                  const isOrderProcessing = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(st => st.toLowerCase() === String(orderStatus).toLowerCase());
+                  const isCod = String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cod');
+                  const paymentStatus = hasPaidPayment ? 'Paid' : (isOrderProcessing && !isCod ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending'));
+                  const orderTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shipments?.[0]?.trackingNumber || order.shippingSnapshot?.trackingNumber;
 
                   return (
                     <tr
@@ -656,27 +726,87 @@ export default function AdminOrders() {
 
                       {/* Patron & Destination */}
                       <td className="py-3.5 px-4">
-                        <span className="font-semibold text-[#F3E6D0] block text-xs sm:text-sm">
-                          {customerName}
-                        </span>
-                        <span className="text-[11px] text-[#D8BE99] font-mono block truncate max-w-[200px]">
-                          {customerEmail}
-                        </span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] text-[#D8BE99] flex items-center gap-1">
-                            <MapPin className="w-2.5 h-2.5 text-[#D4AF37]" />
-                            {order.shippingAddress?.city || 'Dubai'}, {order.shippingAddress?.country || 'UAE'}
+                        <div className="space-y-1">
+                          <span className="font-semibold text-[#F3E6D0] block text-xs sm:text-sm">
+                            {customerName}
                           </span>
-                          {customerPhone && (
-                            <a
-                              href={`tel:${customerPhone}`}
-                              className="inline-flex items-center gap-0.5 text-[10px] text-[#D4AF37] hover:underline font-mono"
-                              title="Call patron"
-                            >
-                              <Phone className="w-2.5 h-2.5" />
-                              <span>{customerPhone}</span>
-                            </a>
-                          )}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {customerEmail && (
+                              <span className="text-[11px] text-[#D8BE99] font-mono block truncate max-w-[190px]" title={customerEmail}>
+                                {customerEmail}
+                              </span>
+                            )}
+                            {customerPhone && (
+                              <a
+                                href={`tel:${customerPhone}`}
+                                className="inline-flex items-center gap-0.5 text-[10px] text-[#D4AF37] hover:underline font-mono shrink-0"
+                                title="Call patron"
+                              >
+                                <Phone className="w-2.5 h-2.5" />
+                                <span>{customerPhone}</span>
+                              </a>
+                            )}
+                          </div>
+
+                          {/* Real Destination Address */}
+                          {(() => {
+                            const addr = order.shippingAddress 
+                              || order.shippingAddressSnapshot 
+                              || order.shippingSnapshot?.address 
+                              || order.shippingSnapshot?.shippingAddress 
+                              || order.address 
+                              || {};
+                            const street = addr.addressLine1 || addr.street || addr.streetAddress || addr.address || '';
+                            const street2 = addr.addressLine2 || '';
+                            const city = addr.city || addr.town || '';
+                            const region = addr.region || addr.state || '';
+                            const postal = addr.postalCode || addr.zipCode || '';
+                            const cCode = (addr.countryCode || '').toUpperCase().trim();
+                            const country = addr.country || (cCode ? (COUNTRY_NAMES[cCode] || cCode) : '') || '';
+
+                            const fullStreet = [street, street2].filter(Boolean).join(', ');
+                            const locality = [city, region, postal].filter(Boolean).join(', ');
+                            const hasAnyAddress = Boolean(fullStreet || city || country || postal);
+
+                            if (!hasAnyAddress) {
+                              return (
+                                <span className="text-[10px] text-neutral-500 font-mono italic flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-2.5 h-2.5 text-neutral-600" />
+                                  <span>No address on file</span>
+                                </span>
+                              );
+                            }
+
+                            const fullTooltip = [
+                              fullStreet,
+                              [city, region, postal].filter(Boolean).join(', '),
+                              country ? (cCode && cCode !== country ? `${country} (${cCode})` : country) : ''
+                            ].filter(Boolean).join('\n');
+
+                            return (
+                              <div
+                                className="mt-1 pt-1 border-t border-[#D4AF37]/15 space-y-0.5 group/addr cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(fullTooltip, 'Full address');
+                                }}
+                                title="Click to copy full delivery address"
+                              >
+                                {fullStreet && (
+                                  <div className="flex items-center gap-1 text-[11px] text-[#F3E6D0] font-medium truncate max-w-[240px]">
+                                    <MapPin className="w-2.5 h-2.5 text-[#D4AF37] shrink-0" />
+                                    <span className="truncate">{fullStreet}</span>
+                                  </div>
+                                )}
+                                {(locality || country) && (
+                                  <div className={`text-[10px] font-mono block truncate max-w-[240px] ${fullStreet ? 'text-[#D8BE99] pl-3.5' : 'text-[#F3E6D0] flex items-center gap-1'}`}>
+                                    {!fullStreet && <MapPin className="w-2.5 h-2.5 text-[#D4AF37] shrink-0" />}
+                                    <span>{[locality, country].filter(Boolean).join(' • ')}</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </td>
 
@@ -703,15 +833,46 @@ export default function AdminOrders() {
                       {/* Payment Status */}
                       <td className="py-3.5 px-4">
                         <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(paymentStatus)}`}>
-                          {paymentStatus}
+                          {isSuccessStatus(paymentStatus) ? 'PAID' : paymentStatus}
                         </span>
                       </td>
 
-                      {/* Fulfillment Status */}
+                      {/* Fulfillment Status & Tracking */}
                       <td className="py-3.5 px-4">
-                        <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(orderStatus)}`}>
-                          {orderStatus}
-                        </span>
+                        <div className="space-y-1.5">
+                          <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(orderStatus)}`}>
+                            {orderStatus}
+                          </span>
+                          {orderTrackingNumber ? (
+                            <div className="flex items-center gap-1">
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 border border-[#D4AF37]/35 text-[11px] font-mono text-[#F2D675] max-w-[170px] truncate"
+                                title={`Tracking: ${orderTrackingNumber}`}
+                              >
+                                <Truck className="w-3 h-3 text-[#D4AF37] shrink-0" />
+                                <span className="truncate">{orderTrackingNumber}</span>
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(orderTrackingNumber, 'Tracking number');
+                                }}
+                                className="p-1 text-[#D8BE99] hover:text-[#F2D675] transition-colors cursor-pointer"
+                                title="Copy tracking number"
+                              >
+                                {copiedText === orderTrackingNumber ? (
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="block text-[10px] text-[#D8BE99]/50 font-mono italic">
+                              Pending dispatch
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Actions */}
@@ -833,7 +994,7 @@ export default function AdminOrders() {
                     {detailsModalOrder.orderStatus || detailsModalOrder.status || 'Pending'}
                   </span>
                   <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status)}`}>
-                    {detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending'}
+                    {isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ? 'PAID' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending')}
                   </span>
                 </div>
                 <p className="text-xs text-[#D8BE99] mt-1 font-mono">
@@ -1093,30 +1254,129 @@ export default function AdminOrders() {
                 <div className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Destination Address */}
-                    <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-4 space-y-3">
-                      <h4 className="text-xs font-cinzel font-bold uppercase text-[#F2D675] tracking-wider flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" /> Delivery Destination
-                      </h4>
+                    {(() => {
+                      const addr = detailsModalOrder.shippingAddress 
+                        || detailsModalOrder.shippingAddressSnapshot 
+                        || detailsModalOrder.shippingSnapshot?.address 
+                        || detailsModalOrder.shippingSnapshot?.shippingAddress 
+                        || detailsModalOrder.address 
+                        || {};
+                      const patronName = addr.fullName || addr.recipientName || detailsModalOrder.customer?.name || detailsModalOrder.customerName || 'Valued Patron';
+                      const street1 = addr.addressLine1 || addr.street || addr.address || addr.streetAddress || '';
+                      const street2 = addr.addressLine2 || addr.apartment || addr.suite || addr.building || '';
+                      const city = addr.city || addr.town || '';
+                      const stateRegion = addr.state || addr.region || addr.province || '';
+                      const postal = addr.postalCode || addr.zipCode || addr.zip || '';
+                      const cCode = (addr.countryCode || '').toUpperCase().trim();
+                      const countryName = addr.country || (cCode ? (COUNTRY_NAMES[cCode] || cCode) : '') || '';
+                      const contactPhone = addr.phone || detailsModalOrder.customer?.phone || detailsModalOrder.customerPhone || '';
 
-                      <div className="text-xs space-y-1 text-[#D8BE99]">
-                        <p className="font-bold text-[#F3E6D0] text-sm">
-                          {detailsModalOrder.shippingAddress?.fullName || detailsModalOrder.customer?.name || detailsModalOrder.customerName || 'Valued Patron'}
-                        </p>
-                        <p>{detailsModalOrder.shippingAddress?.addressLine1 || detailsModalOrder.shippingAddress?.street || 'Luxury Avenue'}</p>
-                        {detailsModalOrder.shippingAddress?.addressLine2 && (
-                          <p>{detailsModalOrder.shippingAddress.addressLine2}</p>
-                        )}
-                        <p>
-                          {detailsModalOrder.shippingAddress?.city || 'Dubai'}, {detailsModalOrder.shippingAddress?.state || ''} {detailsModalOrder.shippingAddress?.postalCode || ''}
-                        </p>
-                        <p className="font-semibold text-[#F2D675]">{detailsModalOrder.shippingAddress?.country || 'United Arab Emirates'}</p>
-                        {detailsModalOrder.shippingAddress?.phone && (
-                          <p className="pt-2 font-mono flex items-center gap-1 text-[#D4AF37]">
-                            <Phone className="w-3 h-3" /> {detailsModalOrder.shippingAddress.phone}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                      const addressLines = [
+                        patronName,
+                        street1,
+                        street2,
+                        [city, stateRegion, postal].filter(Boolean).join(', '),
+                        countryName ? (cCode && cCode !== countryName ? `${countryName} (${cCode})` : countryName) : ''
+                      ].filter(Boolean);
+
+                      const fullAddressCopyText = [
+                        ...addressLines,
+                        contactPhone ? `Tel: ${contactPhone}` : ''
+                      ].filter(Boolean).join('\n');
+
+                      const hasAnyAddress = Boolean(street1 || city || countryName || postal);
+
+                      return (
+                        <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-cinzel font-bold uppercase text-[#F2D675] tracking-wider flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" /> Delivery Destination
+                            </h4>
+                            {hasAnyAddress && (
+                              <button
+                                onClick={() => handleCopy(fullAddressCopyText, 'Shipping address')}
+                                className="inline-flex items-center gap-1 text-[11px] text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer"
+                                title="Copy complete formatted address for courier label"
+                              >
+                                {copiedText === fullAddressCopyText ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                    <span className="text-emerald-400">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy Label</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          {hasAnyAddress ? (
+                            <div className="text-xs space-y-1.5 text-[#D8BE99]">
+                              <p className="font-bold text-[#F3E6D0] text-sm flex items-center gap-2">
+                                <User className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                <span>{patronName}</span>
+                              </p>
+
+                              {street1 && (
+                                <p className="text-[#F3E6D0] font-medium pl-5.5">
+                                  {street1}
+                                </p>
+                              )}
+
+                              {street2 && (
+                                <p className="text-[#D8BE99] pl-5.5 text-[11px]">
+                                  {street2}
+                                </p>
+                              )}
+
+                              {(city || stateRegion || postal) && (
+                                <p className="pl-5.5 text-xs text-[#D8BE99]">
+                                  {[city, stateRegion].filter(Boolean).join(', ')} {postal ? <span className="font-mono text-[#F2D675]">({postal})</span> : ''}
+                                </p>
+                              )}
+
+                              {countryName && (
+                                <div className="pl-5.5 pt-0.5 flex items-center gap-2">
+                                  <span className="font-semibold text-[#F2D675]">{countryName}</span>
+                                  {cCode && (
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F2D675]">
+                                      {cCode}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
+                              {contactPhone && (
+                                <div className="pt-2 border-t border-white/10 font-mono flex items-center justify-between text-xs text-[#D4AF37]">
+                                  <a
+                                    href={`tel:${contactPhone}`}
+                                    className="flex items-center gap-1.5 hover:underline"
+                                    title="Call recipient"
+                                  >
+                                    <Phone className="w-3 h-3" />
+                                    <span>{contactPhone}</span>
+                                  </a>
+                                  <button
+                                    onClick={() => handleCopy(contactPhone, 'Phone number')}
+                                    className="p-1 hover:text-white transition-colors cursor-pointer text-[#D8BE99]"
+                                    title="Copy phone"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="py-4 text-center text-[#D8BE99]/60 italic text-xs">
+                              No physical delivery address recorded for this order.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Shipping Snapshot */}
                     <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-4 space-y-3">
@@ -1141,21 +1401,29 @@ export default function AdminOrders() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Tracking Airway</span>
-                          {(detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber) ? (
-                            <div className="flex items-center gap-1">
-                              <span className="font-mono text-[#F2D675] font-bold">
-                                {detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber}
-                              </span>
-                              <button
-                                onClick={() => handleCopy(detailsModalOrder.trackingCode || detailsModalOrder.shippingSnapshot?.trackingNumber, 'Tracking number')}
-                                className="p-1 hover:text-[#F2D675] cursor-pointer"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="font-mono text-neutral-500 italic text-xs">Unassigned</span>
-                          )}
+                          {(() => {
+                            const airwayNum = detailsModalOrder.trackingNumber || detailsModalOrder.trackingCode || detailsModalOrder.dhlTrackingNumber || detailsModalOrder.shipping?.trackingNumber || detailsModalOrder.shippingSnapshot?.trackingNumber || detailsModalOrder.shipments?.[0]?.trackingNumber;
+                            return airwayNum ? (
+                              <div className="flex items-center gap-1">
+                                <span className="font-mono text-[#F2D675] font-bold">
+                                  {airwayNum}
+                                </span>
+                                <button
+                                  onClick={() => handleCopy(airwayNum, 'Tracking number')}
+                                  className="p-1 hover:text-[#F2D675] cursor-pointer text-[#D4AF37]"
+                                  title="Copy tracking airway"
+                                >
+                                  {copiedText === airwayNum ? (
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="font-mono text-neutral-500 italic text-xs">Unassigned</span>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -1205,11 +1473,24 @@ export default function AdminOrders() {
                       </span>
                     </div>
 
-                    <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3">
-                      <span className="text-[11px] text-[#D8BE99] block">Reconciliation Status</span>
-                      <span className={`inline-block px-2 py-0.5 text-[10px] font-mono font-bold rounded-full border mt-1 uppercase ${getPaymentStatusBadge(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status)}`}>
-                        {detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending'}
-                      </span>
+                    <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[11px] text-[#D8BE99] block">Reconciliation Status</span>
+                        <span className={`inline-block px-2 py-0.5 text-[10px] font-mono font-bold rounded-full border mt-1 uppercase ${getPaymentStatusBadge(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status)}`}>
+                          {isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ? 'PAID & SETTLED' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending')}
+                        </span>
+                      </div>
+                      {!isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) && (
+                        <button
+                          onClick={handleVerifyModalPayment}
+                          disabled={verifyingModalPayment}
+                          className="mt-2 text-[10px] font-mono text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                          title="Fetch live payment status from gateway"
+                        >
+                          <RefreshCw className={`w-2.5 h-2.5 ${verifyingModalPayment ? 'animate-spin' : ''}`} />
+                          <span>{verifyingModalPayment ? 'Verifying...' : 'Fetch Gateway Status'}</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 

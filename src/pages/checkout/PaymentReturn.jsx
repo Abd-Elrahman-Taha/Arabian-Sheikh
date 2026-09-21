@@ -98,11 +98,12 @@ export default function PaymentReturn() {
 
         if (result.status === 'Paid') {
           setStatus('paid');
-          clearPaymentSession(orderId);
-          clearCheckoutOrder();
           if (orderId) {
+            orderService.markOrderPaid(orderId, result);
             orderService.recordPlacedOrderId(orderId);
           }
+          clearPaymentSession(orderId);
+          clearCheckoutOrder();
         } else if (result.status === 'Failed') {
           setStatus('failed');
           clearPaymentSession(orderId);
@@ -188,9 +189,12 @@ export default function PaymentReturn() {
         setPayment(result);
         if (result.status === 'Paid') {
           setStatus('paid');
+          if (orderId) {
+            orderService.markOrderPaid(orderId, result);
+            orderService.recordPlacedOrderId(orderId);
+          }
           clearPaymentSession(orderId);
           clearCheckoutOrder();
-          if (orderId) orderService.recordPlacedOrderId(orderId);
         } else {
           setStatus('failed');
         }

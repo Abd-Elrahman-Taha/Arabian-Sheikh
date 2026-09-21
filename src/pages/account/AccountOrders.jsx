@@ -3,6 +3,7 @@ import { Link } from '../../router/RouterContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
+import { isSuccessStatus } from '../../services/paymentService';
 import { Package, Truck, ChevronRight } from 'lucide-react';
 
 function getStatusStyle(status = '') {
@@ -148,7 +149,10 @@ export default function AccountOrders() {
                   </Link>
                   <span className="text-[#D8BE99] ml-3 font-mono text-xs sm:text-sm">{dateStr}</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className={`px-2.5 py-0.5 text-[11px] font-mono uppercase font-bold rounded-full border ${isSuccessStatus(o.paymentStatus) ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/70 text-amber-300 border-amber-500/40'}`}>
+                    {isSuccessStatus(o.paymentStatus) ? 'Paid' : (o.paymentStatus || 'Pending')}
+                  </span>
                   <span className={`px-3 py-1 text-xs font-mono uppercase font-bold rounded-full border ${statusClass}`}>
                     {statusLabel}
                   </span>
@@ -174,10 +178,21 @@ export default function AccountOrders() {
 
               {/* Footer */}
               <div className="pt-3.5 border-t border-[#3A2116]/30 flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-2">
-                <div className="flex items-center gap-2 font-mono text-[#D8BE99]">
-                  <Truck className="w-4 h-4 text-[#D4AF37]" />
-                  <span>{o.dhlTrackingNumber || o.trackingCode || '—'}</span>
-                </div>
+                {(() => {
+                  const trkNum = o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shipping?.trackingNumber || o.shippingSnapshot?.trackingNumber || o.shipments?.[0]?.trackingNumber;
+                  return (
+                    <div className="flex items-center gap-2 font-mono text-xs text-[#D8BE99]">
+                      <Truck className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                      {trkNum ? (
+                        <span className="text-[#F2D675] font-bold bg-black/50 px-2 py-0.5 rounded border border-[#D4AF37]/30">
+                          Tracking: {trkNum}
+                        </span>
+                      ) : (
+                        <span className="text-neutral-500 italic text-xs">Tracking pending dispatch</span>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="flex items-center gap-4">
                   <Link
                     to={`/account/orders/${o.id}`}

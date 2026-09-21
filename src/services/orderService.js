@@ -4,7 +4,7 @@ import { checkoutApi } from '../api/checkout.api';
 import { addressApi } from '../api/address.api';
 import { cartApi } from '../api/cart.api';
 import { apiClient } from '../api/client';
-import { normalizeShippingOption } from '../api/normalizers';
+import { normalizeShippingOption, normalizeOrderAddress } from '../api/normalizers';
 import { liveCloudSync } from './liveCloudSync';
 import { newOrderKey } from './paymentService';
 
@@ -147,6 +147,7 @@ export const orderService = {
         (o.id && o.id.toLowerCase().includes(q)) ||
         (o.customerName && o.customerName.toLowerCase().includes(q)) ||
         (o.customerEmail && o.customerEmail.toLowerCase().includes(q)) ||
+        (o.trackingNumber && o.trackingNumber.toLowerCase().includes(q)) ||
         (o.trackingCode && o.trackingCode.toLowerCase().includes(q)) ||
         (o.dhlTrackingNumber && o.dhlTrackingNumber.toLowerCase().includes(q))
       );
@@ -179,11 +180,16 @@ export const orderService = {
             });
             if (idx > -1) {
               const localStatus = merged[idx].orderStatus || merged[idx].status;
+              const localPayStatus = merged[idx].paymentStatus;
               merged[idx] = { ...merged[idx], ...item };
               // Preserve status if admin has updated it locally/in cloud
               if (localStatus && localStatus !== 'Pending' && item.orderStatus === 'Pending') {
                 merged[idx].orderStatus = localStatus;
                 merged[idx].status = localStatus;
+              }
+              // Preserve Paid status
+              if (localPayStatus === 'Paid' && item.paymentStatus === 'Pending') {
+                merged[idx].paymentStatus = 'Paid';
               }
             } else {
               merged.unshift(item);
@@ -260,7 +266,11 @@ export const orderService = {
       if (o?.id) {
         const key = String(o.orderNumber || o.id);
         const existing = orderMap.get(key);
-        orderMap.set(key, { ...(existing || {}), ...o });
+        const merged = { ...(existing || {}), ...o };
+        if (existing?.paymentStatus === 'Paid' || o?.paymentStatus === 'Paid') {
+          merged.paymentStatus = 'Paid';
+        }
+        orderMap.set(key, merged);
       }
     });
 
@@ -269,7 +279,11 @@ export const orderService = {
       if (o?.id) {
         const key = String(o.orderNumber || o.id);
         const existing = orderMap.get(key);
-        orderMap.set(key, { ...(existing || {}), ...o });
+        const merged = { ...(existing || {}), ...o };
+        if (existing?.paymentStatus === 'Paid' && o?.paymentStatus !== 'Refunded') {
+          merged.paymentStatus = 'Paid';
+        }
+        orderMap.set(key, merged);
       }
     });
 
@@ -302,7 +316,7 @@ export const orderService = {
         const numStr = String(o.orderNumber || '').toLowerCase();
         const custName = String(o.customer?.name || o.customerName || '').toLowerCase();
         const custEmail = String(o.customer?.email || o.customerEmail || '').toLowerCase();
-        const trk = String(o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase();
+        const trk = String(o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase();
         return idStr.includes(searchStr) || numStr.includes(searchStr) || custName.includes(searchStr) || custEmail.includes(searchStr) || trk.includes(searchStr);
       });
     }
@@ -396,7 +410,7 @@ export const orderService = {
     return orders.find(o => {
       const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
       const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      const trk = String(o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase().trim();
+      const trk = String(o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase().trim();
       return idStr === target || numStr === target || trk === target;
     }) || null;
   },
@@ -424,6 +438,9 @@ export const orderService = {
           if (localStatus && localStatus !== 'Pending' && remote.orderStatus === 'Pending') {
             merged.orderStatus = localStatus;
             merged.status = localStatus;
+          }
+          if (local?.paymentStatus === 'Paid' && remote.paymentStatus === 'Pending') {
+            merged.paymentStatus = 'Paid';
           }
 
           if (idx > -1) {
@@ -453,16 +470,16 @@ export const orderService = {
           const addresses = await addressApi.getAddresses().catch(() => []);
           if (Array.isArray(addresses) && addresses.length > 0 && addresses[0]?.id) {
             resolvedAddressId = addresses[0].id;
-          } else if (orderPayload.shippingAddress) {
+            const addrObj = orderPayload.shippingAddress || {};
             const createdAddr = await addressApi.createAddress({
-              fullName: orderPayload.shippingAddress.fullName || orderPayload.customerName || 'Valued Patron',
-              phone: orderPayload.customerPhone || orderPayload.phone || '+971500000000',
-              countryCode: orderPayload.shippingAddress.countryCode || 'AE',
-              region: orderPayload.shippingAddress.region || orderPayload.shippingAddress.city || 'Dubai',
-              city: orderPayload.shippingAddress.city || 'Dubai',
-              addressLine1: orderPayload.shippingAddress.address || orderPayload.shippingAddress.addressLine1 || 'Sheikh Zayed Road',
-              addressLine2: orderPayload.shippingAddress.addressLine2 || null,
-              postalCode: orderPayload.shippingAddress.postalCode || '00000'
+              fullName: addrObj.fullName || orderPayload.customerName || 'Valued Patron',
+              phone: orderPayload.customerPhone || orderPayload.phone || addrObj.phone || '',
+              countryCode: addrObj.countryCode || addrObj.country || 'BG',
+              region: addrObj.region || addrObj.state || addrObj.city || '',
+              city: addrObj.city || addrObj.region || '',
+              addressLine1: addrObj.addressLine1 || addrObj.address || addrObj.street || '',
+              addressLine2: addrObj.addressLine2 || null,
+              postalCode: addrObj.postalCode || addrObj.zipCode || ''
             });
             if (createdAddr?.id) {
               resolvedAddressId = createdAddr.id;
@@ -643,7 +660,7 @@ export const orderService = {
       orderStatus: apiOrder?.orderStatus || 'Pending',
       paymentStatus: apiOrder?.paymentStatus || 'Paid',
       status: apiOrder?.orderStatus || 'Pending',
-      shippingAddress: orderPayload.shippingAddress || apiOrder?.shippingAddress || {},
+      shippingAddress: normalizeOrderAddress(orderPayload.shippingAddress || apiOrder?.shippingAddress) || (orderPayload.shippingAddress || apiOrder?.shippingAddress || {}),
       shippingSnapshot: apiOrder?.shippingSnapshot || {
         carrier: resolvedCarrier,
         shippingCompanyName: resolvedCarrier,
@@ -655,6 +672,7 @@ export const orderService = {
       shippingMethod: resolvedShippingMethod,
       createdAt: orderDate,
       date: orderDate,
+      trackingNumber: trackingCode,
       trackingCode,
       dhlTrackingNumber: trackingCode,
       timeline: apiOrder?.timeline || [],
@@ -765,6 +783,68 @@ export const orderService = {
     return updatedOrder;
   },
 
+  async markOrderPaid(orderId, paymentDetails = null) {
+    if (!orderId) return null;
+    const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
+
+    // 1. Update in live cloud sync
+    await liveCloudSync.updatePaymentStatus(target, 'Paid', paymentDetails).catch(() => {});
+
+    // 2. Update in local storage orders
+    const orders = loadOrders();
+    const index = orders.findIndex(o => {
+      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+      return idStr === target || numStr === target;
+    });
+
+    let updatedOrder = null;
+    if (index > -1) {
+      orders[index].paymentStatus = 'Paid';
+      orders[index].paidAt = paymentDetails?.paidAt || orders[index].paidAt || new Date().toISOString();
+      if (paymentDetails) {
+        if (paymentDetails.id) orders[index].paymentId = paymentDetails.id;
+        if (paymentDetails.providerPaymentId) orders[index].providerPaymentId = paymentDetails.providerPaymentId;
+        const payments = Array.isArray(orders[index].payments) ? [...orders[index].payments] : [];
+        if (paymentDetails.id) {
+          const pIdx = payments.findIndex(p => String(p.id) === String(paymentDetails.id));
+          if (pIdx > -1) {
+            payments[pIdx] = { ...payments[pIdx], ...paymentDetails, status: 'Paid' };
+          } else {
+            payments.unshift({ ...paymentDetails, status: 'Paid' });
+          }
+        }
+        orders[index].payments = payments;
+      }
+      orders[index].updatedAt = new Date().toISOString();
+      saveOrders(orders);
+      updatedOrder = orders[index];
+    } else {
+      updatedOrder = {
+        id: orderId,
+        orderNumber: orderId,
+        paymentStatus: 'Paid',
+        paidAt: paymentDetails?.paidAt || new Date().toISOString(),
+        paymentId: paymentDetails?.id || null,
+        providerPaymentId: paymentDetails?.providerPaymentId || null
+      };
+    }
+
+    // 3. Dispatch real-time event so customer account, detail views, and admin order dashboard update immediately
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
+        detail: {
+          orderId: target,
+          paymentStatus: 'Paid',
+          paymentDetails,
+          order: updatedOrder
+        }
+      }));
+    }
+
+    return updatedOrder;
+  },
+
   async cancelOrder(orderId, reason = '') {
     const resolvedNumId = toNumericId(orderId);
     let cancelRes = null;
@@ -863,7 +943,7 @@ export const orderService = {
       orderStatus: order?.orderStatus || order?.status || 'Processing',
       shipmentStatus: order?.shipmentStatus || null,
       carrierStatus: null,
-      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null
+      trackingNumber: order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || order?.shipments?.[0]?.trackingNumber || null
     };
   },
 
@@ -885,7 +965,7 @@ export const orderService = {
     }
 
     const order = local || this.getOrderByIdSync(orderId);
-    const trkNumber = order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null;
+    const trkNumber = order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || order?.shipments?.[0]?.trackingNumber || null;
     const curStatus = order?.shipmentStatus || null;
 
     return {
@@ -935,7 +1015,7 @@ export const orderService = {
     return {
       orderId,
       carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || order?.shipping?.shippingCompanyName || 'Carrier',
-      trackingNumber: order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || null,
+      trackingNumber: order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || order?.shipments?.[0]?.trackingNumber || null,
       status: order?.orderStatus || order?.status || 'Processing',
       events: (order?.timeline || []).map(t => ({
         timestamp: t.timestamp || t.date || new Date().toISOString(),

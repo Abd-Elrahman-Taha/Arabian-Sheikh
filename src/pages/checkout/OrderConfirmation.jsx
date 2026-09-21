@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
-import { CheckCircle2, Truck, ArrowRight, Sparkles, XCircle, Clock } from 'lucide-react';
+import { isSuccessStatus } from '../../services/paymentService';
+import { CheckCircle2, Truck, ArrowRight, Sparkles, XCircle, Clock, Copy, Check } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function OrderConfirmation() {
@@ -16,12 +17,36 @@ export default function OrderConfirmation() {
 
   const [order, setOrder] = useState(() => orderService.getOrderByIdSync(orderId));
   const [loading, setLoading] = useState(!order);
+  const [copiedTracking, setCopiedTracking] = useState(false);
+
+  const handleCopyTracking = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedTracking(true);
+    setTimeout(() => setCopiedTracking(false), 2000);
+  };
 
   useEffect(() => {
     async function load() {
       try {
-        const item = await orderService.getOrderById(orderId);
-        if (item) setOrder(item);
+        const [itemRes, delivRes, trkRes] = await Promise.allSettled([
+          orderService.getOrderById(orderId),
+          orderService.getDeliveryStatus(orderId),
+          orderService.getOrderTracking(orderId)
+        ]);
+        const item = itemRes.status === 'fulfilled' ? itemRes.value : null;
+        const deliv = delivRes.status === 'fulfilled' ? delivRes.value : null;
+        const trk = trkRes.status === 'fulfilled' ? trkRes.value : null;
+
+        if (item) {
+          const resolvedTracking = deliv?.trackingNumber || trk?.trackingNumber || item.trackingNumber || item.trackingCode || item.dhlTrackingNumber || null;
+          setOrder({
+            ...item,
+            trackingNumber: resolvedTracking || item.trackingNumber || null,
+            trackingCode: resolvedTracking || item.trackingCode || null,
+            carrier: trk?.carrier || deliv?.carrier || item.carrier || null
+          });
+        }
       } catch (err) {
         console.warn('Confirmation fetch order error:', err);
       } finally {
@@ -122,12 +147,52 @@ export default function OrderConfirmation() {
                 {order?.estimatedDeliveryDays ? `${order.estimatedDeliveryDays} Business Days` : '2-4 Business Days'} ({order?.carrier || order?.shippingMethod || 'Insured Royal Air Courier'})
               </span>
             </div>
-            {order?.trackingNumber && (
-              <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
-                <span className="text-[#D8BE99] font-medium">Tracking Number:</span>
-                <span className="text-[#F2D675] font-bold font-mono text-xs">{order.trackingNumber}</span>
-              </div>
-            )}
+            {/* Tracking Number Row */}
+            {(() => {
+              const trackingNum = order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shipping?.trackingNumber || order?.shipments?.[0]?.trackingNumber || order?.shippingSnapshot?.trackingNumber;
+              return (
+                <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+                  <span className="text-[#D8BE99] font-medium flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>Tracking Number:</span>
+                  </span>
+                  {trackingNum ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#F2D675] font-bold font-mono text-xs bg-black/60 px-2.5 py-1 rounded border border-[#D4AF37]/40 shadow-sm">
+                        {trackingNum}
+                      </span>
+                      <button
+                        onClick={() => handleCopyTracking(trackingNum)}
+                        className="p-1 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer"
+                        title="Copy Tracking Number"
+                      >
+                        {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[#D8BE99]/60 font-mono italic text-xs">
+                      Generated upon courier handover
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const trackingNum = order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shipping?.trackingNumber || order?.shipments?.[0]?.trackingNumber || order?.shippingSnapshot?.trackingNumber;
+              if (!trackingNum) return null;
+              return (
+                <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-between text-xs">
+                  <span className="text-[#D8BE99]">Airway Courier Dispatch Active</span>
+                  <Link
+                    to={`/order-tracking/${orderId}`}
+                    className="font-cinzel text-xs font-bold text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    Track Transit Checkpoints <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              );
+            })()}
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <span className="text-[#D8BE99] font-medium">Payment Method:</span>
               <span className="font-cinzel font-bold text-xs text-[#F2D675]">
@@ -149,7 +214,7 @@ export default function OrderConfirmation() {
                       </span>
                     );
                   }
-                  if (payStatus === 'Paid' || (!payStatus && order?.orderStatus !== 'Cancelled')) {
+                  if (isSuccessStatus(payStatus) || isSuccessStatus(order?.payments?.[0]?.status) || Boolean(order?.paidAt) || (!payStatus && order?.orderStatus !== 'Cancelled')) {
                     return (
                       <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold text-xs">
                         <CheckCircle2 className="w-3 h-3" /> Paid & Confirmed

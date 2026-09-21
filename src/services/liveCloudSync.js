@@ -140,7 +140,11 @@ function mergeRemoteData(remoteData) {
       if (existing) {
         const oTime = new Date(o.updatedAt || o.date || o.createdAt || 0).getTime();
         const exTime = new Date(existing.updatedAt || existing.date || existing.createdAt || 0).getTime();
-        orderMap.set(key, oTime >= exTime ? { ...existing, ...o } : { ...o, ...existing });
+        const mergedObj = oTime >= exTime ? { ...existing, ...o } : { ...o, ...existing };
+        if (String(existing.paymentStatus).toLowerCase() === 'paid' || String(o.paymentStatus).toLowerCase() === 'paid') {
+          mergedObj.paymentStatus = 'Paid';
+        }
+        orderMap.set(key, mergedObj);
       } else {
         orderMap.set(key, o);
       }
@@ -334,6 +338,36 @@ export const liveCloudSync = {
           ...o,
           status: newStatus,
           orderStatus: newStatus,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return o;
+    });
+    await pushToCloud();
+  },
+
+  async updatePaymentStatus(orderId, paymentStatus, paymentDetails = null) {
+    const targetKey = String(orderId).replace(/^#/, '').toLowerCase().trim();
+    state.orders = state.orders.map(o => {
+      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
+      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
+      if (idStr === targetKey || numStr === targetKey) {
+        const existingPayments = Array.isArray(o.payments) ? [...o.payments] : [];
+        if (paymentDetails && paymentDetails.id) {
+          const pIdx = existingPayments.findIndex(p => String(p.id) === String(paymentDetails.id));
+          if (pIdx > -1) {
+            existingPayments[pIdx] = { ...existingPayments[pIdx], ...paymentDetails, status: paymentStatus };
+          } else {
+            existingPayments.unshift({ ...paymentDetails, status: paymentStatus });
+          }
+        }
+        return {
+          ...o,
+          paymentStatus,
+          paidAt: paymentStatus === 'Paid' ? (paymentDetails?.paidAt || o.paidAt || new Date().toISOString()) : o.paidAt,
+          paymentId: paymentDetails?.id || o.paymentId || existingPayments[0]?.id || null,
+          providerPaymentId: paymentDetails?.providerPaymentId || o.providerPaymentId || existingPayments[0]?.providerPaymentId || null,
+          payments: existingPayments,
           updatedAt: new Date().toISOString()
         };
       }

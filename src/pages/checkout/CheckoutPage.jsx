@@ -1042,6 +1042,7 @@ export default function CheckoutPage() {
       // Step 3: Route by intent result
       if (intent.status === 'Paid') {
         // Already paid (replay of a completed payment)
+        orderService.markOrderPaid(createdOrderId, intent);
         clearPaymentSession(createdOrderId);
         clearCheckoutOrder();
         decrementStock();
@@ -1126,6 +1127,7 @@ export default function CheckoutPage() {
   function handlePaymentResult(result, orderId) {
     const oid = orderId || orderIdState;
     if (result.status === 'Paid') {
+      orderService.markOrderPaid(oid, result);
       clearPaymentSession(oid);
       clearCheckoutOrder();
       decrementStock();
@@ -1150,6 +1152,7 @@ export default function CheckoutPage() {
 
     // IMMEDIATE RESOLUTION: If Stripe Elements already verified Paid, transition instantly
     if (status === 'Paid') {
+      orderService.markOrderPaid(oid, result);
       clearPaymentSession(oid);
       clearCheckoutOrder();
       decrementStock();

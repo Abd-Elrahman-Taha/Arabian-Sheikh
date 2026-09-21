@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { paymentApi } from '../../api/payment.api';
+import { orderService } from '../../services/orderService';
+import { isSuccessStatus, isFailedStatus } from '../../services/paymentService';
 import {
   CreditCard,
   Search,
@@ -104,20 +106,31 @@ export default function AdminPayments() {
       }
 
       const response = await paymentApi.adminListPayments(filters);
+      const rawList = Array.isArray(response)
+        ? response
+        : (Array.isArray(response?.items) ? response.items : (Array.isArray(response?.data) ? response.data : []));
 
-      if (Array.isArray(response)) {
-        setPayments(response);
-        setTotalCount(response.length);
-      } else if (response && Array.isArray(response.items)) {
-        setPayments(response.items);
-        setTotalCount(response.totalCount ?? response.items.length);
-      } else if (response && Array.isArray(response.data)) {
-        setPayments(response.data);
-        setTotalCount(response.totalCount ?? response.data.length);
-      } else {
-        setPayments([]);
-        setTotalCount(0);
-      }
+      // Reconcile status with live orders
+      const allOrders = typeof orderService.getAllOrdersSync === 'function' ? orderService.getAllOrdersSync() : [];
+      const orderPayMap = new Map();
+      allOrders.forEach(o => {
+        if (o.id) {
+          orderPayMap.set(String(o.id).toLowerCase(), o.paymentStatus);
+          if (o.numericId) orderPayMap.set(String(o.numericId), o.paymentStatus);
+          if (o.orderNumber) orderPayMap.set(String(o.orderNumber).toLowerCase(), o.paymentStatus);
+        }
+      });
+
+      const reconciledPayments = rawList.map(p => {
+        const ordPayStatus = p.orderId ? orderPayMap.get(String(p.orderId).toLowerCase()) : null;
+        if (isSuccessStatus(ordPayStatus) && !isSuccessStatus(p.status)) {
+          return { ...p, status: 'Paid' };
+        }
+        return p;
+      });
+
+      setPayments(reconciledPayments);
+      setTotalCount(response?.totalCount ?? reconciledPayments.length);
     } catch (err) {
       console.error('[AdminPayments] Fetch error:', err);
       error(err?.message || 'Failed to load payments from gateway.');
@@ -211,13 +224,17 @@ export default function AdminPayments() {
     switch (s) {
       case 'paid':
       case 'succeeded':
+      case 'completed':
+      case 'settled':
+      case 'success':
         return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
       case 'pending':
       case 'processing':
       case 'requires_action':
+      case 'requires_payment_method':
         return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
       case 'failed':
-      case 'requires_payment_method':
+      case 'declined':
         return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
       case 'refunded':
         return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
@@ -240,12 +257,12 @@ export default function AdminPayments() {
     payments.forEach(p => {
       const s = String(p.status || '').toLowerCase();
       const amt = Number(p.amount || 0);
-      if (s === 'paid' || s === 'succeeded') {
+      if (isSuccessStatus(s)) {
         paidCount++;
         totalVolume += amt;
-      } else if (s === 'pending' || s === 'processing') {
+      } else if (s === 'pending' || s === 'processing' || s.includes('require')) {
         pendingCount++;
-      } else if (s === 'failed') {
+      } else if (isFailedStatus(s)) {
         failedCount++;
       }
       if (p.manualReviewRequired) {
@@ -533,7 +550,7 @@ export default function AdminPayments() {
                       {/* Status */}
                       <td className="py-3.5 px-4">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border uppercase ${getStatusBadge(status)}`}>
-                          {status}
+                          {isSuccessStatus(status) ? 'PAID' : status}
                         </span>
                       </td>
 

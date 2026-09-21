@@ -3,6 +3,7 @@ import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
+import { paymentService, getPaymentId, isSuccessStatus, isFailedStatus } from '../../services/paymentService';
 import {
   Truck,
   ArrowLeft,
@@ -27,7 +28,8 @@ import {
   Phone,
   Building,
   Globe,
-  Receipt
+  Receipt,
+  RefreshCw
 } from 'lucide-react';
 import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
 import returnsService from '../../services/returnsService';
@@ -61,10 +63,10 @@ function getStatusBadge(status = '') {
 
 function getPaymentStatusBadge(status = '') {
   const s = String(status || '').toUpperCase();
-  if (s.includes('PAID') || s.includes('SETTLED') || s.includes('SUCCEED')) {
+  if (s.includes('PAID') || s.includes('SETTLED') || s.includes('SUCCEED') || s.includes('COMPLET')) {
     return 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40';
   }
-  if (s.includes('FAIL') || s.includes('DECLIN')) {
+  if (s.includes('FAIL') || s.includes('DECLIN') || s.includes('CANCEL')) {
     return 'bg-rose-950/70 text-rose-300 border-rose-500/40';
   }
   return 'bg-amber-950/70 text-amber-300 border-amber-500/40';
@@ -119,31 +121,96 @@ export default function OrderDetail() {
   const [orderReturns, setOrderReturns] = useState([]);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [selectedReturnId, setSelectedReturnId] = useState(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   const orderId = currentPath.split('/account/orders/')[1]?.split('?')[0];
+
+  const resolveAndFetchPaymentStatus = async (orderData) => {
+    if (!orderData) return orderData;
+    let currentPayStatus = orderData.paymentStatus || 'Pending';
+
+    // If already confirmed as Paid, return as is
+    if (isSuccessStatus(currentPayStatus) || isSuccessStatus(orderData.payments?.[0]?.status) || orderData.paidAt) {
+      return { ...orderData, paymentStatus: 'Paid' };
+    }
+
+    // Try to resolve paymentId from multiple possible locations
+    const resolvedPid = orderData.paymentId 
+      || orderData.payments?.[0]?.id 
+      || (orderId ? getPaymentId(orderId) : null) 
+      || (orderData.id ? getPaymentId(orderData.id) : null);
+
+    if (resolvedPid) {
+      try {
+        const payRes = await paymentService.getPaymentStatus(Number(resolvedPid));
+        if (payRes && isSuccessStatus(payRes.status)) {
+          await orderService.markOrderPaid(orderData.id, payRes);
+          return {
+            ...orderData,
+            paymentStatus: 'Paid',
+            paidAt: payRes.paidAt || new Date().toISOString(),
+            paymentId: payRes.id,
+            providerPaymentId: payRes.providerPaymentId || orderData.providerPaymentId
+          };
+        } else if (payRes && isFailedStatus(payRes.status)) {
+          return { ...orderData, paymentStatus: 'Failed' };
+        }
+      } catch (pErr) {
+        console.warn('Could not fetch real payment status:', pErr?.message);
+      }
+    }
+
+    // Check if order fulfillment implies Paid
+    const ordStatus = String(orderData.orderStatus || orderData.status || '').toLowerCase();
+    const isCod = String(orderData.paymentMethodCode || orderData.paymentMethod || '').toLowerCase().includes('cod');
+    if (['processing', 'shipped', 'outfordelivery', 'delivered'].includes(ordStatus) && !isCod) {
+      await orderService.markOrderPaid(orderData.id);
+      return { ...orderData, paymentStatus: 'Paid' };
+    }
+
+    return orderData;
+  };
+
+  const handleManualVerifyPayment = async () => {
+    if (!order) return;
+    setVerifyingPayment(true);
+    try {
+      const updated = await resolveAndFetchPaymentStatus(order);
+      setOrder(updated);
+      await refreshOrderData();
+    } finally {
+      setVerifyingPayment(false);
+    }
+  };
 
   const refreshOrderData = async () => {
     if (!orderId) return;
     try {
-      const [item, deliv, elig, ret] = await Promise.allSettled([
+      const [itemRes, delivRes, trkRes, eligRes, retRes] = await Promise.allSettled([
         orderService.getOrderById(orderId),
         orderService.getDeliveryStatus(orderId),
+        orderService.getOrderTracking(orderId),
         returnsService.checkEligibility(orderId),
         returnsService.getOrderReturns(orderId)
       ]);
-      const orderData = item.status === 'fulfilled' ? item.value : null;
-      const delivData = deliv.status === 'fulfilled' ? deliv.value : null;
+      const rawOrderData = itemRes.status === 'fulfilled' ? itemRes.value : null;
+      const delivData = delivRes.status === 'fulfilled' ? delivRes.value : null;
+      const trkData = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
-      if (orderData) {
+      if (rawOrderData) {
+        const orderData = await resolveAndFetchPaymentStatus(rawOrderData);
+        const resolvedTracking = trkData?.trackingNumber || delivData?.trackingNumber || orderData.trackingNumber || orderData.trackingCode || orderData.dhlTrackingNumber || null;
         setOrder({
           ...orderData,
-          shipmentStatus: delivData?.shipmentStatus || orderData.shipmentStatus || null,
-          trackingCode: delivData?.trackingNumber || orderData.trackingCode || null,
-          carrierStatus: delivData?.carrierStatus || orderData.carrierStatus || null
+          shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || null,
+          trackingNumber: resolvedTracking || orderData.trackingNumber || null,
+          trackingCode: resolvedTracking || orderData.trackingCode || null,
+          carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || null,
+          carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null
         });
       }
-      if (elig.status === 'fulfilled') setEligibility(elig.value);
-      if (ret.status === 'fulfilled') setOrderReturns(ret.value || []);
+      if (eligRes.status === 'fulfilled') setEligibility(eligRes.value);
+      if (retRes.status === 'fulfilled') setOrderReturns(retRes.value || []);
     } catch (err) {
       console.warn('Failed to refresh order data:', err);
     }
@@ -153,25 +220,31 @@ export default function OrderDetail() {
     async function load() {
       if (!orderId) return;
       try {
-        const [item, deliv, elig, ret] = await Promise.allSettled([
+        const [itemRes, delivRes, trkRes, eligRes, retRes] = await Promise.allSettled([
           orderService.getOrderById(orderId),
           orderService.getDeliveryStatus(orderId),
+          orderService.getOrderTracking(orderId),
           returnsService.checkEligibility(orderId),
           returnsService.getOrderReturns(orderId)
         ]);
-        const orderData = item.status === 'fulfilled' ? item.value : null;
-        const delivData = deliv.status === 'fulfilled' ? deliv.value : null;
+        const rawOrderData = itemRes.status === 'fulfilled' ? itemRes.value : null;
+        const delivData = delivRes.status === 'fulfilled' ? delivRes.value : null;
+        const trkData = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
-        if (orderData) {
+        if (rawOrderData) {
+          const orderData = await resolveAndFetchPaymentStatus(rawOrderData);
+          const resolvedTracking = trkData?.trackingNumber || delivData?.trackingNumber || orderData.trackingNumber || orderData.trackingCode || orderData.dhlTrackingNumber || null;
           setOrder({
             ...orderData,
-            shipmentStatus: delivData?.shipmentStatus || orderData.shipmentStatus || null,
-            trackingCode: delivData?.trackingNumber || orderData.trackingCode || null,
-            carrierStatus: delivData?.carrierStatus || orderData.carrierStatus || null
+            shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || null,
+            trackingNumber: resolvedTracking || orderData.trackingNumber || null,
+            trackingCode: resolvedTracking || orderData.trackingCode || null,
+            carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || null,
+            carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null
           });
         }
-        if (elig.status === 'fulfilled') setEligibility(elig.value);
-        if (ret.status === 'fulfilled') setOrderReturns(ret.value || []);
+        if (eligRes.status === 'fulfilled') setEligibility(eligRes.value);
+        if (retRes.status === 'fulfilled') setOrderReturns(retRes.value || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -206,7 +279,10 @@ export default function OrderDetail() {
       }
 
       const item = await orderService.getOrderById(orderId);
-      if (item) setOrder(item);
+      if (item) {
+        const updatedItem = await resolveAndFetchPaymentStatus(item);
+        setOrder(updatedItem);
+      }
     };
 
     window.addEventListener('arabian_sheikh_order_updated', handleUpdate);
@@ -263,7 +339,12 @@ export default function OrderDetail() {
 
   const formattedOrderCode = orderService.formatOrderCode(order);
   const displayStatus = order.orderStatus || order.status || 'Pending';
-  const paymentStatus = order.paymentStatus || 'Pending';
+  const paymentStatus = (
+    isSuccessStatus(order.paymentStatus) ? 'Paid' :
+    isSuccessStatus(order.payments?.[0]?.status) ? 'Paid' :
+    order.paidAt ? 'Paid' :
+    order.paymentStatus || 'Pending'
+  );
   const isCancelled = String(displayStatus).toLowerCase().includes('cancel');
   const statusBadgeClass = getStatusBadge(displayStatus);
   const paymentBadgeClass = getPaymentStatusBadge(paymentStatus);
@@ -275,7 +356,7 @@ export default function OrderDetail() {
   const isCancellable = ['pending', 'processing'].includes(normStatus) && !isCancelled;
   const isShippedOrOut = ['shipped', 'outfordelivery'].includes(normStatus);
 
-  const trackingNumber = order.trackingCode || order.dhlTrackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
+  const trackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
   const carrierName = order.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || 'Carrier';
   const shipmentStatus = order.shipmentStatus || (normStatus === 'shipped' ? 'Shipped' : (normStatus === 'delivered' ? 'Delivered' : (normStatus === 'outfordelivery' ? 'OutForDelivery' : 'Pending')));
 
@@ -413,8 +494,24 @@ export default function OrderDetail() {
                   {formatOrderStatus(displayStatus)}
                 </span>
                 <span className={`px-3 py-1 text-xs font-mono font-bold rounded-full uppercase border ${paymentBadgeClass}`}>
-                  {paymentStatus === 'Paid' ? 'Paid & Settled' : `Payment: ${paymentStatus}`}
+                  {isSuccessStatus(paymentStatus) ? 'Paid & Settled' : `Payment: ${paymentStatus}`}
                 </span>
+                {trackingNumber && (
+                  <>
+                    <span className="text-[#D4AF37]/40">•</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-mono font-bold rounded-full border bg-black/60 border-[#D4AF37]/40 text-[#F2D675] shadow-sm">
+                      <Truck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span>Tracking: {trackingNumber}</span>
+                      <button
+                        onClick={() => handleCopyTracking(trackingNumber)}
+                        className="p-0.5 text-[#D8BE99] hover:text-white transition-colors cursor-pointer ml-0.5"
+                        title="Copy Tracking Number"
+                      >
+                        {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -802,12 +899,25 @@ export default function OrderDetail() {
                   {paymentInfo.badge}
                 </span>
               </div>
-              <p className="text-[11px] font-mono text-[#D8BE99] flex items-center gap-1.5">
+              <div className="text-[11px] font-mono text-[#D8BE99] flex items-center justify-between">
                 <span>Status:</span>
-                <strong className={paymentStatus === 'Paid' ? 'text-emerald-400' : 'text-amber-400'}>
-                  {paymentStatus === 'Paid' ? 'Paid & Settled' : paymentStatus}
-                </strong>
-              </p>
+                <span className="flex items-center gap-2">
+                  <strong className={isSuccessStatus(paymentStatus) ? 'text-emerald-400' : 'text-amber-400'}>
+                    {isSuccessStatus(paymentStatus) ? 'Paid & Settled' : paymentStatus}
+                  </strong>
+                  {!isSuccessStatus(paymentStatus) && (
+                    <button
+                      onClick={handleManualVerifyPayment}
+                      disabled={verifyingPayment}
+                      className="text-[10px] font-mono text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      title="Fetch live payment status from gateway"
+                    >
+                      <RefreshCw className={`w-2.5 h-2.5 ${verifyingPayment ? 'animate-spin' : ''}`} />
+                      <span>{verifyingPayment ? 'Verifying...' : 'Check Gateway'}</span>
+                    </button>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
         </ScrollReveal>
