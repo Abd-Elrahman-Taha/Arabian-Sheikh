@@ -225,10 +225,12 @@ export const authApi = {
    * Reset Password
    * POST /api/auth/reset-password
    */
-  async resetPassword(token, newPassword) {
+  async resetPassword(token, newPassword, email) {
+    const payload = { token, newPassword };
+    if (email) payload.email = email.trim().toLowerCase();
     return await apiClient.post(
       ENDPOINTS.AUTH.RESET_PASSWORD,
-      { token, newPassword },
+      payload,
       { requiresAuth: false }
     );
   },

@@ -7,9 +7,12 @@ import { Lock, ArrowRight } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function ResetPassword() {
-  const { navigate } = useRouter();
+  const { navigate, queryParams } = useRouter();
   const { t } = useTranslation();
   const { success, error } = useToast();
+
+  const token = queryParams?.get('token') || '';
+  const email = queryParams?.get('email') || '';
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,10 +28,14 @@ export default function ResetPassword() {
       error('Password must be at least 6 characters.');
       return;
     }
+    if (!token) {
+      error('Reset token is missing or expired. Please click the full link in your email or request a new one.');
+      return;
+    }
 
     setLoading(true);
     try {
-      await authService.resetPassword('mock-token', password);
+      await authService.resetPassword(token, password, email);
       success('Your password has been successfully renewed.');
       navigate('/login');
     } catch (err) {

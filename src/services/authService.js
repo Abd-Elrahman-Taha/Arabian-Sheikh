@@ -318,12 +318,13 @@ export const authService = {
     return { success: true, message: 'Recovery instructions dispatched to your royal email.' };
   },
 
-  async resetPassword(token, newPassword) {
+  async resetPassword(token, newPassword, email) {
     if (!apiClient.isMockEnabled()) {
       try {
-        return await authApi.resetPassword(token, newPassword);
+        return await authApi.resetPassword(token, newPassword, email);
       } catch (e) {
-        console.warn('Real API resetPassword fallback:', e.message);
+        console.warn('Real API resetPassword error:', e.message);
+        throw e;
       }
     }
 

@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import { UserPlus, Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, ShieldCheck, Phone, Globe } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 import { WORLD_COUNTRIES, POPULAR_COUNTRIES, findCountryByCode } from '../../utils/countries';
+import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
 
 export default function Signup() {
   const { navigate } = useRouter();
@@ -366,6 +367,18 @@ export default function Signup() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center my-3">
+          <div className="border-t border-[#D4AF37]/20 w-full" />
+          <span className="bg-[#0B0A08] px-3 text-[11px] text-[#D8BE99] uppercase font-cinzel font-semibold tracking-wider shrink-0">
+            {t('common.or') || 'OR'}
+          </span>
+          <div className="border-t border-[#D4AF37]/20 w-full" />
+        </div>
+
+        {/* Google Sign Up */}
+        <GoogleAuthButton mode="signup" />
 
         <div className="text-center text-xs text-[#D8BE99] pt-4 border-t border-[#D4AF37]/20 font-medium">
           <span>{t('auth.haveAccount')} </span>
