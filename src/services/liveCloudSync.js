@@ -87,8 +87,16 @@ async function pushToCloud() {
       body: JSON.stringify(dataPayload)
     }).catch(() => {});
 
-    // 2. Broadcast to all open tabs and windows locally
+    // 2. Global Real-time Multi-Device Pub/Sub Hub (Instant cross-device synchronization)
+    fetch(NTFY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Title': 'sync' },
+      body: JSON.stringify(dataPayload)
+    }).catch(() => {});
+
+    // 3. Broadcast to all open tabs and windows locally
     window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: dataPayload }));
+    window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', { detail: dataPayload }));
   } catch (err) {
     console.warn('Cloud sync push error:', err.message);
   } finally {
@@ -143,6 +151,10 @@ function mergeRemoteData(remoteData) {
         const mergedObj = oTime >= exTime ? { ...existing, ...o } : { ...o, ...existing };
         if (String(existing.paymentStatus).toLowerCase() === 'paid' || String(o.paymentStatus).toLowerCase() === 'paid') {
           mergedObj.paymentStatus = 'Paid';
+          if (!mergedObj.orderStatus || mergedObj.orderStatus === 'Pending') {
+            mergedObj.orderStatus = 'Processing';
+            mergedObj.status = 'Processing';
+          }
         }
         orderMap.set(key, mergedObj);
       } else {
@@ -242,28 +254,62 @@ async function pullFromCloud() {
 
   isPulling = true;
   try {
-    const res = await fetch(VERCEL_SYNC_ENDPOINT, {
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store'
-    }).catch(() => null);
+    let remoteData = null;
 
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data && typeof data === 'object') {
-        const remoteData = data?.data || data;
-        const remoteTimestamp = remoteData.lastUpdated || null;
+    // 1. Try Vercel sync endpoint first
+    try {
+      const res = await fetch(VERCEL_SYNC_ENDPOINT, {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data && typeof data === 'object') {
+          remoteData = data?.data || data;
+        }
+      }
+    } catch {}
 
-        // Only process and dispatch if there is actual new/updated data
-        const isNew = !lastPulledTimestamp || (remoteTimestamp && remoteTimestamp !== lastPulledTimestamp);
-        if (isNew) {
-          lastPulledTimestamp = remoteTimestamp || new Date().toISOString();
-          mergeRemoteData(remoteData);
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
+    // 2. If Vercel endpoint didn't have orders, fetch from global NTFY sync cache
+    if (!remoteData || !Array.isArray(remoteData.orders) || remoteData.orders.length === 0) {
+      try {
+        const ntfyRes = await fetch(`${NTFY_ENDPOINT}/json?poll=1`, {
+          headers: { 'Accept': 'application/json' },
+          cache: 'no-store'
+        });
+        if (ntfyRes && ntfyRes.ok) {
+          const text = await ntfyRes.text();
+          const lines = text.trim().split('\n').filter(Boolean);
+          for (let i = lines.length - 1; i >= 0; i--) {
+            try {
+              const msg = JSON.parse(lines[i]);
+              if (msg.event === 'message' && msg.message) {
+                const parsed = JSON.parse(msg.message);
+                if (parsed && typeof parsed === 'object' && (parsed.orders || parsed.lastUpdated)) {
+                  remoteData = parsed;
+                  break;
+                }
+              }
+            } catch {}
           }
         }
-        return state;
+      } catch (nErr) {
+        console.warn('NTFY pull fallback:', nErr?.message);
       }
+    }
+
+    if (remoteData && typeof remoteData === 'object') {
+      const remoteTimestamp = remoteData.lastUpdated || null;
+      const isNew = !lastPulledTimestamp || (remoteTimestamp && remoteTimestamp !== lastPulledTimestamp);
+      if (isNew) {
+        lastPulledTimestamp = remoteTimestamp || new Date().toISOString();
+        mergeRemoteData(remoteData);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: remoteData }));
+          window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', { detail: remoteData }));
+        }
+      }
+      return state;
     }
   } catch (err) {
     console.warn('Cloud sync pull error:', err.message);
@@ -277,16 +323,37 @@ async function pullFromCloud() {
 function setupLiveSyncListener() {
   if (typeof window === 'undefined') return;
 
-  // Listen for storage events across browser tabs
+  // 1. Listen for storage events across browser tabs
   window.addEventListener('storage', (e) => {
     if (e.key === LOCAL_STORAGE_KEY && e.newValue) {
       try {
         const parsed = JSON.parse(e.newValue);
         mergeRemoteData(parsed);
         window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: parsed }));
+        window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', { detail: parsed }));
       } catch {}
     }
   });
+
+  // 2. Global Real-time Multi-Device SSE Hub
+  try {
+    const sse = new EventSource(`${NTFY_ENDPOINT}/sse`);
+    sse.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'message' && msg.message) {
+          const parsed = JSON.parse(msg.message);
+          if (parsed && typeof parsed === 'object') {
+            mergeRemoteData(parsed);
+            window.dispatchEvent(new CustomEvent('arabian_sheikh_cloud_updated', { detail: parsed }));
+            window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', { detail: parsed }));
+          }
+        }
+      } catch {}
+    };
+  } catch (sseErr) {
+    console.warn('SSE subscription notice:', sseErr?.message);
+  }
 }
 
 // Initialize on file load / page refresh
@@ -348,10 +415,11 @@ export const liveCloudSync = {
 
   async updatePaymentStatus(orderId, paymentStatus, paymentDetails = null) {
     const targetKey = String(orderId).replace(/^#/, '').toLowerCase().trim();
+    const isPaid = String(paymentStatus).toLowerCase() === 'paid';
     state.orders = state.orders.map(o => {
       const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
       const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      if (idStr === targetKey || numStr === targetKey) {
+      if (idStr === targetKey || numStr === targetKey || (numStr && targetKey && (numStr.endsWith(targetKey) || targetKey.endsWith(numStr)))) {
         const existingPayments = Array.isArray(o.payments) ? [...o.payments] : [];
         if (paymentDetails && paymentDetails.id) {
           const pIdx = existingPayments.findIndex(p => String(p.id) === String(paymentDetails.id));
@@ -364,7 +432,9 @@ export const liveCloudSync = {
         return {
           ...o,
           paymentStatus,
-          paidAt: paymentStatus === 'Paid' ? (paymentDetails?.paidAt || o.paidAt || new Date().toISOString()) : o.paidAt,
+          orderStatus: isPaid ? 'Processing' : o.orderStatus,
+          status: isPaid ? 'Processing' : o.status,
+          paidAt: isPaid ? (paymentDetails?.paidAt || o.paidAt || new Date().toISOString()) : o.paidAt,
           paymentId: paymentDetails?.id || o.paymentId || existingPayments[0]?.id || null,
           providerPaymentId: paymentDetails?.providerPaymentId || o.providerPaymentId || existingPayments[0]?.providerPaymentId || null,
           payments: existingPayments,
@@ -373,6 +443,8 @@ export const liveCloudSync = {
       }
       return o;
     });
+    state.lastUpdated = new Date().toISOString();
+    saveLocalState();
     await pushToCloud();
   },
 
@@ -677,50 +749,6 @@ export const liveCloudSync = {
     await pushToCloud();
   },
 
-  // ==========================================
-  // ORDERS SYNCHRONIZATION
-  // ==========================================
-  getOrders() {
-    return Array.isArray(state.orders) ? state.orders : [];
-  },
-
-  async addOrder(order) {
-    if (!order || !order.id) return;
-    const idStr = String(order.id);
-    const numStr = order.orderNumber ? String(order.orderNumber) : null;
-    const list = Array.isArray(state.orders) ? [...state.orders] : [];
-    const idx = list.findIndex(o => String(o.id) === idStr || (numStr && String(o.orderNumber) === numStr));
-    if (idx > -1) {
-      list[idx] = { ...list[idx], ...order };
-    } else {
-      list.unshift(order);
-    }
-    state.orders = list;
-    state.lastUpdated = new Date().toISOString();
-    saveLocalState();
-    await pushToCloud();
-  },
-
-  async updateOrderStatus(orderId, newStatus) {
-    if (!orderId) return;
-    const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
-    state.orders = (state.orders || []).map(o => {
-      const oId = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-      const oNum = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      if (oId === target || oNum === target || (oNum && target && (oNum.endsWith(target) || target.endsWith(oNum)))) {
-        return {
-          ...o,
-          status: newStatus,
-          orderStatus: newStatus,
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return o;
-    });
-    state.lastUpdated = new Date().toISOString();
-    saveLocalState();
-    await pushToCloud();
-  },
 
   // ==========================================
   // REVIEWS SYNCHRONIZATION

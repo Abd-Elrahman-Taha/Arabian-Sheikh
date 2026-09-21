@@ -129,9 +129,10 @@ export default function OrderDetail() {
     if (!orderData) return orderData;
     let currentPayStatus = orderData.paymentStatus || 'Pending';
 
-    // If already confirmed as Paid, return as is
+    // If already confirmed as Paid, return as is with Processing fulfillment status
     if (isSuccessStatus(currentPayStatus) || isSuccessStatus(orderData.payments?.[0]?.status) || orderData.paidAt) {
-      return { ...orderData, paymentStatus: 'Paid' };
+      const orderSt = (!orderData.orderStatus || orderData.orderStatus === 'Pending') ? 'Processing' : orderData.orderStatus;
+      return { ...orderData, paymentStatus: 'Paid', orderStatus: orderSt, status: orderSt };
     }
 
     // Try to resolve paymentId from multiple possible locations
@@ -145,9 +146,12 @@ export default function OrderDetail() {
         const payRes = await paymentService.getPaymentStatus(Number(resolvedPid));
         if (payRes && isSuccessStatus(payRes.status)) {
           await orderService.markOrderPaid(orderData.id, payRes);
+          const orderSt = (!orderData.orderStatus || orderData.orderStatus === 'Pending') ? 'Processing' : orderData.orderStatus;
           return {
             ...orderData,
             paymentStatus: 'Paid',
+            orderStatus: orderSt,
+            status: orderSt,
             paidAt: payRes.paidAt || new Date().toISOString(),
             paymentId: payRes.id,
             providerPaymentId: payRes.providerPaymentId || orderData.providerPaymentId
@@ -166,6 +170,10 @@ export default function OrderDetail() {
     if (['processing', 'shipped', 'outfordelivery', 'delivered'].includes(ordStatus) && !isCod) {
       await orderService.markOrderPaid(orderData.id);
       return { ...orderData, paymentStatus: 'Paid' };
+    }
+
+    if (isSuccessStatus(orderData.paymentStatus) && (!orderData.orderStatus || orderData.orderStatus === 'Pending')) {
+      return { ...orderData, orderStatus: 'Processing', status: 'Processing' };
     }
 
     return orderData;

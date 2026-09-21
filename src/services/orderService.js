@@ -190,6 +190,10 @@ export const orderService = {
               // Preserve Paid status
               if (localPayStatus === 'Paid' && item.paymentStatus === 'Pending') {
                 merged[idx].paymentStatus = 'Paid';
+                if (!merged[idx].orderStatus || merged[idx].orderStatus === 'Pending') {
+                  merged[idx].orderStatus = 'Processing';
+                  merged[idx].status = 'Processing';
+                }
               }
             } else {
               merged.unshift(item);
@@ -269,6 +273,10 @@ export const orderService = {
         const merged = { ...(existing || {}), ...o };
         if (existing?.paymentStatus === 'Paid' || o?.paymentStatus === 'Paid') {
           merged.paymentStatus = 'Paid';
+          if (!merged.orderStatus || merged.orderStatus === 'Pending') {
+            merged.orderStatus = 'Processing';
+            merged.status = 'Processing';
+          }
         }
         orderMap.set(key, merged);
       }
@@ -282,6 +290,10 @@ export const orderService = {
         const merged = { ...(existing || {}), ...o };
         if (existing?.paymentStatus === 'Paid' && o?.paymentStatus !== 'Refunded') {
           merged.paymentStatus = 'Paid';
+          if (!merged.orderStatus || merged.orderStatus === 'Pending') {
+            merged.orderStatus = 'Processing';
+            merged.status = 'Processing';
+          }
         }
         orderMap.set(key, merged);
       }
@@ -441,6 +453,10 @@ export const orderService = {
           }
           if (local?.paymentStatus === 'Paid' && remote.paymentStatus === 'Pending') {
             merged.paymentStatus = 'Paid';
+            if (!merged.orderStatus || merged.orderStatus === 'Pending') {
+              merged.orderStatus = 'Processing';
+              merged.status = 'Processing';
+            }
           }
 
           if (idx > -1) {
@@ -789,6 +805,7 @@ export const orderService = {
 
     // 1. Update in live cloud sync
     await liveCloudSync.updatePaymentStatus(target, 'Paid', paymentDetails).catch(() => {});
+    await liveCloudSync.updateOrderStatus(target, 'Processing').catch(() => {});
 
     // 2. Update in local storage orders
     const orders = loadOrders();
@@ -801,6 +818,8 @@ export const orderService = {
     let updatedOrder = null;
     if (index > -1) {
       orders[index].paymentStatus = 'Paid';
+      orders[index].orderStatus = 'Processing';
+      orders[index].status = 'Processing';
       orders[index].paidAt = paymentDetails?.paidAt || orders[index].paidAt || new Date().toISOString();
       if (paymentDetails) {
         if (paymentDetails.id) orders[index].paymentId = paymentDetails.id;
@@ -817,6 +836,21 @@ export const orderService = {
         orders[index].payments = payments;
       }
       orders[index].updatedAt = new Date().toISOString();
+      if (!orders[index].timeline) orders[index].timeline = [];
+      orders[index].timeline.push({
+        status: 'Processing',
+        title: 'Payment Confirmed — Atelier Crafting & Blending Initiated',
+        timestamp: new Date().toISOString()
+      });
+      if (!orders[index].statusHistory) orders[index].statusHistory = [];
+      orders[index].statusHistory.push({
+        status: 'Processing',
+        fromStatus: 'Pending',
+        toStatus: 'Processing',
+        note: 'Payment settled successfully via Stripe. Order moved to Processing.',
+        changedBy: 'System',
+        createdAt: new Date().toISOString()
+      });
       saveOrders(orders);
       updatedOrder = orders[index];
     } else {
@@ -824,6 +858,8 @@ export const orderService = {
         id: orderId,
         orderNumber: orderId,
         paymentStatus: 'Paid',
+        orderStatus: 'Processing',
+        status: 'Processing',
         paidAt: paymentDetails?.paidAt || new Date().toISOString(),
         paymentId: paymentDetails?.id || null,
         providerPaymentId: paymentDetails?.providerPaymentId || null
@@ -836,6 +872,8 @@ export const orderService = {
         detail: {
           orderId: target,
           paymentStatus: 'Paid',
+          orderStatus: 'Processing',
+          status: 'Processing',
           paymentDetails,
           order: updatedOrder
         }

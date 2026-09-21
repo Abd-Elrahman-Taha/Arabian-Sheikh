@@ -143,6 +143,21 @@ export default function AdminPayments() {
     fetchPayments();
   }, [fetchPayments]);
 
+  // Real-time reactive listener across tabs & devices
+  useEffect(() => {
+    const handleSync = () => {
+      fetchPayments();
+    };
+    window.addEventListener('arabian_sheikh_order_created', handleSync);
+    window.addEventListener('arabian_sheikh_order_updated', handleSync);
+    window.addEventListener('arabian_sheikh_cloud_updated', handleSync);
+    return () => {
+      window.removeEventListener('arabian_sheikh_order_created', handleSync);
+      window.removeEventListener('arabian_sheikh_order_updated', handleSync);
+      window.removeEventListener('arabian_sheikh_cloud_updated', handleSync);
+    };
+  }, [fetchPayments]);
+
   // Open Details Modal and fetch attempts/audit
   const handleOpenDetails = async (payment) => {
     setSelectedPayment(payment);

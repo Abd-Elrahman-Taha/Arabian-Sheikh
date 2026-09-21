@@ -134,6 +134,19 @@ export default function AdminOrders() {
       const result = await orderService.getAdminOrders(filters);
       if (result && Array.isArray(result.items)) {
         setOrdersData(result);
+        // Automatically sync orders that are confirmed Paid to Processing in the backend database
+        result.items.forEach(async (order) => {
+          const rawPay = order.paymentStatus || order.payments?.[0]?.status;
+          const isPaid = isSuccessStatus(rawPay) || rawPay === 'Paid';
+          const isCod = String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cod');
+          const isPending = order.orderStatus === 'Pending' || order.status === 'Pending';
+          const numId = toNumericId(order.id) || toNumericId(order.numericId);
+          if (isPaid && !isCod && isPending && numId) {
+            try {
+              await orderApi.adminUpdateOrderStatus(numId, 'Processing', 'Payment confirmed via Stripe');
+            } catch {}
+          }
+        });
       } else if (Array.isArray(result)) {
         setOrdersData({
           items: result,
@@ -690,6 +703,7 @@ export default function AdminOrders() {
                   const isOrderProcessing = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(st => st.toLowerCase() === String(orderStatus).toLowerCase());
                   const isCod = String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cod');
                   const paymentStatus = hasPaidPayment ? 'Paid' : (isOrderProcessing && !isCod ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending'));
+                  const displayOrderStatus = (isSuccessStatus(paymentStatus) && !isCod && orderStatus === 'Pending') ? 'Processing' : orderStatus;
                   const orderTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shipments?.[0]?.trackingNumber || order.shippingSnapshot?.trackingNumber;
 
                   return (
@@ -841,8 +855,8 @@ export default function AdminOrders() {
                       {/* Fulfillment Status & Tracking */}
                       <td className="py-3.5 px-4">
                         <div className="space-y-1.5">
-                          <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(orderStatus)}`}>
-                            {orderStatus}
+                          <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(displayOrderStatus)}`}>
+                            {displayOrderStatus}
                           </span>
                           {orderTrackingNumber ? (
                             <div className="flex items-center gap-1">
