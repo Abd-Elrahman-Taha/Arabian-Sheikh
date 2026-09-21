@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from '../../router/RouterContext';
-import { paymentService, clearPaymentSession, clearCheckoutOrder, isTerminalStatus, getCurrentCheckoutOrderId, getPaymentId } from '../../services/paymentService';
+import { paymentService, clearPaymentSession, clearCheckoutOrder, isTerminalStatus, getCurrentCheckoutOrderId, getPaymentId, getPaymentKey } from '../../services/paymentService';
 import { orderService } from '../../services/orderService';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -47,9 +47,11 @@ export default function PaymentReturn() {
 
       // Poll backend API until terminal state is recorded in the database
       try {
+        const payKey = orderId ? getPaymentKey(orderId) : null;
         const result = await paymentService.pollUntilTerminal(paymentId ? Number(paymentId) : undefined, {
           signal: controller.signal,
           orderId: orderId ? Number(orderId) : undefined,
+          paymentKey: payKey,
           onStatusUpdate: (p) => {
             if (!isCancelled) setPayment(p);
           },

@@ -178,7 +178,8 @@ export const paymentService = {
    * @returns {Promise<{id, orderId, provider, providerPaymentId, amount, currency, status, paidAt}>}
    */
   async pollUntilTerminal(paymentId, options = {}) {
-    const { signal, onStatusUpdate, orderId } = options;
+    const { signal, onStatusUpdate, orderId, paymentKey } = options;
+    const effectivePaymentKey = paymentKey || (orderId ? getPaymentKey(orderId) : null);
     const started = Date.now();
     const TOTAL_BUDGET_MS = 90_000; // 90 seconds max
 
@@ -196,10 +197,14 @@ export const paymentService = {
       }
     });
 
+    let cycleCount = 0;
+
     for (;;) {
       if (signal?.aborted) {
         throw new Error('PAYMENT_POLL_ABORTED');
       }
+
+      cycleCount++;
 
       try {
         // 1. Query Backend Payment Status: GET /api/payments/{paymentId}
@@ -248,7 +253,48 @@ export const paymentService = {
           }
         }
 
-        // 2. Fallback: Check backend customer order state: GET /api/Orders/{id}
+        // 2. Active Re-Check with Backend: Re-send payment intent with the SAME Idempotency-Key
+        // Prompts the backend server to check Stripe directly using its live Secret Key and mark SQL DB as Paid
+        if (effectivePaymentKey && orderId && (!payment || !isTerminalStatus(payment?.status))) {
+          try {
+            const recheckRes = await paymentApi.createPaymentIntent({ orderId: Number(orderId) }, effectivePaymentKey);
+            if (recheckRes) {
+              const rStatus = recheckRes.status;
+              if (isTerminalStatus(rStatus)) {
+                const normalized = {
+                  id: recheckRes.paymentId || paymentId,
+                  orderId: Number(orderId),
+                  provider: recheckRes.provider || 'stripe',
+                  providerPaymentId: recheckRes.providerPaymentId || null,
+                  amount: recheckRes.amount,
+                  currency: recheckRes.currency || 'EUR',
+                  status: isSuccessStatus(rStatus) ? 'Paid' : 'Failed',
+                  paidAt: new Date().toISOString()
+                };
+                if (onStatusUpdate) onStatusUpdate(normalized);
+                return normalized;
+              }
+            }
+          } catch (recheckErr) {
+            const errCode = recheckErr?.code || recheckErr?.response?.data?.code || '';
+            const errStatus = recheckErr?.status || recheckErr?.response?.status;
+            const errMsg = String(recheckErr?.message || '');
+            if (errStatus === 409 || errCode === 'PAYMENT_ALREADY_COMPLETED' || errMsg.includes('already paid') || errMsg.includes('already completed')) {
+              const terminalPayment = {
+                id: paymentId || orderId,
+                orderId: Number(orderId),
+                provider: 'stripe',
+                providerPaymentId: null,
+                status: 'Paid',
+                paidAt: new Date().toISOString()
+              };
+              if (onStatusUpdate) onStatusUpdate(terminalPayment);
+              return terminalPayment;
+            }
+          }
+        }
+
+        // 3. Fallback: Check backend customer order state: GET /api/Orders/{id}
         if (orderId && (!payment || isAuthError || !isTerminalStatus(payment?.status))) {
           try {
             const order = await orderApi.getOrderById(orderId);

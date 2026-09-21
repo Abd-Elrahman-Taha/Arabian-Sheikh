@@ -1092,7 +1092,7 @@ export default function CheckoutPage() {
   };
 
   // ─── Start polling for payment result ────────────────────────
-  function startPolling(paymentId, orderId, customClientSecret) {
+  function startPolling(paymentId, orderId, customClientSecret, customPaymentKey) {
     setPaymentStatus('polling');
 
     // Abort any existing poll
@@ -1102,12 +1102,16 @@ export default function CheckoutPage() {
     const controller = new AbortController();
     pollAbortRef.current = controller;
 
+    const oid = orderId || orderIdState;
+    const payKey = customPaymentKey || (oid ? getPaymentKey(oid) : null);
+
     paymentService.pollUntilTerminal(paymentId, {
       signal: controller.signal,
-      orderId: orderId || orderIdState,
+      orderId: oid,
       clientSecret: customClientSecret || clientSecret,
+      paymentKey: payKey,
     }).then(result => {
-      handlePaymentResult(result, orderId);
+      handlePaymentResult(result, oid);
     }).catch(err => {
       if (err.message === 'PAYMENT_POLL_TIMEOUT') {
         setPaymentStatus('timeout');
@@ -1160,8 +1164,10 @@ export default function CheckoutPage() {
 
     // Stripe card authorized; poll backend until DB confirms Paid
     setPaymentStatus('polling');
-    if (paymentIdState && oid) {
-      startPolling(paymentIdState, oid);
+    if (oid) {
+      const pid = paymentIdState || getPaymentId(oid);
+      const pKey = getPaymentKey(oid);
+      startPolling(pid, oid, clientSecret, pKey);
     }
   }
 
