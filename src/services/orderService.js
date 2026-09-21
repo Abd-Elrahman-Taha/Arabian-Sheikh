@@ -1,6 +1,4 @@
 import { orderApi, toNumericId } from '../api/order.api';
-import { apiClient } from '../api/client';
-import { normalizeOrderAddress } from '../api/normalizers';
 import { shippingApi } from '../api/shipping.api';
 import { checkoutApi } from '../api/checkout.api';
 import { addressApi } from '../api/address.api';
@@ -60,7 +58,7 @@ export const orderService = {
   getOrderByIdSync() { return null; },
 
   // ─── Customer: Fetch orders from GET /api/Orders ───────────────────────────
-  async getCustomerOrders(user) {
+  async getCustomerOrders() {
     try {
       const response = await orderApi.getMyOrders({ page: 1, pageSize: 100 });
       const items = response?.items || (Array.isArray(response) ? response : []);
@@ -138,7 +136,7 @@ export const orderService = {
 
   // ─── Create order via POST /api/Orders ────────────────────────────────────
   async createOrder(orderPayload) {
-    let apiOrder = null;
+    let apiOrder;
     let resolvedAddressId = orderPayload.addressId;
 
     try {
@@ -204,53 +202,49 @@ export const orderService = {
           firstErr?.status === 400;
 
         if (isQuoteOrMethodError) {
-          try {
-            const currentCoupon = orderPayload.discountCode || orderPayload.couponCode || undefined;
-            const summary = await checkoutApi.getCheckout({
+          const currentCoupon = orderPayload.discountCode || orderPayload.couponCode || undefined;
+          const summary = await checkoutApi.getCheckout({
+            addressId: numericAddressId,
+            couponCode: currentCoupon
+          }).catch(() => null);
+
+          const rawOptions = summary?.shippingOptions || [];
+          const validOptions = (Array.isArray(rawOptions) ? rawOptions : [])
+            .map(normalizeShippingOption)
+            .filter(opt => opt && opt.shippingMethodId && Number(opt.shippingMethodId) > 0);
+
+          let matchedOption = null;
+          if (validOptions.length > 0) {
+            matchedOption = validOptions.find(o => Number(o.shippingMethodId) === Number(shippingMethodId)) || validOptions[0];
+          }
+
+          if (!matchedOption) {
+            const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId }).catch(() => null);
+            const freshOptions = (freshQuotes?.options || []).filter(o => o && (o.shippingMethodId || o.id));
+            matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === Number(shippingMethodId)) || freshOptions[0];
+          }
+
+          const retryMethodId = matchedOption?.shippingMethodId ? Number(matchedOption.shippingMethodId) : Number(shippingMethodId);
+          const freshQuoteId = matchedOption?.quoteId || summary?.selectedShippingMethod?.quoteId || summary?.quoteId;
+
+          if (freshQuoteId && retryMethodId) {
+            await checkoutApi.setCheckoutShipping({
+              shippingMethodId: retryMethodId,
+              quoteId: String(freshQuoteId).trim()
+            }, {
               addressId: numericAddressId,
               couponCode: currentCoupon
-            }).catch(() => null);
+            }).catch(() => {});
 
-            const rawOptions = summary?.shippingOptions || [];
-            const validOptions = (Array.isArray(rawOptions) ? rawOptions : [])
-              .map(normalizeShippingOption)
-              .filter(opt => opt && opt.shippingMethodId && Number(opt.shippingMethodId) > 0);
-
-            let matchedOption = null;
-            if (validOptions.length > 0) {
-              matchedOption = validOptions.find(o => Number(o.shippingMethodId) === Number(shippingMethodId)) || validOptions[0];
-            }
-
-            if (!matchedOption) {
-              const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId }).catch(() => null);
-              const freshOptions = (freshQuotes?.options || []).filter(o => o && (o.shippingMethodId || o.id));
-              matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === Number(shippingMethodId)) || freshOptions[0];
-            }
-
-            const retryMethodId = matchedOption?.shippingMethodId ? Number(matchedOption.shippingMethodId) : Number(shippingMethodId);
-            const freshQuoteId = matchedOption?.quoteId || summary?.selectedShippingMethod?.quoteId || summary?.quoteId;
-
-            if (freshQuoteId && retryMethodId) {
-              await checkoutApi.setCheckoutShipping({
-                shippingMethodId: retryMethodId,
-                quoteId: String(freshQuoteId).trim()
-              }, {
-                addressId: numericAddressId,
-                couponCode: currentCoupon
-              }).catch(() => {});
-
-              apiOrder = await orderApi.createOrder({
-                addressId: numericAddressId,
-                shippingMethodId: retryMethodId,
-                quoteId: String(freshQuoteId).trim(),
-                paymentMethod: orderPayload.paymentMethod || 'cod',
-                couponCode: currentCoupon || null
-              }, newOrderKey());
-            } else {
-              throw firstErr;
-            }
-          } catch (retryErr) {
-            throw retryErr;
+            apiOrder = await orderApi.createOrder({
+              addressId: numericAddressId,
+              shippingMethodId: retryMethodId,
+              quoteId: String(freshQuoteId).trim(),
+              paymentMethod: orderPayload.paymentMethod || 'cod',
+              couponCode: currentCoupon || null
+            }, newOrderKey());
+          } else {
+            throw firstErr;
           }
         } else {
           throw firstErr;
@@ -305,55 +299,26 @@ export const orderService = {
     return result || { orderId, orderStatus: newStatus, status: newStatus };
   },
 
-  // ─── Mark order as paid — store in sessionStorage for immediate display ────
+  // ─── Mark order as paid — notifies local listeners only (Zero storage persistence) ──
   async markOrderPaid(orderId, paymentDetails = null) {
     if (!orderId) return null;
 
-    // Store confirmed payment in sessionStorage so same-device page refreshes
-    // still show Paid even before the backend webhook fires
-    try {
-      const key = `arabian_sheikh_paid:${orderId}`;
-      sessionStorage.setItem(key, JSON.stringify({
-        paymentStatus: 'Paid',
-        orderStatus: 'Processing',
-        paidAt: paymentDetails?.paidAt || new Date().toISOString(),
-        paymentId: paymentDetails?.id || null,
-        amount: paymentDetails?.amount || null,
-        currency: paymentDetails?.currency || null,
-        confirmedAt: Date.now()
-      }));
-    } catch {}
-
-    // Dispatch real-time event so UI updates immediately on this tab
+    // Zero sessionStorage / localStorage persistence — backend is the sole source of truth
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
         detail: {
           orderId,
           paymentStatus: 'Paid',
-          orderStatus: 'Processing',
-          status: 'Processing',
           paymentDetails
         }
       }));
     }
 
-    return { id: orderId, paymentStatus: 'Paid', orderStatus: 'Processing' };
+    return { id: orderId, paymentStatus: 'Paid' };
   },
 
-  // ─── Get locally confirmed payment status (sessionStorage, same device only) ─
-  getLocalPaidStatus(orderId) {
-    if (!orderId || typeof window === 'undefined') return null;
-    try {
-      const raw = sessionStorage.getItem(`arabian_sheikh_paid:${orderId}`);
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      // Expire after 24h — by then backend webhook must have fired
-      if (Date.now() - (data.confirmedAt || 0) > 86_400_000) {
-        sessionStorage.removeItem(`arabian_sheikh_paid:${orderId}`);
-        return null;
-      }
-      return data;
-    } catch {}
+  // ─── Get locally confirmed payment status (Deprecated — all status from API) ──
+  getLocalPaidStatus() {
     return null;
   },
 
@@ -422,7 +387,7 @@ export const orderService = {
     if (!numericId) return null;
     try {
       return await orderApi.adminGetOrderTracking(numericId);
-    } catch (e) {
+    } catch {
       // Fallback: try customer tracking endpoint
       try {
         return await orderApi.trackOrder(numericId);

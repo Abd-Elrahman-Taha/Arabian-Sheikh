@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
-import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
-import { paymentService, getPaymentId, isSuccessStatus, isFailedStatus } from '../../services/paymentService';
+import { paymentService, isSuccessStatus, isFailedStatus } from '../../services/paymentService';
 import {
   Truck,
   ArrowLeft,
@@ -12,26 +11,22 @@ import {
   Copy,
   Check,
   XCircle,
-  Clock,
-  ExternalLink,
   ShieldCheck,
   RotateCcw,
   MapPin,
   CreditCard,
   Calendar,
   Package,
-  Sparkles,
   CheckCircle2,
   Banknote,
   FileText,
-  ChevronRight,
   Phone,
   Building,
   Globe,
   Receipt,
   RefreshCw
 } from 'lucide-react';
-import ScrollReveal, { ScrollRevealItem } from '../../components/common/ScrollReveal';
+import ScrollReveal from '../../components/common/ScrollReveal';
 import returnsService from '../../services/returnsService';
 import ReturnWizardModal from '../../components/returns/ReturnWizardModal';
 import ReturnDetailsModal from '../../components/returns/ReturnDetailsModal';
@@ -104,7 +99,6 @@ function formatPaymentMethod(method, paymentMethodCode) {
 
 export default function OrderDetail() {
   const { currentPath, navigate } = useRouter();
-  const { t } = useTranslation();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -122,6 +116,7 @@ export default function OrderDetail() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [selectedReturnId, setSelectedReturnId] = useState(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [deliveryStatus, setDeliveryStatus] = useState(null);
 
   const orderId = currentPath.split('/account/orders/')[1]?.split('?')[0];
 
@@ -129,30 +124,24 @@ export default function OrderDetail() {
     if (!orderData) return orderData;
     let currentPayStatus = orderData.paymentStatus || 'Pending';
 
-    // If already confirmed as Paid, return as is with Processing fulfillment status
+    // If already confirmed as Paid
     if (isSuccessStatus(currentPayStatus) || isSuccessStatus(orderData.payments?.[0]?.status) || orderData.paidAt) {
-      const orderSt = (!orderData.orderStatus || orderData.orderStatus === 'Pending') ? 'Processing' : orderData.orderStatus;
-      return { ...orderData, paymentStatus: 'Paid', orderStatus: orderSt, status: orderSt };
+      return { ...orderData, paymentStatus: 'Paid' };
     }
 
-    // Try to resolve paymentId from multiple possible locations
+    // Check backend payment record if paymentId exists on the order (Zero sessionStorage)
     const resolvedPid = orderData.paymentId 
       || orderData.payments?.[0]?.id 
-      || (orderId ? getPaymentId(orderId) : null) 
-      || (orderData.id ? getPaymentId(orderData.id) : null);
+      || orderData.payments?.[0]?.paymentId;
 
     if (resolvedPid) {
       try {
         const payRes = await paymentService.getPaymentStatus(Number(resolvedPid));
         if (payRes && isSuccessStatus(payRes.status)) {
-          await orderService.markOrderPaid(orderData.id, payRes);
-          const orderSt = (!orderData.orderStatus || orderData.orderStatus === 'Pending') ? 'Processing' : orderData.orderStatus;
           return {
             ...orderData,
             paymentStatus: 'Paid',
-            orderStatus: orderSt,
-            status: orderSt,
-            paidAt: payRes.paidAt || new Date().toISOString(),
+            paidAt: payRes.paidAt || orderData.paidAt || new Date().toISOString(),
             paymentId: payRes.id,
             providerPaymentId: payRes.providerPaymentId || orderData.providerPaymentId
           };
@@ -162,18 +151,6 @@ export default function OrderDetail() {
       } catch (pErr) {
         console.warn('Could not fetch real payment status:', pErr?.message);
       }
-    }
-
-    // Check if order fulfillment implies Paid
-    const ordStatus = String(orderData.orderStatus || orderData.status || '').toLowerCase();
-    const isCod = String(orderData.paymentMethodCode || orderData.paymentMethod || '').toLowerCase().includes('cod');
-    if (['processing', 'shipped', 'outfordelivery', 'delivered'].includes(ordStatus) && !isCod) {
-      await orderService.markOrderPaid(orderData.id);
-      return { ...orderData, paymentStatus: 'Paid' };
-    }
-
-    if (isSuccessStatus(orderData.paymentStatus) && (!orderData.orderStatus || orderData.orderStatus === 'Pending')) {
-      return { ...orderData, orderStatus: 'Processing', status: 'Processing' };
     }
 
     return orderData;
@@ -205,16 +182,26 @@ export default function OrderDetail() {
       const delivData = delivRes.status === 'fulfilled' ? delivRes.value : null;
       const trkData = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
+      if (delivData) {
+        setDeliveryStatus(delivData);
+      }
+
       if (rawOrderData) {
         const orderData = await resolveAndFetchPaymentStatus(rawOrderData);
-        const resolvedTracking = trkData?.trackingNumber || delivData?.trackingNumber || orderData.trackingNumber || orderData.trackingCode || orderData.dhlTrackingNumber || null;
+        // GET /api/Orders/{id}/delivery-status is the single source of truth for delivery parameters
+        const resolvedTracking = (delivData?.trackingNumber !== undefined && delivData?.trackingNumber !== null && String(delivData.trackingNumber).trim())
+          ? String(delivData.trackingNumber).trim()
+          : ((trkData?.trackingNumber && String(trkData.trackingNumber).trim()) || (orderData.trackingNumber && String(orderData.trackingNumber).trim()) || null);
+
         setOrder({
           ...orderData,
-          shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || null,
-          trackingNumber: resolvedTracking || orderData.trackingNumber || null,
-          trackingCode: resolvedTracking || orderData.trackingCode || null,
-          carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || null,
-          carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null
+          orderStatus: delivData?.orderStatus || orderData.orderStatus || 'Pending',
+          status: delivData?.orderStatus || orderData.orderStatus || 'Pending',
+          shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || 'Created',
+          carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null,
+          trackingNumber: resolvedTracking,
+          trackingCode: resolvedTracking,
+          carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || 'Econt'
         });
       }
       if (eligRes.status === 'fulfilled') setEligibility(eligRes.value);
@@ -239,16 +226,26 @@ export default function OrderDetail() {
         const delivData = delivRes.status === 'fulfilled' ? delivRes.value : null;
         const trkData = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
+        if (delivData) {
+          setDeliveryStatus(delivData);
+        }
+
         if (rawOrderData) {
           const orderData = await resolveAndFetchPaymentStatus(rawOrderData);
-          const resolvedTracking = trkData?.trackingNumber || delivData?.trackingNumber || orderData.trackingNumber || orderData.trackingCode || orderData.dhlTrackingNumber || null;
+          // GET /api/Orders/{id}/delivery-status is the single source of truth for delivery parameters
+          const resolvedTracking = (delivData?.trackingNumber !== undefined && delivData?.trackingNumber !== null && String(delivData.trackingNumber).trim())
+            ? String(delivData.trackingNumber).trim()
+            : ((trkData?.trackingNumber && String(trkData.trackingNumber).trim()) || (orderData.trackingNumber && String(orderData.trackingNumber).trim()) || null);
+
           setOrder({
             ...orderData,
-            shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || null,
-            trackingNumber: resolvedTracking || orderData.trackingNumber || null,
-            trackingCode: resolvedTracking || orderData.trackingCode || null,
-            carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || null,
-            carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null
+            orderStatus: delivData?.orderStatus || orderData.orderStatus || 'Pending',
+            status: delivData?.orderStatus || orderData.orderStatus || 'Pending',
+            shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || 'Created',
+            carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null,
+            trackingNumber: resolvedTracking,
+            trackingCode: resolvedTracking,
+            carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || 'Econt'
           });
         }
         if (eligRes.status === 'fulfilled') setEligibility(eligRes.value);
@@ -350,7 +347,6 @@ export default function OrderDetail() {
 
   const normStatus = String(displayStatus).toLowerCase();
   const isCancellable = ['pending', 'processing'].includes(normStatus) && !isCancelled;
-  const isShippedOrOut = ['shipped', 'outfordelivery'].includes(normStatus);
 
   const trackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
   const carrierName = order.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || 'Carrier';
@@ -771,7 +767,7 @@ export default function OrderDetail() {
           </div>
         </ScrollReveal>
 
-        {/* Card 2: Shipping & Logistics */}
+        {/* Card 2: Delivery & Shipping Status (from GET /api/Orders/{id}/delivery-status) */}
         <ScrollReveal direction="up" delay={0.2}>
           <div className="rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/30 p-6 shadow-2xl backdrop-blur-md space-y-4 h-full flex flex-col justify-between">
             <div className="space-y-3">
@@ -779,23 +775,41 @@ export default function OrderDetail() {
                 <div className="flex items-center gap-2 text-[#D4AF37]">
                   <Truck className="w-4 h-4" />
                   <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider">
-                    Shipping Information
+                    Delivery Status
                   </h4>
                 </div>
-                <span className={`px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded-full border ${shippingService.getShipmentStatusBadge(shipmentStatus)}`}>
-                  {shippingService.getShipmentStatusLabel(shipmentStatus)}
+                <span className={`px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded-full border ${shippingService.getShipmentStatusBadge(deliveryStatus?.shipmentStatus || shipmentStatus)}`}>
+                  {deliveryStatus?.shipmentStatus || shipmentStatus || 'Created'}
                 </span>
               </div>
 
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2.5 text-xs">
+                {/* 1. Order Status */}
                 <div className="flex justify-between items-center text-[#D8BE99]">
-                  <span>Courier Carrier:</span>
+                  <span>Order Status:</span>
                   <span className="font-mono font-bold text-[#F3E6D0] uppercase bg-black/50 px-2 py-0.5 rounded border border-white/10">
-                    {carrierName}
+                    {deliveryStatus?.orderStatus || order.orderStatus || 'Pending'}
                   </span>
                 </div>
 
-                <div className="space-y-1">
+                {/* 2. Shipment Status */}
+                <div className="flex justify-between items-center text-[#D8BE99]">
+                  <span>Shipment Status:</span>
+                  <span className="font-mono font-bold text-[#D4AF37] uppercase bg-black/50 px-2 py-0.5 rounded border border-[#D4AF37]/20">
+                    {deliveryStatus?.shipmentStatus || shipmentStatus || 'Created'}
+                  </span>
+                </div>
+
+                {/* 3. Carrier Status */}
+                <div className="flex justify-between items-center text-[#D8BE99]">
+                  <span>Carrier Status:</span>
+                  <span className="font-mono text-xs text-[#F2D675] bg-black/50 px-2 py-0.5 rounded border border-white/10 text-right max-w-[210px] truncate" title={deliveryStatus?.carrierStatus || order.carrierStatus || 'Not available yet'}>
+                    {deliveryStatus?.carrierStatus || order.carrierStatus || 'Not available yet'}
+                  </span>
+                </div>
+
+                {/* 4. Tracking Number */}
+                <div className="space-y-1 pt-0.5">
                   <div className="flex justify-between items-center text-[#D8BE99]">
                     <span>Tracking Number:</span>
                     {trackingNumber && (
@@ -809,20 +823,21 @@ export default function OrderDetail() {
                     )}
                   </div>
                   {trackingNumber ? (
-                    <span className="font-mono font-bold text-xs text-[#D4AF37] block bg-black/60 p-2 rounded border border-[#D4AF37]/20">
+                    <span className="font-mono font-bold text-xs text-[#D4AF37] block bg-black/60 p-2 rounded border border-[#D4AF37]/20 select-all">
                       {trackingNumber}
                     </span>
                   ) : (
-                    <span className="font-mono text-neutral-500 italic text-[11px] block bg-black/40 p-2 rounded border border-white/5">
-                      Tracking available once courier dispatches
+                    <span className="font-mono text-neutral-400 italic text-[11px] block bg-black/40 p-2 rounded border border-white/5">
+                      Tracking is not available yet
                     </span>
                   )}
                 </div>
 
-                <div className="flex justify-between text-[#D8BE99] pt-1">
-                  <span>Expected Delivery:</span>
+                {/* Courier Carrier */}
+                <div className="flex justify-between text-[#D8BE99] pt-1 border-t border-white/5">
+                  <span>Courier Carrier:</span>
                   <span className="font-mono font-bold text-[#F3E6D0]">
-                    {order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : '2–4 business days'}
+                    {carrierName || 'Econt'}
                   </span>
                 </div>
               </div>

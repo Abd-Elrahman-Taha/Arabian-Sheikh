@@ -1,26 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from '../../i18n/LanguageContext';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { paymentApi } from '../../api/payment.api';
-import { orderService } from '../../services/orderService';
 import { isSuccessStatus, isFailedStatus } from '../../services/paymentService';
 import {
   CreditCard,
   Search,
   RefreshCw,
   Eye,
-  CheckCircle2,
-  XCircle,
   AlertTriangle,
   Clock,
-  Filter,
   RotateCcw,
-  Calendar,
-  ShieldAlert,
-  ArrowUpDown,
   ExternalLink,
-  Layers,
-  Activity,
   ChevronLeft,
   ChevronRight,
   X,
@@ -31,7 +21,6 @@ import {
 } from 'lucide-react';
 
 export default function AdminPayments() {
-  const { t } = useTranslation();
   const { success, error, info } = useToast();
 
   // Filters State
@@ -67,7 +56,6 @@ export default function AdminPayments() {
 
   // Fetch payments list
   const fetchPayments = useCallback(async () => {
-    setLoading(true);
     try {
       const filters = {
         page,
@@ -110,27 +98,9 @@ export default function AdminPayments() {
         ? response
         : (Array.isArray(response?.items) ? response.items : (Array.isArray(response?.data) ? response.data : []));
 
-      // Reconcile status with live orders
-      const allOrders = typeof orderService.getAllOrdersSync === 'function' ? orderService.getAllOrdersSync() : [];
-      const orderPayMap = new Map();
-      allOrders.forEach(o => {
-        if (o.id) {
-          orderPayMap.set(String(o.id).toLowerCase(), o.paymentStatus);
-          if (o.numericId) orderPayMap.set(String(o.numericId), o.paymentStatus);
-          if (o.orderNumber) orderPayMap.set(String(o.orderNumber).toLowerCase(), o.paymentStatus);
-        }
-      });
-
-      const reconciledPayments = rawList.map(p => {
-        const ordPayStatus = p.orderId ? orderPayMap.get(String(p.orderId).toLowerCase()) : null;
-        if (isSuccessStatus(ordPayStatus) && !isSuccessStatus(p.status)) {
-          return { ...p, status: 'Paid' };
-        }
-        return p;
-      });
-
-      setPayments(reconciledPayments);
-      setTotalCount(response?.totalCount ?? reconciledPayments.length);
+      // Pure backend payments list — no local reconciliation
+      setPayments(rawList);
+      setTotalCount(response?.totalCount ?? rawList.length);
     } catch (err) {
       console.error('[AdminPayments] Fetch error:', err);
       error(err?.message || 'Failed to load payments from gateway.');
@@ -140,10 +110,13 @@ export default function AdminPayments() {
   }, [page, pageSize, search, statusFilter, providerFilter, manualReviewOnly, fromDate, toDate, error]);
 
   useEffect(() => {
-    fetchPayments();
+    async function load() {
+      await fetchPayments();
+    }
+    load();
   }, [fetchPayments]);
 
-  // Real-time reactive listener across tabs & devices
+  // Real-time reactive listener + Periodic polling across devices
   useEffect(() => {
     const handleSync = () => {
       fetchPayments();
@@ -151,10 +124,17 @@ export default function AdminPayments() {
     window.addEventListener('arabian_sheikh_order_created', handleSync);
     window.addEventListener('arabian_sheikh_order_updated', handleSync);
     window.addEventListener('arabian_sheikh_cloud_updated', handleSync);
+
+    // Periodic polling every 15s so incoming payments appear in real-time
+    const interval = setInterval(() => {
+      fetchPayments();
+    }, 15000);
+
     return () => {
       window.removeEventListener('arabian_sheikh_order_created', handleSync);
       window.removeEventListener('arabian_sheikh_order_updated', handleSync);
       window.removeEventListener('arabian_sheikh_cloud_updated', handleSync);
+      clearInterval(interval);
     };
   }, [fetchPayments]);
 
@@ -262,7 +242,7 @@ export default function AdminPayments() {
   };
 
   // Metrics Calculations
-  const metrics = React.useMemo(() => {
+  const metrics = useMemo(() => {
     let totalVolume = 0;
     let paidCount = 0;
     let pendingCount = 0;

@@ -45,7 +45,8 @@ import {
   Phone,
   Globe,
   Building,
-  ShoppingBag
+  ShoppingBag,
+  XCircle
 } from 'lucide-react';
 
 export const COUNTRIES = [
@@ -1150,20 +1151,6 @@ export default function CheckoutPage() {
     const status = result?.status;
     const oid = orderIdState;
 
-    // IMMEDIATE RESOLUTION: If Stripe Elements already verified Paid, transition instantly
-    if (status === 'Paid') {
-      orderService.markOrderPaid(oid, result);
-      clearPaymentSession(oid);
-      clearCheckoutOrder();
-      decrementStock();
-      clearCart();
-      orderService.recordPlacedOrderId(oid);
-      setPaymentStatus('paid');
-      setPaymentError(null);
-      success('Payment successful! Your order has been placed.');
-      return;
-    }
-
     if (status === 'Failed') {
       clearPaymentSession(oid);
       setPaymentStatus('failed');
@@ -1171,9 +1158,10 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Only start polling if status is genuinely pending / processing
-    if (paymentIdState && orderIdState) {
-      startPolling(paymentIdState, orderIdState, clientSecret);
+    // Stripe card authorized; poll backend until DB confirms Paid
+    setPaymentStatus('polling');
+    if (paymentIdState && oid) {
+      startPolling(paymentIdState, oid);
     }
   }
 

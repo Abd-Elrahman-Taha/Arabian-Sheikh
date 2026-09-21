@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from '../../router/RouterContext';
-import { paymentService, clearPaymentSession, clearCheckoutOrder, isTerminalStatus, getCurrentCheckoutOrderId, getStripePromise } from '../../services/paymentService';
+import { paymentService, clearPaymentSession, clearCheckoutOrder, isTerminalStatus, getCurrentCheckoutOrderId, getPaymentId } from '../../services/paymentService';
 import { orderService } from '../../services/orderService';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -9,6 +9,7 @@ import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
  * 
  * After stripe.confirmPayment() redirects to the bank and back,
  * the customer lands here at /payment/return?orderId=…&paymentId=…
+ * Status is verified strictly against the backend API.
  */
 export default function PaymentReturn() {
   const { navigate, queryParams } = useRouter();
@@ -17,22 +18,12 @@ export default function PaymentReturn() {
   const [errorMessage, setErrorMessage] = useState('');
   const abortRef = useRef(null);
 
-  // Recover identifiers
+  // Recover identifiers from URL query parameters (or active in-memory session)
   const orderId = queryParams.get('orderId') || getCurrentCheckoutOrderId();
   const paymentIdParam = queryParams.get('paymentId');
   const redirectStatus = queryParams.get('redirect_status');
-  const clientSecretParam = queryParams.get('payment_intent_client_secret');
 
-  // Try URL params first, then sessionStorage fallback
-  const paymentId = paymentIdParam || (() => {
-    try {
-      if (orderId) {
-        const raw = sessionStorage.getItem(`arabian_sheikh_pay:${orderId}`);
-        if (raw) return JSON.parse(raw).paymentId;
-      }
-    } catch {}
-    return null;
-  })();
+  const paymentId = paymentIdParam ? Number(paymentIdParam) : (orderId ? getPaymentId(orderId) : null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -40,35 +31,7 @@ export default function PaymentReturn() {
     abortRef.current = controller;
 
     async function evaluatePayment() {
-      // 1. Instant resolution if Stripe redirected with succeeded status
-      if (redirectStatus === 'succeeded') {
-        setStatus('paid');
-        clearPaymentSession(orderId);
-        clearCheckoutOrder();
-        if (orderId) {
-          orderService.recordPlacedOrderId(orderId);
-        }
-
-        // Fetch payment details directly from Stripe to show amount
-        if (clientSecretParam) {
-          try {
-            const stripe = await getStripePromise();
-            if (stripe) {
-              const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecretParam);
-              if (paymentIntent && !isCancelled) {
-                setPayment({
-                  amount: (paymentIntent.amount || 0) / 100,
-                  currency: paymentIntent.currency || 'EUR',
-                  providerPaymentId: paymentIntent.id,
-                  status: 'Paid'
-                });
-              }
-            }
-          } catch {}
-        }
-        return;
-      }
-
+      // If Stripe redirect indicated card failure
       if (redirectStatus === 'failed') {
         setStatus('failed');
         setErrorMessage('Your payment was declined or could not be completed. Please try another card.');
@@ -76,18 +39,17 @@ export default function PaymentReturn() {
         return;
       }
 
-      if (!paymentId && !orderId && !clientSecretParam) {
+      if (!paymentId && !orderId) {
         setStatus('error');
         setErrorMessage('Payment reference not found. Please check your order in My Orders.');
         return;
       }
 
-      // 2. Poll until terminal with fast cycle and direct Stripe check
+      // Poll backend API until terminal state is recorded in the database
       try {
         const result = await paymentService.pollUntilTerminal(paymentId ? Number(paymentId) : undefined, {
           signal: controller.signal,
           orderId: orderId ? Number(orderId) : undefined,
-          clientSecret: clientSecretParam,
           onStatusUpdate: (p) => {
             if (!isCancelled) setPayment(p);
           },
@@ -99,7 +61,6 @@ export default function PaymentReturn() {
         if (result.status === 'Paid') {
           setStatus('paid');
           if (orderId) {
-            orderService.markOrderPaid(orderId, result);
             orderService.recordPlacedOrderId(orderId);
           }
           clearPaymentSession(orderId);
@@ -136,36 +97,16 @@ export default function PaymentReturn() {
       isCancelled = true;
       controller.abort();
     };
-  }, [paymentId, orderId, redirectStatus, clientSecretParam]);
+  }, [paymentId, orderId, redirectStatus]);
 
-  // Manual re-check for timeout/pending states
+  // Manual re-check querying backend API directly
   async function handleRecheck() {
     setStatus('polling');
     try {
       let result = null;
 
-      // 1. Direct Stripe retrieval if client secret is present
-      if (clientSecretParam) {
-        try {
-          const stripe = await getStripePromise();
-          if (stripe) {
-            const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecretParam);
-            if (paymentIntent?.status === 'succeeded') {
-              result = {
-                status: 'Paid',
-                amount: (paymentIntent.amount || 0) / 100,
-                currency: (paymentIntent.currency || 'EUR').toUpperCase(),
-                providerPaymentId: paymentIntent.id
-              };
-            } else if (paymentIntent?.status === 'requires_payment_method') {
-              result = { status: 'Failed' };
-            }
-          }
-        } catch {}
-      }
-
-      // 2. Direct backend payment status
-      if (!result && paymentId) {
+      // 1. Direct backend payment status: GET /api/payments/{paymentId}
+      if (paymentId) {
         try {
           result = await paymentService.getPaymentStatus(Number(paymentId));
         } catch (pErr) {
@@ -173,7 +114,7 @@ export default function PaymentReturn() {
         }
       }
 
-      // 3. Fallback to order verification
+      // 2. Fallback to order verification: GET /api/Orders/{orderId}
       if (!result && orderId) {
         const order = await orderService.getOrderById(orderId);
         if (order) {
@@ -190,7 +131,6 @@ export default function PaymentReturn() {
         if (result.status === 'Paid') {
           setStatus('paid');
           if (orderId) {
-            orderService.markOrderPaid(orderId, result);
             orderService.recordPlacedOrderId(orderId);
           }
           clearPaymentSession(orderId);

@@ -1,9 +1,6 @@
-import React, { useState, Component } from 'react';
+import { useState, Component } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import {
-  getStripePromise,
-  getStripePublishableKey
-} from '../../services/paymentService';
+import { getStripePromise } from '../../services/paymentService';
 import { Lock, ShieldCheck, CreditCard, Loader2, AlertCircle, RefreshCw, Banknote } from 'lucide-react';
 
 /**
@@ -72,12 +69,12 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
 
       setProcessing(false);
 
-      // Inspect authoritative paymentIntent status directly from Stripe
+      // If Stripe returned paymentIntent, check for errors vs success
       if (paymentIntent) {
-        if (paymentIntent.status === 'succeeded') {
-          // Instant success: money authorized and captured!
+        if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing') {
+          // Stripe authorized/captured card. Hand off to parent to poll backend for true DB settlement
           if (onConfirmed) {
-            onConfirmed({ status: 'Paid', paymentIntent });
+            onConfirmed({ status: 'Processing', paymentIntent });
           }
           return;
         }
@@ -88,18 +85,11 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
           if (onError) onError(errorMsg);
           return;
         }
-
-        if (paymentIntent.status === 'processing') {
-          if (onConfirmed) {
-            onConfirmed({ status: 'Processing', paymentIntent });
-          }
-          return;
-        }
       }
 
-      // Default: proceed with confirmed status
+      // Default: proceed with processing status so backend polling verifies
       if (onConfirmed) {
-        onConfirmed({ status: paymentIntent?.status || 'Paid', paymentIntent });
+        onConfirmed({ status: 'Processing', paymentIntent });
       }
     } catch (err) {
       console.error('[CheckoutForm] confirmPayment error:', err);
@@ -236,14 +226,6 @@ export default function StripePaymentForm({
         <p className="text-xs font-cinzel text-[#D8BE99]">Preparing secure payment...</p>
       </div>
     );
-  }
-
-  // Persist paymentId BEFORE mounting Elements so it survives 3DS redirects
-  // Never persist clientSecret per Section 14
-  if (paymentId && orderId) {
-    try {
-      sessionStorage.setItem(`arabian_sheikh_pay:${orderId}`, JSON.stringify({ paymentId }));
-    } catch {}
   }
 
   const returnUrl = `${window.location.origin}/payment/return?orderId=${orderId}&paymentId=${paymentId}`;

@@ -50,7 +50,8 @@ function loadLocalState() {
 function saveLocalState() {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+    const { orders: _orders, ...persistedState } = state;
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(persistedState));
   } catch (e) {
     console.warn('Could not save local cloud state:', e);
   }

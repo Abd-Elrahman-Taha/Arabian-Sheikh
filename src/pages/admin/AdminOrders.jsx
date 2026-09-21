@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService, ADMIN_ORDER_STATUSES, ADMIN_PAYMENT_STATUSES } from '../../services/orderService';
 import { paymentApi } from '../../api/payment.api';
 import { toNumericId } from '../../api/order.api';
-import { isSuccessStatus, isFailedStatus } from '../../services/paymentService';
+import { isSuccessStatus } from '../../services/paymentService';
 import { COUNTRY_NAMES } from '../../api/normalizers';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -19,23 +19,18 @@ import {
   Clock,
   CreditCard,
   Package,
-  FileText,
   ChevronLeft,
   ChevronRight,
   Copy,
   Check,
   RotateCcw,
-  Filter,
   Calendar,
   ArrowUpDown,
   User,
   MapPin,
   ExternalLink,
-  ShieldCheck,
   DollarSign,
   X,
-  Layers,
-  AlertCircle,
   Tag
 } from 'lucide-react';
 
@@ -113,7 +108,6 @@ export default function AdminOrders() {
 
   // Fetch orders from API / Service
   const fetchOrders = useCallback(async () => {
-    setLoading(true);
     try {
       const filters = {
         page,
@@ -150,10 +144,13 @@ export default function AdminOrders() {
   }, [page, pageSize, search, orderStatusFilter, paymentStatusFilter, fromDate, toDate, sortBy, sortDirection, error]);
 
   useEffect(() => {
-    fetchOrders();
+    async function load() {
+      await fetchOrders();
+    }
+    load();
   }, [fetchOrders]);
 
-  // Real-time reactive listener: when an order is placed or updated on any account or tab
+  // Real-time reactive listener + Periodic polling across devices
   useEffect(() => {
     const handleOrderEvent = () => {
       fetchOrders();
@@ -161,10 +158,17 @@ export default function AdminOrders() {
     window.addEventListener('arabian_sheikh_order_created', handleOrderEvent);
     window.addEventListener('arabian_sheikh_order_updated', handleOrderEvent);
     window.addEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
+
+    // Periodic polling every 10s so orders placed or paid on other devices appear automatically
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 10000);
+
     return () => {
       window.removeEventListener('arabian_sheikh_order_created', handleOrderEvent);
       window.removeEventListener('arabian_sheikh_order_updated', handleOrderEvent);
       window.removeEventListener('arabian_sheikh_cloud_updated', handleOrderEvent);
+      clearInterval(interval);
     };
   }, [fetchOrders]);
 
@@ -187,7 +191,6 @@ export default function AdminOrders() {
             if (paymentItems.length > 0) {
               const hasPaid = paymentItems.some(p => isSuccessStatus(p.status));
               if (hasPaid) {
-                await orderService.markOrderPaid(order.id, paymentItems[0]);
                 resolvedOrder = {
                   ...resolvedOrder,
                   paymentStatus: 'Paid',
@@ -221,7 +224,6 @@ export default function AdminOrders() {
         if (paymentItems.length > 0) {
           const hasPaid = paymentItems.some(p => isSuccessStatus(p.status));
           if (hasPaid) {
-            await orderService.markOrderPaid(detailsModalOrder.id, paymentItems[0]);
             setDetailsModalOrder(prev => ({
               ...prev,
               paymentStatus: 'Paid',

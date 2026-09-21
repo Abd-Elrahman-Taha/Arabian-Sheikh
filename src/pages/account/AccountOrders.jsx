@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from '../../router/RouterContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
 import { paymentApi } from '../../api/payment.api';
-import { isSuccessStatus, getPaymentId } from '../../services/paymentService';
+import { isSuccessStatus } from '../../services/paymentService';
 import { Package, Truck, ChevronRight } from 'lucide-react';
 
 function getStatusStyle(status = '') {
@@ -22,46 +22,31 @@ function formatOrderStatus(status = '') {
 }
 
 
-/** Overlay confirmed payment status on an order from API response */
+/** Resolve payment status strictly from the backend order entity */
 function resolveDisplayPaymentStatus(order) {
-  // 1. If backend already says Paid/Processing/Shipped/etc — trust it
-  if (isSuccessStatus(order.paymentStatus)) return order.paymentStatus;
-  const ordSt = String(order.orderStatus || order.status || '').toLowerCase();
-  if (['processing', 'shipped', 'outfordelivery', 'delivered'].includes(ordSt)) return 'Paid';
-
-  // 2. Check sessionStorage for a confirmed payment on this device
-  try {
-    const key = `arabian_sheikh_paid:${order.id}`;
-    const raw = sessionStorage.getItem(key);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (Date.now() - (data.confirmedAt || 0) < 86_400_000) {
-        return 'Paid';
-      }
-      sessionStorage.removeItem(key);
-    }
-  } catch {}
-
+  if (isSuccessStatus(order.paymentStatus)) return 'Paid';
   return order.paymentStatus || 'Pending';
 }
 
-/** For Pending orders with a known paymentId, fetch live status from the API */
+/** For Pending orders with a known backend paymentId, check live status from the API */
 async function enrichOrdersWithPaymentStatus(orders) {
   const enriched = await Promise.all(orders.map(async (o) => {
     const displayPay = resolveDisplayPaymentStatus(o);
     if (isSuccessStatus(displayPay)) {
-      return { ...o, paymentStatus: displayPay };
+      return { ...o, paymentStatus: 'Paid' };
     }
 
-    // Try to get live payment status from GET /api/payments/{paymentId}
-    const pid = getPaymentId(o.id);
+    // Check backend payment record if paymentId exists on the order
+    const pid = o.paymentId || o.payments?.[0]?.id || o.payments?.[0]?.paymentId;
     if (pid) {
       try {
-        const payment = await paymentApi.getPaymentStatus(pid);
+        const payment = await paymentApi.getPaymentStatus(Number(pid));
         if (payment && isSuccessStatus(payment.status)) {
           return { ...o, paymentStatus: 'Paid' };
         }
-      } catch {}
+      } catch (err) {
+        console.warn('Could not verify payment status for order:', o.id, err?.message);
+      }
     }
 
     return { ...o, paymentStatus: displayPay };

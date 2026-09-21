@@ -19,10 +19,6 @@ const stripePromiseCache = new Map();
 export function getStripePublishableKey() {
   const envKey = (import.meta.env?.VITE_STRIPE_PUBLISHABLE_KEY || '').trim();
   if (envKey) return envKey;
-  try {
-    const saved = localStorage.getItem('arabian_sheikh_stripe_pub_key');
-    if (saved && saved.trim()) return saved.trim();
-  } catch {}
   return '';
 }
 
@@ -53,50 +49,54 @@ export function newPaymentKey() {
   return crypto.randomUUID();
 }
 
+// ─── In-Memory Session Stores (Zero localStorage / sessionStorage persistence) ───
+const inMemoryPaymentKeys = new Map();
+const inMemoryPaymentIds = new Map();
+let inMemoryCurrentOrderId = null;
+
 /** Store checkout order context so refresh/remount can recover */
 export function setCurrentCheckoutOrderId(orderId) {
-  sessionStorage.setItem('arabian_sheikh_current_order', String(orderId));
+  inMemoryCurrentOrderId = orderId ? Number(orderId) : null;
 }
 
 export function getCurrentCheckoutOrderId() {
-  const raw = sessionStorage.getItem('arabian_sheikh_current_order');
-  const id = raw !== null ? Number(raw) : NaN;
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return inMemoryCurrentOrderId;
 }
 
 export function clearCheckoutOrder() {
-  sessionStorage.removeItem('arabian_sheikh_current_order');
+  inMemoryCurrentOrderId = null;
 }
 
 /** Store payment idempotency key per order */
 export function getPaymentKey(orderId) {
-  return sessionStorage.getItem(`arabian_sheikh_paykey:${orderId}`) || null;
+  if (!orderId) return null;
+  return inMemoryPaymentKeys.get(String(orderId)) || null;
 }
 
 export function setPaymentKey(orderId, key) {
-  sessionStorage.setItem(`arabian_sheikh_paykey:${orderId}`, key);
+  if (orderId && key) {
+    inMemoryPaymentKeys.set(String(orderId), key);
+  }
 }
 
-/** Store paymentId for recovery after 3DS redirects */
+/** Store paymentId in memory for recovery */
 export function setPaymentId(orderId, paymentId) {
-  sessionStorage.setItem(`arabian_sheikh_pay:${orderId}`, JSON.stringify({ paymentId }));
+  if (orderId && paymentId) {
+    inMemoryPaymentIds.set(String(orderId), Number(paymentId));
+  }
 }
 
 export function getPaymentId(orderId) {
-  try {
-    const raw = sessionStorage.getItem(`arabian_sheikh_pay:${orderId}`);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return parsed.paymentId || null;
-    }
-  } catch {}
-  return null;
+  if (!orderId) return null;
+  return inMemoryPaymentIds.get(String(orderId)) || null;
 }
 
 /** Clear all payment session data for an order once payment is final */
 export function clearPaymentSession(orderId) {
-  sessionStorage.removeItem(`arabian_sheikh_paykey:${orderId}`);
-  sessionStorage.removeItem(`arabian_sheikh_pay:${orderId}`);
+  if (orderId) {
+    inMemoryPaymentKeys.delete(String(orderId));
+    inMemoryPaymentIds.delete(String(orderId));
+  }
 }
 
 // ─── Terminal Status Check ─────────────────────────────────────
@@ -161,11 +161,26 @@ export const paymentService = {
    * @param {string} [options.clientSecret] - Stripe client secret for direct verification
    * @returns {Promise<{id, orderId, provider, providerPaymentId, amount, currency, status, paidAt}>}
    */
+  /**
+   * Poll payment status strictly from backend API until it reaches a terminal state.
+   * 
+   * Strategy:
+   * - Polls GET /api/payments/{paymentId} every 2s
+   * - Fallback: Polls GET /api/Orders/{orderId}
+   * - The backend is the ONLY authority for payment status
+   * - Terminal states: Paid / Succeeded, Failed, Cancelled, Refunded
+   * 
+   * @param {number} paymentId
+   * @param {object} [options]
+   * @param {AbortSignal} [options.signal] - Optional abort signal to cancel polling
+   * @param {function} [options.onStatusUpdate] - Called with each poll result
+   * @param {number} [options.orderId] - Optional customer order ID for fallback verification
+   * @returns {Promise<{id, orderId, provider, providerPaymentId, amount, currency, status, paidAt}>}
+   */
   async pollUntilTerminal(paymentId, options = {}) {
-    const { signal, onStatusUpdate, orderId, clientSecret } = options;
+    const { signal, onStatusUpdate, orderId } = options;
     const started = Date.now();
-    const FAST_PHASE_MS = 30_000;
-    const TOTAL_BUDGET_MS = 120_000; // 2 minutes max
+    const TOTAL_BUDGET_MS = 90_000; // 90 seconds max
 
     const sleep = (ms) => new Promise((resolve, reject) => {
       if (signal?.aborted) {
@@ -181,66 +196,19 @@ export const paymentService = {
       }
     });
 
-    let stripeInstance = null;
-    if (clientSecret) {
-      try {
-        stripeInstance = await getStripePromise();
-      } catch {}
-    }
-
     for (;;) {
       if (signal?.aborted) {
         throw new Error('PAYMENT_POLL_ABORTED');
       }
 
       try {
-        // 1. Direct Stripe.js verification (Instant check)
-        if (stripeInstance && clientSecret) {
-          try {
-            const { paymentIntent } = await stripeInstance.retrievePaymentIntent(clientSecret);
-            if (paymentIntent) {
-              const piStatus = paymentIntent.status;
-              if (piStatus === 'succeeded') {
-                const result = {
-                  id: paymentId,
-                  orderId: orderId || null,
-                  provider: 'stripe',
-                  providerPaymentId: paymentIntent.id,
-                  amount: (paymentIntent.amount || 0) / 100,
-                  currency: (paymentIntent.currency || 'EUR').toUpperCase(),
-                  status: 'Paid',
-                  paidAt: new Date().toISOString()
-                };
-                if (onStatusUpdate) onStatusUpdate(result);
-                return result;
-              }
-              if (piStatus === 'requires_payment_method' || piStatus === 'canceled') {
-                const result = {
-                  id: paymentId,
-                  orderId: orderId || null,
-                  provider: 'stripe',
-                  providerPaymentId: paymentIntent.id,
-                  amount: (paymentIntent.amount || 0) / 100,
-                  currency: (paymentIntent.currency || 'EUR').toUpperCase(),
-                  status: 'Failed',
-                  paidAt: null
-                };
-                if (onStatusUpdate) onStatusUpdate(result);
-                return result;
-              }
-            }
-          } catch (stripeErr) {
-            console.warn('[paymentService] Direct Stripe verification notice:', stripeErr?.message);
-          }
-        }
-
-        // 2. Query Backend Payment Status
+        // 1. Query Backend Payment Status: GET /api/payments/{paymentId}
         let payment = null;
         let isAuthError = false;
 
         if (paymentId) {
           try {
-            payment = await this.getPaymentStatus(paymentId);
+            payment = await this.getPaymentStatus(Number(paymentId));
           } catch (err) {
             const status = err?.status;
             const code = err?.code;
@@ -280,7 +248,7 @@ export const paymentService = {
           }
         }
 
-        // 3. Fallback: Check customer order state
+        // 2. Fallback: Check backend customer order state: GET /api/Orders/{id}
         if (orderId && (!payment || isAuthError || !isTerminalStatus(payment?.status))) {
           try {
             const order = await orderApi.getOrderById(orderId);
@@ -291,22 +259,22 @@ export const paymentService = {
               const isPaid = isSuccessStatus(payStatus) || ['Processing', 'Confirmed', 'Shipped', 'Delivered'].includes(ordStatus);
               const isFailed = isFailedStatus(payStatus) || ordStatus === 'Cancelled';
 
-              const synthesizedPayment = {
-                id: paymentId || order.payments?.[0]?.id || orderId,
-                orderId: order.id || orderId,
-                provider: 'stripe',
-                providerPaymentId: order.payments?.[0]?.providerPaymentId || null,
-                amount: order.total,
-                currency: order.currency || 'EUR',
-                status: isPaid ? 'Paid' : (isFailed ? 'Failed' : (payStatus || 'Pending')),
-                paidAt: isPaid ? (order.paidAt || new Date().toISOString()) : null
-              };
+              if (isPaid || isFailed) {
+                const synthesizedPayment = {
+                  id: paymentId || order.payments?.[0]?.id || orderId,
+                  orderId: order.id || orderId,
+                  provider: 'stripe',
+                  providerPaymentId: order.payments?.[0]?.providerPaymentId || null,
+                  amount: order.total,
+                  currency: order.currency || 'EUR',
+                  status: isPaid ? 'Paid' : 'Failed',
+                  paidAt: isPaid ? (order.paidAt || new Date().toISOString()) : null
+                };
 
-              if (onStatusUpdate) {
-                onStatusUpdate(synthesizedPayment);
-              }
+                if (onStatusUpdate) {
+                  onStatusUpdate(synthesizedPayment);
+                }
 
-              if (isTerminalStatus(synthesizedPayment.status)) {
                 return synthesizedPayment;
               }
             }
@@ -327,9 +295,13 @@ export const paymentService = {
         throw new Error('PAYMENT_POLL_TIMEOUT');
       }
 
-      await sleep(elapsed < FAST_PHASE_MS ? 1_500 : 3_000);
+      await sleep(2000);
     }
   }
 };
+
+export function getPayment(paymentId) {
+  return paymentApi.getPaymentStatus(paymentId);
+}
 
 export default paymentService;
