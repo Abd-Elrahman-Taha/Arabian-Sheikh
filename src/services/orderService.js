@@ -305,20 +305,24 @@ export const orderService = {
     return result || { orderId, orderStatus: newStatus, status: newStatus };
   },
 
-  // ─── Mark order as paid — calls updateOrderStatus to Processing ────────────
+  // ─── Mark order as paid — store in sessionStorage for immediate display ────
   async markOrderPaid(orderId, paymentDetails = null) {
     if (!orderId) return null;
-    const numericId = toNumericId(orderId);
 
-    // Try to advance to Processing via the admin API
-    if (numericId) {
-      try {
-        await orderApi.adminUpdateOrderStatus(numericId, 'Processing', 'Payment confirmed via Stripe');
-      } catch (e) {
-        // Non-fatal: backend may already be Processing
-        console.warn('[orderService] markOrderPaid status update:', e.message);
-      }
-    }
+    // Store confirmed payment in sessionStorage so same-device page refreshes
+    // still show Paid even before the backend webhook fires
+    try {
+      const key = `arabian_sheikh_paid:${orderId}`;
+      sessionStorage.setItem(key, JSON.stringify({
+        paymentStatus: 'Paid',
+        orderStatus: 'Processing',
+        paidAt: paymentDetails?.paidAt || new Date().toISOString(),
+        paymentId: paymentDetails?.id || null,
+        amount: paymentDetails?.amount || null,
+        currency: paymentDetails?.currency || null,
+        confirmedAt: Date.now()
+      }));
+    } catch {}
 
     // Dispatch real-time event so UI updates immediately on this tab
     if (typeof window !== 'undefined') {
@@ -334,6 +338,23 @@ export const orderService = {
     }
 
     return { id: orderId, paymentStatus: 'Paid', orderStatus: 'Processing' };
+  },
+
+  // ─── Get locally confirmed payment status (sessionStorage, same device only) ─
+  getLocalPaidStatus(orderId) {
+    if (!orderId || typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem(`arabian_sheikh_paid:${orderId}`);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      // Expire after 24h — by then backend webhook must have fired
+      if (Date.now() - (data.confirmedAt || 0) > 86_400_000) {
+        sessionStorage.removeItem(`arabian_sheikh_paid:${orderId}`);
+        return null;
+      }
+      return data;
+    } catch {}
+    return null;
   },
 
   // ─── Cancel order ─────────────────────────────────────────────────────────

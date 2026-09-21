@@ -3,32 +3,70 @@ import { Link } from '../../router/RouterContext';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
-import { isSuccessStatus } from '../../services/paymentService';
+import { paymentApi } from '../../api/payment.api';
+import { isSuccessStatus, getPaymentId } from '../../services/paymentService';
 import { Package, Truck, ChevronRight } from 'lucide-react';
 
 function getStatusStyle(status = '') {
   const s = String(status || '').toUpperCase().replace(/[\s_-]+/g, '');
-  if (s.includes('DELIVER')) {
-    return 'bg-emerald-950 text-emerald-300 border border-emerald-500/40 shadow-sm';
-  }
-  if (s.includes('SHIP') || s.includes('TRANSIT') || s.includes('OUTFOR')) {
-    return 'bg-amber-950 text-amber-300 border border-amber-500/40 shadow-sm';
-  }
-  if (s.includes('PROCESS') || s.includes('CONFIRM')) {
-    return 'bg-blue-950 text-blue-300 border border-blue-500/40 shadow-sm';
-  }
-  if (s.includes('CANCEL')) {
-    return 'bg-rose-950 text-rose-300 border border-rose-500/40 shadow-sm';
-  }
+  if (s.includes('DELIVER')) return 'bg-emerald-950 text-emerald-300 border border-emerald-500/40 shadow-sm';
+  if (s.includes('SHIP') || s.includes('TRANSIT') || s.includes('OUTFOR')) return 'bg-amber-950 text-amber-300 border border-amber-500/40 shadow-sm';
+  if (s.includes('PROCESS') || s.includes('CONFIRM')) return 'bg-blue-950 text-blue-300 border border-blue-500/40 shadow-sm';
+  if (s.includes('CANCEL')) return 'bg-rose-950 text-rose-300 border border-rose-500/40 shadow-sm';
   return 'bg-neutral-900 text-neutral-300 border border-neutral-600/40 shadow-sm';
 }
 
 function formatOrderStatus(status = '') {
   if (!status) return 'Pending';
-  return String(status)
-    .replace(/([A-Z])/g, ' $1')
-    .trim()
-    .replace(/_/g, ' ');
+  return String(status).replace(/([A-Z])/g, ' $1').trim().replace(/_/g, ' ');
+}
+
+
+/** Overlay confirmed payment status on an order from API response */
+function resolveDisplayPaymentStatus(order) {
+  // 1. If backend already says Paid/Processing/Shipped/etc — trust it
+  if (isSuccessStatus(order.paymentStatus)) return order.paymentStatus;
+  const ordSt = String(order.orderStatus || order.status || '').toLowerCase();
+  if (['processing', 'shipped', 'outfordelivery', 'delivered'].includes(ordSt)) return 'Paid';
+
+  // 2. Check sessionStorage for a confirmed payment on this device
+  try {
+    const key = `arabian_sheikh_paid:${order.id}`;
+    const raw = sessionStorage.getItem(key);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Date.now() - (data.confirmedAt || 0) < 86_400_000) {
+        return 'Paid';
+      }
+      sessionStorage.removeItem(key);
+    }
+  } catch {}
+
+  return order.paymentStatus || 'Pending';
+}
+
+/** For Pending orders with a known paymentId, fetch live status from the API */
+async function enrichOrdersWithPaymentStatus(orders) {
+  const enriched = await Promise.all(orders.map(async (o) => {
+    const displayPay = resolveDisplayPaymentStatus(o);
+    if (isSuccessStatus(displayPay)) {
+      return { ...o, paymentStatus: displayPay };
+    }
+
+    // Try to get live payment status from GET /api/payments/{paymentId}
+    const pid = getPaymentId(o.id);
+    if (pid) {
+      try {
+        const payment = await paymentApi.getPaymentStatus(pid);
+        if (payment && isSuccessStatus(payment.status)) {
+          return { ...o, paymentStatus: 'Paid' };
+        }
+      } catch {}
+    }
+
+    return { ...o, paymentStatus: displayPay };
+  }));
+  return enriched;
 }
 
 export default function AccountOrders() {
@@ -40,7 +78,8 @@ export default function AccountOrders() {
     async function load() {
       try {
         const mine = await orderService.getCustomerOrders(user);
-        setOrders(mine);
+        const enriched = await enrichOrdersWithPaymentStatus(mine);
+        setOrders(enriched);
       } catch (e) {
         console.error(e);
       } finally {
@@ -53,7 +92,8 @@ export default function AccountOrders() {
     const handleOrderUpdate = async () => {
       try {
         const fresh = await orderService.getCustomerOrders(user);
-        setOrders(fresh);
+        const enriched = await enrichOrdersWithPaymentStatus(fresh);
+        setOrders(enriched);
       } catch (e) {
         console.warn('Real-time order refresh error:', e);
       }
