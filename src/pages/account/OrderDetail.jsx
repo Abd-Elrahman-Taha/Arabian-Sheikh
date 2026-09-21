@@ -58,6 +58,9 @@ function getStatusBadge(status = '') {
 
 function getPaymentStatusBadge(status = '') {
   const s = String(status || '').toUpperCase();
+  if (s.includes('COD') || s.includes('CASH') || s.includes('DELIVERY')) {
+    return 'bg-[#D4AF37]/20 text-[#F2D675] border-[#D4AF37]/40';
+  }
   if (s.includes('PAID') || s.includes('SETTLED') || s.includes('SUCCEED') || s.includes('COMPLET')) {
     return 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40';
   }
@@ -332,12 +335,16 @@ export default function OrderDetail() {
 
   const formattedOrderCode = orderService.formatOrderCode(order);
   const displayStatus = order.orderStatus || order.status || 'Pending';
-  const paymentStatus = (
-    isSuccessStatus(order.paymentStatus) ? 'Paid' :
-    isSuccessStatus(order.payments?.[0]?.status) ? 'Paid' :
-    order.paidAt ? 'Paid' :
-    order.paymentStatus || 'Pending'
-  );
+  const isCod = String(order.paymentMethodCode || order.paymentMethod || order.paymentMethodName || '').toLowerCase().includes('cod') ||
+    String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cash');
+  const paymentStatus = isCod
+    ? 'Cash on Delivery'
+    : (
+      isSuccessStatus(order.paymentStatus) ? 'Paid' :
+      isSuccessStatus(order.payments?.[0]?.status) ? 'Paid' :
+      order.paidAt ? 'Paid' :
+      order.paymentStatus || 'Pending'
+    );
   const isCancelled = String(displayStatus).toLowerCase().includes('cancel');
   const statusBadgeClass = getStatusBadge(displayStatus);
   const paymentBadgeClass = getPaymentStatusBadge(paymentStatus);
@@ -486,7 +493,7 @@ export default function OrderDetail() {
                   {formatOrderStatus(displayStatus)}
                 </span>
                 <span className={`px-3 py-1 text-xs font-mono font-bold rounded-full uppercase border ${paymentBadgeClass}`}>
-                  {isSuccessStatus(paymentStatus) ? 'Paid & Settled' : `Payment: ${paymentStatus}`}
+                  {isCod ? 'Cash on Delivery' : isSuccessStatus(paymentStatus) ? 'Paid & Settled' : `Payment: ${paymentStatus}`}
                 </span>
                 {trackingNumber && (
                   <>
@@ -913,10 +920,10 @@ export default function OrderDetail() {
               <div className="text-[11px] font-mono text-[#D8BE99] flex items-center justify-between">
                 <span>Status:</span>
                 <span className="flex items-center gap-2">
-                  <strong className={isSuccessStatus(paymentStatus) ? 'text-emerald-400' : 'text-amber-400'}>
-                    {isSuccessStatus(paymentStatus) ? 'Paid & Settled' : paymentStatus}
+                  <strong className={isCod ? 'text-[#F2D675]' : isSuccessStatus(paymentStatus) ? 'text-emerald-400' : 'text-amber-400'}>
+                    {isCod ? 'Cash on Delivery' : isSuccessStatus(paymentStatus) ? 'Paid & Settled' : paymentStatus}
                   </strong>
-                  {!isSuccessStatus(paymentStatus) && (
+                  {!isSuccessStatus(paymentStatus) && !isCod && (
                     <button
                       onClick={handleManualVerifyPayment}
                       disabled={verifyingPayment}

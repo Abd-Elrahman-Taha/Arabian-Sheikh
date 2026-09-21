@@ -364,6 +364,9 @@ export default function AdminOrders() {
 
   const getPaymentStatusBadge = (status = '') => {
     const s = String(status).toLowerCase();
+    if (s.includes('cod') || s.includes('cash') || s.includes('delivery')) {
+      return 'bg-[#D4AF37]/20 text-[#F2D675] border-[#D4AF37]/40';
+    }
     if (s.includes('paid') || s.includes('succeed') || s.includes('complet') || s.includes('settle')) {
       return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
     }
@@ -686,8 +689,11 @@ export default function AdminOrders() {
                   const rawPayStatus = order.paymentStatus;
                   const hasPaidPayment = isSuccessStatus(rawPayStatus) || isSuccessStatus(order.payments?.[0]?.status) || Boolean(order.paidAt);
                   const isOrderProcessing = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(st => st.toLowerCase() === String(orderStatus).toLowerCase());
-                  const isCod = String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cod');
-                  const paymentStatus = hasPaidPayment ? 'Paid' : (isOrderProcessing && !isCod ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending'));
+                  const isCod = String(order.paymentMethodCode || order.paymentMethod || order.paymentMethodName || '').toLowerCase().includes('cod') ||
+                    String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cash');
+                  const paymentStatus = isCod
+                    ? 'Cash on Delivery'
+                    : (hasPaidPayment ? 'Paid' : (isOrderProcessing && !isCod ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending')));
                   const displayOrderStatus = (isSuccessStatus(paymentStatus) && !isCod && orderStatus === 'Pending') ? 'Processing' : orderStatus;
                   const orderTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shipments?.[0]?.trackingNumber || order.shippingSnapshot?.trackingNumber;
 
@@ -833,7 +839,7 @@ export default function AdminOrders() {
                       {/* Payment Status */}
                       <td className="py-3.5 px-4">
                         <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(paymentStatus)}`}>
-                          {isSuccessStatus(paymentStatus) ? 'PAID' : paymentStatus}
+                          {isCod ? 'CASH ON DELIVERY' : (isSuccessStatus(paymentStatus) ? 'PAID' : paymentStatus)}
                         </span>
                       </td>
 
@@ -1473,25 +1479,34 @@ export default function AdminOrders() {
                       </span>
                     </div>
 
-                    <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3 flex flex-col justify-between">
-                      <div>
-                        <span className="text-[11px] text-[#D8BE99] block">Reconciliation Status</span>
-                        <span className={`inline-block px-2 py-0.5 text-[10px] font-mono font-bold rounded-full border mt-1 uppercase ${getPaymentStatusBadge(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status)}`}>
-                          {isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ? 'PAID & SETTLED' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending')}
-                        </span>
-                      </div>
-                      {!isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) && (
-                        <button
-                          onClick={handleVerifyModalPayment}
-                          disabled={verifyingModalPayment}
-                          className="mt-2 text-[10px] font-mono text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                          title="Fetch live payment status from gateway"
-                        >
-                          <RefreshCw className={`w-2.5 h-2.5 ${verifyingModalPayment ? 'animate-spin' : ''}`} />
-                          <span>{verifyingModalPayment ? 'Verifying...' : 'Fetch Gateway Status'}</span>
-                        </button>
-                      )}
-                    </div>
+                    {(() => {
+                      const isModalCod = String(detailsModalOrder.paymentMethodCode || detailsModalOrder.paymentMethod || detailsModalOrder.paymentMethodName || '').toLowerCase().includes('cod') ||
+                        String(detailsModalOrder.paymentMethodCode || detailsModalOrder.paymentMethod || '').toLowerCase().includes('cash');
+                      const rawModalStatus = detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending';
+                      const modalStatusDisplay = isModalCod ? 'Cash on Delivery' : (isSuccessStatus(rawModalStatus) ? 'PAID & SETTLED' : rawModalStatus);
+
+                      return (
+                        <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3 flex flex-col justify-between">
+                          <div>
+                            <span className="text-[11px] text-[#D8BE99] block">Reconciliation Status</span>
+                            <span className={`inline-block px-2 py-0.5 text-[10px] font-mono font-bold rounded-full border mt-1 uppercase ${getPaymentStatusBadge(modalStatusDisplay)}`}>
+                              {modalStatusDisplay}
+                            </span>
+                          </div>
+                          {!isSuccessStatus(rawModalStatus) && !isModalCod && (
+                            <button
+                              onClick={handleVerifyModalPayment}
+                              disabled={verifyingModalPayment}
+                              className="mt-2 text-[10px] font-mono text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="Fetch live payment status from gateway"
+                            >
+                              <RefreshCw className={`w-2.5 h-2.5 ${verifyingModalPayment ? 'animate-spin' : ''}`} />
+                              <span>{verifyingModalPayment ? 'Verifying...' : 'Fetch Gateway Status'}</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Payment Attempts History */}

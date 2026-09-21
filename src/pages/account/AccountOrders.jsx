@@ -22,8 +22,15 @@ function formatOrderStatus(status = '') {
 }
 
 
+/** Helper to check if order is Cash on Delivery */
+function isCodOrder(order) {
+  const method = String(order?.paymentMethodCode || order?.paymentMethod || order?.paymentMethodName || '').toLowerCase();
+  return method.includes('cod') || method.includes('cash') || method.includes('delivery');
+}
+
 /** Resolve payment status strictly from the backend order entity */
 function resolveDisplayPaymentStatus(order) {
+  if (isCodOrder(order)) return 'Cash on Delivery';
   if (isSuccessStatus(order.paymentStatus)) return 'Paid';
   return order.paymentStatus || 'Pending';
 }
@@ -160,9 +167,20 @@ export default function AccountOrders() {
                   <span className="text-[#D8BE99] ml-3 font-mono text-xs sm:text-sm">{dateStr}</span>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <span className={`px-2.5 py-0.5 text-[11px] font-mono uppercase font-bold rounded-full border ${isSuccessStatus(o.paymentStatus) ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/70 text-amber-300 border-amber-500/40'}`}>
-                    {isSuccessStatus(o.paymentStatus) ? 'Paid' : (o.paymentStatus || 'Pending')}
-                  </span>
+                  {(() => {
+                    const isCod = isCodOrder(o);
+                    const badgeClass = isCod
+                      ? 'bg-[#D4AF37]/20 text-[#F2D675] border-[#D4AF37]/40'
+                      : isSuccessStatus(o.paymentStatus)
+                        ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40'
+                        : 'bg-amber-950/70 text-amber-300 border-amber-500/40';
+                    const label = isCod ? 'Cash on Delivery' : isSuccessStatus(o.paymentStatus) ? 'Paid' : (o.paymentStatus || 'Pending');
+                    return (
+                      <span className={`px-2.5 py-0.5 text-[11px] font-mono uppercase font-bold rounded-full border ${badgeClass}`}>
+                        {label}
+                      </span>
+                    );
+                  })()}
                   <span className={`px-3 py-1 text-xs font-mono uppercase font-bold rounded-full border ${statusClass}`}>
                     {statusLabel}
                   </span>
