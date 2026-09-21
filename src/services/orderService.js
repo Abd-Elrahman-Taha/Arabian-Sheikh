@@ -1,83 +1,13 @@
 import { orderApi, toNumericId } from '../api/order.api';
+import { apiClient } from '../api/client';
+import { normalizeOrderAddress } from '../api/normalizers';
 import { shippingApi } from '../api/shipping.api';
 import { checkoutApi } from '../api/checkout.api';
 import { addressApi } from '../api/address.api';
-import { cartApi } from '../api/cart.api';
-import { apiClient } from '../api/client';
-import { normalizeShippingOption, normalizeOrderAddress } from '../api/normalizers';
-import { liveCloudSync } from './liveCloudSync';
 import { newOrderKey } from './paymentService';
+import { normalizeShippingOption } from '../api/normalizers';
 
-const ORDERS_STORAGE_KEY = 'arabian_sheikh_orders';
-const PLACED_ORDERS_STORAGE_KEY = 'arabian_sheikh_placed_order_ids';
-let inMemoryOrders = null;
-
-function loadOrders() {
-  let base = [];
-  const data = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_STORAGE_KEY) : null;
-  if (data) {
-    try {
-      const parsed = JSON.parse(data);
-      base = Array.isArray(parsed) ? parsed : (inMemoryOrders || []);
-    } catch {
-      base = inMemoryOrders || [];
-    }
-  } else {
-    base = inMemoryOrders || [];
-  }
-
-  // Merge live cloud orders
-  const cloudOrders = typeof liveCloudSync.getOrders === 'function' ? liveCloudSync.getOrders() : [];
-  const orderMap = new Map();
-  (base || []).forEach(o => {
-    if (o?.id) {
-      const key = String(o.orderNumber || o.id).toLowerCase();
-      orderMap.set(key, o);
-    }
-  });
-  (cloudOrders || []).forEach(o => {
-    if (o?.id) {
-      const key = String(o.orderNumber || o.id).toLowerCase();
-      const existing = orderMap.get(key);
-      if (existing) {
-        const baseTime = new Date(existing.updatedAt || existing.date || existing.createdAt || 0).getTime();
-        const cloudTime = new Date(o.updatedAt || o.date || o.createdAt || 0).getTime();
-        orderMap.set(key, baseTime >= cloudTime ? { ...o, ...existing } : { ...existing, ...o });
-      } else {
-        orderMap.set(key, o);
-      }
-    }
-  });
-
-  inMemoryOrders = Array.from(orderMap.values());
-  return inMemoryOrders;
-}
-
-function saveOrders(orders) {
-  inMemoryOrders = orders;
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-  }
-}
-
-function loadPlacedOrderIds() {
-  if (typeof window === 'undefined') return [];
-  try {
-    const data = localStorage.getItem(PLACED_ORDERS_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
-function recordPlacedOrderId(id) {
-  if (typeof window === 'undefined' || !id) return;
-  const list = loadPlacedOrderIds();
-  if (!list.includes(id)) {
-    list.unshift(id);
-    localStorage.setItem(PLACED_ORDERS_STORAGE_KEY, JSON.stringify(list));
-  }
-}
+// ─── NO localStorage for orders. Everything comes from the API. ───────────────
 
 export const ORDER_STATUSES = [
   'PENDING',
@@ -108,9 +38,7 @@ export const ADMIN_PAYMENT_STATUSES = [
 ];
 
 /**
- * Returns formatted order code matching Admin Dashboard display (e.g. #ORD-12345 or #12345)
- * @param {object|string|number} order
- * @returns {string}
+ * Returns formatted order code (e.g. #ORD-12345 or #12345)
  */
 export function formatOrderCode(order) {
   if (!order) return '';
@@ -125,252 +53,55 @@ export const orderService = {
     return formatOrderCode(order);
   },
 
-  recordPlacedOrderId(id) {
-    recordPlacedOrderId(id);
-  },
+  // ─── No-op stubs kept for call-site compatibility ──────────────────────────
+  recordPlacedOrderId() {},
+  getPlacedOrderIds() { return []; },
+  getAllOrdersSync() { return []; },
+  getOrderByIdSync() { return null; },
 
-  getPlacedOrderIds() {
-    return loadPlacedOrderIds();
-  },
-
-  getAllOrdersSync(filters = {}) {
-    const orders = loadOrders();
-    let result = [...orders];
-
-    if (filters.status && filters.status !== 'ALL') {
-      result = result.filter(o => (o.status || o.orderStatus) === filters.status);
-    }
-
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(o => 
-        (o.id && o.id.toLowerCase().includes(q)) ||
-        (o.customerName && o.customerName.toLowerCase().includes(q)) ||
-        (o.customerEmail && o.customerEmail.toLowerCase().includes(q)) ||
-        (o.trackingNumber && o.trackingNumber.toLowerCase().includes(q)) ||
-        (o.trackingCode && o.trackingCode.toLowerCase().includes(q)) ||
-        (o.dhlTrackingNumber && o.dhlTrackingNumber.toLowerCase().includes(q))
-      );
-    }
-
-    return result;
-  },
-
-  /**
-   * Get orders for the customer viewing their account
-   * Returns orders placed in this browser session, or matching email/userId, or all if Admin
-   */
+  // ─── Customer: Fetch orders from GET /api/Orders ───────────────────────────
   async getCustomerOrders(user) {
-    // 1. Sync latest live cloud updates first
-    await liveCloudSync.sync().catch(() => {});
-
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const response = await orderApi.getMyOrders();
-        const remoteItems = response?.items || (Array.isArray(response) ? response : []);
-        if (Array.isArray(remoteItems) && remoteItems.length > 0) {
-          const current = loadOrders();
-          const merged = [...current];
-          for (const item of remoteItems) {
-            const target = String(item.orderNumber || item.id).replace(/^#/, '').toLowerCase().trim();
-            const idx = merged.findIndex(o => {
-              const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-              const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-              return idStr === target || numStr === target;
-            });
-            if (idx > -1) {
-              const localStatus = merged[idx].orderStatus || merged[idx].status;
-              const localPayStatus = merged[idx].paymentStatus;
-              merged[idx] = { ...merged[idx], ...item };
-              // Preserve status if admin has updated it locally/in cloud
-              if (localStatus && localStatus !== 'Pending' && item.orderStatus === 'Pending') {
-                merged[idx].orderStatus = localStatus;
-                merged[idx].status = localStatus;
-              }
-              // Preserve Paid status
-              if (localPayStatus === 'Paid' && item.paymentStatus === 'Pending') {
-                merged[idx].paymentStatus = 'Paid';
-                if (!merged[idx].orderStatus || merged[idx].orderStatus === 'Pending') {
-                  merged[idx].orderStatus = 'Processing';
-                  merged[idx].status = 'Processing';
-                }
-              }
-            } else {
-              merged.unshift(item);
-            }
-          }
-          saveOrders(merged);
-        }
-      } catch (e) {
-        console.warn('Real API getMyOrders fallback:', e.message);
-      }
+    try {
+      const response = await orderApi.getMyOrders({ page: 1, pageSize: 100 });
+      const items = response?.items || (Array.isArray(response) ? response : []);
+      items.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+      return items;
+    } catch (e) {
+      console.warn('[orderService] getCustomerOrders failed:', e.message);
+      return [];
     }
-
-    const all = loadOrders();
-    const placedIds = loadPlacedOrderIds();
-    const userEmail = user?.email?.toLowerCase().trim();
-    const userId = user?.id;
-
-    let mine = all.filter(o => {
-      const orderEmail = (o.customerEmail || o.customer?.email || '').toLowerCase().trim();
-      const orderUserId = (o.userId || o.customer?.id) ? String(o.userId || o.customer?.id) : null;
-      const currentUserIdStr = userId ? String(userId) : null;
-      const isPlacedOnDevice = placedIds.includes(o.id) || placedIds.includes(o.orderNumber);
-
-      if (userEmail && orderEmail && orderEmail === userEmail) return true;
-      if (currentUserIdStr && orderUserId && orderUserId === currentUserIdStr) return true;
-      if (isPlacedOnDevice) return true;
-      return false;
-    });
-
-    mine.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
-    return mine;
   },
 
-  /**
-   * Get orders for Admin back-office with server sync & live cloud sync
-   * Merges remote backend orders with customer orders placed in browser/cloud
-   */
+  // ─── Admin: Fetch orders from GET /api/admin/orders ───────────────────────
   async getAdminOrders(filters = {}) {
-    // 1. Pull latest orders from live cloud sync
-    await liveCloudSync.sync().catch(() => {});
-    const cloudOrders = typeof liveCloudSync.getOrders === 'function' ? liveCloudSync.getOrders() : [];
-    const currentOrders = loadOrders();
-
-    let remoteItems = [];
-    let remotePage = Number(filters.page || filters.Page || 1);
-    let remotePageSize = Number(filters.pageSize || filters.PageSize || 20);
-
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const response = await orderApi.adminGetOrders(filters);
-        if (response && Array.isArray(response.items)) {
-          remoteItems = response.items;
-          remotePage = response.page || remotePage;
-          remotePageSize = response.pageSize || remotePageSize;
-        }
-      } catch (e) {
-        console.warn('Real API adminGetOrders fallback:', e.message);
+    try {
+      const response = await orderApi.adminGetOrders(filters);
+      if (response && Array.isArray(response.items)) {
+        return response;
       }
-    }
-
-    // Combine local saved orders, live cloud sync orders, and remote backend orders
-    const orderMap = new Map();
-
-    // 1. Base / Local orders (created on this device)
-    (currentOrders || []).forEach(o => {
-      if (o?.id) {
-        const key = String(o.orderNumber || o.id);
-        orderMap.set(key, o);
+      if (Array.isArray(response)) {
+        return {
+          items: response,
+          page: 1,
+          pageSize: response.length,
+          totalCount: response.length,
+          totalPages: 1,
+          hasPreviousPage: false,
+          hasNextPage: false
+        };
       }
-    });
-
-    // 2. Live cloud sync orders (placed by normal user accounts on any tab or device)
-    (cloudOrders || []).forEach(o => {
-      if (o?.id) {
-        const key = String(o.orderNumber || o.id);
-        const existing = orderMap.get(key);
-        const merged = { ...(existing || {}), ...o };
-        if (existing?.paymentStatus === 'Paid' || o?.paymentStatus === 'Paid') {
-          merged.paymentStatus = 'Paid';
-          if (!merged.orderStatus || merged.orderStatus === 'Pending') {
-            merged.orderStatus = 'Processing';
-            merged.status = 'Processing';
-          }
-        }
-        orderMap.set(key, merged);
-      }
-    });
-
-    // 3. Remote backend orders
-    (remoteItems || []).forEach(o => {
-      if (o?.id) {
-        const key = String(o.orderNumber || o.id);
-        const existing = orderMap.get(key);
-        const merged = { ...(existing || {}), ...o };
-        if (existing?.paymentStatus === 'Paid' && o?.paymentStatus !== 'Refunded') {
-          merged.paymentStatus = 'Paid';
-          if (!merged.orderStatus || merged.orderStatus === 'Pending') {
-            merged.orderStatus = 'Processing';
-            merged.status = 'Processing';
-          }
-        }
-        orderMap.set(key, merged);
-      }
-    });
-
-    const allOrders = Array.from(orderMap.values());
-    saveOrders(allOrders);
-
-    // Apply filters (orderStatus, paymentStatus, search, date range)
-    let filtered = allOrders;
-
-    const statusFilter = filters.orderStatus || filters.OrderStatus || filters.status;
-    if (statusFilter && statusFilter !== 'ALL') {
-      filtered = filtered.filter(o => {
-        const s = String(o.orderStatus || o.status || '').toLowerCase();
-        return s === String(statusFilter).toLowerCase();
-      });
+    } catch (e) {
+      console.warn('[orderService] getAdminOrders failed:', e.message);
+      throw e;
     }
-
-    const paymentFilter = filters.paymentStatus || filters.PaymentStatus;
-    if (paymentFilter && paymentFilter !== 'ALL') {
-      filtered = filtered.filter(o => {
-        const p = String(o.paymentStatus || o.payments?.[0]?.status || '').toLowerCase();
-        return p === String(paymentFilter).toLowerCase();
-      });
-    }
-
-    const searchStr = (filters.search || filters.Search || '').toLowerCase().trim();
-    if (searchStr) {
-      filtered = filtered.filter(o => {
-        const idStr = String(o.id || '').toLowerCase();
-        const numStr = String(o.orderNumber || '').toLowerCase();
-        const custName = String(o.customer?.name || o.customerName || '').toLowerCase();
-        const custEmail = String(o.customer?.email || o.customerEmail || '').toLowerCase();
-        const trk = String(o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase();
-        return idStr.includes(searchStr) || numStr.includes(searchStr) || custName.includes(searchStr) || custEmail.includes(searchStr) || trk.includes(searchStr);
-      });
-    }
-
-    if (filters.from || filters.From) {
-      const fromTime = new Date(filters.from || filters.From).getTime();
-      filtered = filtered.filter(o => new Date(o.createdAt || o.date || 0).getTime() >= fromTime);
-    }
-    if (filters.to || filters.To) {
-      const toTime = new Date(filters.to || filters.To).getTime();
-      filtered = filtered.filter(o => new Date(o.createdAt || o.date || 0).getTime() <= toTime);
-    }
-
-    // Sort
-    const sortBy = filters.sortBy || filters.SortBy || 'createdAt';
-    const sortDir = (filters.sortDirection || filters.SortDirection || 'desc').toLowerCase() === 'asc' ? 1 : -1;
-    filtered.sort((a, b) => {
-      if (sortBy === 'total') {
-        const totA = Number(a.totals?.total ?? a.total ?? 0);
-        const totB = Number(b.totals?.total ?? b.total ?? 0);
-        return (totA - totB) * sortDir;
-      }
-      const timeA = new Date(a.createdAt || a.date || 0).getTime();
-      const timeB = new Date(b.createdAt || b.date || 0).getTime();
-      return (timeA - timeB) * sortDir;
-    });
-
-    const page = remotePage;
-    const pageSize = remotePageSize;
-    const totalCount = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-    const startIdx = (page - 1) * pageSize;
-    const paginatedItems = filtered.slice(startIdx, startIdx + pageSize);
-
     return {
-      items: paginatedItems,
-      page,
-      pageSize,
-      totalCount,
-      totalPages,
-      hasPreviousPage: page > 1,
-      hasNextPage: page < totalPages
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false
     };
   },
 
@@ -378,350 +109,172 @@ export const orderService = {
     return this.getAdminOrders(filters);
   },
 
-  /**
-   * Admin: Get order details by ID
-   */
+  // ─── Admin: Get order details from GET /api/admin/orders/{id} ─────────────
   async getAdminOrderDetails(id) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const remote = await orderApi.adminGetOrderDetails(id);
-        if (remote) {
-          const orders = loadOrders();
-          const idx = orders.findIndex(o => String(o.id) === String(id) || o.orderNumber === id);
-          if (idx > -1) {
-            orders[idx] = { ...orders[idx], ...remote };
-          } else {
-            orders.unshift(remote);
-          }
-          saveOrders(orders);
-          return remote;
-        }
-      } catch (e) {
-        console.warn('Real API adminGetOrderDetails fallback:', e.message);
-      }
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    try {
+      return await orderApi.adminGetOrderDetails(numericId);
+    } catch (e) {
+      console.warn('[orderService] getAdminOrderDetails failed:', e.message);
+      return null;
     }
-
-    return this.getOrderByIdSync(id);
   },
 
-  getOrdersByUserSync(userId) {
-    const orders = loadOrders();
-    return orders
-      .filter(o => o.userId === userId)
-      .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
-  },
-
-  async getOrdersByUser(userId) {
-    return this.getOrdersByUserSync(userId);
-  },
-
-  getOrderByIdSync(id) {
-    if (!id) return null;
-    const orders = loadOrders();
-    const target = String(id).replace(/^#/, '').toLowerCase().trim();
-    return orders.find(o => {
-      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      const trk = String(o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shippingSnapshot?.trackingNumber || '').toLowerCase().trim();
-      return idStr === target || numStr === target || trk === target;
-    }) || null;
-  },
-
+  // ─── Customer: Get single order from GET /api/Orders/{id} ─────────────────
   async getOrderById(id) {
-    const local = this.getOrderByIdSync(id);
-
-    const validNumericId = toNumericId(id) || toNumericId(local?.numericId) || toNumericId(local?.id) || toNumericId(local?.orderNumber);
-
-    if (!apiClient.isMockEnabled() && validNumericId) {
-      try {
-        const remote = await orderApi.getOrderById(validNumericId);
-        if (remote) {
-          const orders = loadOrders();
-          const target = String(id).replace(/^#/, '').toLowerCase().trim();
-          const idx = orders.findIndex(o => {
-            const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-            const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-            return idStr === target || numStr === target;
-          });
-
-          // Remote is the authoritative source of truth from the backend!
-          const merged = { ...local, ...remote };
-          const localStatus = local?.orderStatus || local?.status;
-          if (localStatus && localStatus !== 'Pending' && remote.orderStatus === 'Pending') {
-            merged.orderStatus = localStatus;
-            merged.status = localStatus;
-          }
-          if (local?.paymentStatus === 'Paid' && remote.paymentStatus === 'Pending') {
-            merged.paymentStatus = 'Paid';
-            if (!merged.orderStatus || merged.orderStatus === 'Pending') {
-              merged.orderStatus = 'Processing';
-              merged.status = 'Processing';
-            }
-          }
-
-          if (idx > -1) {
-            orders[idx] = merged;
-          } else {
-            orders.unshift(merged);
-          }
-          saveOrders(orders);
-          return merged;
-        }
-      } catch (e) {
-        // Graceful silent fallback to local/cloud order
-      }
+    const numericId = toNumericId(id);
+    if (!numericId) return null;
+    try {
+      return await orderApi.getOrderById(numericId);
+    } catch (e) {
+      console.warn('[orderService] getOrderById failed:', e.message);
+      return null;
     }
-
-    return local;
   },
 
+  getOrdersByUserSync() { return []; },
+  async getOrdersByUser() { return []; },
+
+  // ─── Create order via POST /api/Orders ────────────────────────────────────
   async createOrder(orderPayload) {
     let apiOrder = null;
     let resolvedAddressId = orderPayload.addressId;
 
-    if (!apiClient.isMockEnabled()) {
+    try {
+      // Resolve address if needed
+      if (!resolvedAddressId) {
+        const addresses = await addressApi.getAddresses().catch(() => []);
+        if (Array.isArray(addresses) && addresses.length > 0 && addresses[0]?.id) {
+          resolvedAddressId = addresses[0].id;
+        } else {
+          const addrObj = orderPayload.shippingAddress || {};
+          const createdAddr = await addressApi.createAddress({
+            fullName: addrObj.fullName || orderPayload.customerName || 'Valued Patron',
+            phone: orderPayload.customerPhone || orderPayload.phone || addrObj.phone || '',
+            countryCode: addrObj.countryCode || addrObj.country || 'BG',
+            region: addrObj.region || addrObj.state || addrObj.city || '',
+            city: addrObj.city || addrObj.region || '',
+            addressLine1: addrObj.addressLine1 || addrObj.address || addrObj.street || '',
+            addressLine2: addrObj.addressLine2 || null,
+            postalCode: addrObj.postalCode || addrObj.zipCode || ''
+          });
+          if (createdAddr?.id) resolvedAddressId = createdAddr.id;
+        }
+      }
+
+      const numericAddressId = Number(resolvedAddressId) || null;
+      if (!numericAddressId) {
+        throw new Error('No valid address found for this customer. Please add a shipping address first.');
+      }
+
+      const rawQuoteId = orderPayload.quoteId;
+      if (!rawQuoteId || typeof rawQuoteId !== 'string' || !rawQuoteId.trim()) {
+        throw new Error('Unable to create the order because the shipping quote is missing. Please recalculate shipping and try again.');
+      }
+
+      const rawMethodId = orderPayload.shippingMethodId;
+      const shippingMethodId = rawMethodId !== undefined && rawMethodId !== null && !isNaN(Number(rawMethodId))
+        ? Number(rawMethodId)
+        : null;
+      if (!shippingMethodId) {
+        throw new Error('A shipping method must be selected.');
+      }
+
+      const orderKey = orderPayload.idempotencyKey || newOrderKey();
+
       try {
-        // 1. Resolve customer delivery address on backend if needed
-        if (!resolvedAddressId) {
-          const addresses = await addressApi.getAddresses().catch(() => []);
-          if (Array.isArray(addresses) && addresses.length > 0 && addresses[0]?.id) {
-            resolvedAddressId = addresses[0].id;
-            const addrObj = orderPayload.shippingAddress || {};
-            const createdAddr = await addressApi.createAddress({
-              fullName: addrObj.fullName || orderPayload.customerName || 'Valued Patron',
-              phone: orderPayload.customerPhone || orderPayload.phone || addrObj.phone || '',
-              countryCode: addrObj.countryCode || addrObj.country || 'BG',
-              region: addrObj.region || addrObj.state || addrObj.city || '',
-              city: addrObj.city || addrObj.region || '',
-              addressLine1: addrObj.addressLine1 || addrObj.address || addrObj.street || '',
-              addressLine2: addrObj.addressLine2 || null,
-              postalCode: addrObj.postalCode || addrObj.zipCode || ''
-            });
-            if (createdAddr?.id) {
-              resolvedAddressId = createdAddr.id;
+        apiOrder = await orderApi.createOrder({
+          addressId: numericAddressId,
+          shippingMethodId,
+          quoteId: rawQuoteId.trim(),
+          paymentMethod: orderPayload.paymentMethod || 'cod',
+          couponCode: orderPayload.discountCode || orderPayload.couponCode || null
+        }, orderKey);
+      } catch (firstErr) {
+        const errMsg = firstErr?.message || '';
+        const isQuoteOrMethodError =
+          firstErr?.code === 'SHIPPING_QUOTE_MISMATCH' ||
+          firstErr?.code === 'QUOTE_MISMATCH' ||
+          firstErr?.code === 'INVALID_SHIPPING_METHOD' ||
+          errMsg.includes('Quote no longer matches') ||
+          errMsg.includes('SHIPPING_QUOTE_MISMATCH') ||
+          errMsg.includes('is not available for the selected address') ||
+          firstErr?.status === 422 ||
+          firstErr?.status === 400;
+
+        if (isQuoteOrMethodError) {
+          try {
+            const currentCoupon = orderPayload.discountCode || orderPayload.couponCode || undefined;
+            const summary = await checkoutApi.getCheckout({
+              addressId: numericAddressId,
+              couponCode: currentCoupon
+            }).catch(() => null);
+
+            const rawOptions = summary?.shippingOptions || [];
+            const validOptions = (Array.isArray(rawOptions) ? rawOptions : [])
+              .map(normalizeShippingOption)
+              .filter(opt => opt && opt.shippingMethodId && Number(opt.shippingMethodId) > 0);
+
+            let matchedOption = null;
+            if (validOptions.length > 0) {
+              matchedOption = validOptions.find(o => Number(o.shippingMethodId) === Number(shippingMethodId)) || validOptions[0];
             }
-          }
-        }
 
-        // Ensure we have a real numeric address ID before hitting the API
-        const numericAddressId = Number(resolvedAddressId) || null;
-        if (!numericAddressId) {
-          throw new Error('No valid address found for this customer. Please add a shipping address first.');
-        }
+            if (!matchedOption) {
+              const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId }).catch(() => null);
+              const freshOptions = (freshQuotes?.options || []).filter(o => o && (o.shippingMethodId || o.id));
+              matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === Number(shippingMethodId)) || freshOptions[0];
+            }
 
-        // 2. Strict guards before calling POST /api/Orders
-        if (!numericAddressId) {
-          throw new Error('A valid shipping address is required.');
-        }
+            const retryMethodId = matchedOption?.shippingMethodId ? Number(matchedOption.shippingMethodId) : Number(shippingMethodId);
+            const freshQuoteId = matchedOption?.quoteId || summary?.selectedShippingMethod?.quoteId || summary?.quoteId;
 
-        const rawQuoteId = orderPayload.quoteId;
-        if (!rawQuoteId || typeof rawQuoteId !== 'string' || !rawQuoteId.trim()) {
-          throw new Error('Unable to create the order because the shipping quote is missing. Please recalculate shipping and try again.');
-        }
-
-        const rawMethodId = orderPayload.shippingMethodId;
-        const shippingMethodId = rawMethodId !== undefined && rawMethodId !== null && !isNaN(Number(rawMethodId))
-          ? Number(rawMethodId)
-          : null;
-        if (!shippingMethodId) {
-          throw new Error('A shipping method must be selected.');
-        }
-
-        const orderKey = orderPayload.idempotencyKey || newOrderKey();
-
-        try {
-          apiOrder = await orderApi.createOrder({
-            addressId: numericAddressId,
-            shippingMethodId,
-            quoteId: rawQuoteId.trim(),
-            paymentMethod: orderPayload.paymentMethod || 'cod',
-            couponCode: orderPayload.discountCode || orderPayload.couponCode || null
-          }, orderKey);
-        } catch (firstErr) {
-          const errMsg = firstErr?.message || '';
-          const isQuoteOrMethodError =
-            firstErr?.code === 'SHIPPING_QUOTE_MISMATCH' ||
-            firstErr?.code === 'QUOTE_MISMATCH' ||
-            firstErr?.code === 'INVALID_SHIPPING_METHOD' ||
-            errMsg.includes('Quote no longer matches') ||
-            errMsg.includes('SHIPPING_QUOTE_MISMATCH') ||
-            errMsg.includes('is not available for the selected address') ||
-            firstErr?.status === 422 ||
-            firstErr?.status === 400;
-
-          if (isQuoteOrMethodError) {
-            console.warn('[orderService] Quote mismatch or invalid shipping method detected, refreshing via GET /api/checkout and retrying...', firstErr);
-            try {
-              const currentCoupon = orderPayload.discountCode || orderPayload.couponCode || undefined;
-
-              // 1. Fetch fresh authoritative checkout summary WITHOUT shippingMethodId to avoid 400 if method is invalid for address
-              const summary = await checkoutApi.getCheckout({
+            if (freshQuoteId && retryMethodId) {
+              await checkoutApi.setCheckoutShipping({
+                shippingMethodId: retryMethodId,
+                quoteId: String(freshQuoteId).trim()
+              }, {
                 addressId: numericAddressId,
                 couponCode: currentCoupon
-              }).catch(() => null);
+              }).catch(() => {});
 
-              const rawOptions = summary?.shippingOptions || [];
-              const validOptions = (Array.isArray(rawOptions) ? rawOptions : [])
-                .map(normalizeShippingOption)
-                .filter(opt => opt && opt.shippingMethodId && Number(opt.shippingMethodId) > 0);
-
-              let matchedOption = null;
-              if (validOptions.length > 0) {
-                matchedOption = validOptions.find(o => Number(o.shippingMethodId) === Number(shippingMethodId))
-                  || validOptions[0];
-              }
-
-              // 2. Fallback to shippingApi if checkout summary didn't return options
-              if (!matchedOption) {
-                const freshQuotes = await shippingApi.getQuotes({ addressId: numericAddressId }).catch(() => null);
-                const freshOptions = (freshQuotes?.options || [])
-                  .filter(o => o && (o.shippingMethodId || o.id));
-                matchedOption = freshOptions.find(o => Number(o.shippingMethodId || o.id) === Number(shippingMethodId))
-                  || freshOptions[0];
-              }
-
-              const retryMethodId = matchedOption?.shippingMethodId
-                ? Number(matchedOption.shippingMethodId)
-                : Number(shippingMethodId);
-
-              const freshQuoteId = matchedOption?.quoteId
-                || summary?.selectedShippingMethod?.quoteId
-                || summary?.quoteId;
-
-              if (freshQuoteId && retryMethodId) {
-                console.log('[orderService] Retrying order with authoritative fresh quote and verified method:', { freshQuoteId, retryMethodId, coupon: currentCoupon });
-
-                // Commit to checkout shipping session (Section 4 - Option 2)
-                await checkoutApi.setCheckoutShipping({
-                  shippingMethodId: retryMethodId,
-                  quoteId: String(freshQuoteId).trim()
-                }, {
-                  addressId: numericAddressId,
-                  couponCode: currentCoupon
-                }).catch(() => {});
-
-                apiOrder = await orderApi.createOrder({
-                  addressId: numericAddressId,
-                  shippingMethodId: retryMethodId,
-                  quoteId: String(freshQuoteId).trim(),
-                  paymentMethod: orderPayload.paymentMethod || 'cod',
-                  couponCode: currentCoupon || null
-                }, newOrderKey());
-              } else {
-                throw firstErr;
-              }
-            } catch (retryErr) {
-              console.error('[orderService] Retry with fresh quote failed:', retryErr);
-              throw retryErr;
+              apiOrder = await orderApi.createOrder({
+                addressId: numericAddressId,
+                shippingMethodId: retryMethodId,
+                quoteId: String(freshQuoteId).trim(),
+                paymentMethod: orderPayload.paymentMethod || 'cod',
+                couponCode: currentCoupon || null
+              }, newOrderKey());
+            } else {
+              throw firstErr;
             }
-          } else {
-            throw firstErr;
+          } catch (retryErr) {
+            throw retryErr;
           }
+        } else {
+          throw firstErr;
         }
-      } catch (e) {
-        console.error('Real API create order error:', e);
-        throw e; // Fail fast so caller receives the real backend error instead of phantom mock
       }
+    } catch (e) {
+      console.error('[orderService] createOrder error:', e);
+      throw e;
     }
 
-    const randomNum = Math.floor(10000 + Math.random() * 90000);
-    const orderId = apiOrder?.id || `ORD-${randomNum}`;
-    const orderNum = apiOrder?.orderNumber || (typeof orderId === 'string' && orderId.startsWith('ORD-') ? orderId : `ORD-${orderId}`);
-    const trackingCode = apiOrder?.trackingCode || apiOrder?.shipping?.trackingNumber || apiOrder?.trackingNumber || null;
-    const resolvedCarrier = orderPayload.carrier 
-      || apiOrder?.shippingSnapshot?.shippingCompanyName 
-      || apiOrder?.shippingSnapshot?.carrier 
-      || apiOrder?.carrier 
-      || apiOrder?.shipping?.shippingCompanyName
-      || 'Carrier';
-    const resolvedShippingMethod = orderPayload.shippingMethod || apiOrder?.shippingSnapshot?.shippingMethod || 'Standard Delivery';
-
-    const customerName = orderPayload.customerName || apiOrder?.customer?.name || 'Valued Patron';
-    const customerEmail = orderPayload.customerEmail || apiOrder?.customer?.email || '';
-    const customerPhone = orderPayload.customerPhone || apiOrder?.customer?.phone || '';
-    const orderTotal = Number(apiOrder?.total ?? orderPayload.total ?? 0);
-    const subtotal = Number(apiOrder?.subtotal ?? orderPayload.subtotal ?? orderTotal);
-    const shippingCost = Number(apiOrder?.shippingCost ?? orderPayload.shipping ?? 0);
-    const discountTotal = Number(apiOrder?.discountTotal ?? orderPayload.discountAmount ?? 0);
-    const orderDate = apiOrder?.createdAt || new Date().toISOString();
+    if (!apiOrder) throw new Error('Order creation failed: no response from server.');
 
     const newOrder = {
-      ...orderPayload,
-      ...(apiOrder || {}),
-      id: orderId,
-      numericId: typeof orderId === 'number' ? orderId : (!isNaN(Number(orderId)) ? Number(orderId) : null),
-      orderNumber: orderNum,
-      customer: {
-        id: orderPayload.userId || apiOrder?.customer?.id || null,
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone
-      },
-      customerEmail,
-      customerName,
-      customerPhone,
-      userId: orderPayload.userId || null,
-      items: (apiOrder?.items && apiOrder.items.length > 0) ? apiOrder.items : (orderPayload.items || []),
-      totals: {
-        subtotal,
-        discountTotal,
-        shippingCost,
-        total: orderTotal,
-        currency: 'EUR'
-      },
-      total: orderTotal,
-      subtotal,
-      shipping: shippingCost,
-      currency: apiOrder?.currency || 'EUR',
-      orderStatus: apiOrder?.orderStatus || 'Pending',
-      paymentStatus: apiOrder?.paymentStatus || 'Paid',
-      status: apiOrder?.orderStatus || 'Pending',
-      shippingAddress: normalizeOrderAddress(orderPayload.shippingAddress || apiOrder?.shippingAddress) || (orderPayload.shippingAddress || apiOrder?.shippingAddress || {}),
-      shippingSnapshot: apiOrder?.shippingSnapshot || {
-        carrier: resolvedCarrier,
-        shippingCompanyName: resolvedCarrier,
-        shippingMethod: resolvedShippingMethod,
-        trackingNumber: trackingCode,
-        shippingCost
-      },
-      carrier: resolvedCarrier,
-      shippingMethod: resolvedShippingMethod,
-      createdAt: orderDate,
-      date: orderDate,
-      trackingNumber: trackingCode,
-      trackingCode,
-      dhlTrackingNumber: trackingCode,
-      timeline: apiOrder?.timeline || [],
-      statusHistory: apiOrder?.statusHistory || [
-        {
-          status: 'Pending',
-          toStatus: 'Pending',
-          fromStatus: null,
-          note: 'Order submitted successfully via customer checkout',
-          changedBy: 'Customer',
-          createdAt: orderDate
-        }
-      ],
-      compensationFailure: false
+      ...apiOrder,
+      id: apiOrder.id,
+      orderNumber: apiOrder.orderNumber,
+      orderStatus: apiOrder.orderStatus || 'Pending',
+      paymentStatus: apiOrder.paymentStatus || 'Pending',
+      status: apiOrder.orderStatus || 'Pending',
+      createdAt: apiOrder.createdAt || new Date().toISOString(),
+      date: apiOrder.createdAt || new Date().toISOString(),
     };
 
-    // 1. Save to live cloud sync so all admins and accounts see it immediately!
-    await liveCloudSync.addOrder(newOrder);
-
-    // 2. Save to local storage list
-    const orders = loadOrders();
-    const existingIndex = orders.findIndex(o => String(o.id) === String(newOrder.id) || o.orderNumber === newOrder.orderNumber);
-    if (existingIndex > -1) {
-      orders[existingIndex] = newOrder;
-    } else {
-      orders.unshift(newOrder);
-    }
-    saveOrders(orders);
-
-    // 3. Record this order on this client/device
-    recordPlacedOrderId(newOrder.id);
-
-    // 4. Dispatch browser event for real-time reactive UI update
+    // Dispatch browser event for immediate UI update (same tab only)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arabian_sheikh_order_created', { detail: newOrder }));
     }
@@ -729,377 +282,158 @@ export const orderService = {
     return newOrder;
   },
 
+  // ─── Update order status via PATCH /api/admin/orders/{id}/status ──────────
   async updateOrderStatus(orderId, newStatus, note = '') {
-    // 1. Update in live cloud sync
-    await liveCloudSync.updateOrderStatus(orderId, newStatus);
-
-    // 2. Update remote API
-    if (!apiClient.isMockEnabled()) {
+    const numericId = toNumericId(orderId);
+    let result = null;
+    if (numericId) {
       try {
-        await orderApi.adminUpdateOrderStatus(orderId, newStatus, note);
+        result = await orderApi.adminUpdateOrderStatus(numericId, newStatus, note);
       } catch (e) {
-        console.warn('Real API update order status fallback:', e.message);
+        console.warn('[orderService] updateOrderStatus API error:', e.message);
+        throw e;
       }
     }
 
-    const orders = loadOrders();
-    const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
-    const index = orders.findIndex(o => {
-      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      return idStr === target || numStr === target;
-    });
-
-    let updatedOrder = null;
-    if (index > -1) {
-      orders[index].status = newStatus;
-      orders[index].orderStatus = newStatus;
-      orders[index].updatedAt = new Date().toISOString();
-      if (!orders[index].timeline) orders[index].timeline = [];
-      orders[index].timeline.push({
-        status: newStatus,
-        title: `Status: ${newStatus}${note ? ` (${note})` : ''}`,
-        timestamp: new Date().toISOString()
-      });
-      if (!orders[index].statusHistory) orders[index].statusHistory = [];
-      orders[index].statusHistory.push({
-        status: newStatus,
-        fromStatus: orders[index].orderStatus || orders[index].status,
-        toStatus: newStatus,
-        note: note || '',
-        changedBy: 'Admin',
-        createdAt: new Date().toISOString()
-      });
-      saveOrders(orders);
-      updatedOrder = orders[index];
-    } else {
-      updatedOrder = { id: orderId, orderNumber: orderId, status: newStatus, orderStatus: newStatus };
-    }
-
-    // 3. Dispatch real-time event so customer account, tracking, and detail views update immediately
+    // Dispatch event for same-tab UI refresh
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
-        detail: {
-          orderId,
-          status: newStatus,
-          orderStatus: newStatus,
-          note,
-          order: updatedOrder
-        }
+        detail: { orderId, status: newStatus, orderStatus: newStatus, note }
       }));
-      try {
-        localStorage.setItem('arabian_sheikh_last_order_update', JSON.stringify({
-          orderId,
-          status: newStatus,
-          timestamp: Date.now()
-        }));
-      } catch {}
     }
 
-    return updatedOrder;
+    return result || { orderId, orderStatus: newStatus, status: newStatus };
   },
 
+  // ─── Mark order as paid — calls updateOrderStatus to Processing ────────────
   async markOrderPaid(orderId, paymentDetails = null) {
     if (!orderId) return null;
-    const target = String(orderId).replace(/^#/, '').toLowerCase().trim();
+    const numericId = toNumericId(orderId);
 
-    // 1. Update in live cloud sync
-    await liveCloudSync.updatePaymentStatus(target, 'Paid', paymentDetails).catch(() => {});
-    await liveCloudSync.updateOrderStatus(target, 'Processing').catch(() => {});
-
-    // 2. Update in local storage orders
-    const orders = loadOrders();
-    const index = orders.findIndex(o => {
-      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      return idStr === target || numStr === target;
-    });
-
-    let updatedOrder = null;
-    if (index > -1) {
-      orders[index].paymentStatus = 'Paid';
-      orders[index].orderStatus = 'Processing';
-      orders[index].status = 'Processing';
-      orders[index].paidAt = paymentDetails?.paidAt || orders[index].paidAt || new Date().toISOString();
-      if (paymentDetails) {
-        if (paymentDetails.id) orders[index].paymentId = paymentDetails.id;
-        if (paymentDetails.providerPaymentId) orders[index].providerPaymentId = paymentDetails.providerPaymentId;
-        const payments = Array.isArray(orders[index].payments) ? [...orders[index].payments] : [];
-        if (paymentDetails.id) {
-          const pIdx = payments.findIndex(p => String(p.id) === String(paymentDetails.id));
-          if (pIdx > -1) {
-            payments[pIdx] = { ...payments[pIdx], ...paymentDetails, status: 'Paid' };
-          } else {
-            payments.unshift({ ...paymentDetails, status: 'Paid' });
-          }
-        }
-        orders[index].payments = payments;
+    // Try to advance to Processing via the admin API
+    if (numericId) {
+      try {
+        await orderApi.adminUpdateOrderStatus(numericId, 'Processing', 'Payment confirmed via Stripe');
+      } catch (e) {
+        // Non-fatal: backend may already be Processing
+        console.warn('[orderService] markOrderPaid status update:', e.message);
       }
-      orders[index].updatedAt = new Date().toISOString();
-      if (!orders[index].timeline) orders[index].timeline = [];
-      orders[index].timeline.push({
-        status: 'Processing',
-        title: 'Payment Confirmed — Atelier Crafting & Blending Initiated',
-        timestamp: new Date().toISOString()
-      });
-      if (!orders[index].statusHistory) orders[index].statusHistory = [];
-      orders[index].statusHistory.push({
-        status: 'Processing',
-        fromStatus: 'Pending',
-        toStatus: 'Processing',
-        note: 'Payment settled successfully via Stripe. Order moved to Processing.',
-        changedBy: 'System',
-        createdAt: new Date().toISOString()
-      });
-      saveOrders(orders);
-      updatedOrder = orders[index];
-    } else {
-      updatedOrder = {
-        id: orderId,
-        orderNumber: orderId,
-        paymentStatus: 'Paid',
-        orderStatus: 'Processing',
-        status: 'Processing',
-        paidAt: paymentDetails?.paidAt || new Date().toISOString(),
-        paymentId: paymentDetails?.id || null,
-        providerPaymentId: paymentDetails?.providerPaymentId || null
-      };
     }
 
-    // 3. Dispatch real-time event so customer account, detail views, and admin order dashboard update immediately
+    // Dispatch real-time event so UI updates immediately on this tab
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
         detail: {
-          orderId: target,
+          orderId,
           paymentStatus: 'Paid',
           orderStatus: 'Processing',
           status: 'Processing',
-          paymentDetails,
-          order: updatedOrder
+          paymentDetails
         }
       }));
     }
 
-    return updatedOrder;
+    return { id: orderId, paymentStatus: 'Paid', orderStatus: 'Processing' };
   },
 
+  // ─── Cancel order ─────────────────────────────────────────────────────────
   async cancelOrder(orderId, reason = '') {
-    const resolvedNumId = toNumericId(orderId);
-    let cancelRes = null;
-    if (resolvedNumId && !apiClient.isMockEnabled()) {
-      try {
-        cancelRes = await orderApi.adminCancelOrder(resolvedNumId, reason);
-      } catch (e) {
-        console.error('Admin cancelOrder API error:', e);
-        throw e;
-      }
+    const numericId = toNumericId(orderId);
+    if (!numericId) throw new Error('Valid order ID required to cancel.');
+    const result = await orderApi.adminCancelOrder(numericId, reason);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
+        detail: { orderId, orderStatus: result?.orderStatus || 'Cancelled' }
+      }));
     }
-    const resolvedStatus = cancelRes?.orderStatus || 'Cancelled';
-    return this.updateOrderStatus(orderId, resolvedStatus, reason ? `Cancellation reason: ${reason}` : 'Cancelled by administrator');
+    return result;
   },
 
   async customerCancelOrder(orderId, reason = '') {
-    const local = this.getOrderByIdSync(orderId);
-    const resolvedNumId = toNumericId(orderId) 
-      || toNumericId(local?.numericId) 
-      || toNumericId(local?.id) 
-      || toNumericId(local?.orderNumber);
+    const idStr = typeof orderId === 'object' && orderId !== null
+      ? (orderId.orderNumber || orderId.id)
+      : orderId;
+    const numericId = toNumericId(idStr);
+    if (!numericId) throw new Error('Valid order ID required to cancel.');
 
-    let cancelRes = null;
-    if (resolvedNumId && !apiClient.isMockEnabled()) {
-      try {
-        cancelRes = await orderApi.cancelOrder(resolvedNumId, reason);
-      } catch (e) {
-        console.error('Customer cancelOrder API error:', e);
-        throw e;
-      }
-    }
+    const result = await orderApi.cancelOrder(numericId, reason);
 
-    const resolvedStatus = cancelRes?.orderStatus || 'Cancelled';
-    const targetKey = String(typeof orderId === 'object' && orderId !== null ? (orderId.orderNumber || orderId.id) : orderId).replace(/^#/, '').toLowerCase().trim();
-
-    // Update in local store
-    const orders = loadOrders();
-    const index = orders.findIndex(o => {
-      const idStr = String(o.id || '').replace(/^#/, '').toLowerCase().trim();
-      const numStr = String(o.orderNumber || '').replace(/^#/, '').toLowerCase().trim();
-      return idStr === targetKey || numStr === targetKey || (resolvedNumId && (Number(o.id) === resolvedNumId || Number(o.numericId) === resolvedNumId));
-    });
-
-    let updatedOrder = null;
-    if (index > -1) {
-      orders[index].status = resolvedStatus;
-      orders[index].orderStatus = resolvedStatus;
-      orders[index].updatedAt = new Date().toISOString();
-      if (!orders[index].timeline) orders[index].timeline = [];
-      orders[index].timeline.push({
-        status: resolvedStatus,
-        title: `Order Cancelled${reason ? `: ${reason}` : ''}`,
-        timestamp: new Date().toISOString()
-      });
-      saveOrders(orders);
-      updatedOrder = orders[index];
-    } else {
-      updatedOrder = {
-        id: resolvedNumId || orderId,
-        orderStatus: resolvedStatus,
-        status: resolvedStatus,
-        updatedAt: new Date().toISOString()
-      };
-    }
-
-    // Sync in liveCloudSync
-    await liveCloudSync.updateOrderStatus(targetKey, resolvedStatus).catch(() => {});
-
-    // Dispatch update event
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
-        detail: { orderId: targetKey, order: updatedOrder }
+        detail: { orderId: idStr, orderStatus: result?.orderStatus || 'Cancelled' }
       }));
     }
-
-    return updatedOrder;
+    return result;
   },
 
+  // ─── Delivery status GET /api/Orders/{id}/delivery-status ─────────────────
   async getDeliveryStatus(orderId) {
-    const local = this.getOrderByIdSync(orderId);
-    const validNumericId = toNumericId(orderId) || toNumericId(local?.numericId) || toNumericId(local?.id) || toNumericId(local?.orderNumber);
-
-    if (validNumericId && !apiClient.isMockEnabled()) {
-      try {
-        const status = await orderApi.getDeliveryStatus(validNumericId);
-        if (status) return status;
-      } catch (e) {
-        if (import.meta.env.DEV) {
-          console.warn('Customer getDeliveryStatus API fallback:', e.message);
-        }
-      }
+    const numericId = toNumericId(orderId);
+    if (!numericId) return null;
+    try {
+      return await orderApi.getDeliveryStatus(numericId);
+    } catch (e) {
+      console.warn('[orderService] getDeliveryStatus failed:', e.message);
+      return null;
     }
-    const order = local || this.getOrderByIdSync(orderId);
-    return {
-      orderId: validNumericId || orderId,
-      orderStatus: order?.orderStatus || order?.status || 'Processing',
-      shipmentStatus: order?.shipmentStatus || null,
-      carrierStatus: null,
-      trackingNumber: order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || order?.shipments?.[0]?.trackingNumber || null
-    };
   },
 
+  // ─── Customer tracking GET /api/Orders/{id}/tracking ─────────────────────
   async getCustomerTracking(orderId) {
-    const local = this.getOrderByIdSync(orderId);
-    const validNumericId = toNumericId(orderId) || toNumericId(local?.numericId) || toNumericId(local?.id) || toNumericId(local?.orderNumber);
-
-    if (validNumericId && !apiClient.isMockEnabled()) {
-      try {
-        const tracking = await orderApi.trackOrder(validNumericId);
-        if (tracking) {
-          return tracking;
-        }
-      } catch (e) {
-        if (import.meta.env.DEV) {
-          console.warn('Customer tracking API fallback:', e.message);
-        }
-      }
+    const numericId = toNumericId(orderId);
+    if (!numericId) return null;
+    try {
+      return await orderApi.trackOrder(numericId);
+    } catch (e) {
+      console.warn('[orderService] getCustomerTracking failed:', e.message);
+      return null;
     }
-
-    const order = local || this.getOrderByIdSync(orderId);
-    const trkNumber = order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || order?.shipments?.[0]?.trackingNumber || null;
-    const curStatus = order?.shipmentStatus || null;
-
-    return {
-      orderId: validNumericId || orderId,
-      shipmentId: order?.shipmentId || null,
-      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || order?.shipping?.shippingCompanyName || 'Carrier',
-      trackingNumber: trkNumber,
-      currentStatus: curStatus,
-      carrierStatus: null,
-      expectedDeliveryDate: order?.expectedDeliveryDate || null,
-      events: Array.isArray(order?.timeline) ? order.timeline.map(t => ({
-        status: t.status || 'Updated',
-        description: t.title || t.description || null,
-        location: t.location || null,
-        occurredAt: t.timestamp || t.date || new Date().toISOString()
-      })) : []
-    };
   },
 
+  // ─── Admin tracking GET /api/admin/orders/{id}/tracking ──────────────────
   async getAdminOrderTracking(orderId) {
     return this.getOrderTracking(orderId);
   },
 
-  async getOrderStatusHistory(orderId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        const history = await orderApi.adminGetOrderStatusHistory(orderId);
-        if (Array.isArray(history) && history.length > 0) return history;
-      } catch (e) {
-        console.warn('Real API getOrderStatusHistory fallback:', e.message);
-      }
-    }
-    const order = this.getOrderByIdSync(orderId);
-    return order?.statusHistory || order?.timeline || [];
-  },
-
   async getOrderTracking(orderId) {
-    if (!apiClient.isMockEnabled()) {
+    const numericId = toNumericId(orderId);
+    if (!numericId) return null;
+    try {
+      return await orderApi.adminGetOrderTracking(numericId);
+    } catch (e) {
+      // Fallback: try customer tracking endpoint
       try {
-        const tracking = await orderApi.adminGetOrderTracking(orderId);
-        if (tracking) return tracking;
-      } catch (e) {
-        console.warn('Real API getOrderTracking fallback:', e.message);
+        return await orderApi.trackOrder(numericId);
+      } catch {
+        return null;
       }
     }
-    const order = this.getOrderByIdSync(orderId);
-    return {
-      orderId,
-      carrier: order?.carrier || order?.shippingSnapshot?.shippingCompanyName || order?.shippingSnapshot?.carrier || order?.shipping?.shippingCompanyName || 'Carrier',
-      trackingNumber: order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shippingSnapshot?.trackingNumber || order?.shipments?.[0]?.trackingNumber || null,
-      status: order?.orderStatus || order?.status || 'Processing',
-      events: (order?.timeline || []).map(t => ({
-        timestamp: t.timestamp || t.date || new Date().toISOString(),
-        occurredAt: t.timestamp || t.date || new Date().toISOString(),
-        status: t.status,
-        description: t.title || t.desc || t.status,
-        location: t.location || null
-      }))
-    };
   },
 
+  // ─── Order status history GET /api/admin/orders/{id}/status-history ───────
+  async getOrderStatusHistory(orderId) {
+    const numericId = toNumericId(orderId);
+    if (!numericId) return [];
+    try {
+      return await orderApi.adminGetOrderStatusHistory(numericId);
+    } catch (e) {
+      console.warn('[orderService] getOrderStatusHistory failed:', e.message);
+      return [];
+    }
+  },
+
+  // ─── Retry compensation POST /api/admin/orders/{id}/compensation/retry ─────
   async retryCompensation(orderId) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await orderApi.adminRetryCompensation(orderId);
-      } catch (e) {
-        console.warn('Real API retryCompensation fallback:', e.message);
-        throw e;
-      }
-    }
-    const orders = loadOrders();
-    const idx = orders.findIndex(o => String(o.id) === String(orderId) || o.orderNumber === orderId);
-    if (idx > -1) {
-      orders[idx].compensationFailure = false;
-      if (orders[idx].compensation) {
-        orders[idx].compensation.status = 'Resolved';
-      }
-      saveOrders(orders);
-      return { success: true, message: 'Compensation workflow retried successfully' };
-    }
-    return { success: true };
+    const numericId = toNumericId(orderId);
+    if (!numericId) throw new Error('Valid order ID required for compensation retry.');
+    return await orderApi.adminRetryCompensation(numericId);
   },
 
-  async trackOrder(trackingCode) {
-    if (!apiClient.isMockEnabled()) {
-      try {
-        return await orderApi.trackOrder(trackingCode);
-      } catch (e) {
-        console.warn('Real API track order fallback:', e.message);
-      }
-    }
-
-    const orders = loadOrders();
-    return orders.find(o => o.trackingCode === trackingCode || o.dhlTrackingNumber === trackingCode || o.id === trackingCode) || null;
+  // ─── Track order (alias) ──────────────────────────────────────────────────
+  async trackOrder(orderId) {
+    return this.getCustomerTracking(orderId);
   }
 };
 
 export default orderService;
-

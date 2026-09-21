@@ -296,21 +296,9 @@ export default function OrderDetail() {
     window.addEventListener('arabian_sheikh_order_updated', handleUpdate);
     window.addEventListener('arabian_sheikh_cloud_updated', handleUpdate);
 
-    const handleStorageChange = (e) => {
-      if (
-        e.key === 'arabian_sheikh_orders' ||
-        e.key === 'arabian_sheikh_last_order_update' ||
-        e.key === 'arabian_sheikh_live_cloud_state_v4'
-      ) {
-        orderService.getOrderById(orderId).then(item => { if (item) setOrder(item); });
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-
     return () => {
       window.removeEventListener('arabian_sheikh_order_updated', handleUpdate);
       window.removeEventListener('arabian_sheikh_cloud_updated', handleUpdate);
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, [orderId]);
 

@@ -1,38 +1,10 @@
 import { discountApi } from '../api/discount.api';
 
 /**
- * Calculates live usage statistics for coupons from placed store orders
+ * Returns empty coupon stats — orders come from API only, not localStorage
  */
 function getLiveCouponStats() {
-  const stats = new Map(); // code -> { count, totalDiscount }
-  if (typeof window === 'undefined') return stats;
-
-  try {
-    const rawOrders = localStorage.getItem('arabian_sheikh_orders');
-    const orders = rawOrders ? JSON.parse(rawOrders) : [];
-
-    const rawCloud = localStorage.getItem('arabian_sheikh_live_cloud_orders');
-    const cloudOrders = rawCloud ? JSON.parse(rawCloud) : [];
-
-    const combined = [...(Array.isArray(orders) ? orders : []), ...(Array.isArray(cloudOrders) ? cloudOrders : [])];
-    const seenOrderIds = new Set();
-
-    combined.forEach(o => {
-      if (!o?.id || seenOrderIds.has(String(o.id))) return;
-      seenOrderIds.add(String(o.id));
-
-      const code = (o.discountCode || o.couponCode || '').toUpperCase().trim();
-      if (code) {
-        const prev = stats.get(code) || { count: 0, totalDiscount: 0 };
-        prev.count += 1;
-        prev.totalDiscount += Number(o.discountAmount || o.discount || 0);
-        stats.set(code, prev);
-      }
-    });
-  } catch (e) {
-    // Non-blocking
-  }
-  return stats;
+  return new Map();
 }
 
 export const discountService = {

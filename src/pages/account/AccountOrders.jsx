@@ -60,26 +60,11 @@ export default function AccountOrders() {
     };
 
     window.addEventListener('arabian_sheikh_order_updated', handleOrderUpdate);
-    window.addEventListener('arabian_sheikh_cloud_updated', handleOrderUpdate);
     window.addEventListener('arabian_sheikh_order_created', handleOrderUpdate);
-
-    // Cross-tab synchronization
-    const handleStorageChange = (e) => {
-      if (
-        e.key === 'arabian_sheikh_orders' ||
-        e.key === 'arabian_sheikh_last_order_update' ||
-        e.key === 'arabian_sheikh_live_cloud_state_v4'
-      ) {
-        handleOrderUpdate();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       window.removeEventListener('arabian_sheikh_order_updated', handleOrderUpdate);
-      window.removeEventListener('arabian_sheikh_cloud_updated', handleOrderUpdate);
       window.removeEventListener('arabian_sheikh_order_created', handleOrderUpdate);
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, [user]);
 

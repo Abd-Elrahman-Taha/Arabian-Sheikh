@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../../i18n/LanguageContext';
-import {
-  orderService,
-  ADMIN_ORDER_STATUSES,
-  ADMIN_PAYMENT_STATUSES
-} from '../../services/orderService';
+import { orderService, ADMIN_ORDER_STATUSES, ADMIN_PAYMENT_STATUSES } from '../../services/orderService';
 import { paymentApi } from '../../api/payment.api';
 import { toNumericId } from '../../api/order.api';
 import { isSuccessStatus, isFailedStatus } from '../../services/paymentService';
@@ -134,19 +130,6 @@ export default function AdminOrders() {
       const result = await orderService.getAdminOrders(filters);
       if (result && Array.isArray(result.items)) {
         setOrdersData(result);
-        // Automatically sync orders that are confirmed Paid to Processing in the backend database
-        result.items.forEach(async (order) => {
-          const rawPay = order.paymentStatus || order.payments?.[0]?.status;
-          const isPaid = isSuccessStatus(rawPay) || rawPay === 'Paid';
-          const isCod = String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cod');
-          const isPending = order.orderStatus === 'Pending' || order.status === 'Pending';
-          const numId = toNumericId(order.id) || toNumericId(order.numericId);
-          if (isPaid && !isCod && isPending && numId) {
-            try {
-              await orderApi.adminUpdateOrderStatus(numId, 'Processing', 'Payment confirmed via Stripe');
-            } catch {}
-          }
-        });
       } else if (Array.isArray(result)) {
         setOrdersData({
           items: result,

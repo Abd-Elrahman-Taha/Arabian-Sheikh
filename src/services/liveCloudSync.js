@@ -30,7 +30,7 @@ function loadLocalState() {
     if (raw) {
       const parsed = JSON.parse(raw);
       state = {
-        orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+        orders: [], // Orders are NEVER loaded from localStorage — always from the API
         reviews: Array.isArray(parsed.reviews) ? parsed.reviews : [],
         users: Array.isArray(parsed.users) ? parsed.users : [],
         blockedUserEmails: Array.isArray(parsed.blockedUserEmails) ? parsed.blockedUserEmails : [],
@@ -134,35 +134,6 @@ function mergeRemoteData(remoteData) {
     state.deletedUserEmails = remoteData.deletedUserEmails.map(e => String(e).toLowerCase().trim());
   }
 
-  const orderMap = new Map();
-  (remoteData.orders || []).forEach(o => {
-    if (o?.id) {
-      const key = String(o.orderNumber || o.id).toLowerCase();
-      orderMap.set(key, o);
-    }
-  });
-  state.orders.forEach(o => {
-    if (o?.id) {
-      const key = String(o.orderNumber || o.id).toLowerCase();
-      const existing = orderMap.get(key);
-      if (existing) {
-        const oTime = new Date(o.updatedAt || o.date || o.createdAt || 0).getTime();
-        const exTime = new Date(existing.updatedAt || existing.date || existing.createdAt || 0).getTime();
-        const mergedObj = oTime >= exTime ? { ...existing, ...o } : { ...o, ...existing };
-        if (String(existing.paymentStatus).toLowerCase() === 'paid' || String(o.paymentStatus).toLowerCase() === 'paid') {
-          mergedObj.paymentStatus = 'Paid';
-          if (!mergedObj.orderStatus || mergedObj.orderStatus === 'Pending') {
-            mergedObj.orderStatus = 'Processing';
-            mergedObj.status = 'Processing';
-          }
-        }
-        orderMap.set(key, mergedObj);
-      } else {
-        orderMap.set(key, o);
-      }
-    }
-  });
-
   const userMap = new Map();
   (remoteData.users || []).forEach(u => {
     if (u?.email) {
@@ -197,7 +168,7 @@ function mergeRemoteData(remoteData) {
   };
 
   state = {
-    orders: Array.from(orderMap.values()),
+    orders: [], // Orders always come from the API — not from cloud sync blob
     reviews: Array.from(reviewMap.values()),
     users: Array.from(userMap.values()),
     blockedUserEmails: state.blockedUserEmails,
