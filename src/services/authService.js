@@ -305,23 +305,19 @@ export const authService = {
       try {
         return await authApi.forgotPassword(email);
       } catch (e) {
-        console.warn('Real API forgotPassword fallback:', e.message);
+        console.warn('Real API forgotPassword error:', e.message);
+        throw e;
       }
     }
 
     await new Promise(resolve => setTimeout(resolve, 300));
-    const users = loadUsers();
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
-    if (!user) {
-      throw new Error('No registered account associated with this email.');
-    }
     return { success: true, message: 'Recovery instructions dispatched to your royal email.' };
   },
 
-  async resetPassword(token, newPassword, email) {
+  async resetPassword(token, newPassword) {
     if (!apiClient.isMockEnabled()) {
       try {
-        return await authApi.resetPassword(token, newPassword, email);
+        return await authApi.resetPassword(token, newPassword);
       } catch (e) {
         console.warn('Real API resetPassword error:', e.message);
         throw e;

@@ -35,7 +35,7 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      await authService.resetPassword(token, password, email);
+      await authService.resetPassword(token, password);
       success('Your password has been successfully renewed.');
       navigate('/login');
     } catch (err) {
