@@ -15,7 +15,6 @@ import {
   X,
   ChevronDown,
   Globe,
-  ShieldAlert,
   Sparkles,
   ArrowRight,
   Sun,
@@ -141,7 +140,7 @@ export default function Header({ onOpenSearch }) {
           <div className={`hidden lg:block border-b pb-2 mb-2 ${
             isDark ? 'border-[#D4AF37]/15' : 'border-[#5A3517]/15'
           }`}>
-            <div className={`max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center justify-between text-[11px] uppercase tracking-[0.25em] ${
+            <div className={`max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center justify-center text-[11px] uppercase tracking-[0.25em] ${
               isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
             }`}>
               <div className="flex items-center gap-2">
@@ -168,23 +167,6 @@ export default function Header({ onOpenSearch }) {
                   <span className="opacity-85 font-cinzel font-semibold text-[10px] tracking-[0.3em]">
                     Maison de Haute Parfumerie Royale
                   </span>
-                )}
-              </div>
-              <div className={`flex items-center gap-6 normal-case text-xs tracking-normal ${
-                isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'
-              }`}>
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-cinzel font-bold uppercase tracking-wider text-xs border transition-all duration-300 shadow-md cursor-pointer ${
-                      isDark
-                        ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#F2D675] hover:bg-[#D4AF37] hover:text-black shadow-[0_0_15px_rgba(212,175,55,0.35)]'
-                        : 'bg-[#5A3517] border-[#5A3517] text-[#F3E6D0] hover:bg-[#3E230F] shadow-sm'
-                    }`}
-                  >
-                    <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
-                    <span>Admin Suite</span>
-                  </Link>
                 )}
               </div>
             </div>
@@ -272,22 +254,6 @@ export default function Header({ onOpenSearch }) {
             <div className={`flex items-center space-x-1.5 sm:space-x-3 md:space-x-4 shrink-0 ${
               isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}>
-              {/* Admin Suite Header Link (Prominent for logged-in Admins) */}
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-cinzel font-bold tracking-wider uppercase border transition-all duration-300 shadow-md ${
-                    isDark
-                      ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#F2D675] hover:bg-[#D4AF37] hover:text-black shadow-[0_0_12px_rgba(212,175,55,0.3)]'
-                      : 'bg-[#5A3517] border-[#5A3517] text-[#F3E6D0] hover:bg-[#3E230F]'
-                  }`}
-                  title="Admin Suite"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Admin Suite</span>
-                </Link>
-              )}
-
               {/* Language Switcher */}
               <div className="relative hidden md:block">
                 <button
@@ -580,21 +546,6 @@ export default function Header({ onOpenSearch }) {
                 <span>Wishlist ({wishlistCount})</span>
               </Link>
             </div>
-
-            {isAdmin && (
-              <Link
-                to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`w-full flex items-center justify-center gap-2 py-2.5 border rounded-xl text-xs font-cinzel uppercase tracking-wider font-bold transition-all shadow-md ${
-                  isDark
-                    ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#F2D675]'
-                    : 'bg-[#5A3517] border-[#5A3517] text-[#F3E6D0]'
-                }`}
-              >
-                <ShieldAlert className="w-4 h-4 text-[#D4AF37]" />
-                <span>Open Admin Suite</span>
-              </Link>
-            )}
           </div>
         </div>
       )}
