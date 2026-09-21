@@ -77,6 +77,7 @@ import AdminReviews from './pages/admin/AdminReviews';
 import AdminReports from './pages/admin/AdminReports';
 import AdminReturns from './pages/admin/AdminReturns';
 import AdminRefunds from './pages/admin/AdminRefunds';
+import AdminPayments from './pages/admin/AdminPayments';
 
 // Public Content Pages
 import FaqPage from './pages/FaqPage';
@@ -115,6 +116,7 @@ function MainRouter() {
           {currentPath === '/admin/brands' && <AdminBrands />}
           {currentPath === '/admin/perfume-categories' && <AdminPerfumeCategories />}
           {currentPath === '/admin/orders' && <AdminOrders />}
+          {(currentPath === '/admin/payments' || currentPath === '/admin/payment-transactions') && <AdminPayments />}
           {(currentPath === '/admin/returns' || currentPath === '/admin/return-requests') && <AdminReturns />}
           {(currentPath === '/admin/refunds' || currentPath === '/admin/refund-requests') && <AdminRefunds />}
           {currentPath === '/admin/users' && <AdminUsers />}

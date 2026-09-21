@@ -451,7 +451,7 @@ export default function Shop() {
 
   // Active Category Name for Header
   const activeCategoryTitle = useMemo(() => {
-    if (selectedCategory === 'all') return t('catalog.allCreations') || 'All Creations';
+    if (selectedCategory === 'all') return t('ALL Catalog') || 'All Creations';
     if (selectedCategory === 'offers') return t('catalog.offersAndDiscounts') || 'Offers & Discounts';
     const found = categories.find(c => String(c.id) === String(selectedCategory));
     return found ? found.name : selectedCategory.toUpperCase();

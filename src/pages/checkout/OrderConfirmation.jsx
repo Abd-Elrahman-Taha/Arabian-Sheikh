@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
-import { CheckCircle2, Truck, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, Truck, ArrowRight, Sparkles, XCircle, Clock } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
 export default function OrderConfirmation() {
@@ -135,6 +135,41 @@ export default function OrderConfirmation() {
                   ? 'Cash on Delivery (COD)'
                   : 'Credit / Debit Card (Stripe)'}
               </span>
+            </div>
+            <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+              <span className="text-[#D8BE99] font-medium">Payment Status:</span>
+              <div>
+                {(() => {
+                  const isCod = ['cod', 'cashondelivery'].includes(String(order?.paymentMethod || order?.paymentMethodCode || '').toLowerCase());
+                  const payStatus = order?.paymentStatus;
+                  if (isCod) {
+                    return (
+                      <span className="bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F2D675] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold text-xs">
+                        <Clock className="w-3 h-3" /> Pay Upon Delivery
+                      </span>
+                    );
+                  }
+                  if (payStatus === 'Paid' || (!payStatus && order?.orderStatus !== 'Cancelled')) {
+                    return (
+                      <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold text-xs">
+                        <CheckCircle2 className="w-3 h-3" /> Paid & Confirmed
+                      </span>
+                    );
+                  }
+                  if (payStatus === 'Failed') {
+                    return (
+                      <span className="bg-rose-500/20 border border-rose-500/40 text-rose-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold text-xs">
+                        <XCircle className="w-3 h-3" /> Payment Failed
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="bg-amber-500/20 border border-amber-500/40 text-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold text-xs">
+                      <Clock className="w-3 h-3" /> {payStatus || 'Pending Verification'}
+                    </span>
+                  );
+                })()}
+              </div>
             </div>
             {(order?.total !== undefined || order?.totals?.total !== undefined) && (
               <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">

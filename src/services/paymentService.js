@@ -17,21 +17,17 @@ import { orderApi } from '../api/order.api';
 const stripePromiseCache = new Map();
 
 export function getStripePublishableKey() {
+  const envKey = (import.meta.env?.VITE_STRIPE_PUBLISHABLE_KEY || '').trim();
+  if (envKey) return envKey;
   try {
     const saved = localStorage.getItem('arabian_sheikh_stripe_pub_key');
     if (saved && saved.trim()) return saved.trim();
   } catch {}
-  return (import.meta.env?.VITE_STRIPE_PUBLISHABLE_KEY || '').trim();
+  return '';
 }
 
-export function setCustomStripePublishableKey(key) {
-  try {
-    if (key && key.trim()) {
-      localStorage.setItem('arabian_sheikh_stripe_pub_key', key.trim());
-    } else {
-      localStorage.removeItem('arabian_sheikh_stripe_pub_key');
-    }
-  } catch {}
+export function setCustomStripePublishableKey() {
+  // Deprecated: Stripe key is configured strictly via Vercel environment variables or code
 }
 
 export function getStripePromise(customKey) {
@@ -105,10 +101,25 @@ export function clearPaymentSession(orderId) {
 
 // ─── Terminal Status Check ─────────────────────────────────────
 
-const TERMINAL_STATUSES = ['Paid', 'Failed', 'Cancelled', 'Refunded'];
+// ─── Terminal Status Check ─────────────────────────────────────
+
+const TERMINAL_STATUSES = ['paid', 'succeeded', 'failed', 'cancelled', 'canceled', 'refunded'];
 
 export function isTerminalStatus(status) {
-  return TERMINAL_STATUSES.includes(status);
+  if (!status) return false;
+  return TERMINAL_STATUSES.includes(String(status).toLowerCase());
+}
+
+export function isSuccessStatus(status) {
+  if (!status) return false;
+  const s = String(status).toLowerCase();
+  return s === 'paid' || s === 'succeeded';
+}
+
+export function isFailedStatus(status) {
+  if (!status) return false;
+  const s = String(status).toLowerCase();
+  return s === 'failed' || s === 'cancelled' || s === 'canceled';
 }
 
 // ─── Payment Service ───────────────────────────────────────────
@@ -136,26 +147,25 @@ export const paymentService = {
   /**
    * Poll payment status until it reaches a terminal state.
    * 
-   * Strategy per §12:
-   * - Fast phase: every 2.5s for the first 60s
-   * - Slow phase: every 10s for up to ~6 more minutes
-   * - Terminal states: Paid, Failed, Cancelled, Refunded
+   * Strategy:
+   * - Fast phase: every 1.5s for immediate responsiveness
+   * - Parallel Stripe.js check when clientSecret is provided
+   * - Fallback to customer order verification
+   * - Terminal states: Paid / Succeeded, Failed, Cancelled, Refunded
    * 
    * @param {number} paymentId
    * @param {object} [options]
    * @param {AbortSignal} [options.signal] - Optional abort signal to cancel polling
    * @param {function} [options.onStatusUpdate] - Called with each poll result
    * @param {number} [options.orderId] - Optional customer order ID for fallback verification
+   * @param {string} [options.clientSecret] - Stripe client secret for direct verification
    * @returns {Promise<{id, orderId, provider, providerPaymentId, amount, currency, status, paidAt}>}
-   * @throws {Error} with message 'PAYMENT_POLL_TIMEOUT' if budget exceeded
-   * @throws {Error} with message 'PAYMENT_POLL_ABORTED' if signal aborted
-   * @throws {Error} with message 'PAYMENT_POLL_AUTH_ERROR' if unauthenticated or session expired
    */
   async pollUntilTerminal(paymentId, options = {}) {
-    const { signal, onStatusUpdate, orderId } = options;
+    const { signal, onStatusUpdate, orderId, clientSecret } = options;
     const started = Date.now();
-    const FAST_PHASE_MS = 60_000;
-    const TOTAL_BUDGET_MS = FAST_PHASE_MS + 360_000; // 7 minutes total
+    const FAST_PHASE_MS = 30_000;
+    const TOTAL_BUDGET_MS = 120_000; // 2 minutes max
 
     const sleep = (ms) => new Promise((resolve, reject) => {
       if (signal?.aborted) {
@@ -171,12 +181,60 @@ export const paymentService = {
       }
     });
 
+    let stripeInstance = null;
+    if (clientSecret) {
+      try {
+        stripeInstance = await getStripePromise();
+      } catch {}
+    }
+
     for (;;) {
       if (signal?.aborted) {
         throw new Error('PAYMENT_POLL_ABORTED');
       }
 
       try {
+        // 1. Direct Stripe.js verification (Instant check)
+        if (stripeInstance && clientSecret) {
+          try {
+            const { paymentIntent } = await stripeInstance.retrievePaymentIntent(clientSecret);
+            if (paymentIntent) {
+              const piStatus = paymentIntent.status;
+              if (piStatus === 'succeeded') {
+                const result = {
+                  id: paymentId,
+                  orderId: orderId || null,
+                  provider: 'stripe',
+                  providerPaymentId: paymentIntent.id,
+                  amount: (paymentIntent.amount || 0) / 100,
+                  currency: (paymentIntent.currency || 'EUR').toUpperCase(),
+                  status: 'Paid',
+                  paidAt: new Date().toISOString()
+                };
+                if (onStatusUpdate) onStatusUpdate(result);
+                return result;
+              }
+              if (piStatus === 'requires_payment_method' || piStatus === 'canceled') {
+                const result = {
+                  id: paymentId,
+                  orderId: orderId || null,
+                  provider: 'stripe',
+                  providerPaymentId: paymentIntent.id,
+                  amount: (paymentIntent.amount || 0) / 100,
+                  currency: (paymentIntent.currency || 'EUR').toUpperCase(),
+                  status: 'Failed',
+                  paidAt: null
+                };
+                if (onStatusUpdate) onStatusUpdate(result);
+                return result;
+              }
+            }
+          } catch (stripeErr) {
+            console.warn('[paymentService] Direct Stripe verification notice:', stripeErr?.message);
+          }
+        }
+
+        // 2. Query Backend Payment Status
         let payment = null;
         let isAuthError = false;
 
@@ -188,38 +246,51 @@ export const paymentService = {
             const code = err?.code;
             const msg = err?.message || '';
 
-            // Check if backend returned 401 Unauthorized or 403 Forbidden
             if (status === 401 || status === 403 || code === 'UNAUTHORIZED' || msg.includes('Admin authentication is required')) {
               isAuthError = true;
-              console.warn('[paymentService] Auth error on payment endpoint (status 401/403):', msg);
+              console.warn('[paymentService] Auth notice on payment endpoint:', msg);
             } else if (status === 404 || code === 'PAYMENT_NOT_FOUND') {
-              console.warn('[paymentService] Payment ID not found on backend (status 404):', paymentId);
+              console.warn('[paymentService] Payment ID not found on backend:', paymentId);
             } else {
-              // Transient or network error on getPaymentStatus
               console.warn('[paymentService] Transient payment poll error (will retry):', msg);
             }
           }
         }
 
-        // If payment status succeeded, check if terminal
+        // Check if backend payment returned a terminal state
         if (payment) {
+          const rawStatus = payment.status || '';
+          const normalizedStatus = isSuccessStatus(rawStatus)
+            ? 'Paid'
+            : isFailedStatus(rawStatus)
+              ? 'Failed'
+              : rawStatus;
+
+          const normalizedPayment = {
+            ...payment,
+            status: normalizedStatus
+          };
+
           if (onStatusUpdate) {
-            onStatusUpdate(payment);
+            onStatusUpdate(normalizedPayment);
           }
-          if (isTerminalStatus(payment.status)) {
-            return payment;
+
+          if (isTerminalStatus(normalizedPayment.status)) {
+            return normalizedPayment;
           }
         }
 
-        // If payment status endpoint was not terminal, or failed with auth/404, fallback to checking the customer order
-        if (orderId && (!payment || isAuthError)) {
+        // 3. Fallback: Check customer order state
+        if (orderId && (!payment || isAuthError || !isTerminalStatus(payment?.status))) {
           try {
             const order = await orderApi.getOrderById(orderId);
             if (order) {
               const payStatus = order.paymentStatus;
               const ordStatus = order.orderStatus || order.status;
 
-              // Synthesize payment object from order
+              const isPaid = isSuccessStatus(payStatus) || ['Processing', 'Confirmed', 'Shipped', 'Delivered'].includes(ordStatus);
+              const isFailed = isFailedStatus(payStatus) || ordStatus === 'Cancelled';
+
               const synthesizedPayment = {
                 id: paymentId || order.payments?.[0]?.id || orderId,
                 orderId: order.id || orderId,
@@ -227,12 +298,8 @@ export const paymentService = {
                 providerPaymentId: order.payments?.[0]?.providerPaymentId || null,
                 amount: order.total,
                 currency: order.currency || 'EUR',
-                status: (payStatus === 'Paid' || ordStatus === 'Processing' || ordStatus === 'Confirmed')
-                  ? 'Paid'
-                  : (payStatus === 'Failed' || ordStatus === 'Cancelled')
-                    ? 'Failed'
-                    : payStatus || 'Pending',
-                paidAt: (payStatus === 'Paid' || ordStatus === 'Processing' || ordStatus === 'Confirmed') ? new Date().toISOString() : null
+                status: isPaid ? 'Paid' : (isFailed ? 'Failed' : (payStatus || 'Pending')),
+                paidAt: isPaid ? (order.paidAt || new Date().toISOString()) : null
               };
 
               if (onStatusUpdate) {
@@ -244,29 +311,15 @@ export const paymentService = {
               }
             }
           } catch (orderErr) {
-            const orderStatus = orderErr?.status;
-            const orderCode = orderErr?.code;
-            const orderMsg = orderErr?.message || '';
-
-            if (orderStatus === 401 || orderStatus === 403 || orderCode === 'UNAUTHORIZED') {
-              // Both payment endpoint and order endpoint failed with auth error!
-              // Abort immediately: user is not authenticated or token expired.
-              throw new Error('PAYMENT_POLL_AUTH_ERROR');
-            }
-            console.warn('[paymentService] Order fallback check notice:', orderMsg);
+            console.warn('[paymentService] Order fallback check notice:', orderErr?.message);
           }
         }
 
-        // If payment endpoint threw auth error and we have no orderId, abort immediately!
-        if (isAuthError && !orderId) {
-          throw new Error('PAYMENT_POLL_AUTH_ERROR');
-        }
-
       } catch (err) {
-        if (err.message === 'PAYMENT_POLL_ABORTED' || err.message === 'PAYMENT_POLL_AUTH_ERROR') {
+        if (err.message === 'PAYMENT_POLL_ABORTED') {
           throw err;
         }
-        console.warn('[paymentService] Payment poll cycle error (will retry):', err.message);
+        console.warn('[paymentService] Payment poll cycle notice (will retry):', err.message);
       }
 
       const elapsed = Date.now() - started;
@@ -274,7 +327,7 @@ export const paymentService = {
         throw new Error('PAYMENT_POLL_TIMEOUT');
       }
 
-      await sleep(elapsed < FAST_PHASE_MS ? 2_500 : 10_000);
+      await sleep(elapsed < FAST_PHASE_MS ? 1_500 : 3_000);
     }
   }
 };

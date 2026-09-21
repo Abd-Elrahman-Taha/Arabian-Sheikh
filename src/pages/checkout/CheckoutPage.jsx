@@ -1090,7 +1090,7 @@ export default function CheckoutPage() {
   };
 
   // ─── Start polling for payment result ────────────────────────
-  function startPolling(paymentId, orderId) {
+  function startPolling(paymentId, orderId, customClientSecret) {
     setPaymentStatus('polling');
 
     // Abort any existing poll
@@ -1103,6 +1103,7 @@ export default function CheckoutPage() {
     paymentService.pollUntilTerminal(paymentId, {
       signal: controller.signal,
       orderId: orderId || orderIdState,
+      clientSecret: customClientSecret || clientSecret,
     }).then(result => {
       handlePaymentResult(result, orderId);
     }).catch(err => {
@@ -1110,7 +1111,7 @@ export default function CheckoutPage() {
         setPaymentStatus('timeout');
       } else if (err.message === 'PAYMENT_POLL_AUTH_ERROR') {
         setPaymentStatus('unverified');
-        setPaymentError('Payment was submitted to Stripe, but status could not be verified automatically due to session expiration. If your card was charged, your order is recorded.');
+        setPaymentError('Payment was submitted to Stripe, but status could not be verified automatically. If your card was charged, your order is recorded.');
       } else if (err.message === 'PAYMENT_NOT_FOUND') {
         setPaymentStatus('unverified');
         setPaymentError('Payment record is taking longer to register. Please check your order in My Orders.');
@@ -1130,22 +1131,46 @@ export default function CheckoutPage() {
       decrementStock();
       clearCart();
       orderService.recordPlacedOrderId(oid);
-      success('Payment successful!');
-      navigate(`/order-confirmation/${oid}`);
+      setPaymentStatus('paid');
+      setPaymentError(null);
+      success('Payment successful! Your order has been placed.');
     } else if (result.status === 'Failed') {
       clearPaymentSession(oid);
       setPaymentStatus('failed');
-      setPaymentError('Payment failed. Please try again with another card.');
+      setPaymentError(result?.message || 'Payment failed or was declined. Please try another card.');
     } else {
       setPaymentStatus('timeout');
     }
   }
 
   // ─── Stripe form callbacks ───────────────────────────────────
-  function handleStripeConfirmed() {
-    // confirmPayment succeeded without redirect → start polling
+  function handleStripeConfirmed(result) {
+    const status = result?.status;
+    const oid = orderIdState;
+
+    // IMMEDIATE RESOLUTION: If Stripe Elements already verified Paid, transition instantly
+    if (status === 'Paid') {
+      clearPaymentSession(oid);
+      clearCheckoutOrder();
+      decrementStock();
+      clearCart();
+      orderService.recordPlacedOrderId(oid);
+      setPaymentStatus('paid');
+      setPaymentError(null);
+      success('Payment successful! Your order has been placed.');
+      return;
+    }
+
+    if (status === 'Failed') {
+      clearPaymentSession(oid);
+      setPaymentStatus('failed');
+      setPaymentError(result?.message || 'Payment was declined. Please try another card.');
+      return;
+    }
+
+    // Only start polling if status is genuinely pending / processing
     if (paymentIdState && orderIdState) {
-      startPolling(paymentIdState, orderIdState);
+      startPolling(paymentIdState, orderIdState, clientSecret);
     }
   }
 
@@ -1820,6 +1845,55 @@ export default function CheckoutPage() {
                   />
                 )}
 
+                {/* Payment Successful / Paid */}
+                {paymentStatus === 'paid' && (
+                  <div className="p-8 rounded-2xl bg-[#0B0A08]/90 border border-emerald-500/40 text-center space-y-6 shadow-2xl animate-in fade-in zoom-in-95">
+                    <div className="w-16 h-16 rounded-full border-2 border-emerald-400 bg-emerald-950/60 flex items-center justify-center mx-auto text-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.3)]">
+                      <CheckCircle2 className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-cinzel text-lg font-bold text-emerald-300 uppercase tracking-wider">
+                        Payment Successful & Confirmed
+                      </p>
+                      <p className="text-xs text-[#D8BE99]">
+                        Your transaction has been verified and settled. Your order has been placed successfully.
+                      </p>
+                    </div>
+
+                    {orderIdState && (
+                      <div className="p-3 rounded-xl bg-black/60 border border-emerald-500/25 flex items-center justify-around text-xs font-mono">
+                        <div>
+                          <span className="text-neutral-400 block text-[10px]">Order Ref</span>
+                          <span className="text-[#F2D675] font-bold">#ORD-{orderIdState}</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-400 block text-[10px]">Payment Status</span>
+                          <span className="text-emerald-400 font-bold">PAID</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-400 block text-[10px]">Total Paid</span>
+                          <span className="text-[#F3E6D0] font-bold">€{grandTotal.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                      <button
+                        onClick={() => navigate(`/order-confirmation/${orderIdState}`)}
+                        className="px-8 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-all cursor-pointer shadow-lg"
+                      >
+                        View Order Confirmation
+                      </button>
+                      <button
+                        onClick={() => navigate('/account/orders')}
+                        className="px-6 py-3 border border-[#D4AF37]/30 bg-black/50 text-[#F3E6D0] font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:border-[#D4AF37] cursor-pointer"
+                      >
+                        My Orders
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Polling / Processing */}
                 {paymentStatus === 'polling' && (
                   <div className="p-8 rounded-xl bg-black/40 border border-white/10 text-center space-y-3">
@@ -1831,15 +1905,37 @@ export default function CheckoutPage() {
 
                 {/* Payment failed */}
                 {paymentStatus === 'failed' && (
-                  <div className="p-8 rounded-xl bg-red-950/20 border border-red-500/30 text-center space-y-4">
-                    <p className="font-cinzel text-sm font-bold text-red-300">Payment Failed</p>
-                    <p className="text-xs text-[#D8BE99]">{paymentError || 'Your card was declined. Please try another card.'}</p>
-                    <button
-                      onClick={handleRetryPayment}
-                      className="px-6 py-2.5 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full cursor-pointer"
-                    >
-                      Try Another Card
-                    </button>
+                  <div className="p-8 rounded-2xl bg-[#0B0A08]/90 border border-rose-500/40 text-center space-y-5 shadow-2xl animate-in fade-in zoom-in-95">
+                    <div className="w-16 h-16 rounded-full border-2 border-rose-400 bg-rose-950/60 flex items-center justify-center mx-auto text-rose-400 shadow-[0_0_25px_rgba(244,63,94,0.3)]">
+                      <XCircle className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-cinzel text-lg font-bold text-rose-300 uppercase tracking-wider">
+                        Payment Failed / Declined
+                      </p>
+                      <p className="text-xs text-[#D8BE99] max-w-md mx-auto">
+                        {paymentError || 'Your card was declined or could not be processed by your bank. Please try another card or switch to Cash on Delivery.'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                      <button
+                        onClick={handleRetryPayment}
+                        className="px-6 py-3 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#F2D675] transition-all cursor-pointer shadow-lg"
+                      >
+                        Try Another Card
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, paymentMethod: 'COD' }));
+                          setPaymentStatus(null);
+                          setClientSecret(null);
+                          setStep(3);
+                        }}
+                        className="px-6 py-3 border border-white/20 bg-black/50 text-[#F3E6D0] font-cinzel font-bold text-xs uppercase tracking-wider rounded-full hover:border-white transition-all cursor-pointer"
+                      >
+                        Pay with Cash on Delivery
+                      </button>
+                    </div>
                   </div>
                 )}
 

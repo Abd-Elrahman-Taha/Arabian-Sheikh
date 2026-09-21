@@ -2,10 +2,9 @@ import React, { useState, Component } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
   getStripePromise,
-  getStripePublishableKey,
-  setCustomStripePublishableKey
+  getStripePublishableKey
 } from '../../services/paymentService';
-import { Lock, ShieldCheck, CreditCard, Loader2, AlertCircle, RefreshCw, Key, Banknote } from 'lucide-react';
+import { Lock, ShieldCheck, CreditCard, Loader2, AlertCircle, RefreshCw, Banknote } from 'lucide-react';
 
 /**
  * Error boundary for catching Stripe Elements loading and runtime errors
@@ -51,30 +50,64 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
     setProcessing(true);
     setStripeError(null);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: returnUrl,
-      },
-    });
+    try {
+      const result = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: returnUrl,
+        },
+        redirect: 'if_required',
+      });
 
-    // If we reach here, it means NO redirect happened.
-    // A redirect would have navigated away from the page entirely.
-    if (error) {
-      // Inline error (e.g. card declined, incomplete details)
-      // Show the error, stay on the form, let the customer correct and re-confirm
-      const errorMsg = error.message || 'Payment could not be confirmed.';
-      setStripeError(errorMsg);
+      const { error, paymentIntent } = result || {};
+
+      // If Stripe returned an error (card declined, invalid CVC, expired, etc.)
+      if (error) {
+        const errorMsg = error.message || 'Payment could not be confirmed.';
+        setStripeError(errorMsg);
+        setProcessing(false);
+        if (onError) onError(errorMsg);
+        return;
+      }
+
       setProcessing(false);
-      if (onError) onError(errorMsg);
-      return;
-    }
 
-    // No redirect and no error: the result still needs backend confirmation.
-    // Start polling — this point is NOT payment success.
-    // Only GET /api/payments/{id} → status Paid authorizes the success screen.
-    setProcessing(false);
-    if (onConfirmed) onConfirmed();
+      // Inspect authoritative paymentIntent status directly from Stripe
+      if (paymentIntent) {
+        if (paymentIntent.status === 'succeeded') {
+          // Instant success: money authorized and captured!
+          if (onConfirmed) {
+            onConfirmed({ status: 'Paid', paymentIntent });
+          }
+          return;
+        }
+
+        if (paymentIntent.status === 'requires_payment_method') {
+          const errorMsg = 'Payment was declined. Please try another card or payment method.';
+          setStripeError(errorMsg);
+          if (onError) onError(errorMsg);
+          return;
+        }
+
+        if (paymentIntent.status === 'processing') {
+          if (onConfirmed) {
+            onConfirmed({ status: 'Processing', paymentIntent });
+          }
+          return;
+        }
+      }
+
+      // Default: proceed with confirmed status
+      if (onConfirmed) {
+        onConfirmed({ status: paymentIntent?.status || 'Paid', paymentIntent });
+      }
+    } catch (err) {
+      console.error('[CheckoutForm] confirmPayment error:', err);
+      const msg = err?.message || 'Payment confirmation encountered an error.';
+      setStripeError(msg);
+      setProcessing(false);
+      if (onError) onError(msg);
+    }
   }
 
   return (
@@ -161,52 +194,37 @@ export default function StripePaymentForm({
 }) {
   const [processing, setProcessing] = useState(false);
   const [loadError, setLoadError] = useState(null);
-  const [showKeyConfig, setShowKeyConfig] = useState(false);
-  const [keyInput, setKeyInput] = useState(() => getStripePublishableKey());
-  const [activeKey, setActiveKey] = useState(() => getStripePublishableKey());
 
-  const currentStripePromise = getStripePromise(activeKey);
+  const currentStripePromise = getStripePromise();
 
-  const handleSaveKey = (e) => {
-    e?.preventDefault();
-    const trimmed = keyInput.trim();
-    if (!trimmed) return;
-    setCustomStripePublishableKey(trimmed);
-    setActiveKey(trimmed);
-    setLoadError(null);
-    setShowKeyConfig(false);
-  };
-
-  if (!currentStripePromise || !activeKey) {
+  if (!currentStripePromise) {
     return (
-      <div className="p-6 rounded-xl bg-red-950/30 border border-red-500/30 text-red-300 text-xs space-y-3">
-        <div className="flex items-center gap-2 text-red-400 font-bold">
-          <AlertCircle className="w-4 h-4" />
-          <span>Stripe Configuration Error</span>
+      <div className="p-6 rounded-2xl bg-[#0B0A08] border border-amber-500/30 text-xs space-y-4 shadow-xl">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-amber-950/60 border border-amber-500/40 flex items-center justify-center shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="font-cinzel font-bold text-sm text-[#F3E6D0]">
+              Online Payment Unavailable
+            </h4>
+            <p className="text-[#D8BE99] leading-relaxed">
+              Card payment services are temporarily undergoing maintenance. You may complete your order seamlessly using Cash on Delivery.
+            </p>
+          </div>
         </div>
-        <p>Missing or invalid Stripe Publishable Key in environment configuration.</p>
-        <div className="pt-2">
-          <form onSubmit={handleSaveKey} className="space-y-2">
-            <label className="block text-[11px] text-[#D8BE99] uppercase">
-              Enter Stripe Publishable Key (pk_test_...):
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="pk_test_..."
-                className="flex-1 bg-black/60 border border-white/15 px-3 py-2 rounded text-xs font-mono text-[#F3E6D0] focus:border-[#D4AF37]"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded cursor-pointer"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
+        {onSwitchToCod && (
+          <div className="pt-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={onSwitchToCod}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-[#F2D675] transition-colors cursor-pointer"
+            >
+              <Banknote className="w-4 h-4" />
+              <span>Pay with Cash on Delivery</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -272,7 +290,7 @@ export default function StripePaymentForm({
               Stripe Payment Form Unavailable
             </h4>
             <p className="text-[#D8BE99] leading-relaxed">
-              The card payment form could not be initialized by Stripe. This typically occurs when the Stripe Publishable Key is invalid or belongs to a different Stripe account than the backend.
+              The card payment form could not be initialized at this moment. You can retry or complete your purchase using Cash on Delivery.
             </p>
           </div>
         </div>
@@ -292,15 +310,6 @@ export default function StripePaymentForm({
 
           <button
             type="button"
-            onClick={() => setShowKeyConfig(!showKeyConfig)}
-            className="flex items-center gap-1.5 px-3 py-2 border border-[#D4AF37]/30 bg-black/40 text-[#D4AF37] font-cinzel text-xs uppercase tracking-wider rounded-lg hover:border-[#D4AF37] transition-colors cursor-pointer"
-          >
-            <Key className="w-3.5 h-3.5" />
-            <span>{showKeyConfig ? 'Hide Key Config' : 'Update Publishable Key'}</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setLoadError(null)}
             className="flex items-center gap-1.5 px-3 py-2 border border-white/20 bg-black/40 text-[#F3E6D0] font-cinzel text-xs uppercase tracking-wider rounded-lg hover:border-white transition-colors cursor-pointer"
           >
@@ -308,30 +317,6 @@ export default function StripePaymentForm({
             <span>Retry</span>
           </button>
         </div>
-
-        {/* Inline key configurator */}
-        {showKeyConfig && (
-          <form onSubmit={handleSaveKey} className="p-4 rounded-xl bg-black/80 border border-white/15 space-y-3">
-            <label className="block text-[11px] text-[#D8BE99] uppercase font-bold">
-              Stripe Publishable Key (pk_test_...):
-            </label>
-            <input
-              type="text"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              placeholder="pk_test_..."
-              className="w-full bg-black border border-white/20 p-2.5 rounded font-mono text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded cursor-pointer"
-              >
-                Save & Reload Form
-              </button>
-            </div>
-          </form>
-        )}
       </div>
     );
   }
@@ -343,39 +328,11 @@ export default function StripePaymentForm({
           <CreditCard className="w-4 h-4" />
           <span className="font-cinzel font-bold text-xs uppercase tracking-wider">Secure Card Payment</span>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowKeyConfig(!showKeyConfig)}
-          className="text-[10px] text-[#D8BE99] hover:text-[#D4AF37] transition-colors flex items-center gap-1 cursor-pointer"
-          title="Configure Stripe Publishable Key"
-        >
-          <Key className="w-3 h-3" />
-          <span>Stripe Key</span>
-        </button>
+        <div className="flex items-center gap-1.5 text-[10px] text-[#D8BE99]">
+          <Lock className="w-3 h-3 text-[#D4AF37]" />
+          <span>Encrypted 256-bit</span>
+        </div>
       </div>
-
-      {showKeyConfig && (
-        <form onSubmit={handleSaveKey} className="p-3 rounded-xl bg-black/80 border border-white/15 space-y-2 text-xs">
-          <label className="block text-[10px] text-[#D8BE99] uppercase">
-            Stripe Publishable Key:
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              placeholder="pk_test_..."
-              className="flex-1 bg-black border border-white/20 px-2.5 py-1.5 rounded font-mono text-[11px] text-[#F3E6D0] focus:border-[#D4AF37]"
-            />
-            <button
-              type="submit"
-              className="px-3 py-1.5 bg-[#D4AF37] text-black font-cinzel font-bold text-[10px] uppercase rounded cursor-pointer"
-            >
-              Apply
-            </button>
-          </div>
-        </form>
-      )}
 
       <StripeErrorBoundary
         onError={(err) => {
@@ -396,7 +353,7 @@ export default function StripePaymentForm({
         )}
       >
         <Elements
-          key={activeKey}
+          key={clientSecret}
           stripe={currentStripePromise}
           options={{ clientSecret, appearance }}
         >

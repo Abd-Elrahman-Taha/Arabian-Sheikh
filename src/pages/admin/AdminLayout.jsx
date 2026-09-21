@@ -26,7 +26,8 @@ import {
   Menu,
   X,
   RotateCcw,
-  DollarSign
+  DollarSign,
+  CreditCard
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -57,6 +58,7 @@ export default function AdminLayout({ children }) {
       title: 'Operations',
       links: [
         { to: '/admin/orders', label: t('admin.orders') || 'Orders', icon: ShoppingBag },
+        { to: '/admin/payments', label: 'Payments', icon: CreditCard, aliases: ['/admin/payment-transactions'] },
         { to: '/admin/returns', label: 'Returns', icon: RotateCcw, aliases: ['/admin/return-requests'] },
         { to: '/admin/refunds', label: 'Refunds', icon: DollarSign, aliases: ['/admin/refund-requests'] },
         { to: '/admin/inventory', label: t('admin.inventory') || 'Inventory', icon: Warehouse },

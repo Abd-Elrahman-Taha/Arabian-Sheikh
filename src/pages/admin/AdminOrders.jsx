@@ -1266,6 +1266,17 @@ export default function AdminOrders() {
                       </div>
                     )}
                   </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-[#D4AF37]/20 text-xs">
+                    <span className="text-[#D8BE99]">Need full gateway transaction telemetry & attempts?</span>
+                    <a
+                      href="/admin/payments"
+                      className="text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 font-cinzel font-bold text-[11px] uppercase tracking-wider"
+                    >
+                      <span>Open Admin Payments Suite</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
               )}
 

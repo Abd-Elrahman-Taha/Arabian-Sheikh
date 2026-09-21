@@ -354,7 +354,7 @@ async function request(endpoint, options = {}, attempt = 0) {
   }
 
   if (!requestHeaders.has('Accept')) {
-    requestHeaders.set('Accept', 'application/json');
+    requestHeaders.set('Accept', 'application/json, text/plain, */*');
   }
 
   // Inject Authorization Bearer Token
@@ -445,34 +445,46 @@ async function request(endpoint, options = {}, attempt = 0) {
                 }
               } else {
                 // Refresh token was rejected (401/400)
+                const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
+                if (isCoreAuthEndpoint) {
+                  tokenManager.clearTokens();
+                  if (typeof window !== 'undefined') {
+                    localStorage.removeItem('arabian_sheikh_current_user');
+                    window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
+                  }
+                }
+              }
+            } catch (refErr) {
+              console.warn('[client] Silent customer token refresh failed:', refErr?.message);
+              const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
+              if (isCoreAuthEndpoint) {
                 tokenManager.clearTokens();
                 if (typeof window !== 'undefined') {
                   localStorage.removeItem('arabian_sheikh_current_user');
                   window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
                 }
               }
-            } catch (refErr) {
-              console.warn('[client] Silent customer token refresh failed:', refErr?.message);
+            }
+          } else {
+            // No refresh token available, session is expired
+            const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
+            if (isCoreAuthEndpoint) {
               tokenManager.clearTokens();
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('arabian_sheikh_current_user');
                 window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
               }
             }
-          } else {
-            // No refresh token available, session is expired
+          }
+        } else {
+          // 401 persists even after retry: clear stale session only if core endpoint
+          const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
+          if (isCoreAuthEndpoint) {
             tokenManager.clearTokens();
             if (typeof window !== 'undefined') {
               localStorage.removeItem('arabian_sheikh_current_user');
               window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
             }
-          }
-        } else {
-          // 401 persists even after retry: clear stale session
-          tokenManager.clearTokens();
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('arabian_sheikh_current_user');
-            window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
           }
         }
       }
