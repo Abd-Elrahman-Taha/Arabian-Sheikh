@@ -126,11 +126,11 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
   };
 
   return (
-    <div className="w-full flex flex-col items-center bg-[transparent]">
+    <div className="w-full flex flex-col items-center bg-transparent">
       {/* Official Google Identity Button (Renders if available) */}
       <div
         ref={googleBtnRef}
-        className={`w-full flex justify-center ${rendered ? 'block' : 'hidden'}`}
+        className={`w-full flex justify-center bg-transparent ${rendered ? 'block' : 'hidden'}`}
       />
 
       {/* Fallback / Custom Styled Luxury Button */}
@@ -139,7 +139,7 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
           type="button"
           onClick={handleClick}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-full border border-[#D4AF37]/40 bg-black/60 hover:bg-black/90 hover:border-[#F2D675] text-[#F3E6D0] font-sans font-medium text-xs transition-all duration-300 shadow-md hover:shadow-[0_0_20px_rgba(212,175,55,0.25)] cursor-pointer group"
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-full border border-[#D4AF37]/50 bg-transparent hover:bg-white/5 hover:border-[#F2D675] text-[#F3E6D0] font-sans font-medium text-xs transition-all duration-300 shadow-sm hover:shadow-[0_0_20px_rgba(212,175,55,0.25)] cursor-pointer group"
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path

@@ -1141,6 +1141,13 @@ export default function CheckoutPage() {
       setPaymentStatus('paid');
       setPaymentError(null);
       success('Payment successful! Your order has been placed.');
+
+      // Automatically route to confirmation after a brief celebratory view
+      setTimeout(() => {
+        if (oid) {
+          navigate(`/order-confirmation/${oid}`);
+        }
+      }, 2000);
     } else if (result.status === 'Failed') {
       clearPaymentSession(oid);
       setPaymentStatus('failed');
@@ -1162,7 +1169,14 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Stripe card authorized; poll backend until DB confirms Paid
+    // Direct success: Stripe confirmed or PaymentIntent already succeeded
+    if (status === 'Paid' || result?.paymentIntent?.status === 'succeeded') {
+      console.log('[Checkout] Stripe confirmed Paid status:', result);
+      handlePaymentResult({ status: 'Paid', ...result }, oid);
+      return;
+    }
+
+    // Stripe card authorized / processing; poll backend until DB confirms Paid
     setPaymentStatus('polling');
     if (oid) {
       const pid = paymentIdState || getPaymentId(oid);
@@ -1172,6 +1186,15 @@ export default function CheckoutPage() {
   }
 
   function handleStripeError(message) {
+    const msgStr = String(message || '');
+    if (
+      msgStr.toLowerCase().includes('already succeeded') ||
+      msgStr.toLowerCase().includes('previously confirmed')
+    ) {
+      console.log('[Checkout] Stripe error indicates payment already succeeded - completing order:', msgStr);
+      handlePaymentResult({ status: 'Paid' }, orderIdState);
+      return;
+    }
     setPaymentError(message);
   }
 

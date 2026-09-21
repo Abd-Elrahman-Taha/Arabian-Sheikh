@@ -62,6 +62,7 @@ export default function Header({ onOpenSearch }) {
   const navCategories = [
     { name: t('nav.shop') || 'Shop', path: '/shop' },
     { name: t('nav.thePalace') || 'The Palace', path: '/the-palace' },
+    { name: t('nav.contact') || 'Contact Us', path: '/contact' },
     { name: t('nav.questions') || 'Questions', path: '/faqs' },
     {
       name: t('nav.policies') || 'Policies',
@@ -85,6 +86,10 @@ export default function Header({ onOpenSearch }) {
 
     if (itemPath === '/the-palace') {
       return currentPath === '/the-palace' || currentPath.startsWith('/the-palace') || currentPath.startsWith('/the-house');
+    }
+
+    if (itemPath === '/contact') {
+      return currentPath === '/contact';
     }
 
     if (itemPath === '/faqs') {
@@ -140,25 +145,29 @@ export default function Header({ onOpenSearch }) {
               isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
             }`}>
               <div className="flex items-center gap-2">
-                <Sparkles className={`w-3 h-3 ${isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'}`} />
                 {activePromos.length > 0 ? (
-                  <Link to="/shop" className="hover:underline flex items-center gap-1.5 font-bold">
-                    <span>
-                      👑 Palace Offer: "{activePromos[0].name.toUpperCase()}" is live —{' '}
-                      {activePromos[0].discountType === 'Fixed' ? `€${activePromos[0].discountValue}` : `${activePromos[0].discountValue}%`}{' '}
-                      OFF{' '}
-                      {(() => {
-                        const rules = activePromos[0].applicabilities || activePromos[0].applicability || [];
-                        if (rules.length === 0) return 'sitewide!';
-                        if (rules.length === 1 && rules[0].targetType === 'Category') return 'on select category!';
-                        if (rules.length === 1 && rules[0].targetType === 'Product') return 'on select flacon!';
-                        if (rules.length === 1 && rules[0].targetType === 'Brand') return 'on select maison!';
-                        return 'on select creations!';
-                      })()}
-                    </span>
-                  </Link>
+                  <>
+                    <Sparkles className={`w-3 h-3 ${isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'}`} />
+                    <Link to="/shop" className="hover:underline flex items-center gap-1.5 font-bold">
+                      <span>
+                        👑 Palace Offer: "{activePromos[0].name.toUpperCase()}" is live —{' '}
+                        {activePromos[0].discountType === 'Fixed' ? `€${activePromos[0].discountValue}` : `${activePromos[0].discountValue}%`}{' '}
+                        OFF{' '}
+                        {(() => {
+                          const rules = activePromos[0].applicabilities || activePromos[0].applicability || [];
+                          if (rules.length === 0) return 'sitewide!';
+                          if (rules.length === 1 && rules[0].targetType === 'Category') return 'on select category!';
+                          if (rules.length === 1 && rules[0].targetType === 'Product') return 'on select flacon!';
+                          if (rules.length === 1 && rules[0].targetType === 'Brand') return 'on select maison!';
+                          return 'on select creations!';
+                        })()}
+                      </span>
+                    </Link>
+                  </>
                 ) : (
-                  <span>Complimentary Royal Express Delivery Over €100 via DHL</span>
+                  <span className="opacity-85 font-cinzel font-semibold text-[10px] tracking-[0.3em]">
+                    Maison de Haute Parfumerie Royale
+                  </span>
                 )}
               </div>
               <div className={`flex items-center gap-6 normal-case text-xs tracking-normal ${
@@ -167,13 +176,14 @@ export default function Header({ onOpenSearch }) {
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className={`flex items-center gap-1 font-semibold uppercase tracking-wider text-[11px] relative group ${
-                      isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
+                    className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-cinzel font-bold uppercase tracking-wider text-xs border transition-all duration-300 shadow-md cursor-pointer ${
+                      isDark
+                        ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#F2D675] hover:bg-[#D4AF37] hover:text-black shadow-[0_0_15px_rgba(212,175,55,0.35)]'
+                        : 'bg-[#5A3517] border-[#5A3517] text-[#F3E6D0] hover:bg-[#3E230F] shadow-sm'
                     }`}
                   >
-                    <ShieldAlert className="w-3 h-3" />
+                    <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Admin Suite</span>
-                    <span className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.8)] rounded-full opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100 transition-all duration-300" />
                   </Link>
                 )}
               </div>
@@ -262,6 +272,22 @@ export default function Header({ onOpenSearch }) {
             <div className={`flex items-center space-x-1.5 sm:space-x-3 md:space-x-4 shrink-0 ${
               isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
             }`}>
+              {/* Admin Suite Header Link (Prominent for logged-in Admins) */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-cinzel font-bold tracking-wider uppercase border transition-all duration-300 shadow-md ${
+                    isDark
+                      ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#F2D675] hover:bg-[#D4AF37] hover:text-black shadow-[0_0_12px_rgba(212,175,55,0.3)]'
+                      : 'bg-[#5A3517] border-[#5A3517] text-[#F3E6D0] hover:bg-[#3E230F]'
+                  }`}
+                  title="Admin Suite"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Admin Suite</span>
+                </Link>
+              )}
+
               {/* Language Switcher */}
               <div className="relative hidden md:block">
                 <button
@@ -554,6 +580,21 @@ export default function Header({ onOpenSearch }) {
                 <span>Wishlist ({wishlistCount})</span>
               </Link>
             </div>
+
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`w-full flex items-center justify-center gap-2 py-2.5 border rounded-xl text-xs font-cinzel uppercase tracking-wider font-bold transition-all shadow-md ${
+                  isDark
+                    ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#F2D675]'
+                    : 'bg-[#5A3517] border-[#5A3517] text-[#F3E6D0]'
+                }`}
+              >
+                <ShieldAlert className="w-4 h-4 text-[#D4AF37]" />
+                <span>Open Admin Suite</span>
+              </Link>
+            )}
           </div>
         </div>
       )}

@@ -11,6 +11,8 @@ export const perfumeCategoryApi = {
     if (params.page) query.page = Number(params.page);
     if (params.pageSize) query.pageSize = Number(params.pageSize);
     if (params.search && params.search.trim()) query.search = params.search.trim();
+    if (params.sortBy) query.sortBy = params.sortBy;
+    if (params.sortDirection) query.sortDirection = params.sortDirection;
 
     const response = await apiClient.get(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.LIST, { params: query });
     return response;

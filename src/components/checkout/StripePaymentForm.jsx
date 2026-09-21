@@ -1,4 +1,4 @@
-import { useState, Component } from 'react';
+import { useState, useEffect, Component } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { getStripePromise } from '../../services/paymentService';
 import { Lock, ShieldCheck, CreditCard, Loader2, AlertCircle, RefreshCw, Banknote } from 'lucide-react';
@@ -32,13 +32,54 @@ class StripeErrorBoundary extends Component {
 }
 
 /**
+ * Helper to check if a Stripe response or error indicates the payment has already succeeded
+ */
+function isAlreadySucceeded(target) {
+  if (!target) return false;
+  const status = target?.payment_intent?.status || target?.status;
+  if (status === 'succeeded') return true;
+
+  const msg = String(target?.message || target?.error?.message || '').toLowerCase();
+  const code = String(target?.code || target?.error?.code || '').toLowerCase();
+
+  return (
+    msg.includes('already succeeded') ||
+    msg.includes('previously confirmed') ||
+    (code === 'payment_intent_unexpected_state' && (status === 'succeeded' || !status))
+  );
+}
+
+/**
  * Inner form component that uses Stripe hooks (must be inside <Elements>)
  */
-function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessing, onLoadError }) {
+function CheckoutForm({ clientSecret, returnUrl, onConfirmed, onError, processing, setProcessing, onLoadError }) {
   const stripe = useStripe();
   const elements = useElements();
   const [stripeError, setStripeError] = useState(null);
   const [elementReady, setElementReady] = useState(false);
+
+  // Pre-check on mount: If PaymentIntent is ALREADY succeeded in Stripe, transition immediately
+  useEffect(() => {
+    if (!stripe || !clientSecret) return;
+    let cancelled = false;
+
+    stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      if (!cancelled && paymentIntent?.status === 'succeeded') {
+        console.log('[CheckoutForm] Initial check: PaymentIntent already succeeded:', paymentIntent);
+        setProcessing(false);
+        setStripeError(null);
+        if (onConfirmed) {
+          onConfirmed({ status: 'Paid', paymentIntent });
+        }
+      }
+    }).catch(err => {
+      console.warn('[CheckoutForm] Initial retrievePaymentIntent notice:', err?.message);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stripe, clientSecret, onConfirmed, setProcessing]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -48,6 +89,25 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
     setStripeError(null);
 
     try {
+      // 1. Guard check: retrieve intent before confirming to prevent duplicate confirmation error
+      if (clientSecret) {
+        try {
+          const { paymentIntent: existingIntent } = await stripe.retrievePaymentIntent(clientSecret);
+          if (existingIntent?.status === 'succeeded') {
+            console.log('[CheckoutForm] PaymentIntent already succeeded before confirm call:', existingIntent);
+            setProcessing(false);
+            setStripeError(null);
+            if (onConfirmed) {
+              onConfirmed({ status: 'Paid', paymentIntent: existingIntent });
+            }
+            return;
+          }
+        } catch (retrieveErr) {
+          console.warn('[CheckoutForm] Pre-confirm retrieve notice:', retrieveErr?.message);
+        }
+      }
+
+      // 2. Submit payment confirmation to Stripe
       const result = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -58,7 +118,18 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
 
       const { error, paymentIntent } = result || {};
 
-      // If Stripe returned an error (card declined, invalid CVC, expired, etc.)
+      // 3. Check if error actually indicates the PaymentIntent already succeeded
+      if (isAlreadySucceeded(error)) {
+        console.log('[CheckoutForm] Stripe returned already succeeded error - treating as Paid:', error);
+        setProcessing(false);
+        setStripeError(null);
+        if (onConfirmed) {
+          onConfirmed({ status: 'Paid', paymentIntent: error?.payment_intent });
+        }
+        return;
+      }
+
+      // If Stripe returned a real failure (card declined, invalid CVC, expired, etc.)
       if (error) {
         const errorMsg = error.message || 'Payment could not be confirmed.';
         setStripeError(errorMsg);
@@ -69,10 +140,17 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
 
       setProcessing(false);
 
-      // If Stripe returned paymentIntent, check for errors vs success
+      // 4. Handle returned paymentIntent
       if (paymentIntent) {
-        if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing') {
-          // Stripe authorized/captured card. Hand off to parent to poll backend for true DB settlement
+        if (paymentIntent.status === 'succeeded') {
+          setStripeError(null);
+          if (onConfirmed) {
+            onConfirmed({ status: 'Paid', paymentIntent });
+          }
+          return;
+        }
+
+        if (paymentIntent.status === 'processing') {
           if (onConfirmed) {
             onConfirmed({ status: 'Processing', paymentIntent });
           }
@@ -93,6 +171,18 @@ function CheckoutForm({ returnUrl, onConfirmed, onError, processing, setProcessi
       }
     } catch (err) {
       console.error('[CheckoutForm] confirmPayment error:', err);
+
+      // Check if exception indicates already succeeded
+      if (isAlreadySucceeded(err)) {
+        console.log('[CheckoutForm] Caught already succeeded PaymentIntent error in catch block:', err);
+        setProcessing(false);
+        setStripeError(null);
+        if (onConfirmed) {
+          onConfirmed({ status: 'Paid', paymentIntent: err?.payment_intent });
+        }
+        return;
+      }
+
       const msg = err?.message || 'Payment confirmation encountered an error.';
       setStripeError(msg);
       setProcessing(false);
@@ -340,6 +430,7 @@ export default function StripePaymentForm({
           options={{ clientSecret, appearance }}
         >
           <CheckoutForm
+            clientSecret={clientSecret}
             returnUrl={returnUrl}
             onConfirmed={onConfirmed}
             onError={onError}

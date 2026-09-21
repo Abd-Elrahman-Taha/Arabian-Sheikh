@@ -178,7 +178,7 @@ export const paymentService = {
    * @returns {Promise<{id, orderId, provider, providerPaymentId, amount, currency, status, paidAt}>}
    */
   async pollUntilTerminal(paymentId, options = {}) {
-    const { signal, onStatusUpdate, orderId, paymentKey } = options;
+    const { signal, onStatusUpdate, orderId, paymentKey, clientSecret } = options;
     const effectivePaymentKey = paymentKey || (orderId ? getPaymentKey(orderId) : null);
     const started = Date.now();
     const TOTAL_BUDGET_MS = 90_000; // 90 seconds max
@@ -207,6 +207,34 @@ export const paymentService = {
       cycleCount++;
 
       try {
+        // 0. Direct Stripe check if clientSecret is available:
+        // If Stripe already captured/succeeded the payment, we know 100% the customer was charged
+        if (clientSecret) {
+          try {
+            const stripeObj = await getStripePromise();
+            if (stripeObj) {
+              const { paymentIntent } = await stripeObj.retrievePaymentIntent(clientSecret);
+              if (paymentIntent && paymentIntent.status === 'succeeded') {
+                console.log('[paymentService] Direct Stripe check confirmed PaymentIntent succeeded:', paymentIntent.id);
+                const terminalPayment = {
+                  id: paymentId || orderId,
+                  orderId: Number(orderId),
+                  provider: 'stripe',
+                  providerPaymentId: paymentIntent.id,
+                  amount: paymentIntent.amount_received ? paymentIntent.amount_received / 100 : undefined,
+                  currency: paymentIntent.currency || 'EUR',
+                  status: 'Paid',
+                  paidAt: new Date().toISOString()
+                };
+                if (onStatusUpdate) onStatusUpdate(terminalPayment);
+                return terminalPayment;
+              }
+            }
+          } catch (stripeErr) {
+            console.warn('[paymentService] Direct Stripe check notice:', stripeErr?.message);
+          }
+        }
+
         // 1. Query Backend Payment Status: GET /api/payments/{paymentId}
         let payment = null;
         let isAuthError = false;

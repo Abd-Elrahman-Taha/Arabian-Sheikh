@@ -58,6 +58,8 @@ const DEFAULT_OVERVIEW = {
     totalProducts: 0,
     activeProducts: 0,
     inactiveProducts: 0,
+    outOfStockProducts: 0,
+    lowStockProducts: 0,
     productsBySubcategory: []
   },
   returns: {
@@ -73,6 +75,8 @@ const DEFAULT_OVERVIEW = {
   },
   customers: {
     totalCustomers: 0,
+    newToday: 0,
+    newThisMonth: 0,
     newCustomersThisMonth: 0
   },
   topSellingProducts: [],
@@ -504,8 +508,10 @@ export default function AdminDashboard({ initialTab = 'all' }) {
               </p>
               <div className="text-[11px] text-[#A69076] font-mono mt-1 space-y-0.5">
                 <div className="flex justify-between">
-                  <span>New This Month:</span>
-                  <span className="text-emerald-400 font-bold">+{data.customers?.newCustomersThisMonth || 0}</span>
+                  <span>Today / Month:</span>
+                  <span className="text-emerald-400 font-bold">
+                    +{data.customers?.newToday || 0} / +{data.customers?.newThisMonth || data.customers?.newCustomersThisMonth || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Patron Status:</span>
@@ -539,13 +545,15 @@ export default function AdminDashboard({ initialTab = 'all' }) {
                   <span className="text-emerald-400 font-bold">{data.catalog?.activeProducts || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Vault Reserve:</span>
-                  <span className="text-amber-400">{data.catalog?.inactiveProducts || 0}</span>
+                  <span>Low / Out Stock:</span>
+                  <span className="text-amber-400 font-bold">
+                    {data.catalog?.lowStockProducts || 0} / {data.catalog?.outOfStockProducts || 0}
+                  </span>
                 </div>
               </div>
             </div>
-            <Link to="/admin/inventory" className="text-[11px] text-[#F2D675] hover:underline font-mono font-bold pt-1 border-t border-white/5 flex items-center justify-between">
-              <span>Manage Vault</span>
+            <Link to="/admin/products" className="text-[11px] text-[#F2D675] hover:underline font-mono font-bold pt-1 border-t border-white/5 flex items-center justify-between">
+              <span>Manage Products</span>
               <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
@@ -741,8 +749,8 @@ export default function AdminDashboard({ initialTab = 'all' }) {
                 <h3 className="font-cinzel text-sm sm:text-base font-bold uppercase text-[#F2D675] tracking-wider">
                   Catalog Distribution
                 </h3>
-                <Link to="/admin/inventory" className="text-xs text-[#D8BE99] hover:text-[#F2D675] font-mono font-bold flex items-center gap-1">
-                  <span>Inventory</span>
+                <Link to="/admin/products" className="text-xs text-[#D8BE99] hover:text-[#F2D675] font-mono font-bold flex items-center gap-1">
+                  <span>Catalog</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -782,7 +790,8 @@ export default function AdminDashboard({ initialTab = 'all' }) {
 
             <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-[#A69076] font-mono">
               <span>Active: {data.catalog?.activeProducts || 0}</span>
-              <span>Inactive: {data.catalog?.inactiveProducts || 0}</span>
+              <span>Low Stock: {data.catalog?.lowStockProducts || 0}</span>
+              <span>Out of Stock: {data.catalog?.outOfStockProducts || 0}</span>
             </div>
           </div>
         </ScrollReveal>

@@ -207,6 +207,8 @@ export const adminService = {
           totalProducts: productList.length,
           activeProducts: activeProducts.length,
           inactiveProducts: inactiveProducts.length,
+          outOfStockProducts: productList.filter(p => Number(p.stock) <= 0).length,
+          lowStockProducts: productList.filter(p => Number(p.stock) > 0 && Number(p.stock) <= 5).length,
           productsBySubcategory: Array.from(subcategoryMap.values())
         },
         returns: {
@@ -222,6 +224,8 @@ export const adminService = {
         },
         customers: {
           totalCustomers: userList.length,
+          newToday: userList.filter(u => (u.createdAt || '').slice(0, 10) === todayDateStr).length,
+          newThisMonth: userList.filter(u => (u.createdAt || '').slice(0, 7) === currentMonthStr).length,
           newCustomersThisMonth: userList.filter(u => (u.createdAt || '').slice(0, 7) === currentMonthStr).length
         },
         topSellingProducts: [],

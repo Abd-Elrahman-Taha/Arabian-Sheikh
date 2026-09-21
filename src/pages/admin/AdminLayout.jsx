@@ -12,7 +12,6 @@ import {
   Sparkles,
   ShoppingBag,
   Users,
-  Warehouse,
   TrendingUp,
   Tag,
   ShieldCheck,
@@ -20,7 +19,6 @@ import {
   HelpCircle,
   FileText,
   PhoneCall,
-  Settings,
   LogOut,
   ExternalLink,
   Menu,
@@ -61,7 +59,6 @@ export default function AdminLayout({ children }) {
         { to: '/admin/payments', label: 'Payments', icon: CreditCard, aliases: ['/admin/payment-transactions'] },
         { to: '/admin/returns', label: 'Returns', icon: RotateCcw, aliases: ['/admin/return-requests'] },
         { to: '/admin/refunds', label: 'Refunds', icon: DollarSign, aliases: ['/admin/refund-requests'] },
-        { to: '/admin/inventory', label: t('admin.inventory') || 'Inventory', icon: Warehouse },
         { to: '/admin/users', label: t('admin.users') || 'Customers', icon: Users },
         { to: '/admin/reviews', label: 'Reviews Moderation', icon: Star, aliases: ['/admin/review-moderation', '/dashboard/reviews'] },
         { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] }
@@ -75,12 +72,11 @@ export default function AdminLayout({ children }) {
       ]
     },
     {
-      title: 'Content & Settings',
+      title: 'Content & Management',
       links: [
         { to: '/admin/content/faqs', label: 'FAQs', icon: HelpCircle, aliases: ['/dashboard/content/faqs'] },
         { to: '/admin/content/pages', label: 'Policies', icon: FileText, aliases: ['/dashboard/content/pages'] },
-        { to: '/admin/content/contact', label: 'Contact Info', icon: PhoneCall, aliases: ['/dashboard/content/contact'] },
-        { to: '/admin/settings', label: t('admin.settings') || 'Settings', icon: Settings }
+        { to: '/admin/content/contact', label: 'Contact Info', icon: PhoneCall, aliases: ['/dashboard/content/contact'] }
       ]
     }
   ];

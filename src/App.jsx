@@ -61,11 +61,9 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminProductEdit from './pages/admin/AdminProductEdit';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
-import AdminInventory from './pages/admin/AdminInventory';
 import AdminDiscounts from './pages/admin/AdminDiscounts';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminManagement from './pages/admin/AdminManagement';
-import AdminSettings from './pages/admin/AdminSettings';
 import AdminFaqs from './pages/admin/AdminFaqs';
 import AdminPages from './pages/admin/AdminPages';
 import AdminContact from './pages/admin/AdminContact';
@@ -123,7 +121,6 @@ function MainRouter() {
           {(currentPath === '/admin/admins' || currentPath === '/admin/administrators' || currentPath === '/admin/management') && (
             <AdminManagement />
           )}
-          {currentPath === '/admin/inventory' && <AdminInventory />}
           {(currentPath === '/admin/reports' || currentPath === '/admin/reports/sales' || currentPath === '/admin/sales-reports' || currentPath === '/admin/analytics') && <AdminDashboard initialTab="reports" />}
           {currentPath === '/admin/promotions' && <AdminPromotions />}
           {(currentPath === '/admin/coupons' || currentPath === '/admin/discounts' || currentPath === '/dashboard/coupons') && <AdminDiscounts />}
@@ -131,7 +128,6 @@ function MainRouter() {
           {(currentPath === '/admin/content/pages' || currentPath === '/dashboard/content/pages') && <AdminPages />}
           {(currentPath === '/admin/content/contact' || currentPath === '/dashboard/content/contact') && <AdminContact />}
           {(currentPath === '/admin/reviews' || currentPath === '/admin/review-moderation' || currentPath === '/dashboard/reviews') && <AdminReviews />}
-          {currentPath === '/admin/settings' && <AdminSettings />}
         </AdminLayout>
       );
     }

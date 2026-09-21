@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { perfumeCategoryService } from '../../services/perfumeCategoryService';
 import {
@@ -32,6 +32,22 @@ export default function AdminPerfumeCategories() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
+
+  // Client-side instant sorting guarantee across all attributes
+  const sortedTiers = useMemo(() => {
+    if (!Array.isArray(tiers)) return [];
+    return [...tiers].sort((a, b) => {
+      let res = 0;
+      if (sortBy === 'name') {
+        res = String(a.name || '').localeCompare(String(b.name || ''));
+      } else if (sortBy === 'price') {
+        res = (Number(a.price) || 0) - (Number(b.price) || 0);
+      } else {
+        res = (Number(a.id) || 0) - (Number(b.id) || 0);
+      }
+      return sortDirection === 'desc' ? -res : res;
+    });
+  }, [tiers, sortBy, sortDirection]);
 
   // Modals state
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -212,14 +228,6 @@ export default function AdminPerfumeCategories() {
         </div>
       </div>
 
-      {/* Notice Banner */}
-      <div className="p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-start gap-3">
-        <Sparkles className="w-5 h-5 text-[#F2D675] shrink-0 mt-0.5" />
-        <div className="text-xs text-[#F3E6D0]/90 leading-relaxed">
-          <strong className="text-[#F2D675] font-semibold">Catalog Rule:</strong> In the Arabian Sheikh catalog, perfumes (Category ID = 1) do not have manual prices. Instead, each perfume is assigned to a Perfume Pricing Tier below and automatically inherits its price. Non-perfume products maintain their own individual price.
-        </div>
-      </div>
-
       {/* Filter Bar */}
       <div className="bg-[#0B0A08]/90 border border-[#D4AF37]/25 rounded-2xl p-4 shadow-xl backdrop-blur-md grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
         {/* Search */}
@@ -290,7 +298,7 @@ export default function AdminPerfumeCategories() {
                     </div>
                   </td>
                 </tr>
-              ) : tiers.length === 0 ? (
+              ) : sortedTiers.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="py-16 text-center">
                     <div className="max-w-md mx-auto space-y-3">
@@ -311,7 +319,7 @@ export default function AdminPerfumeCategories() {
                   </td>
                 </tr>
               ) : (
-                tiers.map((tier) => (
+                sortedTiers.map((tier) => (
                   <tr
                     key={tier.id}
                     className="hover:bg-[#1A1108]/40 transition-colors"

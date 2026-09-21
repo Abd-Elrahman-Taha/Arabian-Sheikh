@@ -16,7 +16,14 @@ import {
   Crown,
   Tag,
   RefreshCw,
-  Layers
+  Layers,
+  Eye,
+  X,
+  Scale,
+  Globe,
+  Building2,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 export default function AdminProducts() {
@@ -31,6 +38,11 @@ export default function AdminProducts() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+
+  // Product Details Modal State (GET /api/admin/products/{id})
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [selectedProductDetails, setSelectedProductDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     async function loadCatalogMetadata() {
@@ -86,6 +98,26 @@ export default function AdminProducts() {
     } catch (err) {
       error(err.message || 'Could not delete item.');
       fetchProducts();
+    }
+  };
+
+  const handleViewDetails = async (id) => {
+    setSelectedProductId(id);
+    setSelectedProductDetails(null);
+    setDetailsLoading(true);
+    try {
+      const details = await productApi.adminGetProductById(id);
+      setSelectedProductDetails(details);
+    } catch (err) {
+      console.warn('Failed to load product details from server:', err);
+      const fallback = products.find(p => p.id === id || p.numericId === id);
+      if (fallback) {
+        setSelectedProductDetails(fallback);
+      } else {
+        error('Failed to load product details.');
+      }
+    } finally {
+      setDetailsLoading(false);
     }
   };
 
@@ -248,7 +280,14 @@ export default function AdminProducts() {
                       {p.status || 'ACTIVE'}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-right rtl:text-left space-x-2 rtl:space-x-reverse">
+                  <td className="py-4 px-4 text-right rtl:text-left space-x-2 rtl:space-x-reverse whitespace-nowrap">
+                    <button
+                      onClick={() => handleViewDetails(p.id)}
+                      className="p-2 inline-block bg-white/5 hover:bg-[#D4AF37] hover:text-black rounded-lg text-[#F2D675] transition-colors shadow-sm cursor-pointer"
+                      title="View Product Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
                     <Link
                       to={`/admin/products/${p.id}/edit`}
                       className="p-2 inline-block bg-white/5 hover:bg-[#D4AF37] hover:text-black rounded-lg text-[#D4AF37] transition-colors shadow-sm"
@@ -272,6 +311,193 @@ export default function AdminProducts() {
         </table>
       </div>
 
+      {/* Product Details Modal (GET /api/admin/products/{id}) */}
+      {selectedProductId !== null && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-[#D4AF37]/20 bg-gradient-to-r from-black via-[#140D08] to-black">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#D4AF37]/20 border border-[#D4AF37]/40 rounded-xl text-[#F2D675]">
+                  <Package className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-cinzel text-lg font-bold text-[#F3E6D0] uppercase tracking-wider">
+                    {detailsLoading ? `Loading Flacon #${selectedProductId}...` : (selectedProductDetails?.name || `Product #${selectedProductId}`)}
+                  </h3>
+                  <p className="text-xs text-[#D8BE99] font-mono">
+                    Product Identifier: #{selectedProductId}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedProductId(null)}
+                className="p-2 rounded-xl text-[#D8BE99] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs sm:text-sm">
+              {detailsLoading ? (
+                <div className="py-20 flex flex-col items-center justify-center gap-3 text-[#D4AF37]">
+                  <RefreshCw className="w-8 h-8 animate-spin" />
+                  <span className="font-cinzel text-xs uppercase tracking-widest text-[#D8BE99]">
+                    Fetching Live Product Details...
+                  </span>
+                </div>
+              ) : selectedProductDetails ? (
+                <div className="space-y-6">
+                  {/* Top Overview: Image + Core Metadata */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 bg-black/40 border border-[#D4AF37]/20 p-4 rounded-xl">
+                    {/* Flacon Image */}
+                    <div className="sm:col-span-4 flex flex-col items-center justify-center bg-black/60 border border-white/5 rounded-xl p-3">
+                      <img
+                        src={selectedProductDetails.imageUrl || selectedProductDetails.image || '/products/luxury_designs/07_arabian_gold.webp'}
+                        alt={selectedProductDetails.name}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/products/luxury_designs/07_arabian_gold.webp';
+                        }}
+                        className="w-32 h-44 object-contain"
+                      />
+                      <span className="mt-2 text-[10px] uppercase font-mono text-[#D8BE99]">
+                        {selectedProductDetails.size || '60 ml'} Flacon
+                      </span>
+                    </div>
+
+                    {/* Core Attributes */}
+                    <div className="sm:col-span-8 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                          selectedProductDetails.isActive !== false && selectedProductDetails.status !== 'INACTIVE'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                        }`}>
+                          {selectedProductDetails.isActive !== false && selectedProductDetails.status !== 'INACTIVE' ? 'Active / Live' : 'Inactive / Draft'}
+                        </span>
+                        {selectedProductDetails.tier && (
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#D4AF37]/20 text-[#F2D675] border border-[#D4AF37]/40 font-cinzel">
+                            {selectedProductDetails.tier} Tier
+                          </span>
+                        )}
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white/5 text-[#D8BE99] border border-white/10">
+                          {selectedProductDetails.category || 'Perfumes'}
+                        </span>
+                      </div>
+
+                      <h4 className="font-cinzel text-xl font-bold text-[#F3E6D0]">
+                        {selectedProductDetails.name}
+                      </h4>
+                      {selectedProductDetails.arabicName && (
+                        <p className="font-arabic text-[#D4AF37] text-base">
+                          {selectedProductDetails.arabicName}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                        <div>
+                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Brand / Maison</span>
+                          <span className="text-[#F3E6D0] font-medium">{selectedProductDetails.brand || selectedProductDetails.brandName || 'Arabian Sheikh'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Subcategory</span>
+                          <span className="text-[#F3E6D0] font-medium">{selectedProductDetails.subcategory || selectedProductDetails.subcategoryName || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Selling Price</span>
+                          <span className="text-[#F2D675] font-mono font-bold text-base">€{Number(selectedProductDetails.price || 0).toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Stock Reserve</span>
+                          <span className="text-[#F3E6D0] font-mono font-bold">{selectedProductDetails.stock || 0} units</span>
+                        </div>
+                        <div>
+                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Shipping Weight</span>
+                          <span className="text-[#F3E6D0] font-mono">{selectedProductDetails.shippingWeight ? `${selectedProductDetails.shippingWeight} kg` : '0.450 kg'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Gender Alignment</span>
+                          <span className="text-[#F3E6D0]">{selectedProductDetails.gender || 'Unisex'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description & Notes */}
+                  {selectedProductDetails.description && (
+                    <div className="bg-black/30 border border-[#D4AF37]/20 p-4 rounded-xl space-y-1.5">
+                      <span className="text-[11px] font-cinzel uppercase tracking-wider text-[#F2D675] font-bold">
+                        Description
+                      </span>
+                      <p className="text-xs text-[#D8BE99] leading-relaxed">
+                        {selectedProductDetails.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Ingredients / Composition */}
+                  {selectedProductDetails.ingredients && (
+                    <div className="bg-black/30 border border-[#D4AF37]/20 p-4 rounded-xl space-y-1.5">
+                      <span className="text-[11px] font-cinzel uppercase tracking-wider text-[#F2D675] font-bold">
+                        Olfactory Composition / Ingredients
+                      </span>
+                      <p className="text-xs text-[#D8BE99] leading-relaxed">
+                        {selectedProductDetails.ingredients}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Multilingual Translations */}
+                  {Array.isArray(selectedProductDetails.translations) && selectedProductDetails.translations.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-cinzel uppercase tracking-wider text-[#F2D675] font-bold block">
+                        Multilingual Translations ({selectedProductDetails.translations.length} registered)
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {selectedProductDetails.translations.map((t, idx) => (
+                          <div key={idx} className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
+                            <span className="text-[10px] font-mono uppercase font-bold text-[#D4AF37]">
+                              Language: {t.languageCode || t.language || 'Default'}
+                            </span>
+                            <p className="text-xs font-semibold text-[#F3E6D0] truncate">{t.name || '—'}</p>
+                            {t.description && <p className="text-[11px] text-[#A69076] line-clamp-2">{t.description}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-12 text-center text-[#A69076]">
+                  No product data found.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-4 border-t border-[#D4AF37]/20 bg-black/60">
+              <button
+                onClick={() => setSelectedProductId(null)}
+                className="px-4 py-2 rounded-xl border border-white/15 text-xs text-[#D8BE99] hover:text-white hover:bg-white/5 cursor-pointer font-semibold transition-colors"
+              >
+                Close
+              </button>
+              {selectedProductId && (
+                <Link
+                  to={`/admin/products/${selectedProductId}/edit`}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>Edit Flacon</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

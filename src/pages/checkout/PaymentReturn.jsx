@@ -48,10 +48,12 @@ export default function PaymentReturn() {
       // Poll backend API until terminal state is recorded in the database
       try {
         const payKey = orderId ? getPaymentKey(orderId) : null;
+        const clientSecretParam = queryParams.get('payment_intent_client_secret');
         const result = await paymentService.pollUntilTerminal(paymentId ? Number(paymentId) : undefined, {
           signal: controller.signal,
           orderId: orderId ? Number(orderId) : undefined,
           paymentKey: payKey,
+          clientSecret: clientSecretParam,
           onStatusUpdate: (p) => {
             if (!isCancelled) setPayment(p);
           },
@@ -67,6 +69,11 @@ export default function PaymentReturn() {
           }
           clearPaymentSession(orderId);
           clearCheckoutOrder();
+          setTimeout(() => {
+            if (orderId) {
+              navigate(`/order-confirmation/${orderId}`);
+            }
+          }, 2500);
         } else if (result.status === 'Failed') {
           setStatus('failed');
           clearPaymentSession(orderId);
@@ -137,6 +144,11 @@ export default function PaymentReturn() {
           }
           clearPaymentSession(orderId);
           clearCheckoutOrder();
+          setTimeout(() => {
+            if (orderId) {
+              navigate(`/order-confirmation/${orderId}`);
+            }
+          }, 2500);
         } else {
           setStatus('failed');
         }

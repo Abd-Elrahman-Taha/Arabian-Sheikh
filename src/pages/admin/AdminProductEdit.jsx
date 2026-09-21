@@ -73,9 +73,9 @@ export default function AdminProductEdit() {
   );
   const tierPrice = selectedTier ? Number(selectedTier.price) : 0;
 
-  // 1. Initial Load of Reference Data (Brands, Categories, Perfume Tiers)
+  // 1. Initial Load of Reference Data (Brands, Categories, Perfume Tiers) and Existing Product
   useEffect(() => {
-    async function loadReferenceData() {
+    async function initializeProductEditor() {
       setPageLoading(true);
       try {
         const [brandsData, catsData, tiersData] = await Promise.all([
@@ -104,64 +104,85 @@ export default function AdminProductEdit() {
             categoryId: defaultCatId,
             perfumeCategoryId: defaultTierId
           }));
+        } else if (editId) {
+          // Load existing product with full reference data already loaded
+          const item = await productService.getProductById(editId);
+          if (item) {
+            const catId = Number(item.categoryId || item.category?.id || (item.category === 'perfumes' ? 1 : 2)) || 1;
+            const isPerfume = catId === 1;
+
+            // Resolve tier carefully: DO NOT blindly default to 1 (which is €30)!
+            let resolvedTierId = '';
+            if (isPerfume) {
+              const rawTierId = item.perfumeCategoryId || item.perfumeCategory?.id;
+              if (rawTierId && loadedTiers.some(t => Number(t.id) === Number(rawTierId))) {
+                resolvedTierId = Number(rawTierId);
+              } else {
+                // Try matching by price (e.g. 150 matches Premium tier)
+                const numPrice = Number(item.price);
+                if (!isNaN(numPrice) && numPrice > 0) {
+                  const matchByPrice = loadedTiers.find(t => Math.abs(Number(t.price) - numPrice) < 0.01);
+                  if (matchByPrice) {
+                    resolvedTierId = Number(matchByPrice.id);
+                  }
+                }
+                // Try matching by tier name
+                if (!resolvedTierId && (item.perfumeCategoryName || item.tier || item.perfumeCategory)) {
+                  const nameToMatch = String(item.perfumeCategoryName || item.tier || (typeof item.perfumeCategory === 'string' ? item.perfumeCategory : item.perfumeCategory?.name) || '').toLowerCase().trim();
+                  const matchByName = loadedTiers.find(t => t.name?.toLowerCase().trim() === nameToMatch);
+                  if (matchByName) {
+                    resolvedTierId = Number(matchByName.id);
+                  }
+                }
+                // If rawTierId exists even if not in loadedTiers, preserve it
+                if (!resolvedTierId && rawTierId) {
+                  resolvedTierId = Number(rawTierId);
+                } else if (!resolvedTierId && (isNaN(numPrice) || numPrice <= 0) && loadedTiers.length > 0) {
+                  resolvedTierId = Number(loadedTiers[0].id);
+                }
+              }
+            }
+
+            setFormData({
+              brandId: Number(item.brandId || item.brand?.id || loadedBrands[0]?.id || 1),
+              categoryId: catId,
+              subcategoryId: item.subcategoryId ? Number(item.subcategoryId) : '',
+              perfumeCategoryId: resolvedTierId,
+              gender: item.gender === 'Female' ? 'Female' : (item.gender === 'Male' ? 'Male' : 'Unisex'),
+              price: item.price !== undefined && item.price !== null ? String(item.price) : '',
+              shippingWeight: Number(item.shippingWeight) > 0 ? Number(item.shippingWeight) : 0.45,
+              nameIsTranslatable: item.nameIsTranslatable !== false,
+              isActive: item.isActive !== false && item.status !== 'INACTIVE',
+              imageUrl: item.imageUrl || item.image || ''
+            });
+
+            // Populate translations
+            const transMap = {
+              En: { name: item.name || '', description: item.description || '', ingredients: item.ingredients || '' },
+              Bg: { name: item.bulgarianName || '', description: item.bulgarianDescription || '', ingredients: '' },
+              Es: { name: item.spanishName || '', description: item.spanishDescription || '', ingredients: '' }
+            };
+
+            if (Array.isArray(item.translations)) {
+              item.translations.forEach(t => {
+                const code = (t.languageCode || t.language || '').toUpperCase();
+                if (code === 'EN') transMap.En = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
+                if (code === 'BG') transMap.Bg = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
+                if (code === 'ES') transMap.Es = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
+              });
+            }
+
+            setTranslations(transMap);
+          }
         }
       } catch (err) {
-        console.warn('Failed to load initial catalog lookup data:', err.message);
+        console.warn('Failed to initialize product editor:', err.message);
+        error('Failed to load product details.');
       } finally {
         setPageLoading(false);
       }
     }
-    loadReferenceData();
-  }, [isNew]);
-
-  // 2. Load Existing Product (if in Edit mode)
-  useEffect(() => {
-    if (isNew || !editId) return;
-
-    async function loadExistingProduct() {
-      try {
-        const item = await productService.getProductById(editId);
-        if (item) {
-          const catId = Number(item.categoryId || item.category?.id || (item.category === 'perfumes' ? 1 : 2)) || 1;
-          const isPerfume = catId === 1;
-
-          setFormData({
-            brandId: Number(item.brandId || item.brand?.id || 1),
-            categoryId: catId,
-            subcategoryId: item.subcategoryId ? Number(item.subcategoryId) : '',
-            perfumeCategoryId: isPerfume ? Number(item.perfumeCategoryId || item.perfumeCategory?.id || 1) : '',
-            gender: item.gender === 'Female' ? 'Female' : (item.gender === 'Male' ? 'Male' : 'Unisex'),
-            price: isPerfume ? '' : (item.price !== undefined && item.price !== null ? String(item.price) : ''),
-            shippingWeight: Number(item.shippingWeight) > 0 ? Number(item.shippingWeight) : 0.45,
-            nameIsTranslatable: item.nameIsTranslatable !== false,
-            isActive: item.isActive !== false && item.status !== 'INACTIVE',
-            imageUrl: item.imageUrl || item.image || ''
-          });
-
-          // Populate translations
-          const transMap = {
-            En: { name: item.name || '', description: item.description || '', ingredients: item.ingredients || '' },
-            Bg: { name: item.bulgarianName || '', description: item.bulgarianDescription || '', ingredients: '' },
-            Es: { name: item.spanishName || '', description: item.spanishDescription || '', ingredients: '' }
-          };
-
-          if (Array.isArray(item.translations)) {
-            item.translations.forEach(t => {
-              const code = (t.languageCode || t.language || '').toUpperCase();
-              if (code === 'EN') transMap.En = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
-              if (code === 'BG') transMap.Bg = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
-              if (code === 'ES') transMap.Es = { name: t.name || '', description: t.description || '', ingredients: t.ingredients || '' };
-            });
-          }
-
-          setTranslations(transMap);
-        }
-      } catch (err) {
-        error('Failed to load product details.');
-      }
-    }
-
-    loadExistingProduct();
+    initializeProductEditor();
   }, [editId, isNew, error]);
 
   // 3. Cascading Subcategories: Fetch whenever categoryId changes
@@ -604,8 +625,8 @@ export default function AdminProductEdit() {
             )}
           </div>
 
-          {/* Shipping Weight & Toggles */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 items-center text-xs">
+          {/* Shipping Weight & Name Translatable */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 items-center text-xs">
             {/* Shipping Weight (kg) */}
             <div className="space-y-1.5">
               <label className="text-[#D8BE99] font-semibold uppercase tracking-wider flex items-center gap-1.5">
@@ -626,22 +647,8 @@ export default function AdminProductEdit() {
               )}
             </div>
 
-            {/* Active Checkbox */}
-            <div className="flex items-center gap-3 pt-4 sm:pt-6">
-              <input
-                type="checkbox"
-                id="field-is-active"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
-              />
-              <label htmlFor="field-is-active" className="text-xs text-[#F3E6D0] cursor-pointer">
-                <strong className="text-[#F2D675]">Active</strong> (Published in Store)
-              </label>
-            </div>
-
             {/* Name is Translatable Checkbox */}
-            <div className="flex items-center gap-3 pt-4 sm:pt-6">
+            <div className="flex items-center gap-3 pt-2 sm:pt-5">
               <input
                 type="checkbox"
                 id="field-name-translatable"
@@ -650,8 +657,50 @@ export default function AdminProductEdit() {
                 className="w-4 h-4 accent-[#D4AF37] rounded cursor-pointer"
               />
               <label htmlFor="field-name-translatable" className="text-xs text-[#D8BE99] cursor-pointer">
-                Name is Translatable
+                Product Name is Translatable across Languages
               </label>
+            </div>
+          </div>
+
+          {/* Explicit Active / Inactive Toggle Switch */}
+          <div className="p-4 rounded-xl bg-black/50 border border-[#D4AF37]/30 space-y-2.5 mt-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[#F2D675] font-cinzel font-bold uppercase tracking-wider text-xs">
+                Catalog Publication Status <span className="text-rose-400">*</span>
+              </label>
+              <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
+                formData.isActive
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+              }`}>
+                {formData.isActive ? '● ACTIVE / LIVE' : '○ INACTIVE / DRAFT'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, isActive: true }))}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  formData.isActive
+                    ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-500/20 border-2 border-emerald-400 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                    : 'bg-black/40 border border-white/10 text-neutral-400 hover:text-neutral-200 hover:border-white/20'
+                }`}
+              >
+                <span className={`w-2.5 h-2.5 rounded-full ${formData.isActive ? 'bg-emerald-400 animate-pulse' : 'bg-neutral-600'}`} />
+                <span>Active (Published in Boutique)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, isActive: false }))}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  !formData.isActive
+                    ? 'bg-gradient-to-r from-rose-600/30 to-rose-500/20 border-2 border-rose-400 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.3)]'
+                    : 'bg-black/40 border border-white/10 text-neutral-400 hover:text-neutral-200 hover:border-white/20'
+                }`}
+              >
+                <span className={`w-2.5 h-2.5 rounded-full ${!formData.isActive ? 'bg-rose-400' : 'bg-neutral-600'}`} />
+                <span>Inactive (Hidden / Private Vault)</span>
+              </button>
             </div>
           </div>
         </div>
