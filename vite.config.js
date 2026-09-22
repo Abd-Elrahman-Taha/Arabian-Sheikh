@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://arabian-sheikhtest.runasp.net',
+        target: 'https://arabian-sheikh.runasp.net',
         changeOrigin: true,
         secure: false,
       }
