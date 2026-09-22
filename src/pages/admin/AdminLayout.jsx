@@ -312,7 +312,7 @@ export default function AdminLayout({ children }) {
         </aside>
 
         {/* Main Admin View Container */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-black/40 overflow-x-hidden backdrop-blur-sm min-w-0">
+        <main className="flex-1 p-3.5 sm:p-5 lg:p-6 xl:p-8 bg-black/40 overflow-x-hidden backdrop-blur-sm min-w-0 max-w-full">
           {children}
         </main>
       </div>
