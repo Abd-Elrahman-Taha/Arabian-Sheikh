@@ -17,7 +17,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://arabian-sheikh.runasp.net/api/:path*"
+      "destination": "https://arabian-sheikhtest.runasp.net/api:path*"
     },
     {
       "source": "/(.*)",
