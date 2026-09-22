@@ -16,11 +16,19 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
 
   const isSignup = mode === 'signup';
 
-  const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const DEFAULT_GOOGLE_CLIENT_ID = '1075432573830-qogm3s2o4s5n9h3kgulg6fne2eoj1i1d.apps.googleusercontent.com';
+
+  const rawClientId = (
+    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    import.meta.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GOOGLE_CLIENT_ID) ||
+    DEFAULT_GOOGLE_CLIENT_ID
+  ).trim();
+
   const isConfigured = Boolean(
     rawClientId &&
     !rawClientId.includes('dummygoogleclientid') &&
-    rawClientId.trim().length > 0
+    rawClientId.length > 0
   );
 
   useEffect(() => {
@@ -99,8 +107,8 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
     if (!isConfigured) {
       error(
         language === 'ar'
-          ? 'تسجيل الدخول عبر Google غير مهيأ بعد. يرجى ضبط VITE_GOOGLE_CLIENT_ID في متغيرات البيئة.'
-          : 'Google Sign-In is not configured yet. Please configure VITE_GOOGLE_CLIENT_ID in your environment variables.'
+          ? 'تسجيل الدخول عبر Google غير مهيأ بعد. يرجى ضبط NEXT_PUBLIC_GOOGLE_CLIENT_ID في متغيرات البيئة.'
+          : 'Google Sign-In is not configured yet. Please configure NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment variables.'
       );
       return;
     }

@@ -700,6 +700,7 @@ export default function AdminOrders() {
                   const orderTotal = order.totals?.total ?? order.total ?? 0;
                   const currency = order.totals?.currency || order.currency || 'EUR';
                   const orderStatus = order.orderStatus || order.status || 'Pending';
+                  const rawPayStatus = order.paymentStatus;
                   const hasPaidPayment = isSuccessStatus(rawPayStatus) ||
                     isSuccessStatus(order.payments?.[0]?.status) ||
                     Boolean(order.paidAt) ||

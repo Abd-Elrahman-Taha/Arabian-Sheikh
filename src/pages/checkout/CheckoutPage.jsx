@@ -14,6 +14,7 @@ import {
   getPaymentKey,
   setPaymentKey,
   setPaymentId,
+  getPaymentId,
   clearPaymentSession,
   isTerminalStatus
 } from '../../services/paymentService';
