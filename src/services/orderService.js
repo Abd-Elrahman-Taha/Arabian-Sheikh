@@ -135,6 +135,12 @@ export const orderService = {
           const merged = {
             ...cached,
             ...item,
+            trackingNumber: item.trackingNumber || cached.trackingNumber,
+            trackingCode: item.trackingCode || cached.trackingCode || item.trackingNumber || cached.trackingNumber,
+            dhlTrackingNumber: item.dhlTrackingNumber || cached.dhlTrackingNumber || item.trackingNumber || cached.trackingNumber,
+            carrier: item.carrier || cached.carrier || item.shipping?.shippingCompanyName || 'DHL Express',
+            carrierStatus: item.carrierStatus || cached.carrierStatus,
+            shipments: (Array.isArray(item.shipments) && item.shipments.length > 0) ? item.shipments : (cached.shipments || []),
             shippingAddress: item.shippingAddress || cached.shippingAddress,
             shippingAddressSnapshot: item.shippingAddressSnapshot || cached.shippingAddressSnapshot,
             shippingSnapshot: item.shippingSnapshot || cached.shippingSnapshot,
@@ -148,8 +154,8 @@ export const orderService = {
           return merged;
         }
 
-        // If item already has shippingAddress or items, seed the cache
-        if (item.shippingAddress || (Array.isArray(item.items) && item.items.length > 0)) {
+        // If item already has shippingAddress, tracking, or items, seed the cache
+        if (item.shippingAddress || item.trackingNumber || (Array.isArray(item.items) && item.items.length > 0)) {
           cacheOrderDetails(item);
         }
 
@@ -180,11 +186,43 @@ export const orderService = {
     const numericId = toNumericId(id);
     if (!numericId) return null;
     try {
-      const details = await orderApi.adminGetOrderDetails(numericId);
-      if (details) {
-        cacheOrderDetails(details);
+      const [detailsRes, trackingRes] = await Promise.allSettled([
+        orderApi.adminGetOrderDetails(numericId),
+        orderApi.adminGetOrderTracking(numericId)
+      ]);
+      const details = detailsRes.status === 'fulfilled' ? detailsRes.value : null;
+      const tracking = trackingRes.status === 'fulfilled' ? trackingRes.value : null;
+
+      let merged = details ? { ...details } : (getCachedOrderDetails(id) || getCachedOrderDetails(numericId) || {});
+
+      const resolvedTracking = tracking?.trackingNumber 
+        || merged.trackingNumber 
+        || merged.trackingCode 
+        || merged.dhlTrackingNumber 
+        || merged.shipping?.trackingNumber 
+        || merged.shippingSnapshot?.trackingNumber
+        || null;
+
+      if (resolvedTracking) {
+        merged.trackingNumber = resolvedTracking;
+        merged.trackingCode = resolvedTracking;
+        merged.dhlTrackingNumber = resolvedTracking;
       }
-      return details;
+
+      if (tracking) {
+        merged.carrier = tracking.carrier || merged.carrier || merged.shipping?.shippingCompanyName || 'DHL Express';
+        merged.carrierStatus = tracking.carrierStatus || merged.carrierStatus;
+        merged.shipmentStatus = tracking.currentStatus || merged.shipmentStatus;
+        merged.trackingEvents = Array.isArray(tracking.events) ? tracking.events : (merged.trackingEvents || []);
+        if (tracking.expectedDeliveryDate) {
+          merged.expectedDeliveryDate = tracking.expectedDeliveryDate;
+        }
+      }
+
+      if (merged && (merged.id || merged.orderNumber)) {
+        cacheOrderDetails(merged);
+      }
+      return merged;
     } catch (e) {
       console.warn('[orderService] getAdminOrderDetails failed:', e.message);
       return getCachedOrderDetails(id) || getCachedOrderDetails(numericId);
@@ -196,8 +234,54 @@ export const orderService = {
     const numericId = toNumericId(id);
     if (!numericId) return null;
     try {
-      const order = await orderApi.getOrderById(numericId);
-      if (order && isOrderConfirmedPaid(id) && (order.paymentStatus === 'Pending' || !order.paymentStatus)) {
+      const [orderRes, trackingRes, delivRes] = await Promise.allSettled([
+        orderApi.getOrderById(numericId),
+        orderApi.trackOrder(numericId),
+        orderApi.getDeliveryStatus(numericId)
+      ]);
+
+      const order = orderRes.status === 'fulfilled' ? orderRes.value : null;
+      const tracking = trackingRes.status === 'fulfilled' ? trackingRes.value : null;
+      const deliv = delivRes.status === 'fulfilled' ? delivRes.value : null;
+
+      if (!order) {
+        if (isOrderConfirmedPaid(id)) {
+          return {
+            id,
+            numericId,
+            orderNumber: `ORD-${numericId}`,
+            paymentStatus: 'Paid',
+            orderStatus: 'Processing',
+            status: 'Processing',
+            paidAt: new Date().toISOString()
+          };
+        }
+        return null;
+      }
+
+      const resolvedTracking = tracking?.trackingNumber 
+        || deliv?.trackingNumber 
+        || order.trackingNumber 
+        || order.trackingCode 
+        || order.dhlTrackingNumber 
+        || order.shipping?.trackingNumber 
+        || order.shippingSnapshot?.trackingNumber
+        || null;
+
+      if (resolvedTracking) {
+        order.trackingNumber = resolvedTracking;
+        order.trackingCode = resolvedTracking;
+        order.dhlTrackingNumber = resolvedTracking;
+      }
+
+      if (tracking) {
+        order.carrier = tracking.carrier || order.carrier || 'DHL Express';
+        order.carrierStatus = tracking.carrierStatus || order.carrierStatus;
+        order.shipmentStatus = tracking.currentStatus || order.shipmentStatus;
+        order.trackingEvents = Array.isArray(tracking.events) ? tracking.events : (order.trackingEvents || []);
+      }
+
+      if (isOrderConfirmedPaid(id) && (order.paymentStatus === 'Pending' || !order.paymentStatus)) {
         order.paymentStatus = 'Paid';
         if (order.orderStatus === 'Pending') order.orderStatus = 'Processing';
         if (order.status === 'Pending') order.status = 'Processing';

@@ -550,7 +550,32 @@ export function normalizeOrder(raw) {
 
   // Tracking & Shipments
   const shipments = Array.isArray(o.shipments) ? o.shipments.map(normalizeObjectKeys) : [];
-  const trackingNumber = shipments[0]?.trackingNumber || o.trackingNumber || o.trackingCode || o.shipping?.trackingNumber || o.dhlTrackingNumber || '';
+  const trackingCandidates = [
+    shipments[0]?.trackingNumber,
+    shipments[0]?.trackingCode,
+    shipments[0]?.waybillNumber,
+    shipments[0]?.airwayBillNumber,
+    o.trackingNumber,
+    o.trackingCode,
+    o.dhlTrackingNumber,
+    o.carrierTrackingNumber,
+    o.airwayBillNumber,
+    o.waybillNumber,
+    o.awbNumber,
+    o.shipping?.trackingNumber,
+    o.shipping?.trackingCode,
+    o.shippingSnapshot?.trackingNumber,
+    o.shippingSnapshot?.carrierTrackingNumber,
+    o.shippingSnapshot?.airwayBillNumber,
+    o.shippingSnapshot?.waybillNumber,
+    o.shipment?.trackingNumber,
+    o.tracking?.trackingNumber,
+    o.deliveryStatus?.trackingNumber
+  ];
+  const trackingNumber = trackingCandidates
+    .map(c => (c !== undefined && c !== null ? String(c).trim() : ''))
+    .find(c => c && !['null', 'undefined', 'pending', 'unassigned', 'none', 'n/a'].includes(c.toLowerCase())) || '';
+
 
   // Audit & Purchase Cycle Sub-resources (Normalized upfront for payment status resolution)
   const paymentsList = Array.isArray(o.payments)
@@ -894,11 +919,28 @@ export function normalizeTrackingResponse(raw) {
   // Section 7: Display tracking timeline in chronological order (oldest first, newest last)
   events.sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
 
+  const trackingCandidates = [
+    t.trackingNumber,
+    t.trackingCode,
+    t.airwayBillNumber,
+    t.waybillNumber,
+    t.dhlTrackingNumber,
+    t.carrierTrackingNumber,
+    t.shippingSnapshot?.trackingNumber
+  ];
+  const trackingNumber = trackingCandidates
+    .map(c => (c !== undefined && c !== null ? String(c).trim() : ''))
+    .find(c => c && !['null', 'undefined', 'pending', 'unassigned', 'none', 'n/a'].includes(c.toLowerCase())) || null;
+
+  const resolvedCarrier = t.carrier || t.carrierName || t.shippingCompanyName || t.companyName || 'DHL Express';
+
   return {
     orderId: t.orderId ? Number(t.orderId) : null,
     shipmentId: t.shipmentId ? Number(t.shipmentId) : null,
-    carrier: t.carrier || 'ECONT',
-    trackingNumber: t.trackingNumber || null,
+    carrier: resolvedCarrier,
+    trackingNumber,
+    trackingCode: trackingNumber,
+    dhlTrackingNumber: trackingNumber,
     currentStatus: t.currentStatus || t.shipmentStatus || t.status || null,
     carrierStatus: t.carrierStatus || null,
     expectedDeliveryDate: t.expectedDeliveryDate || null,

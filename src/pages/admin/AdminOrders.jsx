@@ -343,6 +343,28 @@ export default function AdminOrders() {
       }
 
       setDetailsModalOrder(resolvedOrder);
+
+      // Synchronize resolved order details (including tracking number and address) to the table state
+      if (resolvedOrder.trackingNumber || resolvedOrder.shippingAddress) {
+        setOrdersData(prev => {
+          if (!prev?.items) return prev;
+          const updated = prev.items.map(it => {
+            if (String(it.id) === String(resolvedOrder.id) || (it.orderNumber && String(it.orderNumber) === String(resolvedOrder.orderNumber))) {
+              return {
+                ...it,
+                ...resolvedOrder,
+                trackingNumber: resolvedOrder.trackingNumber || it.trackingNumber,
+                trackingCode: resolvedOrder.trackingCode || it.trackingCode,
+                dhlTrackingNumber: resolvedOrder.dhlTrackingNumber || it.dhlTrackingNumber,
+                carrier: resolvedOrder.carrier || it.carrier,
+                carrierStatus: resolvedOrder.carrierStatus || it.carrierStatus
+              };
+            }
+            return it;
+          });
+          return { ...prev, items: updated };
+        });
+      }
     } catch (err) {
       console.warn('Failed to load order deep details:', err.message);
     } finally {
@@ -1224,6 +1246,87 @@ export default function AdminOrders() {
                   Placed on {detailsModalOrder.createdAt || detailsModalOrder.date ? new Date(detailsModalOrder.createdAt || detailsModalOrder.date).toLocaleString() : '—'}
                   {detailsModalOrder.customer?.email && ` by ${detailsModalOrder.customer.email}`}
                 </p>
+
+                {/* Prominent Tracking Number & Courier Consignment Bar */}
+                {(() => {
+                  const modalTrackingNumber = detailsModalOrder.trackingNumber 
+                    || detailsModalOrder.trackingCode 
+                    || detailsModalOrder.dhlTrackingNumber 
+                    || detailsModalOrder.shipping?.trackingNumber 
+                    || detailsModalOrder.shippingSnapshot?.trackingNumber 
+                    || detailsModalOrder.shippingSnapshot?.carrierTrackingNumber
+                    || detailsModalOrder.shippingSnapshot?.airwayBillNumber
+                    || detailsModalOrder.shippingSnapshot?.waybillNumber
+                    || detailsModalOrder.shipments?.[0]?.trackingNumber;
+                  const modalCarrier = detailsModalOrder.carrier 
+                    || detailsModalOrder.shippingSnapshot?.carrier 
+                    || detailsModalOrder.shippingSnapshot?.shippingCompanyName 
+                    || detailsModalOrder.shipping?.shippingCompanyName 
+                    || 'DHL Express';
+
+                  return (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono shadow-md ${
+                        modalTrackingNumber 
+                          ? 'bg-black/80 border-[#D4AF37]/60 text-[#F2D675]' 
+                          : 'bg-black/50 border-white/10 text-neutral-400'
+                      }`}>
+                        <Truck className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                        <span className="font-semibold text-[#D8BE99]">{modalCarrier}:</span>
+                        {modalTrackingNumber ? (
+                          <span className="font-bold text-[#F2D675] tracking-wider text-xs sm:text-sm select-all">
+                            {modalTrackingNumber}
+                          </span>
+                        ) : (
+                          <span className="italic text-neutral-400">Tracking Pending Dispatch</span>
+                        )}
+
+                        {modalTrackingNumber && (
+                          <button
+                            onClick={() => handleCopy(modalTrackingNumber, 'Tracking number')}
+                            className="p-1 hover:text-white transition-colors cursor-pointer text-[#D4AF37] ml-1"
+                            title="Copy Tracking Airway"
+                          >
+                            {copiedText === modalTrackingNumber ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {modalTrackingNumber && (
+                        <>
+                          <button
+                            onClick={() => handleOpenTracking(detailsModalOrder)}
+                            className="px-2.5 py-1.5 rounded-lg bg-black/60 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F2D675] text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                            title="Inspect Carrier Milestone Timeline"
+                          >
+                            <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                            <span>Milestones</span>
+                          </button>
+                          <a
+                            href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(modalTrackingNumber)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer flex items-center gap-1 text-xs font-mono"
+                            title="Track on DHL Portal"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Carrier Portal</span>
+                          </a>
+                        </>
+                      )}
+
+                      {detailsModalOrder.carrierStatus && (
+                        <span className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-full bg-cyan-950/50 border border-cyan-500/30 text-cyan-300">
+                          {detailsModalOrder.carrierStatus}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1518,6 +1621,87 @@ export default function AdminOrders() {
               {/* TAB 2: SHIPPING & LOGISTICS */}
               {detailsActiveTab === 'shipping' && (
                 <div className="space-y-5">
+                  {/* Dedicated Tracking Banner */}
+                  {(() => {
+                    const tabAirwayNum = detailsModalOrder.trackingNumber 
+                      || detailsModalOrder.trackingCode 
+                      || detailsModalOrder.dhlTrackingNumber 
+                      || detailsModalOrder.shipping?.trackingNumber 
+                      || detailsModalOrder.shippingSnapshot?.trackingNumber 
+                      || detailsModalOrder.shippingSnapshot?.carrierTrackingNumber
+                      || detailsModalOrder.shippingSnapshot?.airwayBillNumber
+                      || detailsModalOrder.shipments?.[0]?.trackingNumber;
+                    const tabCarrier = detailsModalOrder.carrier 
+                      || detailsModalOrder.shippingSnapshot?.carrier 
+                      || detailsModalOrder.shippingSnapshot?.shippingCompanyName 
+                      || detailsModalOrder.shipping?.shippingCompanyName 
+                      || 'DHL Express Worldwide';
+
+                    return (
+                      <div className="p-4 rounded-xl bg-gradient-to-r from-black via-[#16120B] to-black border border-[#D4AF37]/40 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/35 flex items-center justify-center shrink-0 text-[#F2D675]">
+                            <Truck className="w-5 h-5 text-[#D4AF37]" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-cinzel font-bold text-[#D4AF37] uppercase tracking-wider">
+                                Courier Consignment ({tabCarrier})
+                              </span>
+                              {detailsModalOrder.carrierStatus && (
+                                <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 font-bold">
+                                  {detailsModalOrder.carrierStatus}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              {tabAirwayNum ? (
+                                <>
+                                  <span className="font-mono font-bold text-sm sm:text-base text-[#F2D675] tracking-wider select-all">
+                                    {tabAirwayNum}
+                                  </span>
+                                  <button
+                                    onClick={() => handleCopy(tabAirwayNum, 'Tracking number')}
+                                    className="px-2 py-1 rounded bg-[#D4AF37]/20 hover:bg-[#D4AF37]/40 text-[#F2D675] hover:text-white transition-colors text-xs font-mono flex items-center gap-1 cursor-pointer border border-[#D4AF37]/30"
+                                    title="Copy Tracking Number"
+                                  >
+                                    {copiedText === tabAirwayNum ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                    <span>{copiedText === tabAirwayNum ? 'Copied' : 'Copy'}</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-xs font-mono text-neutral-400 italic">
+                                  Tracking number pending courier assignment
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                          <button
+                            onClick={() => handleOpenTracking(detailsModalOrder)}
+                            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Milestones Timeline</span>
+                          </button>
+                          {tabAirwayNum && (
+                            <a
+                              href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(tabAirwayNum)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-lg bg-black/60 hover:bg-black/90 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer"
+                              title="Track on DHL Official Portal"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Destination Address */}
                     {(() => {

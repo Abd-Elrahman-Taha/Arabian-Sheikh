@@ -24,7 +24,9 @@ import {
   Building,
   Globe,
   Receipt,
-  RefreshCw
+  RefreshCw,
+  ExternalLink,
+  Clock
 } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 import returnsService from '../../services/returnsService';
@@ -98,6 +100,47 @@ function formatPaymentMethod(method, paymentMethodCode) {
     icon: CreditCard,
     badge: 'Electronic Settlement'
   };
+}
+
+const isValidTracking = (v) => Boolean(
+  v &&
+  typeof v === 'string' &&
+  v.trim() &&
+  !['null', 'undefined', 'pending', 'unassigned', 'none', 'n/a'].includes(v.trim().toLowerCase())
+);
+
+export function extractTrackingNumber(...sources) {
+  for (const src of sources) {
+    if (!src) continue;
+    if (typeof src === 'string' && isValidTracking(src)) return src.trim();
+    if (typeof src === 'object') {
+      const candidates = [
+        src.trackingNumber,
+        src.trackingCode,
+        src.dhlTrackingNumber,
+        src.carrierTrackingNumber,
+        src.airwayBillNumber,
+        src.waybillNumber,
+        src.awbNumber,
+        src.shipping?.trackingNumber,
+        src.shipping?.trackingCode,
+        src.shippingSnapshot?.trackingNumber,
+        src.shippingSnapshot?.carrierTrackingNumber,
+        src.shippingSnapshot?.airwayBillNumber,
+        src.shippingSnapshot?.waybillNumber,
+        src.shipments?.[0]?.trackingNumber,
+        src.shipments?.[0]?.trackingCode,
+        src.shipment?.trackingNumber,
+        src.deliveryStatus?.trackingNumber
+      ];
+      for (const c of candidates) {
+        if (c && typeof c === 'string' && isValidTracking(c)) {
+          return c.trim();
+        }
+      }
+    }
+  }
+  return null;
 }
 
 export default function OrderDetail() {
@@ -200,16 +243,17 @@ export default function OrderDetail() {
       const delivData = delivRes.status === 'fulfilled' ? delivRes.value : null;
       const trkData = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
-      if (delivData) {
-        setDeliveryStatus(delivData);
-      }
-
       if (rawOrderData) {
         const orderData = await resolveAndFetchPaymentStatus(rawOrderData);
-        // GET /api/Orders/{id}/delivery-status is the single source of truth for delivery parameters
-        const resolvedTracking = (delivData?.trackingNumber !== undefined && delivData?.trackingNumber !== null && String(delivData.trackingNumber).trim())
-          ? String(delivData.trackingNumber).trim()
-          : ((trkData?.trackingNumber && String(trkData.trackingNumber).trim()) || (orderData.trackingNumber && String(orderData.trackingNumber).trim()) || null);
+        const resolvedTracking = extractTrackingNumber(delivData, trkData, rawOrderData, orderData);
+
+        if (delivData) {
+          setDeliveryStatus({
+            ...delivData,
+            trackingNumber: resolvedTracking || delivData.trackingNumber || null,
+            carrier: trkData?.carrier || delivData?.carrier || 'DHL Express'
+          });
+        }
 
         const isOrderPaid = isSuccessStatus(orderData.paymentStatus) ||
           isOrderConfirmedPaid(orderData.id) ||
@@ -229,8 +273,11 @@ export default function OrderDetail() {
           carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null,
           trackingNumber: resolvedTracking,
           trackingCode: resolvedTracking,
-          carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || 'Econt'
+          dhlTrackingNumber: resolvedTracking,
+          carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || 'DHL Express'
         });
+      } else if (delivData) {
+        setDeliveryStatus(delivData);
       }
       if (eligRes.status === 'fulfilled') setEligibility(eligRes.value);
       if (retRes.status === 'fulfilled') setOrderReturns(retRes.value || []);
@@ -254,16 +301,17 @@ export default function OrderDetail() {
         const delivData = delivRes.status === 'fulfilled' ? delivRes.value : null;
         const trkData = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
-        if (delivData) {
-          setDeliveryStatus(delivData);
-        }
-
         if (rawOrderData) {
           const orderData = await resolveAndFetchPaymentStatus(rawOrderData);
-          // GET /api/Orders/{id}/delivery-status is the single source of truth for delivery parameters
-          const resolvedTracking = (delivData?.trackingNumber !== undefined && delivData?.trackingNumber !== null && String(delivData.trackingNumber).trim())
-            ? String(delivData.trackingNumber).trim()
-            : ((trkData?.trackingNumber && String(trkData.trackingNumber).trim()) || (orderData.trackingNumber && String(orderData.trackingNumber).trim()) || null);
+          const resolvedTracking = extractTrackingNumber(delivData, trkData, rawOrderData, orderData);
+
+          if (delivData) {
+            setDeliveryStatus({
+              ...delivData,
+              trackingNumber: resolvedTracking || delivData.trackingNumber || null,
+              carrier: trkData?.carrier || delivData?.carrier || 'DHL Express'
+            });
+          }
 
           const isOrderPaid = isSuccessStatus(orderData.paymentStatus) ||
             isOrderConfirmedPaid(orderData.id) ||
@@ -283,8 +331,11 @@ export default function OrderDetail() {
             carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null,
             trackingNumber: resolvedTracking,
             trackingCode: resolvedTracking,
-            carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || 'Econt'
+            dhlTrackingNumber: resolvedTracking,
+            carrier: trkData?.carrier || delivData?.carrier || orderData.carrier || 'DHL Express'
           });
+        } else if (delivData) {
+          setDeliveryStatus(delivData);
         }
         if (eligRes.status === 'fulfilled') setEligibility(eligRes.value);
         if (retRes.status === 'fulfilled') setOrderReturns(retRes.value || []);
@@ -391,8 +442,8 @@ export default function OrderDetail() {
   const normStatus = String(displayStatus).toLowerCase();
   const isCancellable = ['pending', 'processing'].includes(normStatus) && !isCancelled;
 
-  const trackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
-  const carrierName = order.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || 'Carrier';
+  const trackingNumber = extractTrackingNumber(order, deliveryStatus);
+  const carrierName = order.carrier || deliveryStatus?.carrier || order.shippingSnapshot?.shippingCompanyName || order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || 'DHL Express';
   const shipmentStatus = order.shipmentStatus || (normStatus === 'shipped' ? 'Shipped' : (normStatus === 'delivered' ? 'Delivered' : (normStatus === 'outfordelivery' ? 'OutForDelivery' : 'Pending')));
 
   // Address normalization
@@ -645,6 +696,84 @@ export default function OrderDetail() {
         </div>
       </ScrollReveal>
 
+      {/* ─── Courier Consignment & Tracking Card ─── */}
+      <ScrollReveal direction="up" delay={0.06}>
+        <div className="rounded-2xl p-5 bg-gradient-to-r from-black via-[#16120B] to-black border border-[#D4AF37]/50 shadow-2xl backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center shrink-0 text-[#F2D675] shadow-inner">
+              <Truck className="w-6 h-6 text-[#D4AF37]" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-cinzel font-bold text-[#D4AF37] uppercase tracking-wider">
+                  Courier Consignment ({carrierName})
+                </span>
+                {order.carrierStatus && (
+                  <span className="px-2.5 py-0.5 text-[11px] font-mono rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 font-bold">
+                    {order.carrierStatus}
+                  </span>
+                )}
+                <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-black/60 border border-white/10 text-[#D8BE99]">
+                  Fulfillment: {order.shipmentStatus || (normStatus === 'delivered' ? 'Delivered' : normStatus === 'shipped' ? 'Shipped' : 'Processing')}
+                </span>
+              </div>
+
+              <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                {trackingNumber ? (
+                  <>
+                    <div className="flex items-center gap-2 bg-black/70 px-3.5 py-1.5 rounded-lg border border-[#D4AF37]/40 shadow-inner">
+                      <span className="text-xs font-cinzel text-[#D8BE99]">Airway Bill:</span>
+                      <span className="font-mono font-bold text-sm sm:text-base text-[#F2D675] tracking-wider select-all">
+                        {trackingNumber}
+                      </span>
+                      <button
+                        onClick={() => handleCopyTracking(trackingNumber)}
+                        className="p-1 hover:text-white transition-colors cursor-pointer text-[#D4AF37] ml-1"
+                        title="Copy Tracking Number"
+                      >
+                        {copiedTracking ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {copiedTracking && (
+                      <span className="text-xs font-mono text-emerald-400 animate-fade-in font-bold">
+                        Copied to clipboard!
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-xs font-mono text-[#D8BE99]/80 flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>Your artisan parcel is being prepared. Your carrier tracking number will appear here upon dispatch.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+            <Link
+              to={`/order-tracking/${order.orderNumber || order.id}`}
+              className="flex-1 md:flex-initial px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#F2D675] text-black font-cinzel font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#D4AF37]/20 cursor-pointer"
+            >
+              <Truck className="w-4 h-4" />
+              <span>Track Consignment</span>
+            </Link>
+            {trackingNumber && (
+              <a
+                href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(trackingNumber)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-xl bg-black/60 hover:bg-black/90 border border-[#D4AF37]/40 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-cinzel"
+                title="Track on DHL Official Portal"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span className="hidden sm:inline">Carrier Portal</span>
+              </a>
+            )}
+          </div>
+        </div>
+      </ScrollReveal>
+
       {/* ─── Cancellation Notice Banner ─── */}
       {isCancelled && (
         <ScrollReveal direction="up">
@@ -852,35 +981,47 @@ export default function OrderDetail() {
                 </div>
 
                 {/* 4. Tracking Number */}
-                <div className="space-y-1 pt-0.5">
+                <div className="space-y-1.5 pt-1">
                   <div className="flex justify-between items-center text-[#D8BE99]">
-                    <span>Tracking Number:</span>
+                    <span className="font-semibold text-xs">Tracking Airway:</span>
                     {trackingNumber && (
                       <button
                         onClick={() => handleCopyTracking(trackingNumber)}
-                        className="p-1 text-[#D4AF37] hover:text-white transition-colors cursor-pointer"
+                        className="p-1 text-[#D4AF37] hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-mono"
                         title="Copy Tracking Number"
                       >
-                        {copiedTracking ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedTracking ? 'Copied' : 'Copy'}</span>
                       </button>
                     )}
                   </div>
                   {trackingNumber ? (
-                    <span className="font-mono font-bold text-xs text-[#D4AF37] block bg-black/60 p-2 rounded border border-[#D4AF37]/20 select-all">
-                      {trackingNumber}
-                    </span>
+                    <div className="flex items-center justify-between gap-2 bg-black/70 p-2.5 rounded-lg border border-[#D4AF37]/40 shadow-inner">
+                      <span className="font-mono font-bold text-xs sm:text-sm text-[#F2D675] tracking-wider select-all break-all">
+                        {trackingNumber}
+                      </span>
+                      <a
+                        href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(trackingNumber)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 hover:text-[#F2D675] text-[#D4AF37] transition-colors shrink-0"
+                        title="Track directly on DHL portal"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   ) : (
-                    <span className="font-mono text-neutral-400 italic text-[11px] block bg-black/40 p-2 rounded border border-white/5">
-                      Tracking is not available yet
+                    <span className="font-mono text-neutral-400 italic text-[11px] block bg-black/40 p-2.5 rounded-lg border border-white/5">
+                      Tracking is not available yet (Pending dispatch)
                     </span>
                   )}
                 </div>
 
                 {/* Courier Carrier */}
-                <div className="flex justify-between text-[#D8BE99] pt-1 border-t border-white/5">
+                <div className="flex justify-between text-[#D8BE99] pt-2 border-t border-white/10 text-xs">
                   <span>Courier Carrier:</span>
                   <span className="font-mono font-bold text-[#F3E6D0]">
-                    {carrierName || 'Econt'}
+                    {carrierName || 'DHL Express'}
                   </span>
                 </div>
               </div>

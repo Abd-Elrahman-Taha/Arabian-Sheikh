@@ -221,13 +221,13 @@ export default function AccountOrders() {
               {/* Footer */}
               <div className="pt-3.5 border-t border-[#3A2116]/30 flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-2">
                 {(() => {
-                  const trkNum = o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shipping?.trackingNumber || o.shippingSnapshot?.trackingNumber || o.shipments?.[0]?.trackingNumber;
+                  const trkNum = o.trackingNumber || o.trackingCode || o.dhlTrackingNumber || o.shipping?.trackingNumber || o.shippingSnapshot?.trackingNumber || o.shippingSnapshot?.carrierTrackingNumber || o.shipments?.[0]?.trackingNumber;
                   return (
                     <div className="flex items-center gap-2 font-mono text-xs text-[#D8BE99]">
                       <Truck className="w-4 h-4 text-[#D4AF37] shrink-0" />
                       {trkNum ? (
-                        <span className="text-[#F2D675] font-bold bg-black/50 px-2 py-0.5 rounded border border-[#D4AF37]/30">
-                          Tracking: {trkNum}
+                        <span className="text-[#F2D675] font-bold bg-black/50 px-2.5 py-0.5 rounded border border-[#D4AF37]/30 select-all">
+                          Airway: {trkNum}
                         </span>
                       ) : (
                         <span className="text-neutral-500 italic text-xs">Tracking pending dispatch</span>
