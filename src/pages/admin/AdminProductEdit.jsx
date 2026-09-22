@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useToast } from '../../context/ToastContext';
 import { productService } from '../../services/productService';
+import { productApi } from '../../api/product.api';
 import { categoryService } from '../../services/categoryService';
 import { subcategoryService } from '../../services/subcategoryService';
 import { perfumeCategoryService } from '../../services/perfumeCategoryService';
@@ -105,8 +106,15 @@ export default function AdminProductEdit() {
             perfumeCategoryId: defaultTierId
           }));
         } else if (editId) {
-          // Load existing product with full reference data already loaded
-          const item = await productService.getProductById(editId);
+          // Load existing product via Admin API (which safely retrieves both ACTIVE and INACTIVE items)
+          let item = null;
+          try {
+            item = await productApi.adminGetProductById(editId);
+          } catch (adminErr) {
+            console.warn('adminGetProductById fallback to productService:', adminErr?.message);
+            item = await productService.getProductById(editId);
+          }
+
           if (item) {
             const catId = Number(item.categoryId || item.category?.id || (item.category === 'perfumes' ? 1 : 2)) || 1;
             const isPerfume = catId === 1;
@@ -327,47 +335,47 @@ export default function AdminProductEdit() {
         translations.En.name?.trim() ? {
           languageCode: 'En',
           name: translations.En.name.trim(),
-          description: translations.En.description?.trim() || null,
-          ingredients: translations.En.ingredients?.trim() || null
+          description: translations.En.description?.trim() || '',
+          ingredients: translations.En.ingredients?.trim() || ''
         } : null,
         translations.Bg.name?.trim() ? {
           languageCode: 'Bg',
           name: translations.Bg.name.trim(),
-          description: translations.Bg.description?.trim() || null,
-          ingredients: translations.Bg.ingredients?.trim() || null
+          description: translations.Bg.description?.trim() || '',
+          ingredients: translations.Bg.ingredients?.trim() || ''
         } : null,
         translations.Es.name?.trim() ? {
           languageCode: 'Es',
           name: translations.Es.name.trim(),
-          description: translations.Es.description?.trim() || null,
-          ingredients: translations.Es.ingredients?.trim() || null
+          description: translations.Es.description?.trim() || '',
+          ingredients: translations.Es.ingredients?.trim() || ''
         } : null
       ].filter(Boolean);
 
       if (translationsPayload.length === 0) {
         translationsPayload.push({
           languageCode: 'En',
-          name: 'Untitled Product',
-          description: null,
-          ingredients: null
+          name: translations.En.name?.trim() || 'Imperial Extrait',
+          description: translations.En.description?.trim() || '',
+          ingredients: translations.En.ingredients?.trim() || ''
         });
       }
 
       // Exact backend payload (CreateAdminProductRequest / UpdateAdminProductRequest)
       const payload = {
-        brandId: Number(formData.brandId),
-        categoryId: Number(formData.categoryId),
+        brandId: Number(formData.brandId) || 1,
+        categoryId: Number(formData.categoryId) || 1,
         subcategoryId: formData.subcategoryId ? Number(formData.subcategoryId) : null,
-        perfumeCategoryId: isPerfumeCategory ? Number(formData.perfumeCategoryId) : null,
-        gender: formData.gender,
-        price: isPerfumeCategory ? null : Number(formData.price),
+        perfumeCategoryId: isPerfumeCategory ? (Number(formData.perfumeCategoryId) || 1) : null,
+        gender: formData.gender || 'Unisex',
+        price: isPerfumeCategory ? null : Number(formData.price || 0),
         shippingWeight: Number(formData.shippingWeight) || 0.45,
         nameIsTranslatable: Boolean(formData.nameIsTranslatable),
         isActive: Boolean(formData.isActive),
         imageUrl: formData.imageUrl?.trim() || null,
         translations: translationsPayload,
         // Top-level localized convenience fallbacks
-        name: translations.En.name?.trim() || translationsPayload[0]?.name || '',
+        name: translations.En.name?.trim() || translationsPayload[0]?.name || 'Imperial Extrait',
         description: translations.En.description?.trim() || translationsPayload[0]?.description || '',
         ingredients: translations.En.ingredients?.trim() || translationsPayload[0]?.ingredients || ''
       };

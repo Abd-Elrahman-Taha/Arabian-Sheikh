@@ -589,7 +589,7 @@ export const productService = {
   },
 
   async updateProduct(id, productData) {
-    const targetId = this.resolveTargetId(id);
+    const targetId = this.resolveTargetId(id) || (Number(id) > 0 ? Number(id) : id);
     const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     const isPerfume = Boolean(
@@ -602,7 +602,10 @@ export const productService = {
       Number(productData.categoryId || existing?.categoryId) === 1
     );
 
-    let perfumeCatId = productData.perfumeCategoryId !== undefined ? productData.perfumeCategoryId : existing?.perfumeCategoryId;
+    let perfumeCatId = productData.perfumeCategoryId !== undefined && productData.perfumeCategoryId !== null
+      ? productData.perfumeCategoryId 
+      : existing?.perfumeCategoryId;
+
     if (!perfumeCatId && isPerfume) {
       const tierName = productData.tier || existing?.tier;
       if (tierName) {
@@ -610,25 +613,29 @@ export const productService = {
         const found = tiers.find(t => t.name?.toLowerCase() === String(tierName).toLowerCase());
         if (found) perfumeCatId = found.id;
       }
+      if (!perfumeCatId) perfumeCatId = 1;
     }
 
     let updatedRemote = null;
     if (targetId) {
       const mergedPayload = {
+        id: Number(targetId),
         brandId: Number(productData.brandId || existing?.brandId) || 1,
         categoryId: Number(productData.categoryId || existing?.categoryId) || (isPerfume ? 1 : 2),
         subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (existing?.subcategoryId || null),
-        perfumeCategoryId: isPerfume ? Number(perfumeCatId) : null,
+        perfumeCategoryId: isPerfume ? Number(perfumeCatId || 1) : null,
         gender: productData.gender || existing?.gender || 'Unisex',
-        price: Number(productData.price !== undefined ? productData.price : (existing?.price || 0)),
+        price: isPerfume ? null : (productData.price !== undefined && productData.price !== null ? Number(productData.price) : Number(existing?.price || 0)),
         isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (existing?.isActive !== false),
         imageUrl: productData.imageUrl || productData.image || existing?.imageUrl || existing?.image || (existing?.images?.[0]),
         shippingWeight: productData.shippingWeight !== undefined ? Number(productData.shippingWeight) : (Number(existing?.shippingWeight) || 0.45),
         nameIsTranslatable: productData.nameIsTranslatable !== undefined ? Boolean(productData.nameIsTranslatable) : true,
-        translations: Array.isArray(productData.translations) ? productData.translations : undefined,
-        name: productData.name || existing?.name,
-        description: productData.description || existing?.description,
-        ingredients: productData.ingredients || existing?.ingredients
+        translations: Array.isArray(productData.translations) && productData.translations.length > 0 
+          ? productData.translations 
+          : (existing?.translations && existing.translations.length > 0 ? existing.translations : undefined),
+        name: productData.name || existing?.name || 'Imperial Extrait',
+        description: productData.description !== undefined && productData.description !== null ? String(productData.description) : (existing?.description || ''),
+        ingredients: productData.ingredients !== undefined && productData.ingredients !== null ? String(productData.ingredients) : (existing?.ingredients || '')
       };
 
       updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
@@ -639,7 +646,7 @@ export const productService = {
   },
 
   async deleteProduct(id) {
-    const targetId = this.resolveTargetId(id);
+    const targetId = this.resolveTargetId(id) || (Number(id) > 0 ? Number(id) : id);
     if (targetId) {
       await productApi.adminDeleteProduct(targetId);
     }
@@ -648,7 +655,7 @@ export const productService = {
   },
 
   async toggleProductActive(id, isActive) {
-    const targetId = this.resolveTargetId(id);
+    const targetId = this.resolveTargetId(id) || (Number(id) > 0 ? Number(id) : id);
     const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
     
     if (targetId) {

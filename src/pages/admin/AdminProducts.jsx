@@ -121,7 +121,18 @@ export default function AdminProducts() {
     }
   };
 
-
+  const handleToggleStatus = async (product) => {
+    const currentActive = product.isActive !== false && product.status !== 'INACTIVE';
+    const newActive = !currentActive;
+    try {
+      setProducts(prev => prev.map(p => (p.id === product.id || p.numericId === product.id) ? { ...p, isActive: newActive, status: newActive ? 'ACTIVE' : 'INACTIVE' } : p));
+      await productService.toggleProductActive(product.id, newActive);
+      success(`'${product.name}' is now ${newActive ? 'ACTIVE' : 'INACTIVE'}.`);
+    } catch (err) {
+      error(err.message || 'Failed to toggle product status.');
+      fetchProducts();
+    }
+  };
 
   return (
     <div className="space-y-6 text-[#F3E6D0]">
@@ -276,9 +287,19 @@ export default function AdminProducts() {
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 border border-emerald-500/40 text-emerald-300">
-                      {p.status || 'ACTIVE'}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(p)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                        p.isActive !== false && p.status !== 'INACTIVE'
+                          ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/80'
+                          : 'bg-rose-950/80 border-rose-500/40 text-rose-300 hover:bg-rose-900/80'
+                      }`}
+                      title="Click to toggle publication status (Active/Inactive)"
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${p.isActive !== false && p.status !== 'INACTIVE' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                      <span>{p.isActive !== false && p.status !== 'INACTIVE' ? 'ACTIVE' : 'INACTIVE'}</span>
+                    </button>
                   </td>
                   <td className="py-4 px-4 text-right rtl:text-left space-x-2 rtl:space-x-reverse whitespace-nowrap">
                     <button

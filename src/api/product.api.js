@@ -250,7 +250,31 @@ export const productApi = {
     const isPerfume = Boolean(payload.perfumeCategoryId || payload.category === 'perfumes' || Number(payload.categoryId) === 1);
     const shippingWeight = Number(payload.shippingWeight) > 0 ? Number(payload.shippingWeight) : 0.45;
 
+    // Build robust translations array required by ASP.NET Core model validation & activation rules
+    const translations = Array.isArray(payload.translations) && payload.translations.length > 0
+      ? payload.translations.map(t => ({
+          languageCode: t.languageCode || t.language || 'En',
+          name: t.name || payload.name || 'Imperial Extrait',
+          description: t.description !== undefined && t.description !== null ? String(t.description) : (payload.description || ''),
+          ingredients: t.ingredients !== undefined && t.ingredients !== null ? String(t.ingredients) : (payload.ingredients || '')
+        }))
+      : [
+          {
+            languageCode: 'En',
+            name: payload.name || 'Imperial Extrait',
+            description: payload.description || '',
+            ingredients: payload.ingredients || ''
+          },
+          {
+            languageCode: 'Ar',
+            name: payload.arabicName || payload.name || 'عطر ملكي فاخر',
+            description: payload.arabicDescription || payload.description || '',
+            ingredients: payload.ingredients || ''
+          }
+        ];
+
     const body = {
+      id: Number(id),
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
@@ -258,7 +282,11 @@ export const productApi = {
       shippingWeight,
       nameIsTranslatable: payload.nameIsTranslatable !== false,
       isActive: payload.isActive !== false,
-      imageUrl: payload.imageUrl ? toAbsoluteUrl(payload.imageUrl) : null
+      imageUrl: payload.imageUrl ? toAbsoluteUrl(payload.imageUrl) : null,
+      translations,
+      name: payload.name || translations[0]?.name || 'Imperial Extrait',
+      description: payload.description !== undefined && payload.description !== null ? String(payload.description) : (translations[0]?.description || ''),
+      ingredients: payload.ingredients !== undefined && payload.ingredients !== null ? String(payload.ingredients) : (translations[0]?.ingredients || '')
     };
 
     if (isPerfume) {
@@ -268,47 +296,51 @@ export const productApi = {
     }
 
     const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
-    
-    // Upsert translations across all provided languages
-    if (Array.isArray(payload.translations) && payload.translations.length > 0) {
-      await Promise.allSettled(
-        payload.translations.map(t =>
-          apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, t.languageCode), {
-            name: t.name,
-            description: t.description || null,
-            ingredients: t.ingredients || null
-          })
-        )
-      );
-    } else if (payload.name || payload.description || payload.ingredients) {
-      const transBody = {
-        name: payload.name || 'Imperial Extrait',
-        description: payload.description || 'Haute Parfumerie Creation',
-        ingredients: payload.ingredients || 'Rare Oud, Amber Crystals, Taif Rose'
-      };
-      await Promise.allSettled([
-        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'En'), transBody),
-        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'Bg'), transBody),
-        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, 'Es'), transBody)
-      ]);
-    }
 
-    return normalizeProduct(response);
+    // If dedicated activate/deactivate endpoints exist on backend, also trigger them safely
+    if (payload.isActive === true) {
+      await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.ACTIVATE(id)).catch(() => {
+        return apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.ACTIVATE(id)).catch(() => null);
+      });
+    } else if (payload.isActive === false) {
+      await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.DEACTIVATE(id)).catch(() => {
+        return apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.DEACTIVATE(id)).catch(() => null);
+      });
+    }
+    
+    // Upsert individual translations across all provided languages
+    await Promise.allSettled(
+      translations.map(t =>
+        apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPSERT_TRANSLATION(id, t.languageCode), {
+          name: t.name,
+          description: t.description || '',
+          ingredients: t.ingredients || ''
+        })
+      )
+    );
+
+    return normalizeProduct(response) || { id: Number(id), ...body };
   },
 
   /**
    * Admin: Activate product
-   * PUT /api/admin/products/{id} with isActive: true
+   * POST /api/admin/products/{id}/activate and update status
    */
   async adminActivateProduct(id, currentProduct = {}) {
+    await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.ACTIVATE(id)).catch(() => {
+      return apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.ACTIVATE(id)).catch(() => null);
+    });
     return await this.adminUpdateProduct(id, { ...currentProduct, isActive: true });
   },
 
   /**
    * Admin: Deactivate product
-   * PUT /api/admin/products/{id} with isActive: false
+   * POST /api/admin/products/{id}/deactivate and update status
    */
   async adminDeactivateProduct(id, currentProduct = {}) {
+    await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.DEACTIVATE(id)).catch(() => {
+      return apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.DEACTIVATE(id)).catch(() => null);
+    });
     return await this.adminUpdateProduct(id, { ...currentProduct, isActive: false });
   },
 
