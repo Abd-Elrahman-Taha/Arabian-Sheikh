@@ -4,7 +4,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService, ADMIN_ORDER_STATUSES, ADMIN_PAYMENT_STATUSES } from '../../services/orderService';
 import { paymentApi } from '../../api/payment.api';
 import { toNumericId } from '../../api/order.api';
-import { isSuccessStatus } from '../../services/paymentService';
+import { isSuccessStatus, isOrderConfirmedPaid } from '../../services/paymentService';
 import { COUNTRY_NAMES } from '../../api/normalizers';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -181,7 +181,21 @@ export default function AdminOrders() {
       const detailed = await orderService.getAdminOrderDetails(order.id);
       let resolvedOrder = detailed || order;
 
-      // Reconcile with payment gateway if payment status is not yet marked Paid
+      // Reconcile with payment gateway or local registry if payment status is not yet marked Paid
+      const isConfirmedPaid = isOrderConfirmedPaid(order.id) ||
+        isOrderConfirmedPaid(order.orderNumber) ||
+        isOrderConfirmedPaid(resolvedOrder.id) ||
+        isOrderConfirmedPaid(resolvedOrder.orderNumber);
+
+      if (isConfirmedPaid && !isSuccessStatus(resolvedOrder.paymentStatus)) {
+        resolvedOrder = {
+          ...resolvedOrder,
+          paymentStatus: 'Paid',
+          paidAt: resolvedOrder.paidAt || new Date().toISOString(),
+          orderStatus: resolvedOrder.orderStatus === 'Pending' ? 'Processing' : resolvedOrder.orderStatus
+        };
+      }
+
       if (!isSuccessStatus(resolvedOrder.paymentStatus)) {
         const numId = toNumericId(order.id) || toNumericId(order.numericId);
         if (numId) {
@@ -686,8 +700,11 @@ export default function AdminOrders() {
                   const orderTotal = order.totals?.total ?? order.total ?? 0;
                   const currency = order.totals?.currency || order.currency || 'EUR';
                   const orderStatus = order.orderStatus || order.status || 'Pending';
-                  const rawPayStatus = order.paymentStatus;
-                  const hasPaidPayment = isSuccessStatus(rawPayStatus) || isSuccessStatus(order.payments?.[0]?.status) || Boolean(order.paidAt);
+                  const hasPaidPayment = isSuccessStatus(rawPayStatus) ||
+                    isSuccessStatus(order.payments?.[0]?.status) ||
+                    Boolean(order.paidAt) ||
+                    isOrderConfirmedPaid(order.id) ||
+                    isOrderConfirmedPaid(order.orderNumber);
                   const isOrderProcessing = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(st => st.toLowerCase() === String(orderStatus).toLowerCase());
                   const isCod = String(order.paymentMethodCode || order.paymentMethod || order.paymentMethodName || '').toLowerCase().includes('cod') ||
                     String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cash');
@@ -999,9 +1016,18 @@ export default function AdminOrders() {
                   <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(detailsModalOrder.orderStatus || detailsModalOrder.status)}`}>
                     {detailsModalOrder.orderStatus || detailsModalOrder.status || 'Pending'}
                   </span>
-                  <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status)}`}>
-                    {isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ? 'PAID' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending')}
-                  </span>
+                  {(() => {
+                    const isPaid = isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ||
+                      Boolean(detailsModalOrder.paidAt) ||
+                      isOrderConfirmedPaid(detailsModalOrder.id) ||
+                      isOrderConfirmedPaid(detailsModalOrder.orderNumber);
+                    const modalPayStatus = isPaid ? 'PAID' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending');
+                    return (
+                      <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(modalPayStatus)}`}>
+                        {modalPayStatus}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <p className="text-xs text-[#D8BE99] mt-1 font-mono">
                   Placed on {detailsModalOrder.createdAt || detailsModalOrder.date ? new Date(detailsModalOrder.createdAt || detailsModalOrder.date).toLocaleString() : '—'}
@@ -1482,7 +1508,11 @@ export default function AdminOrders() {
                     {(() => {
                       const isModalCod = String(detailsModalOrder.paymentMethodCode || detailsModalOrder.paymentMethod || detailsModalOrder.paymentMethodName || '').toLowerCase().includes('cod') ||
                         String(detailsModalOrder.paymentMethodCode || detailsModalOrder.paymentMethod || '').toLowerCase().includes('cash');
-                      const rawModalStatus = detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending';
+                      const isModalConfirmedPaid = isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ||
+                        Boolean(detailsModalOrder.paidAt) ||
+                        isOrderConfirmedPaid(detailsModalOrder.id) ||
+                        isOrderConfirmedPaid(detailsModalOrder.orderNumber);
+                      const rawModalStatus = isModalConfirmedPaid ? 'Paid' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending');
                       const modalStatusDisplay = isModalCod ? 'Cash on Delivery' : (isSuccessStatus(rawModalStatus) ? 'PAID & SETTLED' : rawModalStatus);
 
                       return (

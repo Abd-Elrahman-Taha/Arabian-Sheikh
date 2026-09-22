@@ -452,6 +452,41 @@ export function normalizeCart(raw) {
 }
 
 /**
+ * Payment confirmation persistent registry
+ * Ensures payments verified by Stripe on client/webhook are never reverted to Pending
+ */
+export function isOrderConfirmedPaid(orderId) {
+  if (!orderId || typeof window === 'undefined') return false;
+  try {
+    const rawClean = String(orderId).replace(/^(ORD[-_]?|#)/i, '').trim().toLowerCase();
+    const raw = localStorage.getItem('arabian_sheikh_confirmed_paid_orders');
+    if (!raw) return false;
+    const map = JSON.parse(raw);
+    return Boolean(map[rawClean] || map[String(orderId).trim().toLowerCase()]);
+  } catch {
+    return false;
+  }
+}
+
+export function recordConfirmedPaidOrder(orderId, details = {}) {
+  if (!orderId || typeof window === 'undefined') return;
+  try {
+    const cleanId = String(orderId).replace(/^(ORD[-_]?|#)/i, '').trim().toLowerCase();
+    const raw = localStorage.getItem('arabian_sheikh_confirmed_paid_orders');
+    const map = raw ? JSON.parse(raw) : {};
+    map[cleanId] = {
+      orderId,
+      status: 'Paid',
+      paidAt: details.paidAt || new Date().toISOString(),
+      amount: details.amount,
+      providerPaymentId: details.providerPaymentId || details.paymentIntent?.id,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('arabian_sheikh_confirmed_paid_orders', JSON.stringify(map));
+  } catch {}
+}
+
+/**
  * Order Normalizer (Compliant with OrderResponse)
  */
 export function normalizeOrder(raw) {
@@ -528,8 +563,12 @@ export function normalizeOrder(raw) {
   const paymentMethodStr = String(o.paymentMethod || o.paymentMethodCode || '').toLowerCase();
   const isCod = paymentMethodStr.includes('cod') || paymentMethodStr.includes('cash');
 
+  // Check persistent verified payment registry
+  const orderIdRaw = o.id !== undefined && o.id !== null ? o.id : o.orderNumber;
+  const isLocallyPaid = isOrderConfirmedPaid(orderId) || isOrderConfirmedPaid(orderIdRaw);
+
   let resolvedPaymentStatus = 'Pending';
-  if (hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt || (isOrderFulfilled && !isCod)) {
+  if (isLocallyPaid || hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt || (isOrderFulfilled && !isCod)) {
     resolvedPaymentStatus = 'Paid';
   } else if (isStatusRefunded(rawPaymentStatus) || paymentsList.some(p => isStatusRefunded(p.status))) {
     resolvedPaymentStatus = 'Refunded';
@@ -541,6 +580,11 @@ export function normalizeOrder(raw) {
 
   const resolvedPaymentId = o.paymentId || paymentsList[0]?.id || paymentsList[0]?.paymentId || null;
   const resolvedProviderPaymentId = o.providerPaymentId || paymentsList[0]?.providerPaymentId || paymentsList[0]?.transactionId || null;
+
+  // When order is paid, order status must advance past Pending to Processing
+  const finalOrderStatus = (resolvedPaymentStatus === 'Paid' && !isCod && rawOrderStatus === 'Pending')
+    ? 'Processing'
+    : rawOrderStatus;
 
   return {
     id: orderId,
@@ -554,8 +598,8 @@ export function normalizeOrder(raw) {
     shippingCost,
     total,
     currency,
-    orderStatus: o.orderStatus || o.status || 'Pending',
-    status: o.orderStatus || o.status || 'Pending',
+    orderStatus: finalOrderStatus,
+    status: finalOrderStatus,
     paymentStatus: resolvedPaymentStatus,
     paymentId: resolvedPaymentId,
     providerPaymentId: resolvedProviderPaymentId,

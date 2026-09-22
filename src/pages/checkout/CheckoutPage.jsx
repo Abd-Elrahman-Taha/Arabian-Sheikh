@@ -1172,7 +1172,15 @@ export default function CheckoutPage() {
     // Direct success: Stripe confirmed or PaymentIntent already succeeded
     if (status === 'Paid' || result?.paymentIntent?.status === 'succeeded') {
       console.log('[Checkout] Stripe confirmed Paid status:', result);
-      handlePaymentResult({ status: 'Paid', ...result }, oid);
+      const paymentDetails = {
+        ...result,
+        providerPaymentId: result?.paymentIntent?.id,
+        amount: result?.paymentIntent?.amount ? result.paymentIntent.amount / 100 : undefined,
+        paidAt: new Date().toISOString()
+      };
+      orderService.markOrderPaid(oid, paymentDetails);
+      paymentService.syncOrderPaymentWithBackend(oid, paymentDetails).catch(() => {});
+      handlePaymentResult({ status: 'Paid', ...paymentDetails }, oid);
       return;
     }
 
@@ -1192,7 +1200,14 @@ export default function CheckoutPage() {
       msgStr.toLowerCase().includes('previously confirmed')
     ) {
       console.log('[Checkout] Stripe error indicates payment already succeeded - completing order:', msgStr);
-      handlePaymentResult({ status: 'Paid' }, orderIdState);
+      const paymentDetails = {
+        status: 'Paid',
+        paidAt: new Date().toISOString(),
+        alreadyConfirmed: true
+      };
+      orderService.markOrderPaid(orderIdState, paymentDetails);
+      paymentService.syncOrderPaymentWithBackend(orderIdState, paymentDetails).catch(() => {});
+      handlePaymentResult(paymentDetails, orderIdState);
       return;
     }
     setPaymentError(message);

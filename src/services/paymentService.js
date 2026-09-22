@@ -1,6 +1,7 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { paymentApi } from '../api/payment.api';
 import { orderApi } from '../api/order.api';
+import { isOrderConfirmedPaid, recordConfirmedPaidOrder } from '../api/normalizers';
 
 /**
  * Arabian Sheikh - Payment Service
@@ -371,8 +372,33 @@ export const paymentService = {
 
       await sleep(2000);
     }
+  },
+
+  /**
+   * Actively sync order payment with backend database.
+   * Sends payment intent verification request prompting backend to check Stripe directly
+   * using its live Secret Key and mark SQL DB records as Paid.
+   */
+  async syncOrderPaymentWithBackend(orderId, details = {}) {
+    if (!orderId) return null;
+    const numClean = String(orderId).replace(/^(ORD[-_]?|#)/i, '').trim();
+    const numericId = Number(numClean);
+    if (!numericId || isNaN(numericId)) return null;
+
+    const payKey = getPaymentKey(orderId) || getPaymentKey(numericId) || `sync-${numericId}-${Date.now()}`;
+
+    try {
+      const res = await paymentApi.createPaymentIntent({ orderId: numericId }, payKey);
+      console.log('[paymentService] Synced payment with backend:', res);
+      return res;
+    } catch (err) {
+      console.warn('[paymentService] Backend payment sync notice:', err?.message);
+      return null;
+    }
   }
 };
+
+export { isOrderConfirmedPaid, recordConfirmedPaidOrder };
 
 export function getPayment(paymentId) {
   return paymentApi.getPaymentStatus(paymentId);

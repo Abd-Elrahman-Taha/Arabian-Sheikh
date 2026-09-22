@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
 import { paymentApi } from '../../api/payment.api';
-import { isSuccessStatus } from '../../services/paymentService';
+import { isSuccessStatus, isOrderConfirmedPaid } from '../../services/paymentService';
 import { Package, Truck, ChevronRight } from 'lucide-react';
 
 function getStatusStyle(status = '') {
@@ -32,6 +32,7 @@ function isCodOrder(order) {
 function resolveDisplayPaymentStatus(order) {
   if (isCodOrder(order)) return 'Cash on Delivery';
   if (isSuccessStatus(order.paymentStatus)) return 'Paid';
+  if (isOrderConfirmedPaid(order.id) || isOrderConfirmedPaid(order.orderNumber)) return 'Paid';
   return order.paymentStatus || 'Pending';
 }
 
@@ -40,7 +41,12 @@ async function enrichOrdersWithPaymentStatus(orders) {
   const enriched = await Promise.all(orders.map(async (o) => {
     const displayPay = resolveDisplayPaymentStatus(o);
     if (isSuccessStatus(displayPay)) {
-      return { ...o, paymentStatus: 'Paid' };
+      return {
+        ...o,
+        paymentStatus: 'Paid',
+        orderStatus: o.orderStatus === 'Pending' ? 'Processing' : o.orderStatus,
+        status: o.status === 'Pending' ? 'Processing' : o.status
+      };
     }
 
     // Check backend payment record if paymentId exists on the order
@@ -49,7 +55,12 @@ async function enrichOrdersWithPaymentStatus(orders) {
       try {
         const payment = await paymentApi.getPaymentStatus(Number(pid));
         if (payment && isSuccessStatus(payment.status)) {
-          return { ...o, paymentStatus: 'Paid' };
+          return {
+            ...o,
+            paymentStatus: 'Paid',
+            orderStatus: o.orderStatus === 'Pending' ? 'Processing' : o.orderStatus,
+            status: o.status === 'Pending' ? 'Processing' : o.status
+          };
         }
       } catch (err) {
         console.warn('Could not verify payment status for order:', o.id, err?.message);
@@ -141,7 +152,10 @@ export default function AccountOrders() {
       <div className="space-y-5">
         {orders.map((o) => {
           const hasShipmentStatus = Boolean(o.shipmentStatus);
-          const displayStatus = o.shipmentStatus || o.orderStatus || o.status || 'Pending';
+          const isPaid = isSuccessStatus(o.paymentStatus) || isOrderConfirmedPaid(o.id) || isOrderConfirmedPaid(o.orderNumber);
+          const rawOrderStatus = o.orderStatus || o.status || 'Pending';
+          const resolvedOrderStatus = (isPaid && rawOrderStatus === 'Pending') ? 'Processing' : rawOrderStatus;
+          const displayStatus = o.shipmentStatus || resolvedOrderStatus;
           const statusClass = hasShipmentStatus
             ? shippingService.getShipmentStatusBadge(o.shipmentStatus)
             : getStatusStyle(displayStatus);

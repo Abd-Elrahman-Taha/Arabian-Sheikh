@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { orderService } from '../../services/orderService';
 import { shippingService } from '../../services/shippingService';
-import { paymentService, isSuccessStatus, isFailedStatus } from '../../services/paymentService';
+import { paymentService, isSuccessStatus, isFailedStatus, isOrderConfirmedPaid } from '../../services/paymentService';
 import {
   Truck,
   ArrowLeft,
@@ -127,9 +127,24 @@ export default function OrderDetail() {
     if (!orderData) return orderData;
     let currentPayStatus = orderData.paymentStatus || 'Pending';
 
+    const isPaid = isSuccessStatus(currentPayStatus) ||
+      isOrderConfirmedPaid(orderData.id) ||
+      isOrderConfirmedPaid(orderData.orderNumber) ||
+      isOrderConfirmedPaid(orderId) ||
+      isSuccessStatus(orderData.payments?.[0]?.status) ||
+      Boolean(orderData.paidAt);
+
     // If already confirmed as Paid
-    if (isSuccessStatus(currentPayStatus) || isSuccessStatus(orderData.payments?.[0]?.status) || orderData.paidAt) {
-      return { ...orderData, paymentStatus: 'Paid' };
+    if (isPaid) {
+      if (orderData.paymentStatus === 'Pending') {
+        paymentService.syncOrderPaymentWithBackend(orderData.id || orderId).catch(() => {});
+      }
+      return {
+        ...orderData,
+        paymentStatus: 'Paid',
+        orderStatus: orderData.orderStatus === 'Pending' ? 'Processing' : orderData.orderStatus,
+        status: orderData.status === 'Pending' ? 'Processing' : orderData.status
+      };
     }
 
     // Check backend payment record if paymentId exists on the order (Zero sessionStorage)
@@ -196,10 +211,20 @@ export default function OrderDetail() {
           ? String(delivData.trackingNumber).trim()
           : ((trkData?.trackingNumber && String(trkData.trackingNumber).trim()) || (orderData.trackingNumber && String(orderData.trackingNumber).trim()) || null);
 
+        const isOrderPaid = isSuccessStatus(orderData.paymentStatus) ||
+          isOrderConfirmedPaid(orderData.id) ||
+          isOrderConfirmedPaid(orderData.orderNumber) ||
+          isOrderConfirmedPaid(orderId);
+        const rawDelivStatus = delivData?.orderStatus;
+        const resolvedOrderStatus = (isOrderPaid && (rawDelivStatus === 'Pending' || !rawDelivStatus))
+          ? 'Processing'
+          : (rawDelivStatus || orderData.orderStatus || 'Pending');
+
         setOrder({
           ...orderData,
-          orderStatus: delivData?.orderStatus || orderData.orderStatus || 'Pending',
-          status: delivData?.orderStatus || orderData.orderStatus || 'Pending',
+          paymentStatus: isOrderPaid ? 'Paid' : orderData.paymentStatus,
+          orderStatus: resolvedOrderStatus,
+          status: resolvedOrderStatus,
           shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || 'Created',
           carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null,
           trackingNumber: resolvedTracking,
@@ -240,10 +265,20 @@ export default function OrderDetail() {
             ? String(delivData.trackingNumber).trim()
             : ((trkData?.trackingNumber && String(trkData.trackingNumber).trim()) || (orderData.trackingNumber && String(orderData.trackingNumber).trim()) || null);
 
+          const isOrderPaid = isSuccessStatus(orderData.paymentStatus) ||
+            isOrderConfirmedPaid(orderData.id) ||
+            isOrderConfirmedPaid(orderData.orderNumber) ||
+            isOrderConfirmedPaid(orderId);
+          const rawDelivStatus = delivData?.orderStatus;
+          const resolvedOrderStatus = (isOrderPaid && (rawDelivStatus === 'Pending' || !rawDelivStatus))
+            ? 'Processing'
+            : (rawDelivStatus || orderData.orderStatus || 'Pending');
+
           setOrder({
             ...orderData,
-            orderStatus: delivData?.orderStatus || orderData.orderStatus || 'Pending',
-            status: delivData?.orderStatus || orderData.orderStatus || 'Pending',
+            paymentStatus: isOrderPaid ? 'Paid' : orderData.paymentStatus,
+            orderStatus: resolvedOrderStatus,
+            status: resolvedOrderStatus,
             shipmentStatus: delivData?.shipmentStatus || trkData?.currentStatus || orderData.shipmentStatus || 'Created',
             carrierStatus: delivData?.carrierStatus || trkData?.carrierStatus || orderData.carrierStatus || null,
             trackingNumber: resolvedTracking,
@@ -343,6 +378,7 @@ export default function OrderDetail() {
       isSuccessStatus(order.paymentStatus) ? 'Paid' :
       isSuccessStatus(order.payments?.[0]?.status) ? 'Paid' :
       order.paidAt ? 'Paid' :
+      (isOrderConfirmedPaid(order.id) || isOrderConfirmedPaid(order.orderNumber) || isOrderConfirmedPaid(orderId)) ? 'Paid' :
       order.paymentStatus || 'Pending'
     );
   const isCancelled = String(displayStatus).toLowerCase().includes('cancel');

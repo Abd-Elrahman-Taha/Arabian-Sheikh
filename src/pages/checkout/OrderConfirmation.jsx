@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
-import { isSuccessStatus } from '../../services/paymentService';
+import { isSuccessStatus, isOrderConfirmedPaid, paymentService } from '../../services/paymentService';
 import { CheckCircle2, Truck, ArrowRight, Sparkles, XCircle, Clock, Copy, Check } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
@@ -40,12 +40,21 @@ export default function OrderConfirmation() {
 
         if (item) {
           const resolvedTracking = deliv?.trackingNumber || trk?.trackingNumber || item.trackingNumber || item.trackingCode || item.dhlTrackingNumber || null;
+          const isPaid = isOrderConfirmedPaid(orderId) || isSuccessStatus(order?.paymentStatus) || isSuccessStatus(item.paymentStatus) || Boolean(item.paidAt);
+
           setOrder({
             ...item,
+            paymentStatus: isPaid ? 'Paid' : item.paymentStatus,
+            orderStatus: (isPaid && item.orderStatus === 'Pending') ? 'Processing' : item.orderStatus,
             trackingNumber: resolvedTracking || item.trackingNumber || null,
             trackingCode: resolvedTracking || item.trackingCode || null,
             carrier: trk?.carrier || deliv?.carrier || item.carrier || null
           });
+
+          // If confirmed paid but backend returned Pending, sync with backend in background
+          if (isPaid && item.paymentStatus === 'Pending') {
+            paymentService.syncOrderPaymentWithBackend(orderId).catch(() => {});
+          }
         }
       } catch (err) {
         console.warn('Confirmation fetch order error:', err);
@@ -214,7 +223,8 @@ export default function OrderConfirmation() {
                       </span>
                     );
                   }
-                  if (isSuccessStatus(payStatus) || isSuccessStatus(order?.payments?.[0]?.status) || Boolean(order?.paidAt) || (!payStatus && order?.orderStatus !== 'Cancelled')) {
+                  const isPaid = isSuccessStatus(payStatus) || isOrderConfirmedPaid(orderId) || isOrderConfirmedPaid(order?.id) || isSuccessStatus(order?.payments?.[0]?.status) || Boolean(order?.paidAt);
+                  if (isPaid || (!payStatus && order?.orderStatus !== 'Cancelled')) {
                     return (
                       <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono font-bold text-xs">
                         <CheckCircle2 className="w-3 h-3" /> Paid & Confirmed

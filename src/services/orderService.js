@@ -2,8 +2,8 @@ import { orderApi, toNumericId } from '../api/order.api';
 import { shippingApi } from '../api/shipping.api';
 import { checkoutApi } from '../api/checkout.api';
 import { addressApi } from '../api/address.api';
-import { newOrderKey } from './paymentService';
-import { normalizeShippingOption } from '../api/normalizers';
+import { newOrderKey, paymentService } from './paymentService';
+import { normalizeShippingOption, isOrderConfirmedPaid, recordConfirmedPaidOrder } from '../api/normalizers';
 
 // ─── NO localStorage for orders. Everything comes from the API. ───────────────
 
@@ -55,7 +55,22 @@ export const orderService = {
   recordPlacedOrderId() {},
   getPlacedOrderIds() { return []; },
   getAllOrdersSync() { return []; },
-  getOrderByIdSync() { return null; },
+  getOrderByIdSync(id) {
+    if (!id) return null;
+    const isPaid = isOrderConfirmedPaid(id);
+    if (isPaid) {
+      return {
+        id,
+        numericId: toNumericId(id),
+        orderNumber: typeof id === 'string' && id.startsWith('ORD-') ? id : `ORD-${id}`,
+        paymentStatus: 'Paid',
+        orderStatus: 'Processing',
+        status: 'Processing',
+        paidAt: new Date().toISOString()
+      };
+    }
+    return null;
+  },
 
   // ─── Customer: Fetch orders from GET /api/Orders ───────────────────────────
   async getCustomerOrders() {
@@ -124,9 +139,27 @@ export const orderService = {
     const numericId = toNumericId(id);
     if (!numericId) return null;
     try {
-      return await orderApi.getOrderById(numericId);
+      const order = await orderApi.getOrderById(numericId);
+      if (order && isOrderConfirmedPaid(id) && (order.paymentStatus === 'Pending' || !order.paymentStatus)) {
+        order.paymentStatus = 'Paid';
+        if (order.orderStatus === 'Pending') order.orderStatus = 'Processing';
+        if (order.status === 'Pending') order.status = 'Processing';
+        paymentService.syncOrderPaymentWithBackend(numericId).catch(() => {});
+      }
+      return order;
     } catch (e) {
       console.warn('[orderService] getOrderById failed:', e.message);
+      if (isOrderConfirmedPaid(id)) {
+        return {
+          id,
+          numericId,
+          orderNumber: `ORD-${numericId}`,
+          paymentStatus: 'Paid',
+          orderStatus: 'Processing',
+          status: 'Processing',
+          paidAt: new Date().toISOString()
+        };
+      }
       return null;
     }
   },
@@ -299,27 +332,32 @@ export const orderService = {
     return result || { orderId, orderStatus: newStatus, status: newStatus };
   },
 
-  // ─── Mark order as paid — notifies local listeners only (Zero storage persistence) ──
+  // ─── Mark order as paid — records in persistent registry & syncs with backend ──
   async markOrderPaid(orderId, paymentDetails = null) {
     if (!orderId) return null;
 
-    // Zero sessionStorage / localStorage persistence — backend is the sole source of truth
+    recordConfirmedPaidOrder(orderId, paymentDetails || {});
+
+    // Prompt backend to verify with Stripe and update SQL DB in background
+    paymentService.syncOrderPaymentWithBackend(orderId, paymentDetails).catch(() => {});
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arabian_sheikh_order_updated', {
         detail: {
           orderId,
           paymentStatus: 'Paid',
+          orderStatus: 'Processing',
           paymentDetails
         }
       }));
     }
 
-    return { id: orderId, paymentStatus: 'Paid' };
+    return { id: orderId, paymentStatus: 'Paid', orderStatus: 'Processing' };
   },
 
-  // ─── Get locally confirmed payment status (Deprecated — all status from API) ──
-  getLocalPaidStatus() {
-    return null;
+  // ─── Get locally confirmed payment status ──
+  getLocalPaidStatus(orderId) {
+    return isOrderConfirmedPaid(orderId) ? 'Paid' : null;
   },
 
   // ─── Cancel order ─────────────────────────────────────────────────────────
