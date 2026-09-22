@@ -17,6 +17,7 @@ import {
   XCircle,
   AlertTriangle,
   Clock,
+  Banknote,
   CreditCard,
   Package,
   ChevronLeft,
@@ -396,11 +397,16 @@ export default function AdminOrders() {
   // Filtered displayed items (handling compensation only client toggle if active)
   const displayedItems = useMemo(() => {
     let items = ordersData.items || [];
+    if (paymentStatusFilter === 'COD') {
+      items = items.filter(o => o.isCod || ['cod', 'cash', 'cashondelivery'].some(term =>
+        String(o.paymentMethod || o.paymentMethodCode || o.paymentMethodName || '').toLowerCase().includes(term)
+      ));
+    }
     if (filterCompensationOnly) {
       items = items.filter(o => o.compensationFailure === true || o.compensation?.hasFailure === true);
     }
     return items;
-  }, [ordersData.items, filterCompensationOnly]);
+  }, [ordersData.items, filterCompensationOnly, paymentStatusFilter]);
 
   // Quick KPI counts
   const kpis = useMemo(() => {
@@ -571,6 +577,7 @@ export default function AdminOrders() {
               className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer"
             >
               <option value="ALL">All Payment Statuses</option>
+              <option value="COD">Cash on Delivery (COD)</option>
               {ADMIN_PAYMENT_STATUSES.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
@@ -701,16 +708,32 @@ export default function AdminOrders() {
                   const currency = order.totals?.currency || order.currency || 'EUR';
                   const orderStatus = order.orderStatus || order.status || 'Pending';
                   const rawPayStatus = order.paymentStatus;
-                  const hasPaidPayment = isSuccessStatus(rawPayStatus) ||
+                  const isCod = Boolean(
+                    order.isCod ||
+                    ['cod', 'cash', 'cashondelivery'].some(term =>
+                      String(
+                        order.paymentMethod ||
+                        order.paymentMethodCode ||
+                        order.paymentMethodName ||
+                        order.payment_method ||
+                        order.paymentType ||
+                        order.payments?.[0]?.paymentMethod ||
+                        order.payments?.[0]?.method ||
+                        order.shippingSnapshot?.paymentMethod ||
+                        ''
+                      ).toLowerCase().includes(term)
+                    )
+                  );
+                  const hasPaidPayment = !isCod && (
+                    isSuccessStatus(rawPayStatus) ||
                     isSuccessStatus(order.payments?.[0]?.status) ||
                     Boolean(order.paidAt) ||
                     isOrderConfirmedPaid(order.id) ||
-                    isOrderConfirmedPaid(order.orderNumber);
+                    isOrderConfirmedPaid(order.orderNumber)
+                  );
                   const isOrderProcessing = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(st => st.toLowerCase() === String(orderStatus).toLowerCase());
-                  const isCod = String(order.paymentMethodCode || order.paymentMethod || order.paymentMethodName || '').toLowerCase().includes('cod') ||
-                    String(order.paymentMethodCode || order.paymentMethod || '').toLowerCase().includes('cash');
                   const paymentStatus = isCod
-                    ? 'Cash on Delivery'
+                    ? 'COD'
                     : (hasPaidPayment ? 'Paid' : (isOrderProcessing && !isCod ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending')));
                   const displayOrderStatus = (isSuccessStatus(paymentStatus) && !isCod && orderStatus === 'Pending') ? 'Processing' : orderStatus;
                   const orderTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shipments?.[0]?.trackingNumber || order.shippingSnapshot?.trackingNumber;
@@ -856,9 +879,25 @@ export default function AdminOrders() {
 
                       {/* Payment Status */}
                       <td className="py-3.5 px-4">
-                        <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(paymentStatus)}`}>
-                          {isCod ? 'CASH ON DELIVERY' : (isSuccessStatus(paymentStatus) ? 'PAID' : paymentStatus)}
-                        </span>
+                        {isCod ? (
+                          <div className="flex flex-col items-start gap-1">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-mono font-bold rounded-full border bg-amber-500/20 text-[#F2D675] border-[#D4AF37]/50 shadow-sm"
+                              title="Cash on Delivery: Payment has not been collected yet. Collect in cash upon delivery."
+                            >
+                              <Banknote className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              COD
+                            </span>
+                            <span className="text-[10px] font-mono text-amber-300/80 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5 text-amber-400" />
+                              Unpaid (Pay on Delivery)
+                            </span>
+                          </div>
+                        ) : (
+                          <span className={`inline-block px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold rounded-full border uppercase ${getPaymentStatusBadge(paymentStatus)}`}>
+                            {isSuccessStatus(paymentStatus) ? 'PAID' : paymentStatus}
+                          </span>
+                        )}
                       </td>
 
                       {/* Fulfillment Status & Tracking */}
@@ -1018,6 +1057,28 @@ export default function AdminOrders() {
                     {detailsModalOrder.orderStatus || detailsModalOrder.status || 'Pending'}
                   </span>
                   {(() => {
+                    const isModalCod = Boolean(
+                      detailsModalOrder.isCod ||
+                      ['cod', 'cash', 'cashondelivery'].some(term =>
+                        String(
+                          detailsModalOrder.paymentMethod ||
+                          detailsModalOrder.paymentMethodCode ||
+                          detailsModalOrder.paymentMethodName ||
+                          detailsModalOrder.payment_method ||
+                          detailsModalOrder.paymentType ||
+                          detailsModalOrder.payments?.[0]?.paymentMethod ||
+                          ''
+                        ).toLowerCase().includes(term)
+                      )
+                    );
+                    if (isModalCod) {
+                      return (
+                        <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border bg-amber-500/20 text-[#F2D675] border-[#D4AF37]/50 flex items-center gap-1.5 uppercase">
+                          <Banknote className="w-3.5 h-3.5 text-[#D4AF37]" />
+                          COD • UNPAID (PAY ON DELIVERY)
+                        </span>
+                      );
+                    }
                     const isPaid = isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ||
                       Boolean(detailsModalOrder.paidAt) ||
                       isOrderConfirmedPaid(detailsModalOrder.id) ||
@@ -1276,6 +1337,49 @@ export default function AdminOrders() {
                             €{Number(detailsModalOrder.totals?.total ?? detailsModalOrder.total ?? 0).toFixed(2)}
                           </span>
                         </div>
+
+                        {/* Payment Method & Collection Status */}
+                        {(() => {
+                          const isModalCod = Boolean(
+                            detailsModalOrder.isCod ||
+                            ['cod', 'cash', 'cashondelivery'].some(term =>
+                              String(
+                                detailsModalOrder.paymentMethod ||
+                                detailsModalOrder.paymentMethodCode ||
+                                detailsModalOrder.paymentMethodName ||
+                                detailsModalOrder.payment_method ||
+                                detailsModalOrder.paymentType ||
+                                ''
+                              ).toLowerCase().includes(term)
+                            )
+                          );
+                          return (
+                            <div className="pt-2 border-t border-[#D4AF37]/15 space-y-2">
+                              <div className="flex items-center justify-between text-xs font-mono">
+                                <span className="text-[#D8BE99]">Payment Type:</span>
+                                <span className={isModalCod ? "text-[#F2D675] font-bold flex items-center gap-1.5" : "text-emerald-400 font-bold"}>
+                                  {isModalCod ? (
+                                    <>
+                                      <Banknote className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                      Cash on Delivery (COD)
+                                    </>
+                                  ) : (
+                                    'Online Card Payment'
+                                  )}
+                                </span>
+                              </div>
+                              {isModalCod && (
+                                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-[#F2D675] flex items-start gap-2">
+                                  <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                                  <div>
+                                    <strong className="block uppercase text-amber-300">Payment Not Received Yet:</strong>
+                                    <span className="text-[#D8BE99]">The courier must collect the grand total of €{Number(detailsModalOrder.totals?.total ?? detailsModalOrder.total ?? 0).toFixed(2)} in cash upon delivery.</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1491,54 +1595,84 @@ export default function AdminOrders() {
               {/* TAB 3: PAYMENTS & ATTEMPTS */}
               {detailsActiveTab === 'payments' && (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3">
-                      <span className="text-[11px] text-[#D8BE99] block">Gateway Provider</span>
-                      <span className="text-sm font-bold text-[#F2D675] font-mono mt-0.5 block">
-                        {detailsModalOrder.payments?.[0]?.provider || 'Stripe / Bank Wire'}
-                      </span>
-                    </div>
-
-                    <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3">
-                      <span className="text-[11px] text-[#D8BE99] block">Transaction Reference</span>
-                      <span className="text-xs font-mono text-[#F3E6D0] mt-0.5 block truncate">
-                        {detailsModalOrder.payments?.[0]?.transactionId || detailsModalOrder.id || 'TXN-DIRECT'}
-                      </span>
-                    </div>
-
                     {(() => {
-                      const isModalCod = String(detailsModalOrder.paymentMethodCode || detailsModalOrder.paymentMethod || detailsModalOrder.paymentMethodName || '').toLowerCase().includes('cod') ||
-                        String(detailsModalOrder.paymentMethodCode || detailsModalOrder.paymentMethod || '').toLowerCase().includes('cash');
-                      const isModalConfirmedPaid = isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ||
+                      const isModalCod = Boolean(
+                        detailsModalOrder.isCod ||
+                        ['cod', 'cash', 'cashondelivery'].some(term =>
+                          String(
+                            detailsModalOrder.paymentMethod ||
+                            detailsModalOrder.paymentMethodCode ||
+                            detailsModalOrder.paymentMethodName ||
+                            detailsModalOrder.payment_method ||
+                            detailsModalOrder.paymentType ||
+                            ''
+                          ).toLowerCase().includes(term)
+                        )
+                      );
+                      const isModalConfirmedPaid = !isModalCod && (
+                        isSuccessStatus(detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status) ||
                         Boolean(detailsModalOrder.paidAt) ||
                         isOrderConfirmedPaid(detailsModalOrder.id) ||
-                        isOrderConfirmedPaid(detailsModalOrder.orderNumber);
+                        isOrderConfirmedPaid(detailsModalOrder.orderNumber)
+                      );
                       const rawModalStatus = isModalConfirmedPaid ? 'Paid' : (detailsModalOrder.paymentStatus || detailsModalOrder.payments?.[0]?.status || 'Pending');
-                      const modalStatusDisplay = isModalCod ? 'Cash on Delivery' : (isSuccessStatus(rawModalStatus) ? 'PAID & SETTLED' : rawModalStatus);
+                      const modalStatusDisplay = isModalCod ? 'COD • UNPAID (COLLECT ON DELIVERY)' : (isSuccessStatus(rawModalStatus) ? 'PAID & SETTLED' : rawModalStatus);
 
                       return (
-                        <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3 flex flex-col justify-between">
-                          <div>
-                            <span className="text-[11px] text-[#D8BE99] block">Reconciliation Status</span>
-                            <span className={`inline-block px-2 py-0.5 text-[10px] font-mono font-bold rounded-full border mt-1 uppercase ${getPaymentStatusBadge(modalStatusDisplay)}`}>
-                              {modalStatusDisplay}
-                            </span>
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3">
+                              <span className="text-[11px] text-[#D8BE99] block">Gateway / Method</span>
+                              <span className="text-sm font-bold text-[#F2D675] font-mono mt-0.5 flex items-center gap-1.5">
+                                {isModalCod && <Banknote className="w-4 h-4 text-[#D4AF37]" />}
+                                {isModalCod ? 'Cash on Delivery (COD)' : (detailsModalOrder.payments?.[0]?.provider || 'Stripe / Card')}
+                              </span>
+                            </div>
+
+                            <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3">
+                              <span className="text-[11px] text-[#D8BE99] block">Transaction Reference</span>
+                              <span className="text-xs font-mono text-[#F3E6D0] mt-0.5 block truncate">
+                                {isModalCod ? 'COD-COLLECTION-PENDING' : (detailsModalOrder.payments?.[0]?.transactionId || detailsModalOrder.id || 'TXN-DIRECT')}
+                              </span>
+                            </div>
+
+                            <div className="bg-black/50 border border-[#D4AF37]/25 rounded-xl p-3 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[11px] text-[#D8BE99] block">Reconciliation Status</span>
+                                <span className={`inline-block px-2 py-0.5 text-[10px] font-mono font-bold rounded-full border mt-1 uppercase ${isModalCod ? 'bg-amber-500/20 text-[#F2D675] border-[#D4AF37]/50' : getPaymentStatusBadge(modalStatusDisplay)}`}>
+                                  {modalStatusDisplay}
+                                </span>
+                              </div>
+                              {!isSuccessStatus(rawModalStatus) && !isModalCod && (
+                                <button
+                                  onClick={handleVerifyModalPayment}
+                                  disabled={verifyingModalPayment}
+                                  className="mt-2 text-[10px] font-mono text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                  title="Fetch live payment status from gateway"
+                                >
+                                  <RefreshCw className={`w-2.5 h-2.5 ${verifyingModalPayment ? 'animate-spin' : ''}`} />
+                                  <span>{verifyingModalPayment ? 'Verifying...' : 'Fetch Gateway Status'}</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          {!isSuccessStatus(rawModalStatus) && !isModalCod && (
-                            <button
-                              onClick={handleVerifyModalPayment}
-                              disabled={verifyingModalPayment}
-                              className="mt-2 text-[10px] font-mono text-[#D4AF37] hover:text-[#F2D675] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                              title="Fetch live payment status from gateway"
-                            >
-                              <RefreshCw className={`w-2.5 h-2.5 ${verifyingModalPayment ? 'animate-spin' : ''}`} />
-                              <span>{verifyingModalPayment ? 'Verifying...' : 'Fetch Gateway Status'}</span>
-                            </button>
+
+                          {isModalCod && (
+                            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-[#F2D675] flex items-start gap-2.5">
+                              <Clock className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                              <div>
+                                <span className="font-bold block uppercase tracking-wider text-[#F2D675]">
+                                  Cash on Delivery Notice: Payment Not Collected Yet
+                                </span>
+                                <span className="text-[#D8BE99] block mt-0.5">
+                                  This order was placed under Cash on Delivery (COD). The customer has NOT paid online. The shipping courier must collect the full total of €{Number(detailsModalOrder.totals?.total ?? detailsModalOrder.total ?? 0).toFixed(2)} in cash upon delivering the parcel.
+                                </span>
+                              </div>
+                            </div>
                           )}
-                        </div>
+                        </>
                       );
                     })()}
-                  </div>
 
                   {/* Payment Attempts History */}
                   <div className="border border-[#D4AF37]/25 rounded-xl overflow-hidden">

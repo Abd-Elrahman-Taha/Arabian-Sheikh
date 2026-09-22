@@ -560,16 +560,35 @@ export function normalizeOrder(raw) {
   const rawPaymentStatus = o.paymentStatus || o.payment_status;
   const rawOrderStatus = o.orderStatus || o.status || 'Pending';
   const isOrderFulfilled = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(s => s.toLowerCase() === String(rawOrderStatus).toLowerCase());
-  const paymentMethodStr = String(o.paymentMethod || o.paymentMethodCode || '').toLowerCase();
-  const isCod = paymentMethodStr.includes('cod') || paymentMethodStr.includes('cash');
+  const paymentMethodCandidates = [
+    o.paymentMethod,
+    o.paymentMethodCode,
+    o.paymentMethodName,
+    o.payment_method,
+    o.paymentType,
+    paymentsList[0]?.paymentMethod,
+    paymentsList[0]?.method,
+    paymentsList[0]?.provider,
+    o.shippingSnapshot?.paymentMethod
+  ];
+  const isCod = Boolean(
+    o.isCod ||
+    paymentMethodCandidates.some(val => {
+      if (!val) return false;
+      const s = String(val).toLowerCase().trim();
+      return s.includes('cod') || s.includes('cash') || s.includes('delivery');
+    })
+  );
 
-  // Check persistent verified payment registry
+  // Check persistent verified payment registry (only applies to online Stripe payments, not COD)
   const orderIdRaw = o.id !== undefined && o.id !== null ? o.id : o.orderNumber;
-  const isLocallyPaid = isOrderConfirmedPaid(orderId) || isOrderConfirmedPaid(orderIdRaw);
+  const isLocallyPaid = !isCod && (isOrderConfirmedPaid(orderId) || isOrderConfirmedPaid(orderIdRaw));
 
   let resolvedPaymentStatus = 'Pending';
-  if (isLocallyPaid || hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt || (isOrderFulfilled && !isCod)) {
+  if (!isCod && (isLocallyPaid || hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt || isOrderFulfilled)) {
     resolvedPaymentStatus = 'Paid';
+  } else if (isCod) {
+    resolvedPaymentStatus = (hasPaidPayment || isStatusSuccess(rawPaymentStatus)) ? 'Paid' : 'Pending';
   } else if (isStatusRefunded(rawPaymentStatus) || paymentsList.some(p => isStatusRefunded(p.status))) {
     resolvedPaymentStatus = 'Refunded';
   } else if (hasFailedPayment || isStatusFailed(rawPaymentStatus)) {
@@ -604,7 +623,10 @@ export function normalizeOrder(raw) {
     paymentId: resolvedPaymentId,
     providerPaymentId: resolvedProviderPaymentId,
     paidAt: o.paidAt || (resolvedPaymentStatus === 'Paid' ? (o.updatedAt || o.createdAt || new Date().toISOString()) : null),
-    paymentMethodCode: o.paymentMethodCode || o.paymentMethod || '',
+    paymentMethod: isCod ? 'COD' : (o.paymentMethod || o.paymentMethodCode || ''),
+    paymentMethodCode: isCod ? 'COD' : (o.paymentMethodCode || o.paymentMethod || ''),
+    paymentMethodName: isCod ? 'Cash on Delivery (COD)' : (o.paymentMethodName || o.paymentMethod || ''),
+    isCod,
     compensationFailure: Boolean(o.compensationFailure),
     
     // Customer
