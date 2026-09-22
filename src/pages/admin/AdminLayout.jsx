@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Tag,
   ShieldCheck,
+  ShieldAlert,
   Star,
   HelpCircle,
   FileText,
@@ -61,7 +62,8 @@ export default function AdminLayout({ children }) {
         { to: '/admin/refunds', label: 'Refunds', icon: DollarSign, aliases: ['/admin/refund-requests'] },
         { to: '/admin/users', label: t('admin.users') || 'Customers', icon: Users },
         { to: '/admin/reviews', label: 'Reviews Moderation', icon: Star, aliases: ['/admin/review-moderation', '/dashboard/reviews'] },
-        { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] }
+        { to: '/admin/admins', label: 'Admin Control', icon: ShieldCheck, aliases: ['/admin/administrators', '/admin/management'] },
+        { to: '/admin/audit-logs', label: 'Audit Logs', icon: ShieldAlert, aliases: ['/admin/audit', '/dashboard/audit-logs'] }
       ]
     },
     {

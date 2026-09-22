@@ -25,3 +25,4 @@ export { default as analyticsApi } from './analytics.api';
 export { default as reviewApi } from './review.api';
 export { default as reportApi } from './report.api';
 export { default as returnsApi } from './returns.api';
+export { default as auditApi } from './audit.api';

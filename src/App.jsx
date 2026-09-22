@@ -77,6 +77,7 @@ import AdminReports from './pages/admin/AdminReports';
 import AdminReturns from './pages/admin/AdminReturns';
 import AdminRefunds from './pages/admin/AdminRefunds';
 import AdminPayments from './pages/admin/AdminPayments';
+import AdminAuditLogs from './pages/admin/AdminAuditLogs';
 
 // Public Content Pages
 import FaqPage from './pages/FaqPage';
@@ -129,6 +130,7 @@ function MainRouter() {
           {(currentPath === '/admin/content/pages' || currentPath === '/dashboard/content/pages') && <AdminPages />}
           {(currentPath === '/admin/content/contact' || currentPath === '/dashboard/content/contact') && <AdminContact />}
           {(currentPath === '/admin/reviews' || currentPath === '/admin/review-moderation' || currentPath === '/dashboard/reviews') && <AdminReviews />}
+          {(currentPath === '/admin/audit-logs' || currentPath === '/admin/audit' || currentPath === '/dashboard/audit-logs') && <AdminAuditLogs />}
         </AdminLayout>
       );
     }
