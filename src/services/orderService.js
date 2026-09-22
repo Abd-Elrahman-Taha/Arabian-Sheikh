@@ -46,9 +46,37 @@ export function formatOrderCode(order) {
   return clean.startsWith('#') ? clean : `#${clean}`;
 }
 
+// ─── Persistent Memory Cache for Detailed Order Attributes (Address, Items, Phone) ───
+const orderDetailsCache = new Map();
+
+export function cacheOrderDetails(order) {
+  if (!order || typeof order !== 'object') return;
+  const idKey = order.id ? String(order.id) : null;
+  const numKey = order.numericId ? String(order.numericId) : null;
+  const ordKey = order.orderNumber ? String(order.orderNumber) : null;
+
+  if (idKey) orderDetailsCache.set(idKey, order);
+  if (numKey) orderDetailsCache.set(numKey, order);
+  if (ordKey) orderDetailsCache.set(ordKey, order);
+}
+
+export function getCachedOrderDetails(id) {
+  if (!id) return null;
+  const key = String(id);
+  return orderDetailsCache.get(key) || null;
+}
+
 export const orderService = {
   formatOrderCode(order) {
     return formatOrderCode(order);
+  },
+
+  cacheOrderDetails(order) {
+    cacheOrderDetails(order);
+  },
+
+  getCachedOrderDetails(id) {
+    return getCachedOrderDetails(id);
   },
 
   // ─── No-op stubs kept for call-site compatibility ──────────────────────────
@@ -89,33 +117,58 @@ export const orderService = {
   async getAdminOrders(filters = {}) {
     try {
       const response = await orderApi.adminGetOrders(filters);
-      if (response && Array.isArray(response.items)) {
-        return response;
-      }
-      if (Array.isArray(response)) {
-        return {
-          items: response,
-          page: 1,
-          pageSize: response.length,
-          totalCount: response.length,
-          totalPages: 1,
-          hasPreviousPage: false,
-          hasNextPage: false
-        };
-      }
+      const rawItems = response && Array.isArray(response.items)
+        ? response.items
+        : (Array.isArray(response) ? response : []);
+
+      // Merge each item with cached order details so shippingAddress, phone, items never disappear
+      const enrichedItems = rawItems.map(item => {
+        const idKey = item.id ? String(item.id) : null;
+        const numKey = item.numericId ? String(item.numericId) : null;
+        const ordKey = item.orderNumber ? String(item.orderNumber) : null;
+
+        const cached = (idKey ? orderDetailsCache.get(idKey) : null)
+          || (ordKey ? orderDetailsCache.get(ordKey) : null)
+          || (numKey ? orderDetailsCache.get(numKey) : null);
+
+        if (cached) {
+          const merged = {
+            ...cached,
+            ...item,
+            shippingAddress: item.shippingAddress || cached.shippingAddress,
+            shippingAddressSnapshot: item.shippingAddressSnapshot || cached.shippingAddressSnapshot,
+            shippingSnapshot: item.shippingSnapshot || cached.shippingSnapshot,
+            customerPhone: item.customerPhone || cached.customerPhone || item.customer?.phone || cached.customer?.phone,
+            items: (Array.isArray(item.items) && item.items.length > 0) ? item.items : (cached.items || []),
+            payments: (Array.isArray(item.payments) && item.payments.length > 0) ? item.payments : (cached.payments || []),
+            paymentMethod: item.paymentMethod || cached.paymentMethod,
+            isCod: item.isCod ?? cached.isCod,
+          };
+          cacheOrderDetails(merged);
+          return merged;
+        }
+
+        // If item already has shippingAddress or items, seed the cache
+        if (item.shippingAddress || (Array.isArray(item.items) && item.items.length > 0)) {
+          cacheOrderDetails(item);
+        }
+
+        return item;
+      });
+
+      return {
+        items: enrichedItems,
+        page: Number(response?.page || 1),
+        pageSize: Number(response?.pageSize || enrichedItems.length || 20),
+        totalCount: Number(response?.totalCount !== undefined ? response.totalCount : enrichedItems.length),
+        totalPages: Number(response?.totalPages || 1),
+        hasPreviousPage: Boolean(response?.hasPreviousPage),
+        hasNextPage: Boolean(response?.hasNextPage)
+      };
     } catch (e) {
       console.warn('[orderService] getAdminOrders failed:', e.message);
       throw e;
     }
-    return {
-      items: [],
-      page: 1,
-      pageSize: 20,
-      totalCount: 0,
-      totalPages: 1,
-      hasPreviousPage: false,
-      hasNextPage: false
-    };
   },
 
   async getAllOrders(filters = {}) {
@@ -127,10 +180,14 @@ export const orderService = {
     const numericId = toNumericId(id);
     if (!numericId) return null;
     try {
-      return await orderApi.adminGetOrderDetails(numericId);
+      const details = await orderApi.adminGetOrderDetails(numericId);
+      if (details) {
+        cacheOrderDetails(details);
+      }
+      return details;
     } catch (e) {
       console.warn('[orderService] getAdminOrderDetails failed:', e.message);
-      return null;
+      return getCachedOrderDetails(id) || getCachedOrderDetails(numericId);
     }
   },
 

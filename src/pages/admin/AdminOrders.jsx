@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService, ADMIN_ORDER_STATUSES, ADMIN_PAYMENT_STATUSES } from '../../services/orderService';
@@ -83,6 +83,7 @@ export default function AdminOrders() {
 
   const [retryingOrderId, setRetryingOrderId] = useState(null);
   const [copiedText, setCopiedText] = useState(null);
+  const inFlightEnrichmentRef = useRef(new Set());
 
   // Close modals on Escape key
   useEffect(() => {
@@ -124,7 +125,38 @@ export default function AdminOrders() {
 
       const result = await orderService.getAdminOrders(filters);
       if (result && Array.isArray(result.items)) {
-        setOrdersData(result);
+        setOrdersData(prev => {
+          const prevMap = new Map();
+          if (prev?.items && Array.isArray(prev.items)) {
+            prev.items.forEach(p => {
+              if (p.id) prevMap.set(String(p.id), p);
+              if (p.orderNumber) prevMap.set(String(p.orderNumber), p);
+            });
+          }
+
+          const mergedItems = result.items.map(fresh => {
+            const existing = prevMap.get(String(fresh.id)) || (fresh.orderNumber ? prevMap.get(String(fresh.orderNumber)) : null);
+            if (!existing) return fresh;
+
+            return {
+              ...existing,
+              ...fresh,
+              shippingAddress: fresh.shippingAddress || existing.shippingAddress,
+              shippingAddressSnapshot: fresh.shippingAddressSnapshot || existing.shippingAddressSnapshot,
+              shippingSnapshot: fresh.shippingSnapshot || existing.shippingSnapshot,
+              customerPhone: fresh.customerPhone || existing.customerPhone || fresh.customer?.phone || existing.customer?.phone,
+              items: (Array.isArray(fresh.items) && fresh.items.length > 0) ? fresh.items : (existing.items || []),
+              payments: (Array.isArray(fresh.payments) && fresh.payments.length > 0) ? fresh.payments : (existing.payments || []),
+              paymentMethod: fresh.paymentMethod || existing.paymentMethod,
+              isCod: fresh.isCod ?? existing.isCod,
+            };
+          });
+
+          return {
+            ...result,
+            items: mergedItems
+          };
+        });
       } else if (Array.isArray(result)) {
         setOrdersData({
           items: result,
@@ -173,20 +205,31 @@ export default function AdminOrders() {
     };
   }, [fetchOrders]);
 
-  // Automatic background enrichment for table rows: check details for orders where paymentMethod is missing
+  // Automatic background enrichment for table rows: ensure address, flacons, and payment method are always loaded
   useEffect(() => {
     if (!ordersData?.items || ordersData.items.length === 0) return;
 
     const ordersToEnrich = ordersData.items.filter(o => {
-      const id = o.id || o.orderNumber;
-      if (isOrderCod(id)) return false;
-      if (o.paymentMethod && String(o.paymentMethod).trim().length > 0) return false;
-      return true;
+      const id = String(o.id || o.orderNumber);
+      if (inFlightEnrichmentRef.current.has(id)) return false;
+
+      const hasAddr = Boolean(
+        o.shippingAddress || 
+        o.shippingAddressSnapshot || 
+        o.shippingSnapshot?.address || 
+        o.shippingSnapshot?.shippingAddress || 
+        o.address
+      );
+      const hasItems = Array.isArray(o.items) && o.items.length > 0;
+      const hasPayment = Boolean(o.paymentMethod && String(o.paymentMethod).trim().length > 0);
+
+      return !hasAddr || !hasItems || !hasPayment;
     });
 
     if (ordersToEnrich.length === 0) return;
 
     let isMounted = true;
+    ordersToEnrich.forEach(o => inFlightEnrichmentRef.current.add(String(o.id || o.orderNumber)));
 
     Promise.all(
       ordersToEnrich.map(async (o) => {
@@ -197,6 +240,7 @@ export default function AdminOrders() {
               recordCodOrder(detailed.id);
               if (detailed.orderNumber) recordCodOrder(detailed.orderNumber);
             }
+            orderService.cacheOrderDetails(detailed);
             return detailed;
           }
         } catch {
@@ -227,7 +271,12 @@ export default function AdminOrders() {
                 paymentMethod: cod ? 'COD' : (found.paymentMethod || item.paymentMethod),
                 paymentMethodCode: cod ? 'COD' : (found.paymentMethodCode || item.paymentMethodCode),
                 paymentMethodName: cod ? 'Cash on Delivery (COD)' : (found.paymentMethodName || item.paymentMethodName),
-                paymentStatus: cod ? 'COD' : (found.paymentStatus || item.paymentStatus)
+                paymentStatus: cod ? 'COD' : (found.paymentStatus || item.paymentStatus),
+                shippingAddress: found.shippingAddress || item.shippingAddress,
+                shippingAddressSnapshot: found.shippingAddressSnapshot || item.shippingAddressSnapshot,
+                shippingSnapshot: found.shippingSnapshot || item.shippingSnapshot,
+                customerPhone: found.customerPhone || item.customerPhone || found.customer?.phone || item.customer?.phone,
+                items: (Array.isArray(found.items) && found.items.length > 0) ? found.items : (item.items || []),
               };
             }
             return item;
@@ -1123,7 +1172,7 @@ export default function AdminOrders() {
       {detailsModalOrder && typeof document !== 'undefined' && createPortal(
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setDetailsModalOrder(null); }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
+          className="fixed inset-0 z-[9999] flex items-start justify-center p-3 sm:p-6 pt-8 sm:pt-12 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
         >
           <div className="relative z-[10000] w-full max-w-4xl max-h-[90vh] flex flex-col bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl overflow-hidden text-[#F3E6D0]">
             {/* Modal Header */}
@@ -1913,7 +1962,7 @@ export default function AdminOrders() {
       {trackingModalData && typeof document !== 'undefined' && createPortal(
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setTrackingModalData(null); }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-10 sm:pt-16 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
         >
           <div className="relative z-[10000] w-full max-w-lg bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-6 text-[#F3E6D0] space-y-4">
             <div className="flex items-start justify-between border-b border-[#D4AF37]/25 pb-3">
@@ -2011,7 +2060,7 @@ export default function AdminOrders() {
       {statusModalOrder && typeof document !== 'undefined' && createPortal(
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setStatusModalOrder(null); }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-10 sm:pt-16 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
         >
           <form
             onSubmit={handleSubmitStatusUpdate}
@@ -2091,7 +2140,7 @@ export default function AdminOrders() {
       {cancelModalOrder && typeof document !== 'undefined' && createPortal(
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setCancelModalOrder(null); }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-10 sm:pt-16 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
         >
           <form
             onSubmit={handleSubmitCancelOrder}

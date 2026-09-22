@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import ScrollReveal from '../../components/common/ScrollReveal';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useToast } from '../../context/ToastContext';
@@ -569,13 +570,13 @@ export default function AdminAuditLogs() {
       </div>
 
       {/* 6. Diff & Details Inspector Modal */}
-      {selectedLog && (
+      {selectedLog && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-start justify-center p-3 sm:p-5 pt-8 sm:pt-12 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
           onClick={() => setSelectedLog(null)}
         >
           <div
-            className="w-full max-w-4xl max-h-[90vh] bg-[#0E0C09] border border-[#D4AF37]/50 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col justify-between overflow-hidden space-y-5"
+            className="w-full max-w-4xl max-h-[88vh] bg-[#0E0C09] border border-[#D4AF37]/50 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col justify-between overflow-hidden space-y-4 my-auto sm:my-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -727,7 +728,8 @@ export default function AdminAuditLogs() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
