@@ -5,7 +5,7 @@ import { orderService, ADMIN_ORDER_STATUSES, ADMIN_PAYMENT_STATUSES } from '../.
 import { paymentApi } from '../../api/payment.api';
 import { toNumericId } from '../../api/order.api';
 import { isSuccessStatus, isOrderConfirmedPaid } from '../../services/paymentService';
-import { COUNTRY_NAMES } from '../../api/normalizers';
+import { COUNTRY_NAMES, isOrderCod, recordCodOrder } from '../../api/normalizers';
 import { useToast } from '../../context/ToastContext';
 import {
   Search,
@@ -173,6 +173,75 @@ export default function AdminOrders() {
     };
   }, [fetchOrders]);
 
+  // Automatic background enrichment for table rows: check details for orders where paymentMethod is missing
+  useEffect(() => {
+    if (!ordersData?.items || ordersData.items.length === 0) return;
+
+    const ordersToEnrich = ordersData.items.filter(o => {
+      const id = o.id || o.orderNumber;
+      if (isOrderCod(id)) return false;
+      if (o.paymentMethod && String(o.paymentMethod).trim().length > 0) return false;
+      return true;
+    });
+
+    if (ordersToEnrich.length === 0) return;
+
+    let isMounted = true;
+
+    Promise.all(
+      ordersToEnrich.map(async (o) => {
+        try {
+          const detailed = await orderService.getAdminOrderDetails(o.id);
+          if (detailed) {
+            if (detailed.isCod) {
+              recordCodOrder(detailed.id);
+              if (detailed.orderNumber) recordCodOrder(detailed.orderNumber);
+            }
+            return detailed;
+          }
+        } catch {
+          // ignore individual fetch errors
+        }
+        return null;
+      })
+    ).then((enrichedList) => {
+      if (!isMounted) return;
+      const validEnriched = enrichedList.filter(Boolean);
+      if (validEnriched.length > 0) {
+        const enrichedMap = new Map();
+        validEnriched.forEach(e => {
+          enrichedMap.set(String(e.id), e);
+          if (e.orderNumber) enrichedMap.set(String(e.orderNumber), e);
+        });
+
+        setOrdersData(prev => {
+          if (!prev?.items) return prev;
+          const updatedItems = prev.items.map(item => {
+            const found = enrichedMap.get(String(item.id)) || (item.orderNumber ? enrichedMap.get(String(item.orderNumber)) : null);
+            if (found) {
+              const cod = Boolean(found.isCod || isOrderCod(item.id) || isOrderCod(item.orderNumber));
+              return {
+                ...item,
+                ...found,
+                isCod: cod,
+                paymentMethod: cod ? 'COD' : (found.paymentMethod || item.paymentMethod),
+                paymentMethodCode: cod ? 'COD' : (found.paymentMethodCode || item.paymentMethodCode),
+                paymentMethodName: cod ? 'Cash on Delivery (COD)' : (found.paymentMethodName || item.paymentMethodName),
+                paymentStatus: cod ? 'COD' : (found.paymentStatus || item.paymentStatus)
+              };
+            }
+            return item;
+          });
+          return { ...prev, items: updatedItems };
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [ordersData?.items]);
+
   // Open Details Modal and fetch deep purchase cycle snapshot
   const handleOpenDetails = async (order) => {
     setDetailsModalOrder(order);
@@ -181,6 +250,10 @@ export default function AdminOrders() {
     try {
       const detailed = await orderService.getAdminOrderDetails(order.id);
       let resolvedOrder = detailed || order;
+      if (resolvedOrder.isCod) {
+        recordCodOrder(resolvedOrder.id);
+        if (resolvedOrder.orderNumber) recordCodOrder(resolvedOrder.orderNumber);
+      }
 
       // Reconcile with payment gateway or local registry if payment status is not yet marked Paid
       const isConfirmedPaid = isOrderConfirmedPaid(order.id) ||
@@ -398,7 +471,7 @@ export default function AdminOrders() {
   const displayedItems = useMemo(() => {
     let items = ordersData.items || [];
     if (paymentStatusFilter === 'COD') {
-      items = items.filter(o => o.isCod || ['cod', 'cash', 'cashondelivery'].some(term =>
+      items = items.filter(o => o.isCod || isOrderCod(o.id) || isOrderCod(o.orderNumber) || ['cod', 'cash', 'cashondelivery'].some(term =>
         String(o.paymentMethod || o.paymentMethodCode || o.paymentMethodName || '').toLowerCase().includes(term)
       ));
     }
@@ -710,6 +783,9 @@ export default function AdminOrders() {
                   const rawPayStatus = order.paymentStatus;
                   const isCod = Boolean(
                     order.isCod ||
+                    isOrderCod(order.id) ||
+                    isOrderCod(order.orderNumber) ||
+                    isOrderCod(orderNum) ||
                     ['cod', 'cash', 'cashondelivery'].some(term =>
                       String(
                         order.paymentMethod ||
@@ -724,6 +800,11 @@ export default function AdminOrders() {
                       ).toLowerCase().includes(term)
                     )
                   );
+                  if (isCod) {
+                    recordCodOrder(order.id);
+                    if (order.orderNumber) recordCodOrder(order.orderNumber);
+                    if (orderNum) recordCodOrder(orderNum);
+                  }
                   const hasPaidPayment = !isCod && (
                     isSuccessStatus(rawPayStatus) ||
                     isSuccessStatus(order.payments?.[0]?.status) ||
@@ -731,10 +812,9 @@ export default function AdminOrders() {
                     isOrderConfirmedPaid(order.id) ||
                     isOrderConfirmedPaid(order.orderNumber)
                   );
-                  const isOrderProcessing = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(st => st.toLowerCase() === String(orderStatus).toLowerCase());
                   const paymentStatus = isCod
                     ? 'COD'
-                    : (hasPaidPayment ? 'Paid' : (isOrderProcessing && !isCod ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending')));
+                    : (hasPaidPayment ? 'Paid' : (rawPayStatus || order.payments?.[0]?.status || 'Pending'));
                   const displayOrderStatus = (isSuccessStatus(paymentStatus) && !isCod && orderStatus === 'Pending') ? 'Processing' : orderStatus;
                   const orderTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shipments?.[0]?.trackingNumber || order.shippingSnapshot?.trackingNumber;
 

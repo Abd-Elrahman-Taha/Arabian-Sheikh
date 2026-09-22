@@ -53,7 +53,13 @@ export const productService = {
     // Filter by category
     if (filters.categoryId && filters.categoryId !== 'all') {
       const cId = Number(filters.categoryId);
-      result = result.filter(p => Number(p.categoryId || p.category?.id) === cId);
+      result = result.filter(p => {
+        const pId = Number(p.categoryId || p.category?.id);
+        if (!isNaN(pId) && pId > 0 && pId === cId) return true;
+        const pCatName = String(p.categoryName || (typeof p.category === 'object' ? p.category?.name : p.category) || '').toLowerCase();
+        if (cId === 1 && (p.tier || p.perfumeCategoryId || pCatName.includes('perfume') || pId === 1 || !pCatName)) return true;
+        return false;
+      });
     } else if (filters.category && filters.category !== 'all') {
       const cat = filters.category.toLowerCase().trim();
       if (cat === 'offers' || cat === 'discounts') {
@@ -64,7 +70,7 @@ export const productService = {
           const catId = p.categoryId ? String(p.categoryId) : (p.category?.id ? String(p.category.id) : '');
           if (!c && !catId) return true;
           return c === cat || c.includes(cat) || cat.includes(c) || catId === cat ||
-            (cat === 'perfumes' && (c === 'perfume' || c === 'perfumes' || catId === '1' || !c)) ||
+            (cat === 'perfumes' && (c === 'perfume' || c === 'perfumes' || catId === '1' || !!p.tier || !!p.perfumeCategoryId || !c)) ||
             ((cat === 'body-bath-care' || cat === 'body care' || cat === 'body & bath care') && (c.includes('body') || c.includes('bath') || catId === '3')) ||
             (cat === 'cosmetics' && (c.includes('cosmetic') || catId === '7' || catId === '4')) ||
             ((cat === 'hair-care' || cat === 'hair care') && (c.includes('hair') || catId === '8'));

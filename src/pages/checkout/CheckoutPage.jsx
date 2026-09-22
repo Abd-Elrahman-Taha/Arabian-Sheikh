@@ -23,7 +23,7 @@ import { shippingService } from '../../services/shippingService';
 import { checkoutApi } from '../../api/checkout.api';
 import { addressApi } from '../../api/address.api';
 import { cartApi } from '../../api/cart.api';
-import { normalizeShippingOption } from '../../api/normalizers';
+import { normalizeShippingOption, recordCodOrder } from '../../api/normalizers';
 import { useToast } from '../../context/ToastContext';
 import StripePaymentForm from '../../components/checkout/StripePaymentForm';
 import {
@@ -977,6 +977,8 @@ export default function CheckoutPage() {
 
       // Record placed order so reviews & account order history see it
       orderService.recordPlacedOrderId(createdOrderId);
+      recordCodOrder(createdOrderId);
+      if (newOrder.orderNumber) recordCodOrder(newOrder.orderNumber);
 
       if (import.meta.env.DEV) {
         console.log('[Checkout] COD order successfully placed:', createdOrderId);

@@ -486,6 +486,31 @@ export function recordConfirmedPaidOrder(orderId, details = {}) {
   } catch {}
 }
 
+export function isOrderCod(orderId) {
+  if (!orderId || typeof window === 'undefined') return false;
+  try {
+    const rawClean = String(orderId).replace(/^(ORD[-_]?|#)/i, '').trim().toLowerCase();
+    const raw = localStorage.getItem('arabian_sheikh_cod_orders');
+    if (!raw) return false;
+    const map = JSON.parse(raw);
+    return Boolean(map[rawClean] || map[String(orderId).trim().toLowerCase()]);
+  } catch {
+    return false;
+  }
+}
+
+export function recordCodOrder(orderId) {
+  if (!orderId || typeof window === 'undefined') return;
+  try {
+    const cleanId = String(orderId).replace(/^(ORD[-_]?|#)/i, '').trim().toLowerCase();
+    const raw = localStorage.getItem('arabian_sheikh_cod_orders');
+    const map = raw ? JSON.parse(raw) : {};
+    map[cleanId] = true;
+    map[String(orderId).trim().toLowerCase()] = true;
+    localStorage.setItem('arabian_sheikh_cod_orders', JSON.stringify(map));
+  } catch {}
+}
+
 /**
  * Order Normalizer (Compliant with OrderResponse)
  */
@@ -559,7 +584,6 @@ export function normalizeOrder(raw) {
   const hasFailedPayment = paymentsList.some(p => isStatusFailed(p.status));
   const rawPaymentStatus = o.paymentStatus || o.payment_status;
   const rawOrderStatus = o.orderStatus || o.status || 'Pending';
-  const isOrderFulfilled = ['Processing', 'Shipped', 'OutForDelivery', 'Delivered'].some(s => s.toLowerCase() === String(rawOrderStatus).toLowerCase());
   const paymentMethodCandidates = [
     o.paymentMethod,
     o.paymentMethodCode,
@@ -571,8 +595,12 @@ export function normalizeOrder(raw) {
     paymentsList[0]?.provider,
     o.shippingSnapshot?.paymentMethod
   ];
+  const orderIdRaw = o.id !== undefined && o.id !== null ? o.id : o.orderNumber;
   const isCod = Boolean(
     o.isCod ||
+    isOrderCod(orderId) ||
+    isOrderCod(orderIdRaw) ||
+    (o.orderNumber && isOrderCod(o.orderNumber)) ||
     paymentMethodCandidates.some(val => {
       if (!val) return false;
       const s = String(val).toLowerCase().trim();
@@ -580,12 +608,17 @@ export function normalizeOrder(raw) {
     })
   );
 
+  if (isCod) {
+    recordCodOrder(orderId);
+    if (orderIdRaw) recordCodOrder(orderIdRaw);
+    if (o.orderNumber) recordCodOrder(o.orderNumber);
+  }
+
   // Check persistent verified payment registry (only applies to online Stripe payments, not COD)
-  const orderIdRaw = o.id !== undefined && o.id !== null ? o.id : o.orderNumber;
   const isLocallyPaid = !isCod && (isOrderConfirmedPaid(orderId) || isOrderConfirmedPaid(orderIdRaw));
 
   let resolvedPaymentStatus = 'Pending';
-  if (!isCod && (isLocallyPaid || hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt || isOrderFulfilled)) {
+  if (!isCod && (isLocallyPaid || hasPaidPayment || isStatusSuccess(rawPaymentStatus) || o.paidAt)) {
     resolvedPaymentStatus = 'Paid';
   } else if (isCod) {
     resolvedPaymentStatus = (hasPaidPayment || isStatusSuccess(rawPaymentStatus)) ? 'Paid' : 'Pending';

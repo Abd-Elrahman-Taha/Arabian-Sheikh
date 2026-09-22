@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { productService } from '../../services/productService';
@@ -68,13 +68,9 @@ export default function AdminProducts() {
     setLoading(true);
     try {
       const list = await productService.getAllProducts({
-        includeDrafts: true,
-        search,
-        categoryId: categoryFilter !== 'all' ? categoryFilter : undefined,
-        category: categoryFilter !== 'all' ? categoryFilter : undefined,
-        tier: tierFilter !== 'all' ? tierFilter : undefined
+        includeDrafts: true
       });
-      setProducts(list);
+      setProducts(list || []);
     } catch (err) {
       console.error(err);
       error(err.message || 'Failed to load products.');
@@ -85,7 +81,87 @@ export default function AdminProducts() {
 
   useEffect(() => {
     fetchProducts();
-  }, [search, categoryFilter, tierFilter]);
+  }, []);
+
+  const displayedProducts = useMemo(() => {
+    let result = products || [];
+
+    // Filter by search
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      result = result.filter(p =>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.arabicName && p.arabicName.toLowerCase().includes(q)) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(q)) ||
+        (p.category && String(p.category).toLowerCase().includes(q)) ||
+        (p.tier && p.tier.toLowerCase().includes(q)) ||
+        (p.perfumeCategoryName && p.perfumeCategoryName.toLowerCase().includes(q)) ||
+        String(p.id).includes(q)
+      );
+    }
+
+    // Filter by category
+    if (categoryFilter !== 'all') {
+      const selectedCat = categories.find(c => String(c.id) === String(categoryFilter) || c.name?.toLowerCase() === String(categoryFilter).toLowerCase());
+      const targetCatId = Number(selectedCat?.id || categoryFilter);
+      const targetCatName = (selectedCat?.name || categoryFilter).toLowerCase().trim();
+
+      result = result.filter(p => {
+        // Direct ID match
+        const pCatId = Number(p.categoryId || p.category?.id);
+        if (!isNaN(pCatId) && pCatId > 0 && pCatId === targetCatId) return true;
+
+        // Name match
+        const pCatName = String(p.categoryName || (typeof p.category === 'object' ? p.category?.name : p.category) || '').toLowerCase().trim();
+        if (pCatName && (pCatName === targetCatName || pCatName.includes(targetCatName) || targetCatName.includes(pCatName))) {
+          return true;
+        }
+
+        // Perfumes special matching (Tiered perfumes)
+        const isPerfumes = targetCatName.includes('perfume') || targetCatId === 1;
+        if (isPerfumes) {
+          if (p.tier || p.perfumeCategoryId || p.perfumeCategoryName || pCatName.includes('perfume') || pCatId === 1) {
+            return true;
+          }
+        }
+
+        // Oils / Attars matching
+        if (targetCatName.includes('oil') || targetCatName.includes('attar')) {
+          if (pCatName.includes('oil') || pCatName.includes('attar') || (p.subcategoryName && p.subcategoryName.toLowerCase().includes('oil'))) {
+            return true;
+          }
+        }
+
+        // Bakhoor / Incense matching
+        if (targetCatName.includes('bakhoor') || targetCatName.includes('incense')) {
+          if (pCatName.includes('bakhoor') || pCatName.includes('incense') || (p.subcategoryName && p.subcategoryName.toLowerCase().includes('bakhoor'))) {
+            return true;
+          }
+        }
+
+        // Cosmetics / Body Care matching
+        if (targetCatName.includes('body') || targetCatName.includes('bath') || targetCatName.includes('cosmetic')) {
+          if (pCatName.includes('body') || pCatName.includes('bath') || pCatName.includes('cosmetic')) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+    }
+
+    // Filter by tier
+    if (tierFilter !== 'all') {
+      const targetTier = tierFilter.toLowerCase().replace(/tier/g, '').trim();
+      result = result.filter(p => {
+        const pTier = String(p.tier || p.perfumeCategoryName || '').toLowerCase().replace(/tier/g, '').trim();
+        const pTierId = String(p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : ''));
+        return pTier === targetTier || pTier.includes(targetTier) || pTierId === targetTier;
+      });
+    }
+
+    return result;
+  }, [products, search, categoryFilter, tierFilter, categories]);
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Are you certain you wish to retire '${name}' from the Catalogue?`)) {
@@ -216,7 +292,6 @@ export default function AdminProducts() {
               <th className="py-4 px-4">Product Name</th>
               <th className="py-4 px-4">Tier / Category</th>
               <th className="py-4 px-4">Price</th>
-              <th className="py-4 px-4">Stock</th>
               <th className="py-4 px-4">Status</th>
               <th className="py-4 px-4 text-right rtl:text-left">Actions</th>
             </tr>
@@ -224,14 +299,14 @@ export default function AdminProducts() {
           <tbody className="divide-y divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan="7" className="p-8 text-center text-sm text-neutral-400">Loading catalog...</td>
+                <td colSpan="6" className="p-8 text-center text-sm text-neutral-400">Loading catalog...</td>
               </tr>
-            ) : products.length === 0 ? (
+            ) : displayedProducts.length === 0 ? (
               <tr>
-                <td colSpan="7" className="p-8 text-center text-sm text-neutral-400">No products found.</td>
+                <td colSpan="6" className="p-8 text-center text-sm text-neutral-400">No products found.</td>
               </tr>
             ) : (
-              products.map((p) => {
+              displayedProducts.map((p) => {
                 const matchedTier = perfumeCategories.find(t => Number(t.id) === Number(p.perfumeCategoryId))
                   || perfumeCategories.find(t => t.name?.toLowerCase() === (p.tier || p.perfumeCategoryName)?.toLowerCase());
                 const effectivePrice = (p.price && Number(p.price) > 0)
@@ -281,11 +356,6 @@ export default function AdminProducts() {
                         <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</span>
                       )}
                     </td>
-                  <td className="py-4 px-4 font-mono text-sm sm:text-base">
-                    <span className={p.stock > 10 ? 'text-emerald-400 font-semibold' : p.stock > 0 ? 'text-amber-400 font-semibold' : 'text-red-400 font-semibold'}>
-                      {p.stock} units
-                    </span>
-                  </td>
                   <td className="py-4 px-4">
                     <button
                       type="button"
@@ -430,10 +500,6 @@ export default function AdminProducts() {
                         <div>
                           <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Selling Price</span>
                           <span className="text-[#F2D675] font-mono font-bold text-base">€{Number(selectedProductDetails.price || 0).toFixed(2)}</span>
-                        </div>
-                        <div>
-                          <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Stock Reserve</span>
-                          <span className="text-[#F3E6D0] font-mono font-bold">{selectedProductDetails.stock || 0} units</span>
                         </div>
                         <div>
                           <span className="text-[#A69076] uppercase tracking-wider font-semibold block text-[10px]">Shipping Weight</span>
