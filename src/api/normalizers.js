@@ -368,7 +368,7 @@ export function normalizeUser(raw) {
   const fullName = u.fullName || (u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : (u.name || 'Patron'));
 
   return {
-    id: u.id || u.userId || `user-${Date.now()}`,
+    id: (u.id !== undefined && u.id !== null) ? u.id : (u.userId || `user-${Date.now()}`),
     name: fullName,
     firstName: u.firstName || fullName.split(' ')[0] || '',
     lastName: u.lastName || fullName.split(' ').slice(1).join(' ') || '',

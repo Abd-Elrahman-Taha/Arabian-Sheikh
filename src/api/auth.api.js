@@ -109,15 +109,27 @@ export const authApi = {
       { requiresAuth: false }
     );
 
-    if (response?.tokens?.accessToken || response?.token || response?.accessToken) {
-      tokenManager.setToken(response?.tokens?.accessToken || response?.token || response?.accessToken);
+    const accessToken = response?.tokens?.accessToken || response?.token || response?.accessToken;
+    const refreshToken = response?.tokens?.refreshToken || response?.refreshToken;
+
+    if (accessToken) {
+      tokenManager.setToken(accessToken);
     }
-    if (response?.tokens?.refreshToken || response?.refreshToken) {
-      tokenManager.setRefreshToken(response?.tokens?.refreshToken || response?.refreshToken);
+    if (refreshToken) {
+      tokenManager.setRefreshToken(refreshToken);
     }
 
     const userData = response?.user || response?.data || response;
-    return normalizeUser(userData);
+    const normalized = normalizeUser(userData);
+    if (normalized) {
+      if (response?.tokens) {
+        normalized.tokens = response.tokens;
+      } else if (accessToken) {
+        normalized.tokens = { accessToken, refreshToken };
+      }
+      normalized.token = accessToken;
+    }
+    return normalized;
   },
 
   /**

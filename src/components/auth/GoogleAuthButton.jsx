@@ -59,10 +59,15 @@ export default function GoogleAuthButton({ mode = 'signin', onSuccess, returnPat
     setLoading(true);
     try {
       const user = await googleLogin(response.credential);
-      success(`Welcome to Arabian Sheikh, ${user.name || 'Patron'}.`);
+      const displayName = user?.firstName || user?.name || (language === 'ar' ? 'ضيفنا الكريم' : 'Patron');
+      success(
+        language === 'ar'
+          ? `أهلاً بك في دار الشيخ العربي، ${displayName}.`
+          : `Welcome to Arabian Sheikh, ${displayName}.`
+      );
       if (onSuccess) {
         onSuccess(user);
-      } else if (returnPath && returnPath !== '/login' && returnPath !== '/account') {
+      } else if (returnPath && returnPath !== '/login' && returnPath !== '/signup') {
         navigate(returnPath);
       } else {
         navigate('/');

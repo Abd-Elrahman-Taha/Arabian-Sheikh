@@ -98,8 +98,17 @@ export const authService = {
   async googleLogin(idToken) {
     try {
       const user = await authApi.googleLogin(idToken);
-      if (user && (user.id || user.email)) {
+      if (user && ((user.id !== undefined && user.id !== null) || user.email)) {
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        const users = loadUsers();
+        const existingIdx = users.findIndex(u => (u.email || '').toLowerCase().trim() === (user.email || '').toLowerCase().trim());
+        if (existingIdx > -1) {
+          users[existingIdx] = { ...users[existingIdx], ...user };
+        } else {
+          users.unshift(user);
+        }
+        saveUsers(users);
+        liveCloudSync.addUser(user).catch(() => {});
         window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
         return user;
       }
