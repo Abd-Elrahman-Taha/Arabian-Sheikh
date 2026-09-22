@@ -36,6 +36,7 @@ import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import VerifyEmail from './pages/auth/VerifyEmail';
 
 // Customer Account Pages
 import AccountLayout from './pages/account/AccountLayout';
@@ -221,6 +222,10 @@ function MainRouter() {
       case currentPath.startsWith('/reset-password'):
       case currentPath.startsWith('/auth/reset-password'):
         return <ResetPassword />;
+      case currentPath.startsWith('/verify-email'):
+      case currentPath.startsWith('/auth/verify-email'):
+      case currentPath.startsWith('/resend-verification'):
+        return <VerifyEmail />;
 
       // Commerce confirmation & tracking
       case currentPath.startsWith('/order-confirmation'):

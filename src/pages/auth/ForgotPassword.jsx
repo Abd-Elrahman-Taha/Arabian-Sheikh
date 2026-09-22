@@ -45,19 +45,28 @@ export default function ForgotPassword() {
         </div>
 
         {dispatched ? (
-          <div className="space-y-4 text-center">
-            <div className="p-4 bg-[var(--color-desert-primary)]/30 border border-[var(--color-terracotta)]/40 text-xs text-[var(--color-terracotta)] space-y-2 font-medium">
-              <p>✓ Instructions sent to <strong>{email}</strong></p>
-              <p className="text-[11px] text-[var(--color-terracotta-deep)]">
-                Please check your inbox or proceed to the simulated reset step below:
+          <div className="space-y-5 text-center">
+            <div className="w-14 h-14 rounded-full bg-emerald-900/40 border border-emerald-500/40 flex items-center justify-center mx-auto">
+              <Mail className="w-7 h-7 text-emerald-400" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="font-cinzel text-base font-bold text-[var(--color-earth-dark)] uppercase tracking-wider">
+                Recovery Email Sent
+              </h2>
+              <p className="text-xs text-[var(--color-terracotta-deep)] leading-relaxed">
+                We've dispatched password reset instructions to{' '}
+                <strong className="text-[var(--color-terracotta)]">{email}</strong>.
+              </p>
+              <p className="text-[11px] text-[var(--color-terracotta-deep)]/70 leading-relaxed pt-1">
+                Please check your inbox (and spam folder). Click the link in the email to set a new password.
               </p>
             </div>
-            <Link
-              to="/reset-password?token=mock-recovery-token"
-              className="w-full luxury-btn-gold py-3 text-xs block font-semibold uppercase tracking-wider text-center cursor-pointer shadow-md"
+            <button
+              onClick={() => { setDispatched(false); }}
+              className="text-xs text-[var(--color-terracotta)] hover:underline font-cinzel font-bold"
             >
-              Continue to Reset Password
-            </Link>
+              ← Try a different email
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">

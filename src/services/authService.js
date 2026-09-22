@@ -337,6 +337,14 @@ export const authService = {
     return { success: true, message: 'Your password has been successfully updated.' };
   },
 
+  async verifyEmail(token) {
+    return await authApi.verifyEmail(token);
+  },
+
+  async resendVerification(email) {
+    return await authApi.resendVerification(email);
+  },
+
   logout() {
     authApi.logout().catch(() => {});
     if (typeof window !== 'undefined') {
