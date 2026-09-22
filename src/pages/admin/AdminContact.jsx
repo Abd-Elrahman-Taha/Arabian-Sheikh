@@ -128,7 +128,8 @@ export default function AdminContact() {
       }
 
       setModalMode(null);
-      fetchContacts();
+      await fetchContacts();
+      window.dispatchEvent(new CustomEvent('arabian_contact_updated'));
     } catch (err) {
       error(err.message || 'Failed to save contact entry.');
     } finally {
@@ -145,7 +146,8 @@ export default function AdminContact() {
       await contentService.deleteContact(deleteConfirmContact.id);
       success('Contact entry deleted permanently.');
       setDeleteConfirmContact(null);
-      fetchContacts();
+      await fetchContacts();
+      window.dispatchEvent(new CustomEvent('arabian_contact_updated'));
     } catch (err) {
       error(err.message || 'Failed to delete contact entry.');
     } finally {

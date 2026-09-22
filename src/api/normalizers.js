@@ -1645,7 +1645,13 @@ export function normalizeContact(raw) {
 
 export function normalizeContactList(raw) {
   if (!raw) return [];
-  const items = Array.isArray(raw) ? raw : Array.isArray(raw.items) ? raw.items : [];
+  const items = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw.items)
+      ? raw.items
+      : Array.isArray(raw.data)
+        ? raw.data
+        : [];
   return items.map(normalizeContact).filter(Boolean);
 }
 

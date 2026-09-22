@@ -270,7 +270,13 @@ export const contentService = {
 
   async getAdminContact() {
     try {
-      return await contentApi.adminGetContact();
+      const data = await contentApi.adminGetContact();
+      if (Array.isArray(data) && data.length > 0) {
+        try {
+          localStorage.setItem('arabian_sheikh_public_contacts', JSON.stringify(data));
+        } catch (_) {}
+      }
+      return data;
     } catch (err) {
       this.handleApiError(err, 'Failed to fetch contact information.');
     }
@@ -334,9 +340,24 @@ export const contentService = {
 
   async getPublicContact() {
     try {
-      return await contentApi.getPublicContact();
+      const items = await contentApi.getPublicContact();
+      if (Array.isArray(items) && items.length > 0) {
+        try {
+          localStorage.setItem('arabian_sheikh_public_contacts', JSON.stringify(items));
+        } catch (_) {}
+        return items;
+      }
+      try {
+        const cached = localStorage.getItem('arabian_sheikh_public_contacts');
+        if (cached) return JSON.parse(cached);
+      } catch (_) {}
+      return [];
     } catch (err) {
       console.warn('Public contact fallback:', err.message);
+      try {
+        const cached = localStorage.getItem('arabian_sheikh_public_contacts');
+        if (cached) return JSON.parse(cached);
+      } catch (_) {}
       return [];
     }
   },

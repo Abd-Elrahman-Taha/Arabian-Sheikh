@@ -36,13 +36,24 @@ export default function Contact() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    contentService.getPublicContact()
-      .then(items => {
-        if (Array.isArray(items) && items.length > 0) {
-          setLiveContacts(items);
-        }
-      })
-      .catch(() => {});
+    const fetchLive = () => {
+      contentService.getPublicContact()
+        .then(items => {
+          if (Array.isArray(items) && items.length > 0) {
+            setLiveContacts(items);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchLive();
+    window.addEventListener('arabian_contact_updated', fetchLive);
+    window.addEventListener('storage', fetchLive);
+
+    return () => {
+      window.removeEventListener('arabian_contact_updated', fetchLive);
+      window.removeEventListener('storage', fetchLive);
+    };
   }, []);
 
   const handleSubmit = (e) => {

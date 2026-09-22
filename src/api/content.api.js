@@ -287,12 +287,18 @@ export const contentApi = {
   async getPublicContact() {
     const response = await apiClient.get(ENDPOINTS.CONTENT.CONTACT);
     const norm = normalizeObjectKeys(response);
-    const rawItems = Array.isArray(norm?.items) ? norm.items : (Array.isArray(response) ? response : []);
+    const rawItems = Array.isArray(norm?.items)
+      ? norm.items
+      : Array.isArray(norm?.data)
+        ? norm.data
+        : (Array.isArray(response) ? response : []);
     return rawItems.map(i => {
       const item = normalizeObjectKeys(i);
       return {
+        id: item.id !== undefined ? Number(item.id) : null,
         type: item.type || 'Phone',
-        value: item.value || ''
+        value: item.value || '',
+        isActive: item.isActive !== false
       };
     });
   }

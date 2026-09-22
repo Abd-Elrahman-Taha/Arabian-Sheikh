@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
 import ArabianLogo from '../common/ArabianLogo';
 import { Sparkles, ArrowRight, ShieldCheck, Truck, Award, CheckCircle2 } from 'lucide-react';
+import { contentService } from '../../services/contentService';
 
 export default function Footer() {
   const { t } = useTranslation();
@@ -12,6 +13,47 @@ export default function Footer() {
   const { isDark } = useTheme();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+
+  const [contacts, setContacts] = useState(() => {
+    try {
+      const cached = localStorage.getItem('arabian_sheikh_public_contacts');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const loadContacts = useCallback(async () => {
+    try {
+      const items = await contentService.getPublicContact();
+      if (Array.isArray(items) && items.length > 0) {
+        setContacts(items);
+      }
+    } catch {
+      // keep fallback defaults
+    }
+  }, []);
+
+  useEffect(() => {
+    loadContacts();
+
+    const handleUpdate = () => {
+      loadContacts();
+    };
+
+    window.addEventListener('arabian_contact_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('arabian_contact_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [loadContacts]);
+
+  const activeContacts = Array.isArray(contacts) ? contacts.filter(c => c.isActive !== false) : [];
+  const flagshipAddress = activeContacts.find(c => c.type === 'Address')?.value || 'Downtown Dubai, UAE';
+  const conciergePhone = activeContacts.find(c => c.type === 'Phone')?.value || '+971 4 800-SHEIKH (08:00 - 22:00 GMT)';
+  const conciergeEmail = activeContacts.find(c => c.type === 'Email')?.value || null;
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -182,14 +224,32 @@ export default function Footer() {
                 <strong className={`font-cinzel ${isDark ? 'text-[#FFFDF8]' : 'text-[#120B06]'}`}>
                   Flagship Palace:
                 </strong>{' '}
-                Downtown Dubai, UAE
+                <span>{flagshipAddress}</span>
               </p>
               <p>
                 <strong className={`font-cinzel ${isDark ? 'text-[#FFFDF8]' : 'text-[#120B06]'}`}>
                   Concierge:
                 </strong>{' '}
-                +971 4 800-SHEIKH (08:00 - 22:00 GMT)
+                <a
+                  href={`tel:${conciergePhone.replace(/[^0-9+]/g, '') || conciergePhone}`}
+                  className="hover:underline hover:text-[#D4AF37] transition-colors"
+                >
+                  {conciergePhone}
+                </a>
               </p>
+              {conciergeEmail && (
+                <p>
+                  <strong className={`font-cinzel ${isDark ? 'text-[#FFFDF8]' : 'text-[#120B06]'}`}>
+                    Concierge Mail:
+                  </strong>{' '}
+                  <a
+                    href={`mailto:${conciergeEmail}`}
+                    className="hover:underline hover:text-[#D4AF37] transition-colors"
+                  >
+                    {conciergeEmail}
+                  </a>
+                </p>
+              )}
             </div>
           </div>
 
