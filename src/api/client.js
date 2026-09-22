@@ -201,7 +201,7 @@ export const tokenManager = {
       endpointsToTry.push(`${primaryBase}/admin/auth/login`.replace(/([^:]\/)\/+/g, '$1'));
 
       if (primaryBase.startsWith('/')) {
-        endpointsToTry.push('https://arabian-sheikhtest.runasp.net/api/admin/auth/login');
+        endpointsToTry.push('https://arabian-sheikh.runasp.net/api/admin/auth/login');
       } else if (primaryBase.includes('arabian-sheikh')) {
         endpointsToTry.push('/api/admin/auth/login');
       }
