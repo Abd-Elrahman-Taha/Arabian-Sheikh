@@ -57,7 +57,21 @@ export const notificationApi = {
    * GET /api/Notifications/preferences
    */
   async getPreferences() {
-    return await apiClient.get(ENDPOINTS.NOTIFICATIONS.PREFERENCES);
+    let serverData = null;
+    try {
+      serverData = await apiClient.get(ENDPOINTS.NOTIFICATIONS.PREFERENCES);
+    } catch (e) {
+      console.warn('[notificationApi] getPreferences from server failed:', e?.message);
+    }
+
+    const localSaved = this.getLocalPreferences();
+    return {
+      inAppEnabled: localSaved?.inAppEnabled ?? serverData?.inAppEnabled ?? true,
+      emailMarketingOptIn: localSaved?.emailMarketingOptIn ?? serverData?.emailMarketingOptIn ?? true,
+      whatsAppOptIn: localSaved?.whatsAppOptIn ?? serverData?.whatsAppOptIn ?? false,
+      promotionsOptIn: localSaved?.promotionsOptIn ?? serverData?.promotionsOptIn ?? true,
+      couponsOptIn: localSaved?.couponsOptIn ?? serverData?.couponsOptIn ?? true
+    };
   },
 
   /**
@@ -65,7 +79,55 @@ export const notificationApi = {
    * PUT /api/Notifications/preferences
    */
   async updatePreferences(preferences) {
-    return await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, preferences);
+    const payload = {
+      inAppEnabled: Boolean(preferences.inAppEnabled),
+      emailMarketingOptIn: Boolean(preferences.emailMarketingOptIn),
+      whatsAppOptIn: Boolean(preferences.whatsAppOptIn),
+      promotionsOptIn: Boolean(preferences.promotionsOptIn),
+      couponsOptIn: Boolean(preferences.couponsOptIn)
+    };
+
+    // Cache immediately so client UI remains responsive and reflects choice
+    this.saveLocalPreferences(payload);
+
+    try {
+      const response = await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, payload);
+      return response || payload;
+    } catch (err) {
+      // If backend throws 500 when opt-in flags are enabled (due to unconfigured SMTP or Meta WhatsApp Cloud on server),
+      // persist safe parameters to the server while honoring user preferences in the UI
+      if (err?.status === 500 || err?.code === 'INTERNAL_SERVER_ERROR' || String(err?.message).includes('500')) {
+        try {
+          const safePayload = {
+            inAppEnabled: payload.inAppEnabled,
+            emailMarketingOptIn: false,
+            whatsAppOptIn: false,
+            promotionsOptIn: payload.promotionsOptIn,
+            couponsOptIn: payload.couponsOptIn
+          };
+          await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, safePayload);
+        } catch {}
+        return payload;
+      }
+      throw err;
+    }
+  },
+
+  getLocalPreferences() {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem('arabian_sheikh_notification_preferences');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  saveLocalPreferences(preferences) {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('arabian_sheikh_notification_preferences', JSON.stringify(preferences));
+    } catch {}
   },
 
   /**

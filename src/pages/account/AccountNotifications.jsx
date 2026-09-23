@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import AccountLayout from './AccountLayout';
 import { useNotifications, getNotificationEventStyle } from '../../context/NotificationContext';
 import { useRouter } from '../../router/RouterContext';
 import notificationApi from '../../api/notification.api';
@@ -120,8 +119,7 @@ export default function AccountNotifications() {
   };
 
   return (
-    <AccountLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Top Header Card */}
         <div className="rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-6 shadow-2xl backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -303,6 +301,5 @@ export default function AccountNotifications() {
           </div>
         )}
       </div>
-    </AccountLayout>
   );
 }

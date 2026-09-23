@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AccountLayout from './AccountLayout';
 import notificationApi from '../../api/notification.api';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -69,8 +68,7 @@ export default function AccountPreferences() {
   };
 
   return (
-    <AccountLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header Banner */}
         <div className="rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-2">
           <div className="flex items-center gap-2">
@@ -259,6 +257,5 @@ export default function AccountPreferences() {
           </form>
         )}
       </div>
-    </AccountLayout>
   );
 }
