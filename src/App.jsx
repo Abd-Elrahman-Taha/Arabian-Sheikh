@@ -87,11 +87,48 @@ import PolicyPage from './pages/PolicyPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 
+const INTRO_SHOWN_KEY = 'arabian_sheikh_intro_shown';
+
 function MainRouter() {
   const { currentPath } = useRouter();
   const { user, isAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
+
+  // Play intro video ONLY on initial entrance to the website.
+  // When the user refreshes (F5 / reload) within the same session, sessionStorage prevents it from replaying.
+  const [showIntro, setShowIntro] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const alreadyPlayed = sessionStorage.getItem(INTRO_SHOWN_KEY);
+      if (alreadyPlayed === 'true') {
+        return false;
+      }
+
+      const path = window.location.pathname || '';
+      if (
+        path.startsWith('/admin') ||
+        path.startsWith('/dashboard') ||
+        path.startsWith('/checkout') ||
+        path.startsWith('/order-confirmation')
+      ) {
+        sessionStorage.setItem(INTRO_SHOWN_KEY, 'true');
+        return false;
+      }
+
+      // Mark immediately in session so any page refresh prevents re-running
+      sessionStorage.setItem(INTRO_SHOWN_KEY, 'true');
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  const handleIntroComplete = () => {
+    try {
+      sessionStorage.setItem(INTRO_SHOWN_KEY, 'true');
+    } catch {}
+    setShowIntro(false);
+  };
 
   const isAdminRoute = currentPath.startsWith('/admin') || currentPath.startsWith('/dashboard');
   const isAccountRoute = currentPath.startsWith('/account');
@@ -257,9 +294,9 @@ function MainRouter() {
         }}
       />
 
-      {/* Standalone Cinematic Intro */}
+      {/* Standalone Cinematic Intro (Plays only on initial entrance, never on refresh) */}
       {showIntro && !isAdminRoute && (
-        <ArabianIntro onComplete={() => setShowIntro(false)} />
+        <ArabianIntro onComplete={handleIntroComplete} />
       )}
 
       {/* Customer Header (hidden on Admin pages) */}

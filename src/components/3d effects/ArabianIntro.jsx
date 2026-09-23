@@ -56,6 +56,13 @@ export default function ArabianIntro({ onComplete }) {
     }
   }, [isMobile]);
 
+  // Mark intro shown in sessionStorage on mount
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('arabian_sheikh_intro_shown', 'true');
+    } catch {}
+  }, []);
+
   // Motion reduction check
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -69,6 +76,9 @@ export default function ArabianIntro({ onComplete }) {
 
   // Handle Skip Button Click
   const handleSkip = () => {
+    try {
+      sessionStorage.setItem('arabian_sheikh_intro_shown', 'true');
+    } catch {}
     if (containerRef.current) {
       gsap.to(containerRef.current, {
         opacity: 0,
