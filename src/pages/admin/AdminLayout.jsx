@@ -26,8 +26,11 @@ import {
   X,
   RotateCcw,
   DollarSign,
-  CreditCard
+  CreditCard,
+  Bell,
+  Sliders
 } from 'lucide-react';
+import NotificationBell from '../../components/notifications/NotificationBell';
 
 export default function AdminLayout({ children }) {
   const { currentPath, navigate } = useRouter();
@@ -70,7 +73,9 @@ export default function AdminLayout({ children }) {
       title: 'Marketing & Offers',
       links: [
         { to: '/admin/promotions', label: 'Promotions', icon: Sparkles },
-        { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] }
+        { to: '/admin/coupons', label: t('admin.discounts') || 'Coupons', icon: Tag, aliases: ['/admin/discounts', '/dashboard/coupons'] },
+        { to: '/admin/sent-notifications', label: 'Broadcast Campaigns', icon: Bell, aliases: ['/admin/notifications'] },
+        { to: '/admin/settings/notifications', label: 'VIP & Notification Rules', icon: Sliders, aliases: ['/admin/settings/vip-segments'] }
       ]
     },
     {
@@ -162,6 +167,8 @@ export default function AdminLayout({ children }) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
+          <NotificationBell isAdmin={true} />
+
           <Link
             to="/"
             className="hidden sm:flex items-center gap-2 text-xs font-cinzel tracking-wider text-[#D8BE99] hover:text-[#F2D675] border border-[#D4AF37]/30 hover:border-[#D4AF37] px-3.5 py-1.5 rounded-full transition-all bg-black/40 shadow-sm"

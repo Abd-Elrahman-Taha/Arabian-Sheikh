@@ -5,6 +5,7 @@ import { productApi } from '../../api/product.api';
 import { brandApi } from '../../api/brand.api';
 import { productService } from '../../services/productService';
 import { useToast } from '../../context/ToastContext';
+import notificationApi from '../../api/notification.api';
 import {
   Plus,
   Search,
@@ -121,6 +122,11 @@ export default function AdminDiscounts() {
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [conflictCoupon, setConflictCoupon] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  const [vipModalOpen, setVipModalOpen] = useState(false);
+  const [vipCoupon, setVipCoupon] = useState(null);
+  const [vipAssigning, setVipAssigning] = useState(false);
+  const [vipResult, setVipResult] = useState(null);
 
   const [formData, setFormData] = useState({
     code: '',
@@ -348,6 +354,27 @@ export default function AdminDiscounts() {
       error(err.message || 'Failed to deactivate coupon.');
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleOpenVipModal = (coupon) => {
+    setVipCoupon(coupon);
+    setVipResult(null);
+    setVipModalOpen(true);
+  };
+
+  const handleConfirmVipAssign = async () => {
+    if (!vipCoupon) return;
+    setVipAssigning(true);
+    try {
+      const res = await notificationApi.assignCouponToVip(vipCoupon.id);
+      setVipResult(res || { message: `Coupon assigned to VIP patrons successfully.` });
+      success(res?.message || `Coupon '${vipCoupon.code}' assigned exclusively to VIP patrons!`);
+      fetchCoupons();
+    } catch (err) {
+      error(err?.message || 'Failed to assign coupon to VIP patrons.');
+    } finally {
+      setVipAssigning(false);
     }
   };
 
@@ -727,6 +754,14 @@ export default function AdminDiscounts() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            onClick={() => handleOpenVipModal(coupon)}
+                            disabled={isActionBusy}
+                            className="p-1.5 text-[#F2D675] hover:text-black bg-[#D4AF37]/15 hover:bg-[#D4AF37] border border-[#D4AF37]/40 rounded-lg transition-all cursor-pointer shadow-sm"
+                            title="Assign Exclusively to VIP Patrons & Notify"
+                          >
+                            <Crown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={() => handleToggleActivate(coupon)}
                             disabled={isActionBusy}
                             className={`p-1.5 rounded-lg transition-all cursor-pointer ${
@@ -954,6 +989,92 @@ export default function AdminDiscounts() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIP Exclusive Assignment Modal */}
+      {vipModalOpen && vipCoupon && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 text-[#F3E6D0]">
+            <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-4">
+              <div className="flex items-center gap-2.5">
+                <Crown className="w-5 h-5 text-[#D4AF37]" />
+                <h3 className="font-cinzel text-lg font-bold uppercase tracking-wider text-[#F2D675]">
+                  Assign Coupon to VIP Patrons
+                </h3>
+              </div>
+              <button
+                onClick={() => setVipModalOpen(false)}
+                className="text-[#D8BE99] hover:text-white p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-[#D4AF37]/10 via-black to-[#8C6239]/10 border border-[#D4AF37]/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#D8BE99] uppercase tracking-wider">Coupon Code:</span>
+                  <span className="font-mono font-bold text-[#F2D675] bg-black/60 px-2.5 py-1 rounded border border-[#D4AF37]/40 text-sm">
+                    {vipCoupon.code}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#D8BE99] uppercase tracking-wider">Discount Privilege:</span>
+                  <span className="font-cinzel font-bold text-[#F3E6D0]">
+                    {vipCoupon.type === 'Percentage' ? `${vipCoupon.value}% OFF` : `€${vipCoupon.value} OFF`}
+                  </span>
+                </div>
+              </div>
+
+              {vipResult ? (
+                <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 space-y-2">
+                  <div className="flex items-center gap-2 font-bold font-cinzel text-sm">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Exclusive VIP Assignment Complete</span>
+                  </div>
+                  <p className="text-xs text-emerald-200/90 leading-relaxed">
+                    {vipResult.message || `Coupon ${vipCoupon.code} has been assigned to VIP customers.`}
+                  </p>
+                  {vipResult.notifiedCount !== undefined && (
+                    <div className="font-mono text-xs pt-1 border-t border-emerald-500/20">
+                      Notified VIP Patrons: <span className="font-bold text-white">{vipResult.notifiedCount}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2 text-[#D8BE99]">
+                  <p className="leading-relaxed">
+                    This action will mark coupon <span className="text-[#F2D675] font-mono font-bold">{vipCoupon.code}</span> as an exclusive privilege for VIP customers and dispatch real-time notifications to all eligible patrons.
+                  </p>
+                  <p className="text-[11px] text-[#D8BE99]/70 italic">
+                    VIP patrons are evaluated based on the Maison's VIP segment rules (total spend, order frequency, active window).
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#D4AF37]/20">
+              <button
+                type="button"
+                onClick={() => setVipModalOpen(false)}
+                className="px-5 py-2.5 rounded-full border border-white/20 bg-white/5 text-[#D8BE99] hover:text-[#F3E6D0] font-cinzel text-xs uppercase font-bold cursor-pointer transition-colors"
+              >
+                {vipResult ? 'Close' : 'Cancel'}
+              </button>
+              {!vipResult && (
+                <button
+                  type="button"
+                  onClick={handleConfirmVipAssign}
+                  disabled={vipAssigning}
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#B8860B] hover:brightness-110 text-black font-cinzel text-xs uppercase tracking-wider font-bold cursor-pointer transition-all shadow-[0_0_15px_rgba(212,175,55,0.4)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>{vipAssigning ? 'Assigning & Notifying...' : 'Assign to VIP Patrons'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './context/ToastContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Layout & Global Components
 import Header from './components/layout/Header';
@@ -13,6 +14,7 @@ import Footer from './components/layout/Footer';
 import CartDrawer from './components/cart/CartDrawer';
 import SearchOverlay from './components/search/SearchOverlay';
 import PageTransition from './components/common/PageTransition';
+import NotificationToast from './components/notifications/NotificationToast';
 
 // Public Pages
 import Home from './pages/Home';
@@ -47,6 +49,8 @@ import AccountWishlist from './pages/account/AccountWishlist';
 import AccountAddresses from './pages/account/AccountAddresses';
 import AccountPaymentMethods from './pages/account/AccountPaymentMethods';
 import AccountSettings from './pages/account/AccountSettings';
+import AccountNotifications from './pages/account/AccountNotifications';
+import AccountPreferences from './pages/account/AccountPreferences';
 
 // Commerce Pages
 import CartPage from './pages/checkout/CartPage';
@@ -78,6 +82,8 @@ import AdminReturns from './pages/admin/AdminReturns';
 import AdminRefunds from './pages/admin/AdminRefunds';
 import AdminPayments from './pages/admin/AdminPayments';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
+import AdminSentNotifications from './pages/admin/AdminSentNotifications';
+import AdminNotificationSettings from './pages/admin/AdminNotificationSettings';
 
 // Public Content Pages
 import FaqPage from './pages/FaqPage';
@@ -168,6 +174,8 @@ function MainRouter() {
           {(currentPath === '/admin/content/contact' || currentPath === '/dashboard/content/contact') && <AdminContact />}
           {(currentPath === '/admin/reviews' || currentPath === '/admin/review-moderation' || currentPath === '/dashboard/reviews') && <AdminReviews />}
           {(currentPath === '/admin/audit-logs' || currentPath === '/admin/audit' || currentPath === '/dashboard/audit-logs') && <AdminAuditLogs />}
+          {(currentPath === '/admin/sent-notifications' || currentPath === '/admin/notifications') && <AdminSentNotifications />}
+          {(currentPath === '/admin/settings/notifications' || currentPath === '/admin/settings/vip-segments') && <AdminNotificationSettings />}
         </AdminLayout>
       );
     }
@@ -189,6 +197,10 @@ function MainRouter() {
           {currentPath === '/account/addresses' && <AccountAddresses />}
           {currentPath === '/account/payment-methods' && <AccountPaymentMethods />}
           {currentPath === '/account/settings' && <AccountSettings />}
+          {currentPath === '/account/notifications' && <AccountNotifications />}
+          {(currentPath === '/account/preferences' || currentPath === '/account/settings/notifications') && (
+            <AccountPreferences />
+          )}
         </AccountLayout>
       );
     }
@@ -315,6 +327,9 @@ function MainRouter() {
       {/* Global Interactive Search Modal Overlay */}
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
+      {/* Global Real-time Notification Toast Alert */}
+      <NotificationToast />
+
       {/* Customer Footer (hidden on Admin pages) */}
       {!isAdminRoute && <Footer />}
     </div>
@@ -328,11 +343,13 @@ export default function App() {
         <ToastProvider>
           <AuthProvider>
             <RouterProvider>
-              <CartProvider>
-                <WishlistProvider>
-                  <MainRouter />
-                </WishlistProvider>
-              </CartProvider>
+              <NotificationProvider>
+                <CartProvider>
+                  <WishlistProvider>
+                    <MainRouter />
+                  </WishlistProvider>
+                </CartProvider>
+              </NotificationProvider>
             </RouterProvider>
           </AuthProvider>
         </ToastProvider>

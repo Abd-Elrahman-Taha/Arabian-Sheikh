@@ -154,6 +154,7 @@ export default function CheckoutPage() {
     postalCode: '1000',
     shippingMethod: '',
     paymentMethod: 'COD',  // 'COD' or 'CreditCard' (UI display values)
+    marketingConsent: true,
   });
 
   const selectedCountry = COUNTRIES.find(c => c.code === (formData.countryCode || 'BG')) || COUNTRIES[0];
@@ -922,7 +923,11 @@ export default function CheckoutPage() {
       shippingMethodId: verifiedMethodId,
       carrier: selectedQuote?.carrier || selectedQuote?.carrierName || selectedQuote?.shippingMethod || 'Carrier',
       shippingAddress: authoritativeAddress,
-      paymentMethod: getApiPaymentMethod()
+      paymentMethod: getApiPaymentMethod(),
+      marketingConsent: {
+        emailMarketing: Boolean(formData.marketingConsent),
+        whatsApp: Boolean(formData.marketingConsent)
+      }
     });
 
     if (import.meta.env.DEV) {
@@ -1802,6 +1807,22 @@ export default function CheckoutPage() {
                     </div>
                     <p className="text-[11px] text-[#D8BE99]">Secure payment via Stripe — Visa, Mastercard, and more.</p>
                   </div>
+                </div>
+
+                {/* Marketing & VIP Privileges Consent Checkbox (GDPR compliant) */}
+                <div className="pt-2">
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl border border-[#D4AF37]/30 bg-black/40 cursor-pointer hover:border-[#D4AF37]/60 transition-colors group">
+                    <input
+                      type="checkbox"
+                      checked={formData.marketingConsent !== false}
+                      onChange={(e) => setFormData(prev => ({ ...prev, marketingConsent: e.target.checked }))}
+                      className="mt-0.5 w-4 h-4 rounded border-[#D4AF37]/50 text-[#D4AF37] focus:ring-0 focus:ring-offset-0 bg-black/60 cursor-pointer accent-[#D4AF37]"
+                    />
+                    <span className="text-[11px] text-[#D8BE99] group-hover:text-[#F3E6D0] leading-relaxed transition-colors select-none">
+                      {t('checkout.marketingConsent') ||
+                        'I agree to receive exclusive palace offers, private VIP discounts, and order concierge updates via WhatsApp and Email.'}
+                    </span>
+                  </label>
                 </div>
 
                 {/* Payment error display */}

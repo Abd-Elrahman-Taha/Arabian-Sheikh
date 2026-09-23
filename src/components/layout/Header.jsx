@@ -18,9 +18,11 @@ import {
   Sparkles,
   ArrowRight,
   Sun,
-  Moon
+  Moon,
+  Bell
 } from 'lucide-react';
 import { promotionService } from '../../services/promotionService';
+import NotificationBell from '../notifications/NotificationBell';
 
 export default function Header({ onOpenSearch }) {
   const { currentPath, queryParams } = useRouter();
@@ -346,6 +348,9 @@ export default function Header({ onOpenSearch }) {
                 )}
               </Link>
 
+              {/* Royal Notifications */}
+              {isAuthenticated && <NotificationBell />}
+
               {/* Account / Login */}
               <Link
                 to={isAuthenticated ? '/account' : '/login'}
@@ -546,6 +551,23 @@ export default function Header({ onOpenSearch }) {
                 <span>Wishlist ({wishlistCount})</span>
               </Link>
             </div>
+
+            {isAuthenticated && (
+              <div className="pt-1">
+                <Link
+                  to="/account/notifications"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 border rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors ${
+                    isDark
+                      ? 'bg-[#D4AF37]/10 border-[#D4AF37]/40 text-[#F2D675] hover:bg-[#D4AF37]/20'
+                      : 'bg-white border-[#5A3517]/30 text-[#5A3517] shadow-sm'
+                  }`}
+                >
+                  <Bell className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Royal Notifications</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

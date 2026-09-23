@@ -1,0 +1,228 @@
+/**
+ * Arabian Sheikh - Notification & Marketing API Service
+ * 
+ * Compliant with:
+ * - PerfumeStore Dual-Layer Notification System (SignalR + REST)
+ * - Customer & Admin Notification Management
+ * - VIP Segmentation & Coupon Campaign Broadcasts
+ */
+
+import apiClient, { resolveBaseUrl } from './client';
+import { ENDPOINTS } from './endpoints';
+
+export const notificationApi = {
+  // ==========================================
+  // 1. CUSTOMER NOTIFICATIONS
+  // ==========================================
+
+  /**
+   * Fetch paginated notification history for authenticated customer
+   * GET /api/Notifications?unreadOnly=false&page=1&pageSize=20
+   */
+  async getNotifications({ unreadOnly = false, page = 1, pageSize = 20 } = {}) {
+    const response = await apiClient.get(ENDPOINTS.NOTIFICATIONS.LIST, {
+      params: { unreadOnly, page, pageSize }
+    });
+    return response?.data || response?.items || response || [];
+  },
+
+  /**
+   * Get current unread notification count
+   * GET /api/Notifications/unread-count
+   */
+  async getUnreadCount() {
+    const response = await apiClient.get(ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
+    const count = response?.count !== undefined ? response.count : (typeof response === 'number' ? response : 0);
+    return { count };
+  },
+
+  /**
+   * Mark a single notification as read
+   * PATCH /api/Notifications/{id}/read
+   */
+  async markAsRead(id) {
+    return await apiClient.patch(ENDPOINTS.NOTIFICATIONS.MARK_READ(id));
+  },
+
+  /**
+   * Mark all notifications as read for current user
+   * PATCH /api/Notifications/read-all
+   */
+  async markAllAsRead() {
+    return await apiClient.patch(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
+  },
+
+  /**
+   * Retrieve notification preferences
+   * GET /api/Notifications/preferences
+   */
+  async getPreferences() {
+    return await apiClient.get(ENDPOINTS.NOTIFICATIONS.PREFERENCES);
+  },
+
+  /**
+   * Save updated notification preferences (GDPR Audit logged)
+   * PUT /api/Notifications/preferences
+   */
+  async updatePreferences(preferences) {
+    return await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, preferences);
+  },
+
+  /**
+   * One-click unsubscribe from marketing emails via token
+   * GET /api/Notifications/unsubscribe?token=...
+   */
+  async unsubscribeWithToken(token) {
+    return await apiClient.get(ENDPOINTS.NOTIFICATIONS.UNSUBSCRIBE, {
+      params: { token },
+      requiresAuth: false
+    });
+  },
+
+  /**
+   * Account programmatic unsubscribe from marketing emails
+   * POST /api/Notifications/unsubscribe
+   */
+  async unsubscribeAccount() {
+    return await apiClient.post(ENDPOINTS.NOTIFICATIONS.UNSUBSCRIBE);
+  },
+
+  // ==========================================
+  // 2. ADMIN NOTIFICATIONS
+  // ==========================================
+
+  /**
+   * Get paginated admin notifications
+   * GET /api/admin/notifications
+   */
+  async getAdminNotifications({ unreadOnly = false, page = 1, pageSize = 20, channel } = {}) {
+    const params = { unreadOnly, page, pageSize };
+    if (channel) params.channel = channel;
+    const response = await apiClient.get(ENDPOINTS.ADMIN.NOTIFICATIONS.LIST, { params });
+    return response?.data || response?.items || response || [];
+  },
+
+  /**
+   * Get admin unread count
+   * GET /api/admin/notifications/unread-count
+   */
+  async getAdminUnreadCount() {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.NOTIFICATIONS.UNREAD_COUNT);
+    const count = response?.count !== undefined ? response.count : (typeof response === 'number' ? response : 0);
+    return { count };
+  },
+
+  /**
+   * Mark admin notification as read
+   * PATCH /api/admin/notifications/{id}/read
+   */
+  async markAdminAsRead(id) {
+    return await apiClient.patch(ENDPOINTS.ADMIN.NOTIFICATIONS.MARK_READ(id));
+  },
+
+  /**
+   * Mark all admin notifications as read
+   * PATCH /api/admin/notifications/read-all
+   */
+  async markAdminAllAsRead() {
+    return await apiClient.patch(ENDPOINTS.ADMIN.NOTIFICATIONS.MARK_ALL_READ);
+  },
+
+  // ==========================================
+  // 3. ADMIN SENT NOTIFICATIONS (BROADCASTS)
+  // ==========================================
+
+  /**
+   * Get broadcast campaign history
+   * GET /api/admin/sent-notifications
+   */
+  async getSentNotifications(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.LIST, { params });
+    return response?.data || response?.items || response || [];
+  },
+
+  /**
+   * Get campaign batch details with statistics & message variants
+   * GET /api/admin/sent-notifications/{batchId}
+   */
+  async getSentNotificationDetails(batchId) {
+    return await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.DETAILS(batchId));
+  },
+
+  /**
+   * Get recipient list for a campaign batch
+   * GET /api/admin/sent-notifications/{batchId}/recipients
+   */
+  async getSentNotificationRecipients(batchId, params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.RECIPIENTS(batchId), { params });
+    return response?.data || response?.items || response || [];
+  },
+
+  /**
+   * Get exact message delivered to a specific recipient
+   * GET /api/admin/sent-notifications/{batchId}/recipients/{recipientId}/message
+   */
+  async getRecipientMessage(batchId, recipientId) {
+    return await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.RECIPIENT_MESSAGE(batchId, recipientId));
+  },
+
+  /**
+   * Generate Viber CSV export download URL
+   */
+  getViberExportUrl(batchId, language = '') {
+    const base = resolveBaseUrl();
+    const cleanBase = base.startsWith('http') ? base : `${window.location.origin}${base}`;
+    const langParam = language ? `?language=${encodeURIComponent(language)}` : '';
+    return `${cleanBase}${ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.EXPORT(batchId)}${langParam}`;
+  },
+
+  // ==========================================
+  // 4. ADMIN SETTINGS (VIP & WINDOWS)
+  // ==========================================
+
+  /**
+   * Get VIP Segment eligibility thresholds
+   * GET /api/admin/settings/vip-segments
+   */
+  async getVipSegments() {
+    return await apiClient.get(ENDPOINTS.ADMIN.SETTINGS.VIP_SEGMENTS);
+  },
+
+  /**
+   * Update VIP Segment eligibility thresholds
+   * PUT /api/admin/settings/vip-segments
+   */
+  async updateVipSegments(payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.SETTINGS.VIP_SEGMENTS, payload);
+  },
+
+  /**
+   * Get Active Customer Window Days
+   * GET /api/admin/settings/notifications
+   */
+  async getNotificationSettings() {
+    return await apiClient.get(ENDPOINTS.ADMIN.SETTINGS.NOTIFICATIONS);
+  },
+
+  /**
+   * Update Active Customer Window Days
+   * PUT /api/admin/settings/notifications
+   */
+  async updateNotificationSettings(payload) {
+    return await apiClient.put(ENDPOINTS.ADMIN.SETTINGS.NOTIFICATIONS, payload);
+  },
+
+  // ==========================================
+  // 5. COUPON VIP EXCLUSIVE ASSIGNMENT
+  // ==========================================
+
+  /**
+   * Assign exclusive coupon to all eligible VIP customers & broadcast
+   * POST /api/admin/coupons/{id}/assign-exclusive
+   */
+  async assignCouponToVip(couponId) {
+    return await apiClient.post(ENDPOINTS.ADMIN.COUPONS.ASSIGN_EXCLUSIVE(couponId));
+  }
+};
+
+export default notificationApi;

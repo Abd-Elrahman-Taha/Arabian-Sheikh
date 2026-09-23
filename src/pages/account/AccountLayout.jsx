@@ -12,14 +12,18 @@ import {
   Settings,
   LogOut,
   ShieldAlert,
-  Crown
+  Crown,
+  Bell,
+  Sliders
 } from 'lucide-react';
+import { useNotifications } from '../../context/NotificationContext';
 
 export default function AccountLayout({ children }) {
   const { currentPath, navigate } = useRouter();
   const { t } = useTranslation();
   const { user, logout, isAdmin } = useAuth();
   const { wishlistCount } = useWishlist();
+  const { unreadCount } = useNotifications();
 
   const handleLogout = () => {
     logout();
@@ -30,8 +34,10 @@ export default function AccountLayout({ children }) {
     { to: '/account', label: t('account.dashboard') || 'Overview', icon: User },
     { to: '/account/orders', label: t('account.orders') || 'Acquisitions', icon: ShoppingBag },
     { to: '/account/wishlist', label: t('account.wishlist') || 'Vault Wishlist', icon: Heart, count: wishlistCount },
+    { to: '/account/notifications', label: 'Royal Notifications', icon: Bell, count: unreadCount },
     { to: '/account/addresses', label: t('account.addresses') || 'Palace Addresses', icon: MapPin },
     { to: '/account/payment-methods', label: t('account.paymentMethods') || 'Payment Methods', icon: CreditCard },
+    { to: '/account/preferences', label: 'Preferences', icon: Sliders },
     { to: '/account/settings', label: t('account.settings') || 'Settings & Security', icon: Settings }
   ];
 

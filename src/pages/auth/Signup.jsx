@@ -23,6 +23,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const selectedCountry = findCountryByCode(countryCode);
@@ -97,7 +98,11 @@ export default function Signup() {
         password,
         phone: finalPhone || null,
         countryCode: countryCode || 'EG',
-        preferredLanguage: preferredLanguage || 'En'
+        preferredLanguage: preferredLanguage || 'En',
+        marketingConsent: {
+          emailMarketing: marketingConsent,
+          whatsApp: marketingConsent
+        }
       });
 
       // Automatically switch the website to the chosen preferred language
@@ -356,6 +361,27 @@ export default function Signup() {
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* Marketing & VIP Privileges Consent Checkbox (GDPR compliant) */}
+          <div className="pt-1">
+            <label className="flex items-start gap-3 p-3 rounded-xl border border-[#D4AF37]/25 bg-black/40 cursor-pointer hover:border-[#D4AF37]/50 transition-colors group">
+              <input
+                type="checkbox"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-[#D4AF37]/50 text-[#D4AF37] focus:ring-0 focus:ring-offset-0 bg-black/60 cursor-pointer accent-[#D4AF37]"
+              />
+              <span className="text-[11px] text-[#D8BE99] group-hover:text-[#F3E6D0] leading-relaxed transition-colors select-none">
+                {language === 'ar'
+                  ? 'أوافق على استلام عروض حصرية، خصومات الـ VIP الخاصة، وتحديثات الطلب عبر البريد الإلكتروني وتطبيق WhatsApp.'
+                  : language === 'bg'
+                  ? 'Съгласявам се да получавам ексклузивни оферти, ВИП отстъпки и известия за поръчки по имейл и WhatsApp.'
+                  : language === 'es'
+                  ? 'Acepto recibir ofertas exclusivas, privilegios VIP y actualizaciones de pedidos por correo electrónico y WhatsApp.'
+                  : 'I agree to receive exclusive palace offers, private VIP discounts, and order concierge updates via WhatsApp and Email.'}
+              </span>
+            </label>
           </div>
 
           <button

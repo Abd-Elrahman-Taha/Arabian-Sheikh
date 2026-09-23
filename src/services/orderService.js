@@ -361,7 +361,8 @@ export const orderService = {
           shippingMethodId,
           quoteId: rawQuoteId.trim(),
           paymentMethod: orderPayload.paymentMethod || 'cod',
-          couponCode: orderPayload.discountCode || orderPayload.couponCode || null
+          couponCode: orderPayload.discountCode || orderPayload.couponCode || null,
+          ...(orderPayload.marketingConsent ? { marketingConsent: orderPayload.marketingConsent } : {})
         }, orderKey);
       } catch (firstErr) {
         const errMsg = firstErr?.message || '';
@@ -415,7 +416,8 @@ export const orderService = {
               shippingMethodId: retryMethodId,
               quoteId: String(freshQuoteId).trim(),
               paymentMethod: orderPayload.paymentMethod || 'cod',
-              couponCode: currentCoupon || null
+              couponCode: currentCoupon || null,
+              ...(orderPayload.marketingConsent ? { marketingConsent: orderPayload.marketingConsent } : {})
             }, newOrderKey());
           } else {
             throw firstErr;

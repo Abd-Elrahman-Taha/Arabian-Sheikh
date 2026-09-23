@@ -150,11 +150,14 @@ export const ENDPOINTS = {
     UPLOAD_PHOTOS: (id) => `/Returns/${id}/photos`
   },
 
-  // Notifications
+  // Customer Notifications
   NOTIFICATIONS: {
-    LIST: '/notifications',
-    MARK_READ: (id) => `/notifications/${id}/read`,
-    MARK_ALL_READ: '/notifications/read-all'
+    LIST: '/Notifications',
+    UNREAD_COUNT: '/Notifications/unread-count',
+    MARK_READ: (id) => `/Notifications/${id}/read`,
+    MARK_ALL_READ: '/Notifications/read-all',
+    PREFERENCES: '/Notifications/preferences',
+    UNSUBSCRIBE: '/Notifications/unsubscribe'
   },
 
   // Content (Public)
@@ -269,7 +272,8 @@ export const ENDPOINTS = {
       DELETE: (id) => `/admin/coupons/${id}`,
       ACTIVATE: (id) => `/admin/coupons/${id}/activate`,
       DEACTIVATE: (id) => `/admin/coupons/${id}/deactivate`,
-      ANALYTICS: (id) => `/admin/coupons/${id}/analytics`
+      ANALYTICS: (id) => `/admin/coupons/${id}/analytics`,
+      ASSIGN_EXCLUSIVE: (id) => `/admin/coupons/${id}/assign-exclusive`
     },
 
     // Admin Promotions & Bundles
@@ -372,13 +376,26 @@ export const ENDPOINTS = {
     // Settings
     SETTINGS: {
       GET_LANGUAGE: '/admin/settings/language',
-      UPDATE_LANGUAGE: '/admin/settings/language'
+      UPDATE_LANGUAGE: '/admin/settings/language',
+      VIP_SEGMENTS: '/admin/settings/vip-segments',
+      NOTIFICATIONS: '/admin/settings/notifications'
     },
 
-    // Notifications
+    // Admin In-App Notifications
     NOTIFICATIONS: {
       LIST: '/admin/notifications',
-      MARK_READ: (id) => `/admin/notifications/${id}/read`
+      UNREAD_COUNT: '/admin/notifications/unread-count',
+      MARK_READ: (id) => `/admin/notifications/${id}/read`,
+      MARK_ALL_READ: '/admin/notifications/read-all'
+    },
+
+    // Admin Sent-Notifications & Campaigns
+    SENT_NOTIFICATIONS: {
+      LIST: '/admin/sent-notifications',
+      DETAILS: (batchId) => `/admin/sent-notifications/${batchId}`,
+      RECIPIENTS: (batchId) => `/admin/sent-notifications/${batchId}/recipients`,
+      RECIPIENT_MESSAGE: (batchId, recipientId) => `/admin/sent-notifications/${batchId}/recipients/${recipientId}/message`,
+      EXPORT: (batchId) => `/admin/sent-notifications/${batchId}/export`
     },
 
     // Reviews Moderation
