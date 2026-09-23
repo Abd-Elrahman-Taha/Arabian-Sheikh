@@ -120,7 +120,7 @@ export default function Contact() {
               Palace
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="text-[#F2D675] font-bold">Concierge & Boutiques</span>
+            <span className="text-[#F2D675] font-bold">Concierge</span>
           </div>
 
           {/* Quick In-Page Language Switcher Pills */}
@@ -159,7 +159,7 @@ export default function Contact() {
               <span>Private Salons & Sovereign Concierge</span>
             </div>
             <h1 className="font-cinzel text-3xl sm:text-5xl lg:text-6xl font-extrabold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#FFFDF8] via-[#F2D675] to-[#D4AF37]">
-              {t('contact.title') || 'Concierge & Boutiques'}
+              {t('contact.title') || 'Concierge'}
             </h1>
             <p className="text-sm sm:text-base text-[#D8BE99] max-w-2xl mx-auto font-medium leading-relaxed">
               {t('contact.subtitle') || 'Converse directly with our Master Perfumers, reserve VIP salon appointments, or track bespoke sovereign acquisitions.'}

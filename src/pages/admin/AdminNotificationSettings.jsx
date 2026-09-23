@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from './AdminLayout';
 import notificationApi from '../../api/notification.api';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -99,8 +98,7 @@ export default function AdminNotificationSettings() {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header Card */}
         <div className="rounded-2xl bg-[#0B0A08]/90 border border-[#D4AF37]/35 p-6 shadow-2xl backdrop-blur-md space-y-1">
           <div className="flex items-center gap-2">
@@ -262,6 +260,5 @@ export default function AdminNotificationSettings() {
           </div>
         )}
       </div>
-    </AdminLayout>
   );
 }

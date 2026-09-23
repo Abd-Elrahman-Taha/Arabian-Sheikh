@@ -143,13 +143,6 @@ export function CartProvider({ children }) {
 
     const customerToken = tokenManager.getToken(false);
     if (!isAuthenticated || !customerToken) {
-      if (isAuthenticated && !customerToken) {
-        tokenManager.clearTokens();
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('arabian_sheikh_current_user');
-          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-        }
-      }
       const intent = { bundle, isBundle: true, quantity };
       setPendingItem(intent);
       try {
@@ -194,13 +187,8 @@ export function CartProvider({ children }) {
     } catch (err) {
       console.error('[Cart] Failed to add bundle to backend cart:', err);
       if (err?.status === 401 || err?.status === 403) {
-        tokenManager.clearTokens();
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('arabian_sheikh_current_user');
-          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-        }
         setAuthModalOpen(true);
-        error('Your session has expired. Please sign in again to add items to your bag.');
+        error('Please sign in with a customer account to add items to your bag.');
       } else {
         error(err?.message || 'Failed to add suite to bag. Please try again.');
       }
@@ -222,13 +210,6 @@ export function CartProvider({ children }) {
 
     const customerToken = tokenManager.getToken(false);
     if (!isAuthenticated || !customerToken) {
-      if (isAuthenticated && !customerToken) {
-        tokenManager.clearTokens();
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('arabian_sheikh_current_user');
-          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-        }
-      }
       const intent = { product, size, quantity };
       setPendingItem(intent);
       try {
@@ -293,13 +274,8 @@ export function CartProvider({ children }) {
     } catch (err) {
       console.error('[Cart] Failed to add item to backend cart:', err);
       if (err?.status === 401 || err?.status === 403) {
-        tokenManager.clearTokens();
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('arabian_sheikh_current_user');
-          window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-        }
         setAuthModalOpen(true);
-        error('Your session has expired. Please sign in again to add items to your bag.');
+        error('Please sign in with a customer account to add items to your bag.');
       } else {
         error(err?.message || 'Failed to add item to bag. Please try again.');
       }

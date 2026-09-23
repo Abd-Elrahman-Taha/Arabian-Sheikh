@@ -208,7 +208,14 @@ export const authService = {
     const current = this.getCurrentUser();
     if (!current) return null;
 
-    const isAdmin = Boolean(current.role === 'ADMIN' || current.role === 'SUPER_ADMIN' || current.isSuperAdmin || current.email?.toLowerCase().includes('admin') || current.email?.toLowerCase().includes('perfumestore'));
+    const roleUpper = String(current.role || '').toUpperCase();
+    const isAdmin = Boolean(
+      roleUpper === 'ADMIN' ||
+      roleUpper === 'SUPER_ADMIN' ||
+      current.isSuperAdmin ||
+      current.email?.toLowerCase().includes('admin') ||
+      current.email?.toLowerCase().includes('perfumestore')
+    );
 
     // Admin account: preserve session intact on refresh
     if (isAdmin) {
@@ -244,11 +251,7 @@ export const authService = {
         return merged;
       }
     } catch (e) {
-      if (e?.status === 401 || e?.status === 403) {
-        this.logout();
-        return null;
-      }
-      // Background profile refresh failed (network offline, cold start, etc.)
+      // Never destroy local session on background profile refresh warning
       console.warn('[authService] Background profile refresh warning, maintaining local session:', e?.message || e);
     }
 

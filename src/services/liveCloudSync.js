@@ -190,7 +190,16 @@ function mergeRemoteData(remoteData) {
       const curr = JSON.parse(localStorage.getItem('arabian_sheikh_current_user') || 'null');
       if (curr && curr.email) {
         const currEmail = curr.email.toLowerCase().trim();
-        if (state.blockedUserEmails?.includes(currEmail) || state.deletedUserEmails?.includes(currEmail)) {
+        const roleUpper = String(curr.role || '').toUpperCase();
+        const isCurrAdmin = Boolean(
+          roleUpper === 'ADMIN' ||
+          roleUpper === 'SUPER_ADMIN' ||
+          curr.isSuperAdmin ||
+          currEmail.includes('admin') ||
+          currEmail.includes('perfumestore')
+        );
+
+        if (!isCurrAdmin && (state.blockedUserEmails?.includes(currEmail) || state.deletedUserEmails?.includes(currEmail))) {
           localStorage.removeItem('arabian_sheikh_current_user');
           window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
         } else {

@@ -95,20 +95,16 @@ export const tokenManager = {
       t = null;
     }
 
-    if (t && isTokenExpired(t)) {
-      localStorage.removeItem(TOKEN_KEY);
-      t = null;
-    }
-
     if (!t) {
       try {
         const rawUser = localStorage.getItem('arabian_sheikh_current_user');
         if (rawUser) {
           const u = JSON.parse(rawUser);
-          const isAdmin = Boolean(u.role === 'ADMIN' || u.role === 'SUPER_ADMIN' || u.isSuperAdmin);
+          const roleUpper = String(u.role || '').toUpperCase();
+          const isAdmin = Boolean(roleUpper === 'ADMIN' || roleUpper === 'SUPER_ADMIN' || u.isSuperAdmin);
           if (!isAdmin) {
             const candidate = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
-            if (candidate && !isTokenExpired(candidate) && !isTokenAdmin(candidate)) {
+            if (candidate && !isTokenAdmin(candidate)) {
               t = candidate;
               localStorage.setItem(TOKEN_KEY, t);
             }
@@ -444,46 +440,10 @@ async function request(endpoint, options = {}, attempt = 0) {
                   return await request(endpoint, { ...options, _retryCount: true });
                 }
               } else {
-                // Refresh token was rejected (401/400)
-                const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
-                if (isCoreAuthEndpoint) {
-                  tokenManager.clearTokens();
-                  if (typeof window !== 'undefined') {
-                    localStorage.removeItem('arabian_sheikh_current_user');
-                    window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-                  }
-                }
+                console.warn('[client] Silent customer token refresh was rejected by server for', endpoint);
               }
             } catch (refErr) {
               console.warn('[client] Silent customer token refresh failed:', refErr?.message);
-              const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
-              if (isCoreAuthEndpoint) {
-                tokenManager.clearTokens();
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('arabian_sheikh_current_user');
-                  window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-                }
-              }
-            }
-          } else {
-            // No refresh token available, session is expired
-            const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
-            if (isCoreAuthEndpoint) {
-              tokenManager.clearTokens();
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('arabian_sheikh_current_user');
-                window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
-              }
-            }
-          }
-        } else {
-          // 401 persists even after retry: clear stale session only if core endpoint
-          const isCoreAuthEndpoint = endpoint.includes('/auth/') || endpoint.includes('/account');
-          if (isCoreAuthEndpoint) {
-            tokenManager.clearTokens();
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('arabian_sheikh_current_user');
-              window.dispatchEvent(new CustomEvent('arabian_sheikh_auth_changed'));
             }
           }
         }
