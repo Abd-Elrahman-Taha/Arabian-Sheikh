@@ -415,17 +415,17 @@ export default function AdminDiscounts() {
       const payload = {
         code: formData.code.trim().toUpperCase(),
         type: formData.type === 'Fixed' ? 'Fixed' : 'Percentage',
-        value: Number(formData.value),
+        value: Number(formData.value) || 0,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
-        usageLimit: formData.isUnlimitedUsage ? null : Number(formData.usageLimit),
-        minOrderAmount: formData.minOrderAmount !== '' ? Number(formData.minOrderAmount) : null,
-        maxDiscountAmount: formData.type === 'Percentage' && formData.maxDiscountAmount !== '' ? Number(formData.maxDiscountAmount) : null,
+        usageLimit: formData.isUnlimitedUsage ? 0 : Number(formData.usageLimit) || 0,
+        minOrderAmount: formData.minOrderAmount !== '' && formData.minOrderAmount !== null ? Number(formData.minOrderAmount) : 0,
+        maxDiscountAmount: formData.type === 'Percentage' && formData.maxDiscountAmount !== '' && formData.maxDiscountAmount !== null ? Number(formData.maxDiscountAmount) : 0,
         allowOnDiscountedItems: Boolean(formData.allowOnDiscountedItems),
         isActive: Boolean(formData.isActive),
-        applicability: formData.applicability.map(rule => ({
-          targetType: rule.targetType,
-          targetId: Number(rule.targetId),
+        applicability: (formData.applicability || []).map(rule => ({
+          targetType: String(rule.targetType || 'Product'),
+          targetId: Number(rule.targetId || 0),
           isExcluded: Boolean(rule.isExcluded)
         }))
       };
@@ -457,9 +457,9 @@ export default function AdminDiscounts() {
       applicability: [
         ...prev.applicability,
         {
-          targetType: 'Category',
-          targetId: catalogCategories[0]?.id || 1,
-          isExcluded: false
+          targetType: 'Product',
+          targetId: catalogProducts[0]?.numericId || catalogProducts[0]?.id || 1,
+          isExcluded: true
         }
       ]
     }));
@@ -468,7 +468,16 @@ export default function AdminDiscounts() {
   const handleUpdateRule = (index, field, value) => {
     setFormData(prev => {
       const updated = [...prev.applicability];
-      updated[index] = { ...updated[index], [field]: value };
+      if (field === 'targetType') {
+        let defId = 1;
+        if (value === 'Product') defId = catalogProducts[0]?.numericId || catalogProducts[0]?.id || 1;
+        else if (value === 'Category') defId = catalogCategories[0]?.id || 1;
+        else if (value === 'Brand') defId = catalogBrands[0]?.id || 1;
+        else if (value === 'PerfumeCategory') defId = catalogPerfumeCats[0]?.id || 1;
+        updated[index] = { ...updated[index], targetType: value, targetId: defId };
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
+      }
       return { ...prev, applicability: updated };
     });
   };
@@ -958,12 +967,28 @@ export default function AdminDiscounts() {
                     </select>
 
                     <div className="flex-1">
-                      {rule.targetType === 'Category' ? (
+                      {rule.targetType === 'Product' ? (
+                        <select value={rule.targetId} onChange={(e) => handleUpdateRule(idx, 'targetId', Number(e.target.value))} className="w-full bg-[#0B0A08] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 text-xs text-[#F3E6D0]">
+                          {catalogProducts.map(prod => (
+                            <option key={prod.numericId || prod.id} value={prod.numericId || prod.id}>
+                              {prod.name} (ID: {prod.numericId || prod.id})
+                            </option>
+                          ))}
+                        </select>
+                      ) : rule.targetType === 'Category' ? (
                         <select value={rule.targetId} onChange={(e) => handleUpdateRule(idx, 'targetId', Number(e.target.value))} className="w-full bg-[#0B0A08] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 text-xs text-[#F3E6D0]">
                           {catalogCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
+                      ) : rule.targetType === 'Brand' ? (
+                        <select value={rule.targetId} onChange={(e) => handleUpdateRule(idx, 'targetId', Number(e.target.value))} className="w-full bg-[#0B0A08] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 text-xs text-[#F3E6D0]">
+                          {catalogBrands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        </select>
+                      ) : rule.targetType === 'PerfumeCategory' ? (
+                        <select value={rule.targetId} onChange={(e) => handleUpdateRule(idx, 'targetId', Number(e.target.value))} className="w-full bg-[#0B0A08] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 text-xs text-[#F3E6D0]">
+                          {catalogPerfumeCats.map(pc => <option key={pc.id} value={pc.id}>{pc.name}</option>)}
+                        </select>
                       ) : (
-                        <input type="number" min="1" value={rule.targetId} onChange={(e) => handleUpdateRule(idx, 'targetId', Number(e.target.value))} className="w-full bg-[#0B0A08] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[#F3E6D0]" />
+                        <input type="number" min="0" value={rule.targetId} onChange={(e) => handleUpdateRule(idx, 'targetId', Number(e.target.value))} className="w-full bg-[#0B0A08] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[#F3E6D0]" />
                       )}
                     </div>
 
