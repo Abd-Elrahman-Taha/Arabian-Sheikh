@@ -372,7 +372,7 @@ export default function Signup() {
         <div className="relative flex items-center justify-center my-4">
           <div className="border-t border-[#D4AF37]/25 w-full" />
           <span className="bg-[#0B0A08] px-3.5 text-[11px] text-[#D8BE99] uppercase font-cinzel font-semibold tracking-widest shrink-0">
-            {t('common.or') || 'OR'}
+            {t('common.or') && t('common.or') !== 'common.or' ? t('common.or') : (language === 'ar' ? 'أو' : 'OR')}
           </span>
           <div className="border-t border-[#D4AF37]/25 w-full" />
         </div>

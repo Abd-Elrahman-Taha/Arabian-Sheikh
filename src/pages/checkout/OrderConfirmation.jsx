@@ -150,12 +150,27 @@ export default function OrderConfirmation() {
                 {String(displayStatus).replace(/([A-Z])/g, ' $1').trim()}
               </span>
             </div>
-            <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
-              <span className="text-[#D8BE99] font-medium">{t('confirmation.estimatedDelivery')}:</span>
-              <span className="text-[#F3E6D0] font-bold font-mono">
-                {order?.estimatedDeliveryDays ? `${order.estimatedDeliveryDays} Business Days` : '2-4 Business Days'} ({order?.carrier || order?.shippingMethod || 'Insured Royal Air Courier'})
-              </span>
-            </div>
+            {/* Estimated Delivery Row — ONLY rendered if provided by API (Zero static/hardcoded data) */}
+            {(() => {
+              const estDays = order?.estimatedDeliveryDays ?? order?.shipping?.estimatedDeliveryDays ?? order?.shippingSnapshot?.estimatedDeliveryDays;
+              const estDate = order?.estimatedDeliveryDate || order?.estimatedDelivery || order?.shipping?.estimatedDeliveryDate;
+              const carrier = order?.carrier || order?.shippingMethod || order?.shipping?.carrier;
+
+              if (!estDays && !estDate) return null;
+
+              const deliveryText = estDays 
+                ? `${estDays} ${language === 'ar' ? 'أيام عمل' : 'Business Days'}`
+                : String(estDate);
+
+              return (
+                <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
+                  <span className="text-[#D8BE99] font-medium">{t('confirmation.estimatedDelivery')}:</span>
+                  <span className="text-[#F3E6D0] font-bold font-mono">
+                    {deliveryText}{carrier ? ` (${carrier})` : ''}
+                  </span>
+                </div>
+              );
+            })()}
             {/* Tracking Number Row */}
             {(() => {
               const trackingNum = order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shipping?.trackingNumber || order?.shipments?.[0]?.trackingNumber || order?.shippingSnapshot?.trackingNumber;

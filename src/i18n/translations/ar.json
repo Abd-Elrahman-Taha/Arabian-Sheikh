@@ -367,7 +367,8 @@
     "rating": "التقييم",
     "popularSearches": "البحوث الشائعة",
     "recentSearches": "البحوث الأخيرة",
-    "suggestedNotes": "استكشف حسب المكونات"
+    "suggestedNotes": "استكشف حسب المكونات",
+    "or": "أو"
   },
   "tiers": {
     "luxury": "الفئة الفاخرة (٥٠ يورو)",

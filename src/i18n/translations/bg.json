@@ -373,7 +373,8 @@
     "rating": "Оценка",
     "popularSearches": "Популярни Търсения",
     "recentSearches": "Последни Търсения",
-    "suggestedNotes": "Търсене по Нотки"
+    "suggestedNotes": "Търсене по Нотки",
+    "or": "ИЛИ"
   },
   "tiers": {
     "luxury": "Луксозен клас (€50)",

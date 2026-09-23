@@ -373,7 +373,8 @@
     "rating": "Calificación",
     "popularSearches": "Búsquedas Frecuentes",
     "recentSearches": "Búsquedas Recientes",
-    "suggestedNotes": "Explorar por Notas"
+    "suggestedNotes": "Explorar por Notas",
+    "or": "O"
   },
   "tiers": {
     "luxury": "Gama Lujo (€50)",

@@ -373,7 +373,8 @@
     "rating": "Rating",
     "popularSearches": "Popular Inquiries",
     "recentSearches": "Recent Searches",
-    "suggestedNotes": "Explore by Notes"
+    "suggestedNotes": "Explore by Notes",
+    "or": "OR"
   },
   "tiers": {
     "luxury": "Luxury (€50)",
