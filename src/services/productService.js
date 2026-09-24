@@ -3,10 +3,11 @@ import { perfumeCategoryService } from './perfumeCategoryService';
 import { promotionApi } from '../api/promotion.api';
 import { promotionService } from './promotionService';
 
-// Purge any legacy device-specific discount overrides so backend promotions are the sole source of truth
+// Purge any legacy device-specific discount overrides so backend API is the sole source of truth
 if (typeof window !== 'undefined') {
   try {
     localStorage.removeItem('arabian_sheikh_product_discounts');
+    localStorage.removeItem('arabian_sheikh_perfume_tiers');
   } catch {}
 }
 
@@ -220,100 +221,31 @@ export const productService = {
 
       let items = response?.items || (Array.isArray(response) ? response : []);
 
-      // Ensure perfume products reflect the exact dynamic tier pricing from backend
-      try {
-        let tiers = perfumeCategoryService.getCachedTiers();
-        if (!tiers || tiers.length === 0) {
-          tiers = [
-            { id: 1, name: 'Standard', price: 100, notes: 'Standard Perfume Tier' },
-            { id: 2, name: 'Premium', price: 150, notes: 'Premium Perfume Tier' },
-            { id: 3, name: 'Luxury', price: 300, notes: 'Luxury Perfume Tier' }
-          ];
+      // Ensure every product preserves pure API pricing and standardized 60ml size
+      items = items.map(p => {
+        const rawPrice = Number(p.price);
+        const finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(p.price || 0);
+        const origPrice = p.originalPrice ? Number(p.originalPrice) : null;
+        const hasDisc = Boolean(p.hasDiscount || (origPrice && origPrice > finalPrice));
+
+        // Derive tier name only for display purposes if not already set, without touching price
+        let tierName = p.tier || p.perfumeCategoryName || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : null);
+        if (!tierName && p.perfumeCategoryId) {
+          const matched = perfumeCategoryService.getTierById(p.perfumeCategoryId);
+          if (matched?.name) tierName = matched.name;
         }
-        if (Array.isArray(tiers) && tiers.length > 0) {
-          const tierById = new Map();
-          const tierByName = new Map();
-          const tierByPrice = new Map();
-          tiers.forEach(t => {
-            tierById.set(Number(t.id), t);
-            if (t.name) tierByName.set(String(t.name).toLowerCase().replace(/tier/g, '').trim(), t);
-            if (t.price !== undefined && !isNaN(Number(t.price)) && Number(t.price) > 0) {
-              tierByPrice.set(Number(t.price), t);
-            }
-          });
 
-          items = items.map(p => {
-            const pCatId = Number(p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null));
-            const catIdNum = Number(p.categoryId || (typeof p.category === 'object' ? p.category?.id : null));
-            const catNameStr = String(p.categoryName || (typeof p.category === 'object' ? p.category?.name : p.category) || '').toLowerCase();
-            const isPerfume = catIdNum === 1 || catNameStr.includes('perfume') || !!pCatId;
-
-            if (isPerfume) {
-              const matchedTier = pCatId
-                ? tierById.get(pCatId)
-                : (p.tier
-                    ? tierByName.get(String(p.tier).toLowerCase().replace(/tier/g, '').trim())
-                    : (p.perfumeCategoryName
-                        ? tierByName.get(String(p.perfumeCategoryName).toLowerCase().replace(/tier/g, '').trim())
-                        : tierByPrice.get(Number(p.originalPrice || p.price))));
-
-              if (matchedTier) {
-                const tierPrice = Number(matchedTier.price);
-                const basePrice = tierPrice > 0 ? tierPrice : (Number(p.price) || 0);
-                return {
-                  ...p,
-                  tier: matchedTier.name,
-                  perfumeCategoryName: matchedTier.name,
-                  perfumeCategoryId: matchedTier.id,
-                  price: basePrice,
-                  originalPrice: basePrice,
-                  tierPrice: tierPrice
-                };
-              }
-            }
-            return p;
-          });
-        }
-      } catch (e) {
-        // Continue with raw backend items if tier enrichment fails
-      }
-
-      // Enrich products with active discounts strictly from Backend Promotions
-      try {
-        let activePromos = [];
-        try {
-          activePromos = await promotionService.getActivePromotions().catch(() => []);
-        } catch {}
-
-        items = items.map(p => {
-          const basePrice = p.tierPrice || (p.perfumeCategoryId ? perfumeCategoryService.getTierPrice(p.perfumeCategoryId) : null) || p.originalPrice || p.price;
-
-          if (Array.isArray(activePromos) && activePromos.length > 0) {
-            const promoCalc = promotionService.calculateProductPromotion({ ...p, price: basePrice, originalPrice: basePrice }, activePromos);
-            if (promoCalc?.hasPromotion) {
-              return {
-                ...p,
-                hasDiscount: true,
-                isOffer: true,
-                discountPercent: promoCalc.discountPercent,
-                originalPrice: promoCalc.originalPrice || basePrice,
-                price: promoCalc.price
-              };
-            }
-          }
-
-          return {
-            ...p,
-            hasDiscount: false,
-            isOffer: false,
-            discountPercent: 0,
-            originalPrice: null,
-            price: basePrice
-          };
-        });
-      } catch (e) {
-        console.warn('Backend promotions enrichment error:', e.message);
-      }
+        return {
+          ...p,
+          price: finalPrice,
+          originalPrice: origPrice,
+          hasDiscount: hasDisc,
+          isOffer: hasDisc,
+          tier: tierName || p.tier,
+          perfumeCategoryName: tierName || p.perfumeCategoryName,
+          size: p.size || '60 ml / 2.0 fl oz'
+        };
+      });
 
       memoryCatalog = items;
       return this.applyFilters(memoryCatalog, filters);
@@ -418,38 +350,27 @@ export const productService = {
       try {
         const remote = await productApi.getProductById(numId);
         if (remote) {
-          let basePrice = Number(remote.price) || 0;
-          if (remote.perfumeCategoryId || Number(remote.categoryId) === 1) {
-            const tierPrice = perfumeCategoryService.getTierPrice(remote.perfumeCategoryId);
-            if (tierPrice && tierPrice > 0) {
-              remote.price = tierPrice;
-              basePrice = tierPrice;
-            }
+          const rawPrice = Number(remote.price);
+          const finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(remote.price || 0);
+          const origPrice = remote.originalPrice ? Number(remote.originalPrice) : null;
+          const hasDisc = Boolean(remote.hasDiscount || (origPrice && origPrice > finalPrice));
+
+          let tierName = remote.tier || remote.perfumeCategoryName || (typeof remote.perfumeCategory === 'object' ? remote.perfumeCategory?.name : null);
+          if (!tierName && remote.perfumeCategoryId) {
             const tier = perfumeCategoryService.getTierById(remote.perfumeCategoryId);
-            if (tier?.name) {
-              remote.tier = tier.name;
-              remote.perfumeCategoryName = tier.name;
-            }
+            if (tier?.name) tierName = tier.name;
           }
-          try {
-            const activePromos = await promotionService.getActivePromotions().catch(() => []);
-            if (activePromos.length > 0) {
-              const promoCalc = promotionService.calculateProductPromotion({ ...remote, price: basePrice, originalPrice: basePrice }, activePromos);
-              if (promoCalc?.hasPromotion) {
-                remote.hasDiscount = true;
-                remote.isOffer = true;
-                remote.discountPercent = promoCalc.discountPercent;
-                remote.originalPrice = promoCalc.originalPrice || basePrice;
-                remote.price = promoCalc.price;
-              } else {
-                remote.hasDiscount = false;
-                remote.isOffer = false;
-                remote.discountPercent = 0;
-                remote.originalPrice = null;
-                remote.price = basePrice;
-              }
-            }
-          } catch {}
+
+          remote.price = finalPrice;
+          remote.originalPrice = origPrice;
+          remote.hasDiscount = hasDisc;
+          remote.isOffer = hasDisc;
+          if (tierName) {
+            remote.tier = tierName;
+            remote.perfumeCategoryName = tierName;
+          }
+          remote.size = remote.size || '60 ml / 2.0 fl oz';
+
           return this.enrichProductWithNotes(remote);
         }
       } catch (err) {
@@ -631,7 +552,7 @@ export const productService = {
         subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (existing?.subcategoryId || null),
         perfumeCategoryId: isPerfume ? Number(perfumeCatId || 1) : null,
         gender: productData.gender || existing?.gender || 'Unisex',
-        price: isPerfume ? null : (productData.price !== undefined && productData.price !== null ? Number(productData.price) : Number(existing?.price || 0)),
+        price: productData.price !== undefined && productData.price !== null ? Number(productData.price) : Number(existing?.price || 0),
         isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (existing?.isActive !== false),
         imageUrl: productData.imageUrl || productData.image || existing?.imageUrl || existing?.image || (existing?.images?.[0]),
         shippingWeight: productData.shippingWeight !== undefined ? Number(productData.shippingWeight) : (Number(existing?.shippingWeight) || 0.45),

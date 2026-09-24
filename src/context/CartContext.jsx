@@ -197,7 +197,7 @@ export function CartProvider({ children }) {
   }, [isAuthenticated, isAdmin, fetchBackendCart, success, error]);
 
   // Add Product to backend cart
-  const addToCart = useCallback(async (product, size = '100ml', quantity = 1) => {
+  const addToCart = useCallback(async (product, size = '60ml', quantity = 1) => {
     if (product?.isBundle || product?.bundlePrice !== undefined) {
       return addBundleToCart(product, quantity);
     }
@@ -297,7 +297,7 @@ export function CartProvider({ children }) {
       if (isBundle && bundle) {
         addBundleToCart(bundle, quantity || 1);
       } else if (product) {
-        addToCart(product, size || '100ml', quantity || 1);
+        addToCart(product, size || '60ml', quantity || 1);
       }
     }
   }, [isAuthenticated, pendingItem, addToCart, addBundleToCart]);

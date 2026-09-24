@@ -126,12 +126,12 @@ export default function LoginRequiredModal({ isOpen, onClose, pendingItem, onAut
                 {pendingItem.product.name}
               </h4>
               <p className="text-xs text-[var(--color-terracotta-deep)] font-medium">
-                Size: {pendingItem.size || '100ml'} • Qty: {pendingItem.quantity || 1}
+                Size: {pendingItem.size || '60ml'} • Qty: {pendingItem.quantity || 1}
               </p>
             </div>
             <div className="text-right">
               <span className="font-cinzel text-base font-bold text-[var(--color-terracotta)]">
-                ${pendingItem.product.price}
+                €{pendingItem.product.price}
               </span>
             </div>
           </div>

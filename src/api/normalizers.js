@@ -319,6 +319,7 @@ export function normalizeProduct(raw) {
     categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
     subcategoryId: p.subcategoryId || (typeof p.subcategory === 'object' ? p.subcategory?.id : null),
     perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
+    size: p.size || '60 ml / 2.0 fl oz',
     shippingWeight: Number(p.shippingWeight || 0.45),
     nameIsTranslatable: p.nameIsTranslatable !== false,
     translations: Array.isArray(p.translations) ? p.translations : [],
@@ -412,7 +413,7 @@ export function normalizeCartItem(raw) {
     price: unitPrice,
     originalPrice: Number(item.originalPrice || unitPrice),
     unitBasePrice: Number(item.unitBasePrice || unitPrice),
-    size: item.size || '100ml',
+    size: item.size || '60ml',
     fragranceFamily: item.fragranceFamily || 'Haute Parfumerie',
     arabicName: item.arabicName || '',
     isBundle: Boolean(item.isBundle || String(item.productId || '').startsWith('bundle-')),
@@ -932,7 +933,7 @@ export function normalizeTrackingResponse(raw) {
     .map(c => (c !== undefined && c !== null ? String(c).trim() : ''))
     .find(c => c && !['null', 'undefined', 'pending', 'unassigned', 'none', 'n/a'].includes(c.toLowerCase())) || null;
 
-  const resolvedCarrier = t.carrier || t.carrierName || t.shippingCompanyName || t.companyName || 'DHL Express';
+  const resolvedCarrier = t.carrier || t.carrierName || t.shippingCompanyName || t.companyName || 'Carrier';
 
   return {
     orderId: t.orderId ? Number(t.orderId) : null,

@@ -233,7 +233,7 @@ export default function CartPage() {
 
                           <div className="pt-0.5">
                             <span className="inline-block text-[11px] text-[#D8BE99] font-mono bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/20">
-                              {isBundle ? item.size : `Size: ${item.size || '100ml'}`}
+                              {isBundle ? item.size : `Size: ${item.size || '60ml'}`}
                             </span>
                           </div>
 

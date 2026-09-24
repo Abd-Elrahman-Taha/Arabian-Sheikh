@@ -1,37 +1,14 @@
 import { perfumeCategoryApi } from '../api/perfumeCategory.api';
 import { tokenManager } from '../api/client';
 
-const TIERS_STORAGE_KEY = 'arabian_sheikh_perfume_tiers';
-
-const DEFAULT_TIERS = [
-  { id: 1, name: 'Standard', price: 100, notes: 'Standard Perfume Tier' },
-  { id: 2, name: 'Premium', price: 150, notes: 'Premium Perfume Tier' },
-  { id: 3, name: 'Luxury', price: 300, notes: 'Luxury Perfume Tier' }
-];
-
-function loadStoredTiers() {
-  if (typeof window === 'undefined') return DEFAULT_TIERS;
+// Purge any stale tier cache from localStorage
+if (typeof window !== 'undefined') {
   try {
-    const raw = localStorage.getItem(TIERS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (_) {}
-  return DEFAULT_TIERS;
+    localStorage.removeItem('arabian_sheikh_perfume_tiers');
+  } catch {}
 }
 
-function saveStoredTiers(tiers) {
-  if (typeof window === 'undefined' || !Array.isArray(tiers)) return;
-  try {
-    localStorage.setItem(TIERS_STORAGE_KEY, JSON.stringify(tiers));
-    window.dispatchEvent(new CustomEvent('arabian_sheikh_tiers_updated', { detail: tiers }));
-  } catch (_) {}
-}
-
-let cachedTiers = loadStoredTiers();
+let cachedTiers = [];
 
 export const perfumeCategoryService = {
   handleApiError(err, fallbackMessage = 'An unexpected error occurred.') {

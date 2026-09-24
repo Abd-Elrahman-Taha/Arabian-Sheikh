@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService } from '../../services/orderService';
-import { shippingService } from '../../services/shippingService';
+import { shippingService, getCarrierTrackingUrl } from '../../services/shippingService';
 import {
   Truck,
   CheckCircle2,
@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Copy,
   Check,
-  Search
+  Search,
+  ExternalLink
 } from 'lucide-react';
 import ScrollReveal from '../../components/common/ScrollReveal';
 
@@ -321,6 +322,24 @@ export default function OrderTracking() {
                     >
                       {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
+                    {(() => {
+                      const code = trackingData?.trackingNumber || order?.trackingNumber || order?.trackingCode;
+                      const carrierName = trackingData?.carrier || order?.carrier;
+                      const url = getCarrierTrackingUrl(carrierName, code);
+                      if (!url) return null;
+                      return (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 border border-[#D4AF37]/40 text-[#F2D675] text-[11px] font-mono font-bold transition-colors cursor-pointer"
+                          title={`Track on ${carrierName || 'Carrier'} Portal`}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Track on {carrierName ? carrierName.split(' ')[0] : 'Carrier'}</span>
+                        </a>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <span className="text-xs text-neutral-400 font-mono italic">

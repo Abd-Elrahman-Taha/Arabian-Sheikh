@@ -113,7 +113,46 @@ export const shippingService = {
    */
   async getQuotes(params = {}, options = {}) {
     return await shippingApi.getQuotes(params, options);
+  },
+
+  /**
+   * Resolves direct tracking URL based on carrier and tracking/waybill number
+   */
+  getCarrierTrackingUrl(carrier, trackingNumber) {
+    return getCarrierTrackingUrl(carrier, trackingNumber);
   }
 };
 
+/**
+ * Resolves direct tracking URL based on carrier and tracking/waybill number
+ * Supports Econt, Speedy, DHL Express, Aramex, and FedEx.
+ * @param {string} carrier
+ * @param {string} trackingNumber
+ * @returns {string|null}
+ */
+export function getCarrierTrackingUrl(carrier, trackingNumber) {
+  if (!trackingNumber) return null;
+  const cleanNum = String(trackingNumber).trim();
+  if (!cleanNum || ['null', 'undefined', 'pending', 'unassigned', 'none', 'n/a'].includes(cleanNum.toLowerCase())) {
+    return null;
+  }
+  const cleanCarrier = String(carrier || '').toLowerCase();
+
+  if (cleanCarrier.includes('econt')) {
+    return `https://www.econt.com/services/track/${encodeURIComponent(cleanNum)}`;
+  }
+  if (cleanCarrier.includes('speedy')) {
+    return `https://www.speedy.bg/bg/track-shipment?shipmentNumber=${encodeURIComponent(cleanNum)}`;
+  }
+  if (cleanCarrier.includes('aramex')) {
+    return `https://www.aramex.com/track/results?mode=0&ShipmentNumber=${encodeURIComponent(cleanNum)}`;
+  }
+  if (cleanCarrier.includes('fedex')) {
+    return `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(cleanNum)}`;
+  }
+  // Default to DHL Express portal
+  return `https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(cleanNum)}`;
+}
+
 export default shippingService;
+

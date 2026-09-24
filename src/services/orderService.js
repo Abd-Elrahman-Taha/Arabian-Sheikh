@@ -196,6 +196,7 @@ export const orderService = {
       let merged = details ? { ...details } : (getCachedOrderDetails(id) || getCachedOrderDetails(numericId) || {});
 
       const resolvedTracking = tracking?.trackingNumber 
+        || merged.shipments?.[0]?.trackingNumber 
         || merged.trackingNumber 
         || merged.trackingCode 
         || merged.dhlTrackingNumber 
@@ -210,7 +211,7 @@ export const orderService = {
       }
 
       if (tracking) {
-        merged.carrier = tracking.carrier || merged.carrier || merged.shipping?.shippingCompanyName || 'DHL Express';
+        merged.carrier = tracking.carrier || merged.carrier || merged.shipping?.shippingCompanyName || 'Carrier';
         merged.carrierStatus = tracking.carrierStatus || merged.carrierStatus;
         merged.shipmentStatus = tracking.currentStatus || merged.shipmentStatus;
         merged.trackingEvents = Array.isArray(tracking.events) ? tracking.events : (merged.trackingEvents || []);
@@ -261,6 +262,7 @@ export const orderService = {
 
       const resolvedTracking = tracking?.trackingNumber 
         || deliv?.trackingNumber 
+        || order.shipments?.[0]?.trackingNumber 
         || order.trackingNumber 
         || order.trackingCode 
         || order.dhlTrackingNumber 
@@ -275,10 +277,13 @@ export const orderService = {
       }
 
       if (tracking) {
-        order.carrier = tracking.carrier || order.carrier || 'DHL Express';
+        order.carrier = tracking.carrier || order.carrier || 'Carrier';
         order.carrierStatus = tracking.carrierStatus || order.carrierStatus;
         order.shipmentStatus = tracking.currentStatus || order.shipmentStatus;
         order.trackingEvents = Array.isArray(tracking.events) ? tracking.events : (order.trackingEvents || []);
+        if (tracking.expectedDeliveryDate) {
+          order.expectedDeliveryDate = tracking.expectedDeliveryDate;
+        }
       }
 
       if (isOrderConfirmedPaid(id) && (order.paymentStatus === 'Pending' || !order.paymentStatus)) {

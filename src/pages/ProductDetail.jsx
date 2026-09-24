@@ -624,7 +624,7 @@ export default function ProductDetail() {
                 >
                   <ShoppingBag className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
                   <span className="relative z-10 drop-shadow-sm">
-                    {isOutOfStock ? (t('shop.outOfStock') || 'Out of Stock') : `${t('shop.addToBag') || 'Add to Bag'} (€${product.price * quantity})`}
+                    {isOutOfStock ? (t('shop.outOfStock') || 'Out of Stock') : `${t('shop.addToBag') || 'Add to Bag'} (€${currentPrice * quantity})`}
                   </span>
                 </button>
               </div>

@@ -60,7 +60,7 @@ export const cartService = {
         };
       }
 
-      const baseUnitPrice = Number(item.originalPrice || item.price || 0);
+      const baseUnitPrice = Number(item.price !== undefined && item.price !== null ? item.price : (item.unitPriceSnapshot || item.originalPrice || 0));
       calculatedSubtotal += (baseUnitPrice * qty);
 
       // Check if this specific item matches any active promotion applicability rules
@@ -89,7 +89,7 @@ export const cartService = {
       };
     });
 
-    const subtotal = calculatedSubtotal;
+    const subtotal = (cart.subtotal !== undefined && cart.subtotal !== null && Number(cart.subtotal) > 0 && promoDiscountAmount === 0) ? Number(cart.subtotal) : calculatedSubtotal;
 
     // Coupon discount calculation (if coupon code applied)
     let couponDiscountAmount = 0;
@@ -103,7 +103,7 @@ export const cartService = {
 
     const finalItemsTotal = Math.max(0, subtotal - discountAmount);
     const shipping = 0;
-    const total = finalItemsTotal;
+    const total = (cart.total !== undefined && cart.total !== null && Number(cart.total) > 0 && discountAmount === 0) ? Number(cart.total) : finalItemsTotal;
 
 
     const totalCount = items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);

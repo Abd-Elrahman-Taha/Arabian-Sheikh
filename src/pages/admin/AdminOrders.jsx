@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { orderService, ADMIN_ORDER_STATUSES, ADMIN_PAYMENT_STATUSES } from '../../services/orderService';
+import { getCarrierTrackingUrl } from '../../services/shippingService';
 import { paymentApi } from '../../api/payment.api';
 import { toNumericId } from '../../api/order.api';
 import { isSuccessStatus, isOrderConfirmedPaid } from '../../services/paymentService';
@@ -222,8 +223,9 @@ export default function AdminOrders() {
       );
       const hasItems = Array.isArray(o.items) && o.items.length > 0;
       const hasPayment = Boolean(o.paymentMethod && String(o.paymentMethod).trim().length > 0);
+      const hasTracking = Boolean(o.trackingNumber || o.shipments?.[0]?.trackingNumber);
 
-      return !hasAddr || !hasItems || !hasPayment;
+      return !hasAddr || !hasItems || !hasPayment || !hasTracking;
     });
 
     if (ordersToEnrich.length === 0) return;
@@ -264,6 +266,7 @@ export default function AdminOrders() {
             const found = enrichedMap.get(String(item.id)) || (item.orderNumber ? enrichedMap.get(String(item.orderNumber)) : null);
             if (found) {
               const cod = Boolean(found.isCod || isOrderCod(item.id) || isOrderCod(item.orderNumber));
+              const resolvedTrackingNum = found.trackingNumber || item.trackingNumber || found.shipments?.[0]?.trackingNumber || item.shipments?.[0]?.trackingNumber || null;
               return {
                 ...item,
                 ...found,
@@ -276,6 +279,12 @@ export default function AdminOrders() {
                 shippingAddressSnapshot: found.shippingAddressSnapshot || item.shippingAddressSnapshot,
                 shippingSnapshot: found.shippingSnapshot || item.shippingSnapshot,
                 customerPhone: found.customerPhone || item.customerPhone || found.customer?.phone || item.customer?.phone,
+                trackingNumber: resolvedTrackingNum,
+                trackingCode: resolvedTrackingNum,
+                dhlTrackingNumber: resolvedTrackingNum,
+                carrier: found.carrier || item.carrier || null,
+                carrierStatus: found.carrierStatus || item.carrierStatus || null,
+                shipmentStatus: found.shipmentStatus || item.shipmentStatus || null,
                 items: (Array.isArray(found.items) && found.items.length > 0) ? found.items : (item.items || []),
               };
             }
@@ -406,24 +415,57 @@ export default function AdminOrders() {
   // Open Logistics Tracking Modal
   const handleOpenTracking = async (order) => {
     const rawTrackingNumber = order.trackingNumber || order.trackingCode || order.dhlTrackingNumber || order.shipping?.trackingNumber || order.shippingSnapshot?.trackingNumber || order.shipments?.[0]?.trackingNumber || null;
+    const initialCarrier = order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || order.carrier || 'Carrier';
     setTrackingModalData({
       orderId: order.id,
       orderNumber: order.orderNumber || order.id,
-      carrier: order.shippingSnapshot?.carrier || order.shipping?.shippingCompanyName || order.carrier || 'DHL Express',
+      carrier: initialCarrier,
       trackingNumber: rawTrackingNumber || 'PENDING',
       status: order.orderStatus || order.status || 'InTransit',
       events: []
     });
     setTrackingLoading(true);
     try {
-      const tracking = await orderService.getOrderTracking(order.id);
+      const tracking = await orderService.getAdminOrderTracking(order.id);
       if (tracking) {
+        const resolvedTracking = tracking.trackingNumber || rawTrackingNumber;
+        const resolvedCarrier = tracking.carrier || initialCarrier;
+
         setTrackingModalData(prev => ({
           ...prev,
           ...tracking,
           orderNumber: order.orderNumber || order.id,
-          trackingNumber: tracking.trackingNumber || rawTrackingNumber || prev?.trackingNumber
+          trackingNumber: resolvedTracking || prev?.trackingNumber,
+          carrier: resolvedCarrier,
+          carrierStatus: tracking.carrierStatus || prev?.carrierStatus,
+          expectedDeliveryDate: tracking.expectedDeliveryDate || prev?.expectedDeliveryDate,
+          status: tracking.currentStatus || prev?.status,
+          events: Array.isArray(tracking.events) ? tracking.events : (prev?.events || [])
         }));
+
+        // Dynamically enrich table state so the table immediately shows tracking number!
+        if (resolvedTracking) {
+          setOrdersData(prev => {
+            if (!prev?.items) return prev;
+            return {
+              ...prev,
+              items: prev.items.map(o => {
+                if (String(o.id) === String(order.id) || (order.orderNumber && String(o.orderNumber) === String(order.orderNumber))) {
+                  return {
+                    ...o,
+                    trackingNumber: resolvedTracking,
+                    trackingCode: resolvedTracking,
+                    dhlTrackingNumber: resolvedTracking,
+                    carrier: resolvedCarrier,
+                    carrierStatus: tracking.carrierStatus || o.carrierStatus,
+                    shipmentStatus: tracking.currentStatus || o.shipmentStatus
+                  };
+                }
+                return o;
+              })
+            };
+          });
+        }
       }
     } catch (err) {
       console.warn('Tracking fetch error:', err.message);
@@ -1306,16 +1348,18 @@ export default function AdminOrders() {
                             <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
                             <span>Milestones</span>
                           </button>
-                          <a
-                            href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(modalTrackingNumber)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer flex items-center gap-1 text-xs font-mono"
-                            title="Track on DHL Portal"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Carrier Portal</span>
-                          </a>
+                          {getCarrierTrackingUrl(detailsModalOrder.carrier || detailsModalOrder.shippingSnapshot?.carrier, modalTrackingNumber) && (
+                            <a
+                              href={getCarrierTrackingUrl(detailsModalOrder.carrier || detailsModalOrder.shippingSnapshot?.carrier, modalTrackingNumber)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer flex items-center gap-1 text-xs font-mono"
+                              title={`Track on ${detailsModalOrder.carrier || 'Carrier'} Portal`}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Carrier Portal</span>
+                            </a>
+                          )}
                         </>
                       )}
 
@@ -1686,13 +1730,13 @@ export default function AdminOrders() {
                             <Clock className="w-3.5 h-3.5" />
                             <span>Milestones Timeline</span>
                           </button>
-                          {tabAirwayNum && (
+                          {tabAirwayNum && getCarrierTrackingUrl(detailsModalOrder.carrier || detailsModalOrder.shippingSnapshot?.carrier, tabAirwayNum) && (
                             <a
-                              href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(tabAirwayNum)}`}
+                              href={getCarrierTrackingUrl(detailsModalOrder.carrier || detailsModalOrder.shippingSnapshot?.carrier, tabAirwayNum)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-2 rounded-lg bg-black/60 hover:bg-black/90 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer"
-                              title="Track on DHL Official Portal"
+                              title={`Track on ${detailsModalOrder.carrier || 'Carrier'} Official Portal`}
                             >
                               <ExternalLink className="w-4 h-4" />
                             </a>
@@ -2167,32 +2211,72 @@ export default function AdminOrders() {
             <div className="bg-black/60 border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[#D8BE99]">Courier Partner</span>
-                <span className="font-bold text-sm text-[#F3E6D0]">{trackingModalData.carrier || 'DHL Express'}</span>
+                <span className="font-bold text-sm text-[#F3E6D0]">{trackingModalData.carrier || 'Carrier'}</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#D8BE99]">Tracking Number</span>
-                {trackingModalData.trackingNumber ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-sm font-bold text-[#F2D675]">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs text-[#D8BE99]">Tracking Airway</span>
+                {trackingModalData.trackingNumber && !['pending', 'unassigned', 'none'].includes(String(trackingModalData.trackingNumber).toLowerCase()) ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm font-bold text-[#F2D675] select-all">
                       {trackingModalData.trackingNumber}
                     </span>
                     <button
                       onClick={() => handleCopy(trackingModalData.trackingNumber, 'Tracking number')}
                       className="p-1 text-[#D4AF37] hover:text-[#F2D675] cursor-pointer"
+                      title="Copy tracking number"
                     >
-                      <Copy className="w-3.5 h-3.5" />
+                      {copiedText === trackingModalData.trackingNumber ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
                     </button>
+                    {getCarrierTrackingUrl(trackingModalData.carrier, trackingModalData.trackingNumber) && (
+                      <a
+                        href={getCarrierTrackingUrl(trackingModalData.carrier, trackingModalData.trackingNumber)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#D4AF37]/20 hover:bg-[#D4AF37]/30 border border-[#D4AF37]/50 text-[#F2D675] text-[11px] font-mono font-bold transition-colors cursor-pointer"
+                        title="Open Official Carrier Tracking Portal"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>Carrier Portal</span>
+                      </a>
+                    )}
                   </div>
                 ) : (
-                  <span className="font-mono text-neutral-500 italic text-xs">Unassigned</span>
+                  <span className="font-mono text-neutral-500 italic text-xs">Pending Courier Assignment</span>
                 )}
               </div>
 
+              {trackingModalData.carrierStatus && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#D8BE99]">Carrier Milestone</span>
+                  <span className="px-2 py-0.5 text-xs font-mono font-semibold rounded bg-cyan-950/50 border border-cyan-500/40 text-cyan-300">
+                    {trackingModalData.carrierStatus}
+                  </span>
+                </div>
+              )}
+
+              {trackingModalData.expectedDeliveryDate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#D8BE99]">Expected Delivery</span>
+                  <span className="text-xs font-mono font-bold text-[#F2D675]">
+                    {new Date(trackingModalData.expectedDeliveryDate).toLocaleDateString(undefined, {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[#D8BE99]">Current Logistics Status</span>
-                <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(trackingModalData.status)}`}>
-                  {trackingModalData.status || 'In Transit'}
+                <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded-full border uppercase ${getOrderStatusBadge(trackingModalData.status || trackingModalData.currentStatus)}`}>
+                  {trackingModalData.status || trackingModalData.currentStatus || 'In Transit'}
                 </span>
               </div>
             </div>

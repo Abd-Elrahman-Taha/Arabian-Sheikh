@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { orderService } from '../../services/orderService';
-import { shippingService } from '../../services/shippingService';
+import { shippingService, getCarrierTrackingUrl } from '../../services/shippingService';
 import { paymentService, isSuccessStatus, isFailedStatus, isOrderConfirmedPaid } from '../../services/paymentService';
 import {
   Truck,
@@ -758,13 +758,13 @@ export default function OrderDetail() {
               <Truck className="w-4 h-4" />
               <span>Track Consignment</span>
             </Link>
-            {trackingNumber && (
+            {trackingNumber && getCarrierTrackingUrl(order.carrier || order.shippingSnapshot?.carrier, trackingNumber) && (
               <a
-                href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(trackingNumber)}`}
+                href={getCarrierTrackingUrl(order.carrier || order.shippingSnapshot?.carrier, trackingNumber)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2.5 rounded-xl bg-black/60 hover:bg-black/90 border border-[#D4AF37]/40 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-cinzel"
-                title="Track on DHL Official Portal"
+                title={`Track on ${order.carrier || 'Carrier'} Official Portal`}
               >
                 <ExternalLink className="w-4 h-4" />
                 <span className="hidden sm:inline">Carrier Portal</span>
@@ -856,7 +856,7 @@ export default function OrderDetail() {
                         {item.name}
                       </h4>
                       <p className="text-xs text-[#D8BE99]">
-                        {item.size || '100 ml Extrait de Parfum'}
+                        {item.size || '60 ml Extrait de Parfum'}
                       </p>
                       <p className="text-xs font-mono text-[#D8BE99]">
                         Qty: <strong className="text-[#F3E6D0]">{qty}</strong> × {formatPrice(itemPrice, currency)}
