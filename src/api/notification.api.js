@@ -229,6 +229,30 @@ export const notificationApi = {
   },
 
   /**
+   * Export Viber CSV for a campaign batch with Bearer token authentication
+   * GET /api/admin/sent-notifications/{batchId}/export
+   * Note: language is optional. If omitted, exports all recipients across all languages.
+   */
+  async exportViberCsv(batchId, language = '') {
+    const params = {};
+    if (language) params.language = language;
+    const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.EXPORT(batchId), {
+      params
+    });
+    const csvContent = typeof response === 'string' ? response : (response?.data ?? response);
+    const blob = new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `viber-broadcast-${batchId}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    return true;
+  },
+
+  /**
    * Generate Viber CSV export download URL
    */
   getViberExportUrl(batchId, language = '') {
