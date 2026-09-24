@@ -10,8 +10,9 @@ import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
 
 export default function Signup() {
   const { navigate } = useRouter();
-  const { t, setLanguage } = useTranslation();
+  const { t, language = 'en', setLanguage } = useTranslation();
   const { signup } = useAuth();
+
   const { success, error } = useToast();
 
   const [name, setName] = useState('');

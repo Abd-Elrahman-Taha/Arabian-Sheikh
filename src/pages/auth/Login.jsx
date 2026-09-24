@@ -9,8 +9,9 @@ import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
 
 export default function Login({ returnPath }) {
   const { navigate } = useRouter();
-  const { t, setLanguage } = useTranslation();
+  const { t, language = 'en', setLanguage } = useTranslation();
   const { login } = useAuth();
+
   const { success, error } = useToast();
 
   const [email, setEmail] = useState('');
