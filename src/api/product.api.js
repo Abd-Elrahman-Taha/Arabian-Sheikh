@@ -62,10 +62,10 @@ export const productApi = {
     // SortBy & SortDirection
     const sortBy = (filters.sortBy || filters.SortBy || '').toString().trim();
     if (sortBy && sortBy !== 'featured') {
-      if (sortBy === 'price_asc' || sortBy === 'price-asc') {
+      if (sortBy === 'price_asc' || sortBy === 'price-asc' || sortBy === 'price-low') {
         params.SortBy = 'price';
         params.SortDirection = 'asc';
-      } else if (sortBy === 'price_desc' || sortBy === 'price-desc') {
+      } else if (sortBy === 'price_desc' || sortBy === 'price-desc' || sortBy === 'price-high') {
         params.SortBy = 'price';
         params.SortDirection = 'desc';
       } else if (sortBy === 'name' || sortBy === 'name_asc') {

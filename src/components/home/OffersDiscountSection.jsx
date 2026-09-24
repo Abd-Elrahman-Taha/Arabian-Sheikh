@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
 import { promotionService } from '../../services/promotionService';
+import { discountService } from '../../services/discountService';
 import {
   Tag,
   Percent,
@@ -34,27 +35,42 @@ export default function OffersDiscountSection({ products = [] }) {
 
   const [promotions, setPromotions] = useState([]);
   const [bundles, setBundles] = useState([]);
+  const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'BUNDLES' | 'DISCOUNTS'
   const [selectedBundleModal, setSelectedBundleModal] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
 
-  // Fetch active promotions and bundles from backend API
+  // Fetch active promotions, bundles, and coupons from backend API
   useEffect(() => {
     let isMounted = true;
     async function loadOffers() {
       setLoading(true);
       try {
-        const [promosRes, bundlesRes] = await Promise.allSettled([
+        const [promosRes, bundlesRes, couponsRes] = await Promise.allSettled([
           promotionService.getPublicPromotions(),
-          promotionService.getPublicBundles()
+          promotionService.getPublicBundles(),
+          discountService.getAllDiscounts()
         ]);
 
         if (isMounted) {
-          const loadedPromos = promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : [];
+          let loadedPromos = promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : [];
+          if (loadedPromos.length === 0) {
+            try {
+              const adminP = await promotionService.getPromotions({ page: 1, pageSize: 20 });
+              if (adminP?.items && adminP.items.length > 0) {
+                loadedPromos = adminP.items.filter(p => p.status !== 'Inactive');
+              }
+            } catch {}
+          }
           const loadedBundles = bundlesRes.status === 'fulfilled' && Array.isArray(bundlesRes.value) ? bundlesRes.value : [];
+          const loadedCoupons = couponsRes.status === 'fulfilled' && Array.isArray(couponsRes.value)
+            ? couponsRes.value.filter(c => c.isActive !== false && c.status !== 'Inactive' && c.status !== 'Expired')
+            : [];
+
           setPromotions(loadedPromos);
           setBundles(loadedBundles);
+          setCoupons(loadedCoupons);
         }
       } catch (err) {
         console.warn('[OffersDiscountSection] Error loading offers:', err);
@@ -107,43 +123,37 @@ export default function OffersDiscountSection({ products = [] }) {
     ];
   }, [bundles, products, language]);
 
-  // Display Promotions
+  // Display Promotions from Backend API
   const displayPromotions = useMemo(() => {
     if (promotions.length > 0) return promotions;
+    return [];
+  }, [promotions]);
+
+  // Dynamic Palace Voucher Codes from Real Backend Coupons
+  const displayPromoCodes = useMemo(() => {
+    if (coupons.length > 0) {
+      return coupons.map(c => ({
+        code: c.code,
+        discount: c.type === 'Percentage' ? `${c.value}% OFF` : `€${c.value} OFF`,
+        arabicDiscount: c.type === 'Percentage' ? `خصم ${c.value}%` : `خصم €${c.value}`,
+        minSpend: Number(c.minOrderAmount) > 0 ? `€${c.minOrderAmount}` : 'No Min Spend',
+        desc: c.allowOnDiscountedItems ? 'Valid on all creations including promotional items.' : 'Exclusive discount applied directly at checkout.',
+        arabicDesc: c.allowOnDiscountedItems ? 'ساري على كافة العطور بما فيها العروض.' : 'خصم حصري يطبق مباشرة عند الدفع.',
+        endDate: c.endDate
+      }));
+    }
 
     return [
       {
-        id: 'fallback-promo-1',
-        name: language === 'ar' ? 'مهرجان العطور الشرقية الملكية' : 'Autumn Royal Extrait Celebration',
-        type: 'Discount',
-        discountType: 'Percentage',
-        discountValue: 20,
-        startDate: new Date().toISOString(),
-        endDate: '2026-12-31T23:59:59Z',
-        bundlesCount: 2
+        code: 'ROYALTY20',
+        discount: '20% OFF',
+        arabicDiscount: 'خصم 20%',
+        minSpend: '€100',
+        desc: 'Exclusive VIP royal discount for grand orders over €100.',
+        arabicDesc: 'خصم ملكي خاص للطلبات الكبيرة التي تتجاوز 100 يورو.'
       }
     ];
-  }, [promotions, language]);
-
-  // Standard Palace Voucher Codes
-  const promoCodes = [
-    {
-      code: 'SHEIKH10',
-      discount: '10% OFF',
-      arabicDiscount: 'خصم 10%',
-      minSpend: '€50',
-      desc: 'Applied instantly on all sovereign orders exceeding €50.',
-      arabicDesc: 'يطبق فوراً على كافة الطلبات التي تتجاوز 50 يورو.'
-    },
-    {
-      code: 'ROYALTY20',
-      discount: '20% OFF',
-      arabicDiscount: 'خصم 20%',
-      minSpend: '€100',
-      desc: 'Exclusive VIP royal discount for grand orders over €100.',
-      arabicDesc: 'خصم ملكي خاص للطلبات الكبيرة التي تتجاوز 100 يورو.'
-    }
-  ];
+  }, [coupons, language]);
 
   const handleCopy = (code) => {
     navigator.clipboard.writeText(code);
@@ -207,9 +217,9 @@ export default function OffersDiscountSection({ products = [] }) {
           {/* Navigation Filter Tabs */}
           <div className="inline-flex p-1.5 rounded-2xl bg-black/50 border border-[#D4AF37]/30 backdrop-blur-md gap-1.5 mt-2">
             {[
-              { id: 'ALL', label: language === 'ar' ? 'جميع العروض' : 'All Offers', count: displayBundles.length + displayPromotions.length },
+              { id: 'ALL', label: language === 'ar' ? 'جميع العروض' : 'All Offers', count: displayBundles.length + displayPromotions.length + displayPromoCodes.length },
               { id: 'BUNDLES', label: language === 'ar' ? 'باقات العطور' : 'Curated Bundles', count: displayBundles.length, icon: Package },
-              { id: 'DISCOUNTS', label: language === 'ar' ? 'حملات الخصم' : 'Campaigns', count: displayPromotions.length, icon: Percent }
+              { id: 'DISCOUNTS', label: language === 'ar' ? 'حملات الخصم' : 'Campaigns', count: displayPromotions.length + displayPromoCodes.length, icon: Percent }
             ].map(tab => {
               const isSel = activeTab === tab.id;
               const Icon = tab.icon;
@@ -490,73 +500,75 @@ export default function OffersDiscountSection({ products = [] }) {
         {/* ========================================================================= */}
         {/* 4. PALACE VOUCHER CODES SECTION                                           */}
         {/* ========================================================================= */}
-        <div className="space-y-6">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <h4 className={`font-cinzel text-lg sm:text-xl font-bold uppercase tracking-wider ${
-              isDark ? 'text-[#F3E6D0]' : 'text-[#704622]'
-            }`}>
-              {language === 'ar' ? 'قسائم التخفيض الفورية عند الدفع' : 'Instant Checkout Voucher Codes'}
-            </h4>
-            <p className="text-xs text-[#D8BE99]">
-              {language === 'ar'
-                ? 'انسخ كود الخصم وطبقه مباشرة في صفحة الدفع للاستفادة من المزايا الملكية.'
-                : 'Copy any sovereign code and apply directly at checkout for immediate order savings.'}
-            </p>
-          </div>
+        {displayPromoCodes.length > 0 && (
+          <div className="space-y-6">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <h4 className={`font-cinzel text-lg sm:text-xl font-bold uppercase tracking-wider ${
+                isDark ? 'text-[#F3E6D0]' : 'text-[#704622]'
+              }`}>
+                {language === 'ar' ? 'قسائم التخفيض الفورية عند الدفع' : 'Instant Checkout Voucher Codes'}
+              </h4>
+              <p className="text-xs text-[#D8BE99]">
+                {language === 'ar'
+                  ? 'انسخ كود الخصم وطبقه مباشرة في صفحة الدفع للاستفادة من المزايا الملكية.'
+                  : 'Copy any sovereign code and apply directly at checkout for immediate order savings.'}
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {promoCodes.map((promo) => (
-              <div
-                key={promo.code}
-                className={`p-6 sm:p-7 rounded-2xl border-2 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all duration-300 ${
-                  isDark
-                    ? 'bg-gradient-to-br from-[#D4AF37]/45 via-[#F2D675]/25 to-[#8C6239]/55 border-[#F2D675] shadow-[0_10px_35px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_45px_rgba(242,214,117,0.5)]'
-                    : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 shadow-[0_10px_30px_rgba(112,70,34,0.08)]'
-                }`}
-              >
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-md shadow-sm">
-                      {language === 'ar' ? promo.arabicDiscount : promo.discount}
-                    </span>
-                    <span className={`text-[11px] font-mono font-bold ${isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'}`}>
-                      Min Spend: {promo.minSpend}
-                    </span>
-                  </div>
-                  <div className="font-mono text-xl font-bold tracking-widest text-[#D4AF37] select-all">
-                    {promo.code}
-                  </div>
-                  <p className={`text-xs ${isDark ? 'text-[#F3E6D0]' : 'text-[#5A3517]'}`}>
-                    {language === 'ar' ? promo.arabicDesc : promo.desc}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => handleCopy(promo.code)}
-                  className={`px-5 py-3 rounded-xl border font-cinzel font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-md ${
-                    copiedCode === promo.code
-                      ? 'bg-emerald-600 text-white border-emerald-500'
-                      : isDark
-                      ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border-[#F2D675]'
-                      : 'bg-[#704622] hover:bg-[#4A2A14] text-white border-[#A8853B]'
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {displayPromoCodes.map((promo) => (
+                <div
+                  key={promo.code}
+                  className={`p-6 sm:p-7 rounded-2xl border-2 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all duration-300 ${
+                    isDark
+                      ? 'bg-gradient-to-br from-[#D4AF37]/45 via-[#F2D675]/25 to-[#8C6239]/55 border-[#F2D675] shadow-[0_10px_35px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_45px_rgba(242,214,117,0.5)]'
+                      : 'bg-[#FFFDF8] hover:bg-[#FBF6EC] border-[#A8853B]/35 shadow-[0_10px_30px_rgba(112,70,34,0.08)]'
                   }`}
                 >
-                  {copiedCode === promo.code ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>{language === 'ar' ? 'تم النسخ!' : 'Copied!'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>{language === 'ar' ? 'نسخ الكود' : 'Copy Code'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            ))}
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-[#D4AF37] text-black font-cinzel font-bold text-xs uppercase tracking-wider rounded-md shadow-sm">
+                        {language === 'ar' ? promo.arabicDiscount : promo.discount}
+                      </span>
+                      <span className={`text-[11px] font-mono font-bold ${isDark ? 'text-[#FFDF8A]' : 'text-[#8A6540]'}`}>
+                        Min Spend: {promo.minSpend}
+                      </span>
+                    </div>
+                    <div className="font-mono text-xl font-bold tracking-widest text-[#D4AF37] select-all">
+                      {promo.code}
+                    </div>
+                    <p className={`text-xs ${isDark ? 'text-[#F3E6D0]' : 'text-[#5A3517]'}`}>
+                      {language === 'ar' ? promo.arabicDesc : promo.desc}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleCopy(promo.code)}
+                    className={`px-5 py-3 rounded-xl border font-cinzel font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-md ${
+                      copiedCode === promo.code
+                        ? 'bg-emerald-600 text-white border-emerald-500'
+                        : isDark
+                        ? 'bg-[#0B0A08] hover:bg-[#1A1008] text-[#FFF2B2] hover:text-[#D4AF37] border-[#F2D675]'
+                        : 'bg-[#704622] hover:bg-[#4A2A14] text-white border-[#A8853B]'
+                    }`}
+                  >
+                    {copiedCode === promo.code ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>{language === 'ar' ? 'تم النسخ!' : 'Copied!'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>{language === 'ar' ? 'نسخ الكود' : 'Copy Code'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
 

@@ -42,12 +42,6 @@ export const perfumeCategoryService = {
   },
 
   getCachedTiers() {
-    if (typeof window !== 'undefined') {
-      const stored = loadStoredTiers();
-      if (stored && stored.length > 0) {
-        cachedTiers = stored;
-      }
-    }
     return cachedTiers;
   },
 
@@ -113,8 +107,13 @@ export const perfumeCategoryService = {
     return tier && tier.price !== undefined ? Number(tier.price) : null;
   },
 
-  getStorePerfumeCategories() {
-    return { items: this.getCachedTiers() };
+  async getStorePerfumeCategories() {
+    try {
+      const res = await this.getAdminPerfumeCategories();
+      return res || { items: this.getCachedTiers() };
+    } catch {
+      return { items: this.getCachedTiers() };
+    }
   },
 
   async getAdminPerfumeCategories(params = {}) {
@@ -137,7 +136,6 @@ export const perfumeCategoryService = {
       const items = response?.items || (Array.isArray(response) ? response : []);
       if (items.length > 0) {
         cachedTiers = items;
-        saveStoredTiers(cachedTiers);
       }
       return {
         items,
@@ -189,7 +187,6 @@ export const perfumeCategoryService = {
       });
       if (created) {
         cachedTiers = [...cachedTiers.filter(t => t.id !== created.id), created];
-        saveStoredTiers(cachedTiers);
       }
       return created;
     } catch (err) {
@@ -214,7 +211,6 @@ export const perfumeCategoryService = {
       });
       const updatedItem = updated || { id, name: payload.name.trim(), price, notes: payload.notes ? payload.notes.trim() : null };
       cachedTiers = cachedTiers.map(t => Number(t.id) === Number(id) ? { ...t, ...updatedItem } : t);
-      saveStoredTiers(cachedTiers);
       return updatedItem;
     } catch (err) {
       this.handleApiError(err, 'Failed to update perfume pricing tier.');
@@ -225,7 +221,6 @@ export const perfumeCategoryService = {
     try {
       const res = await perfumeCategoryApi.adminDeletePerfumeCategory(id);
       cachedTiers = cachedTiers.filter(t => Number(t.id) !== Number(id));
-      saveStoredTiers(cachedTiers);
       return res;
     } catch (err) {
       this.handleApiError(err, 'Failed to delete perfume pricing tier.');

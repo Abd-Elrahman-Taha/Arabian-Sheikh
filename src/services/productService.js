@@ -248,10 +248,19 @@ export const productService = {
       });
 
       memoryCatalog = items;
-      return this.applyFilters(memoryCatalog, filters);
+
+      let result = items;
+      if (filters.category === 'offers' || filters.category === 'discounts') {
+        result = result.filter(p => p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+      }
+      if (filters.inStockOnly) {
+        result = result.filter(p => p.stock > 0);
+      }
+
+      return result;
     } catch (err) {
       console.warn('API getAllProducts error:', err.message);
-      return this.applyFilters(memoryCatalog, filters);
+      return memoryCatalog;
     }
   },
 

@@ -221,15 +221,19 @@ export function normalizeProduct(raw) {
     || null;
 
   if (!derivedTier) {
-    derivedTier = perfumeCategoryService.getTierForProduct({
-      ...p,
-      price: finalPrice,
-      categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
-      category: categoryName,
-      perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
-      perfumeCategoryName: perfumeCategoryName,
-      tier: p.tier
-    });
+    try {
+      derivedTier = perfumeCategoryService.getTierForProduct({
+        ...p,
+        price: finalPrice,
+        categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
+        category: categoryName,
+        perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
+        perfumeCategoryName: perfumeCategoryName,
+        tier: p.tier
+      });
+    } catch {
+      derivedTier = null;
+    }
   }
 
   // Ensure EVERY product on EVERY device has a valid resolved tier
@@ -243,8 +247,35 @@ export function normalizeProduct(raw) {
     else derivedTier = 'Standard';
   }
 
-  const originalPrice = p.originalPrice ? Number(p.originalPrice) : (p.discount ? Number(p.discount.originalPrice || finalPrice) : null);
-  const isDiscounted = Boolean(p.isDiscounted || (p.discount && p.discount.value > 0) || (originalPrice && originalPrice > finalPrice));
+  const discountObj = p.discount && typeof p.discount === 'object' ? p.discount : null;
+  const discountVal = Number(discountObj?.value || p.discountValue || 0);
+  const discountType = discountObj?.type || p.discountType || 'Percentage';
+  let isDiscounted = Boolean(p.isDiscounted || discountVal > 0);
+  let originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
+
+  if (isDiscounted && !originalPrice && finalPrice > 0 && discountVal > 0) {
+    if (String(discountType).toLowerCase().includes('percent')) {
+      originalPrice = Math.round((finalPrice / (1 - discountVal / 100)) * 100) / 100;
+    } else {
+      originalPrice = finalPrice + discountVal;
+    }
+  }
+
+  if (!isDiscounted && Array.isArray(p.offers) && p.offers.length > 0) {
+    const firstOffer = p.offers[0];
+    const offVal = Number(firstOffer.discountValue || 0);
+    if (offVal > 0) {
+      isDiscounted = true;
+      if (!originalPrice && finalPrice > 0) {
+        if (String(firstOffer.discountType).toLowerCase().includes('percent')) {
+          originalPrice = Math.round((finalPrice / (1 - offVal / 100)) * 100) / 100;
+        } else {
+          originalPrice = finalPrice + offVal;
+        }
+      }
+    }
+  }
+
   const isActive = p.isActive !== undefined ? Boolean(p.isActive) : (p.status ? p.status !== 'INACTIVE' : true);
 
   const currentLang = (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';

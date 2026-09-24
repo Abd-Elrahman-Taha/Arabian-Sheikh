@@ -185,7 +185,8 @@ export default function Home() {
         setAllProducts(prods);
 
         // Group products into rich curated Collections without duplicate fallbacks
-        const imperialTiersProducts = prods.filter(p => p.category === 'perfumes' || p.tier === 'Luxury' || p.tier === 'Royal' || p.tier === 'Classic');
+        const imperialTiersProducts = prods.filter(p => p.category === 'perfumes' || p.categoryName?.toLowerCase().includes('perfume') || p.tier === 'Luxury' || p.tier === 'Royal' || p.tier === 'Classic' || !p.category);
+        const resolvedImperial = imperialTiersProducts.length > 0 ? imperialTiersProducts : prods;
         const oudAmberProducts = prods.filter(p => 
           p.name?.toLowerCase().includes('oud') ||
           p.name?.toLowerCase().includes('amber') ||
@@ -224,7 +225,7 @@ export default function Home() {
             spanishDescription: 'Nuestros extraits emblemáticos embotellados en frascos numerados de 60 ml.',
             bulgarianDescription: 'Нашите емблематични екстракти в номерирани флакони от 60 мл.',
             accentColor: '#D4AF37',
-            products: imperialTiersProducts
+            products: resolvedImperial
           },
           {
             id: 'col-oud-amber',
@@ -337,12 +338,23 @@ export default function Home() {
   };
 
   // Discovery filtered list
-  const discoveryMatches = allProducts.filter(p => {
+  const rawDiscovery = allProducts.filter(p => {
     if (selectedGender !== 'all' && p.gender?.toLowerCase() !== selectedGender.toLowerCase() && p.gender !== 'Unisex') return false;
-    if (selectedFamily !== 'all' && !p.fragranceFamily?.toLowerCase().includes(selectedFamily.toLowerCase())) return false;
-    if (selectedOccasion !== 'all' && !p.occasion?.some(o => o.toLowerCase().includes(selectedOccasion.toLowerCase()))) return false;
+    if (selectedFamily !== 'all') {
+      const fam = selectedFamily.toLowerCase();
+      const match = (p.fragranceFamily && p.fragranceFamily.toLowerCase().includes(fam)) ||
+                    (p.scentFamily && p.scentFamily.toLowerCase().includes(fam)) ||
+                    (p.name && p.name.toLowerCase().includes(fam)) ||
+                    (p.description && p.description.toLowerCase().includes(fam));
+      if (!match) return false;
+    }
+    if (selectedOccasion !== 'all' && Array.isArray(p.occasion)) {
+      const occ = selectedOccasion.toLowerCase();
+      if (!p.occasion.some(o => o.toLowerCase().includes(occ))) return false;
+    }
     return true;
   });
+  const discoveryMatches = rawDiscovery.length > 0 ? rawDiscovery : allProducts;
 
   const scrollToCollections = () => {
     if (firstCollectionRef.current) {

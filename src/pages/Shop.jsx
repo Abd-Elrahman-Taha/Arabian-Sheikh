@@ -62,21 +62,24 @@ export default function Shop() {
 
   // Helper to resolve numeric category ID from current selection
   const activeCategoryId = useMemo(() => {
-    if (selectedCategory === 'all' || selectedCategory === 'offers') return null;
+    if (!selectedCategory || selectedCategory === 'all' || selectedCategory === 'offers') return null;
     const num = Number(selectedCategory);
     if (!isNaN(num) && num > 0) return num;
-    const lower = String(selectedCategory || '').toLowerCase();
-    if (lower === 'perfumes' || lower === 'perfume') return 1;
-    if (lower === 'body-bath-care' || lower === 'body care' || lower === 'body & bath care') return 3;
-    if (lower === 'cosmetics') return 7;
-    if (lower === 'hair-care' || lower === 'hair care') return 8;
 
+    const lower = String(selectedCategory || '').toLowerCase();
     const found = categories.find(c =>
       String(c.id) === String(selectedCategory) ||
       (c.name && c.name.toLowerCase() === lower) ||
       (c.slug && c.slug.toLowerCase() === lower)
     );
-    return found ? Number(found.id) : null;
+    if (found) return Number(found.id);
+
+    if (lower === 'perfumes' || lower === 'perfume') return 1;
+    if (lower === 'body-bath-care' || lower === 'body care' || lower === 'body & bath care') return 3;
+    if (lower === 'cosmetics') return 7;
+    if (lower === 'hair-care' || lower === 'hair care') return 8;
+
+    return null;
   }, [selectedCategory, categories]);
 
   // 1. Fetch Dynamic Categories, Brands, and Perfume Tiers on Mount / Language Change
@@ -88,7 +91,7 @@ export default function Shop() {
         const [catsData, brandsData, tiersData] = await Promise.all([
           categoryService.getStoreCategories(language).catch(() => []),
           brandService.getStoreBrands(language).catch(() => []),
-          perfumeCategoryService.getStorePerfumeCategories()
+          perfumeCategoryService.getStorePerfumeCategories().catch(() => ({ items: [] }))
         ]);
 
         if (isMounted) {
