@@ -1001,11 +1001,11 @@ export default function OrderDetail() {
                         {trackingNumber}
                       </span>
                       <a
-                        href={`https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(trackingNumber)}`}
+                        href={getCarrierTrackingUrl(carrierName, trackingNumber) || `https://www.econt.com/services/track/${encodeURIComponent(trackingNumber)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1 hover:text-[#F2D675] text-[#D4AF37] transition-colors shrink-0"
-                        title="Track directly on DHL portal"
+                        title={`Track on ${carrierName || 'Carrier'} portal`}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>

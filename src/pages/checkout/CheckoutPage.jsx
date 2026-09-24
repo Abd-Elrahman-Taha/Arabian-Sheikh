@@ -1705,9 +1705,7 @@ export default function CheckoutPage() {
                                 </span>
                               </div>
                               <p className="text-[11px] text-[#D8BE99]">
-                                {opt.estimatedDeliveryDays
-                                  ? `${opt.estimatedDeliveryDays} business days • Insured temperature-controlled transport`
-                                  : '2-4 business days • Insured temperature-controlled transport'}
+                                Insured temperature-controlled transport
                               </p>
                             </label>
                           </div>

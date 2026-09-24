@@ -106,7 +106,35 @@ export const orderService = {
       const response = await orderApi.getMyOrders({ page: 1, pageSize: 100 });
       const items = response?.items || (Array.isArray(response) ? response : []);
       items.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
-      return items;
+
+      const enrichedItems = items.map(item => {
+        const idKey = item.id ? String(item.id) : null;
+        const numKey = item.numericId ? String(item.numericId) : null;
+        const ordKey = item.orderNumber ? String(item.orderNumber) : null;
+
+        const cached = (idKey ? orderDetailsCache.get(idKey) : null)
+          || (ordKey ? orderDetailsCache.get(ordKey) : null)
+          || (numKey ? orderDetailsCache.get(numKey) : null);
+
+        if (cached) {
+          return {
+            ...cached,
+            ...item,
+            trackingNumber: item.trackingNumber || cached.trackingNumber,
+            trackingCode: item.trackingCode || cached.trackingCode || item.trackingNumber || cached.trackingNumber,
+            dhlTrackingNumber: item.dhlTrackingNumber || cached.dhlTrackingNumber || item.trackingNumber || cached.trackingNumber,
+            carrier: item.carrier || cached.carrier || item.shipping?.shippingCompanyName || 'Carrier',
+            carrierStatus: item.carrierStatus || cached.carrierStatus,
+            shipments: (Array.isArray(item.shipments) && item.shipments.length > 0) ? item.shipments : (cached.shipments || []),
+          };
+        }
+        if (item.trackingNumber || item.shippingAddress) {
+          cacheOrderDetails(item);
+        }
+        return item;
+      });
+
+      return enrichedItems;
     } catch (e) {
       console.warn('[orderService] getCustomerOrders failed:', e.message);
       return [];

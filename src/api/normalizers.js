@@ -859,13 +859,13 @@ export function normalizeShippingOption(raw) {
 
   const minDays = opt.minDeliveryDays !== undefined && opt.minDeliveryDays !== null
     ? Number(opt.minDeliveryDays)
-    : (isExpress ? 1 : 2);
+    : null;
   const maxDays = opt.maxDeliveryDays !== undefined && opt.maxDeliveryDays !== null
     ? Number(opt.maxDeliveryDays)
-    : (isExpress ? 2 : 4);
-  const estDays = opt.estimatedDeliveryDays !== undefined && opt.estimatedDeliveryDays !== null
+    : null;
+  const estDays = (opt.estimatedDeliveryDays !== undefined && opt.estimatedDeliveryDays !== null && String(opt.estimatedDeliveryDays).trim() !== '3-3' && String(opt.estimatedDeliveryDays).trim() !== '0')
     ? String(opt.estimatedDeliveryDays)
-    : `${minDays}-${maxDays}`;
+    : null;
 
   let shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
     ? Number(opt.shippingMethodId)

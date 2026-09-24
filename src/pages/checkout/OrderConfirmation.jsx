@@ -39,7 +39,16 @@ export default function OrderConfirmation() {
         const trk = trkRes.status === 'fulfilled' ? trkRes.value : null;
 
         if (item) {
-          const resolvedTracking = deliv?.trackingNumber || trk?.trackingNumber || item.trackingNumber || item.trackingCode || item.dhlTrackingNumber || null;
+          const resolvedTracking = deliv?.trackingNumber
+            || deliv?.carrierTrackingNumber
+            || trk?.trackingNumber
+            || item.trackingNumber
+            || item.trackingCode
+            || item.dhlTrackingNumber
+            || item.shipping?.trackingNumber
+            || item.shippingSnapshot?.trackingNumber
+            || item.shipments?.[0]?.trackingNumber
+            || null;
           const isPaid = isOrderConfirmedPaid(orderId) || isSuccessStatus(order?.paymentStatus) || isSuccessStatus(item.paymentStatus) || Boolean(item.paidAt);
 
           setOrder({
@@ -150,54 +159,28 @@ export default function OrderConfirmation() {
                 {String(displayStatus).replace(/([A-Z])/g, ' $1').trim()}
               </span>
             </div>
-            {/* Estimated Delivery Row — ONLY rendered if provided by API (Zero static/hardcoded data) */}
-            {(() => {
-              const estDays = order?.estimatedDeliveryDays ?? order?.shipping?.estimatedDeliveryDays ?? order?.shippingSnapshot?.estimatedDeliveryDays;
-              const estDate = order?.estimatedDeliveryDate || order?.estimatedDelivery || order?.shipping?.estimatedDeliveryDate;
-              const carrier = order?.carrier || order?.shippingMethod || order?.shipping?.carrier;
-
-              if (!estDays && !estDate) return null;
-
-              const deliveryText = estDays 
-                ? `${estDays} ${language === 'ar' ? 'أيام عمل' : 'Business Days'}`
-                : String(estDate);
-
-              return (
-                <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
-                  <span className="text-[#D8BE99] font-medium">{t('confirmation.estimatedDelivery')}:</span>
-                  <span className="text-[#F3E6D0] font-bold font-mono">
-                    {deliveryText}{carrier ? ` (${carrier})` : ''}
-                  </span>
-                </div>
-              );
-            })()}
-            {/* Tracking Number Row */}
+            {/* Tracking Number Row (ONLY rendered when a real courier tracking number is assigned) */}
             {(() => {
               const trackingNum = order?.trackingNumber || order?.trackingCode || order?.dhlTrackingNumber || order?.shipping?.trackingNumber || order?.shipments?.[0]?.trackingNumber || order?.shippingSnapshot?.trackingNumber;
+              if (!trackingNum) return null;
               return (
                 <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
                   <span className="text-[#D8BE99] font-medium flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Tracking Number:</span>
                   </span>
-                  {trackingNum ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#F2D675] font-bold font-mono text-xs bg-black/60 px-2.5 py-1 rounded border border-[#D4AF37]/40 shadow-sm">
-                        {trackingNum}
-                      </span>
-                      <button
-                        onClick={() => handleCopyTracking(trackingNum)}
-                        className="p-1 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer"
-                        title="Copy Tracking Number"
-                      >
-                        {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-[#D8BE99]/60 font-mono italic text-xs">
-                      Generated upon courier handover
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#F2D675] font-bold font-mono text-xs bg-black/60 px-2.5 py-1 rounded border border-[#D4AF37]/40 shadow-sm select-all">
+                      {trackingNum}
                     </span>
-                  )}
+                    <button
+                      onClick={() => handleCopyTracking(trackingNum)}
+                      className="p-1 text-[#D4AF37] hover:text-[#F2D675] transition-colors cursor-pointer"
+                      title="Copy Tracking Number"
+                    >
+                      {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
               );
             })()}
