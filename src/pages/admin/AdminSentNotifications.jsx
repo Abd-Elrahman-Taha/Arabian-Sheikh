@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import notificationApi from '../../api/notification.api';
 import { discountService } from '../../services/discountService';
 import { userService } from '../../services/userService';
@@ -37,6 +37,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 
+const WEBSITE_URL = 'https://arabian-sheikh.vercel.app';
+
 export default function AdminSentNotifications() {
   const { success, error, info } = useToast();
 
@@ -57,6 +59,10 @@ export default function AdminSentNotifications() {
   const [exportingCsvId, setExportingCsvId] = useState(null);
   const [manualSentStatus, setManualSentStatus] = useState({}); // recipientId -> { whatsapp: bool, email: bool, inApp: bool }
 
+  // Overlay scroll refs to guarantee modals render pinned at the absolute TOP of page
+  const rosterOverlayRef = useRef(null);
+  const composerOverlayRef = useRef(null);
+
   // Manual Notification Composer State (One-by-One patron dispatch)
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerLoading, setComposerLoading] = useState(false);
@@ -71,10 +77,42 @@ export default function AdminSentNotifications() {
     patronEmail: '',
     patronId: '',
     title: 'Exclusive Palace Privilege',
-    body: 'Your presence is requested at Arabian Sheikh. Experience our newest private reserves with royal complimentary delivery.',
-    actionUrl: '/shop',
+    body: `Your presence is requested at Arabian Sheikh. Experience our newest private reserves with royal complimentary delivery.\n\n👑 Visit Arabian Sheikh: https://arabian-sheikh.vercel.app/`,
+    actionUrl: 'https://arabian-sheikh.vercel.app/',
     selectedCouponId: ''
   });
+
+  // Ensure Roster modal is positioned at the very top of the page immediately upon opening
+  useEffect(() => {
+    if (selectedBatch) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+      if (typeof document !== 'undefined') {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+      if (rosterOverlayRef.current) {
+        rosterOverlayRef.current.scrollTop = 0;
+      }
+    }
+  }, [selectedBatch]);
+
+  // Ensure Composer modal is positioned at the very top of the page immediately upon opening
+  useEffect(() => {
+    if (composerOpen) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+      if (typeof document !== 'undefined') {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+      if (composerOverlayRef.current) {
+        composerOverlayRef.current.scrollTop = 0;
+      }
+    }
+  }, [composerOpen]);
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
@@ -123,12 +161,70 @@ export default function AdminSentNotifications() {
       patronEmail: '',
       patronId: '',
       title: 'Exclusive Palace Privilege',
-      body: 'Your presence is requested at Arabian Sheikh. Experience our newest private reserves with royal complimentary delivery.',
-      actionUrl: '/shop',
+      body: `Your presence is requested at Arabian Sheikh. Experience our newest private reserves with royal complimentary delivery.\n\n👑 Visit Arabian Sheikh: https://arabian-sheikh.vercel.app/`,
+      actionUrl: 'https://arabian-sheikh.vercel.app/',
       selectedCouponId: ''
     });
     setPreviewTab('whatsapp');
     setComposerOpen(true);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  };
+
+  // Helper to format messages with website link and coupon code
+  const formatPatronMessage = (baseText, couponCode = '', actionUrl = '') => {
+    let text = (baseText || '').trim();
+
+    // 1. Append Coupon Code if present and not already typed in message
+    if (couponCode && !text.toUpperCase().includes(couponCode.toUpperCase())) {
+      text += `\n\n🎟️ Use Exclusive Privilege Code: ${couponCode}`;
+    }
+
+    // 2. Append Website URL if not already typed in message
+    if (!text.includes('arabian-sheikh.vercel.app')) {
+      const cleanUrl = actionUrl && actionUrl !== '/shop' && actionUrl !== '/'
+        ? (actionUrl.startsWith('http') ? actionUrl : `${WEBSITE_URL}${actionUrl.startsWith('/') ? actionUrl : `/${actionUrl}`}`)
+        : 'https://arabian-sheikh.vercel.app/';
+      text += `\n👑 Visit Arabian Sheikh: ${cleanUrl}`;
+    }
+
+    return text;
+  };
+
+  // When admin selects a coupon, automatically type it into the message body
+  const handleSelectCoupon = (couponId) => {
+    const chosenCoupon = activeCoupons.find(c => String(c.id) === String(couponId));
+    const couponCode = chosenCoupon?.code || '';
+    const discountLabel = chosenCoupon ? (chosenCoupon.type === 'Percentage' ? `${chosenCoupon.value}% OFF` : `€${chosenCoupon.value} OFF`) : '';
+
+    setPatronForm(prev => {
+      let updatedBody = prev.body;
+      // Strip any existing coupon privilege line when switching or clearing
+      updatedBody = updatedBody.replace(/\n\n🎟️ Use Exclusive Privilege Code: [^\n]+/g, '');
+
+      if (couponCode) {
+        if (updatedBody.includes('👑 Visit Arabian Sheikh:')) {
+          updatedBody = updatedBody.replace(
+            '👑 Visit Arabian Sheikh:',
+            `🎟️ Use Exclusive Privilege Code: ${couponCode}${discountLabel ? ` (${discountLabel})` : ''}\n\n👑 Visit Arabian Sheikh:`
+          );
+        } else {
+          updatedBody = `${updatedBody.trim()}\n\n🎟️ Use Exclusive Privilege Code: ${couponCode}${discountLabel ? ` (${discountLabel})` : ''}\n👑 Visit Arabian Sheikh: https://arabian-sheikh.vercel.app/`;
+        }
+      }
+
+      // Guarantee store website link is present
+      if (!updatedBody.includes('https://arabian-sheikh.vercel.app')) {
+        updatedBody = `${updatedBody.trim()}\n\n👑 Visit Arabian Sheikh: https://arabian-sheikh.vercel.app/`;
+      }
+
+      return {
+        ...prev,
+        selectedCouponId: couponId,
+        body: updatedBody
+      };
+    });
   };
 
   // Helper to select a patron from the directory
@@ -168,13 +264,14 @@ export default function AdminSentNotifications() {
     return `mailto:${encodeURIComponent(email || '')}?subject=${encodeURIComponent(title || 'Arabian Sheikh Notice')}&body=${encodeURIComponent(text || '')}`;
   };
 
-  // 1-Click Manual Send to Patron: WhatsApp
-  const handleSendWhatsAppManual = (phone, text, recipientId = null) => {
+  // 1-Click Manual Send to Patron: WhatsApp (with website link & coupon guaranteed)
+  const handleSendWhatsAppManual = (phone, text, recipientId = null, couponCode = '', actionUrl = '') => {
     if (!phone) {
       error('Patron phone number is required to send via WhatsApp.');
       return;
     }
-    const url = getWhatsAppUrl(phone, text);
+    const formatted = formatPatronMessage(text, couponCode, actionUrl || patronForm.actionUrl);
+    const url = getWhatsAppUrl(phone, formatted);
     window.open(url, '_blank', 'noopener,noreferrer');
     if (recipientId) {
       setManualSentStatus(prev => ({
@@ -182,16 +279,17 @@ export default function AdminSentNotifications() {
         [recipientId]: { ...prev[recipientId], whatsapp: true }
       }));
     }
-    success('WhatsApp opened with pre-filled message. Press send in WhatsApp.');
+    success('WhatsApp opened with pre-filled message, coupon, and website link.');
   };
 
-  // 1-Click Manual Send to Patron: Email
-  const handleSendEmailManual = (email, title, text, recipientId = null) => {
+  // 1-Click Manual Send to Patron: Email (with website link & coupon guaranteed)
+  const handleSendEmailManual = (email, title, text, recipientId = null, couponCode = '', actionUrl = '') => {
     if (!email) {
       error('Patron email address is required to send via Email.');
       return;
     }
-    const url = getMailtoUrl(email, title, text);
+    const formatted = formatPatronMessage(text, couponCode, actionUrl || patronForm.actionUrl);
+    const url = getMailtoUrl(email, title, formatted);
     window.location.href = url;
     if (recipientId) {
       setManualSentStatus(prev => ({
@@ -199,15 +297,16 @@ export default function AdminSentNotifications() {
         [recipientId]: { ...prev[recipientId], email: true }
       }));
     }
-    info('Email client opened with pre-filled subject and body.');
+    info('Email client opened with pre-filled subject, body, and website link.');
   };
 
   // 1-Click Manual Send to Patron: In-App Website Notification
-  const handleSendInAppManual = async (patronData, recipientId = null) => {
+  const handleSendInAppManual = async (patronData, recipientId = null, couponCode = '', actionUrl = '') => {
+    const formattedBody = formatPatronMessage(patronData.body, couponCode, actionUrl || patronData.actionUrl);
     try {
       await notificationApi.sendBroadcastNotification({
         title: patronData.title,
-        body: patronData.body,
+        body: formattedBody,
         targetAudience: 'specific',
         specificTarget: patronData.patronEmail || patronData.patronPhone || patronData.patronId,
         channels: ['InApp'],
@@ -225,11 +324,17 @@ export default function AdminSentNotifications() {
     }
   };
 
-  // Open Recipients modal
+  // Open Recipients modal anchored immediately to TOP of screen
   const handleOpenRecipients = async (batchId) => {
     setSelectedBatch(batchId);
     setSelectedMessage(null);
     setRecipientsLoading(true);
+
+    // Scroll window to top immediately so roster modal is at the very top of page
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
     try {
       const [details, recipientList] = await Promise.all([
         notificationApi.getSentNotificationDetails(batchId).catch(() => null),
@@ -354,11 +459,13 @@ export default function AdminSentNotifications() {
 
     setComposerLoading(true);
     try {
+      const chosenCoupon = activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId));
+      const formattedBody = formatPatronMessage(patronForm.body, chosenCoupon?.code, patronForm.actionUrl);
       const targetIdentifier = patronForm.patronEmail || patronForm.patronPhone || patronForm.patronName;
-      
+
       const payload = {
         title: patronForm.title.trim(),
-        body: patronForm.body.trim(),
+        body: formattedBody,
         targetAudience: 'specific',
         specificTarget: targetIdentifier,
         eventType: 'Manual_Patron_Notice',
@@ -372,7 +479,7 @@ export default function AdminSentNotifications() {
       const newRecord = {
         batchId: result?.batchId || `MANUAL-${Date.now()}`,
         title: `${patronForm.title} (${patronForm.patronName || targetIdentifier})`,
-        body: patronForm.body,
+        body: formattedBody,
         eventType: 'Manual_Patron_Notice',
         channels: ['InApp', 'WhatsApp', 'Email'],
         totalRecipients: 1,
@@ -641,27 +748,31 @@ export default function AdminSentNotifications() {
         </div>
       </div>
 
-      {/* Recipient Drilldown Modal (With 1-by-1 Manual Send Buttons!) */}
+      {/* Recipient Drilldown Modal (Anchored to the absolute TOP of page) */}
       {selectedBatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-4xl rounded-3xl bg-[#0B0A08] border border-[#D4AF37]/40 p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-[#F3E6D0] space-y-6 max-h-[92vh] flex flex-col overflow-hidden">
-            <div className="flex items-start justify-between border-b border-[#D4AF37]/20 pb-4">
+        <div
+          ref={rosterOverlayRef}
+          className="fixed inset-0 z-50 flex items-start justify-center pt-2 sm:pt-4 pb-6 px-2 sm:px-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
+        >
+          <div className="relative w-full max-w-4xl rounded-3xl bg-[#0B0A08] border border-[#D4AF37]/40 p-5 sm:p-6 shadow-[0_25px_70px_rgba(0,0,0,0.98)] text-[#F3E6D0] space-y-4 max-h-[96vh] flex flex-col overflow-hidden mt-0 mb-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-[#D4AF37]/20 pb-3 shrink-0">
               <div className="space-y-0.5">
-                <h3 className="font-cinzel text-lg font-bold uppercase text-[#F2D675] flex items-center gap-2">
+                <h3 className="font-cinzel text-base sm:text-lg font-bold uppercase text-[#F2D675] flex items-center gap-2">
                   <Users className="w-5 h-5 text-[#D4AF37]" />
                   <span>Patron Delivery Roster — Manual 1-by-1 Sending</span>
                 </h3>
-                <p className="font-mono text-xs text-[#D8BE99]/80">
-                  Batch: <span className="text-[#F3E6D0]">{selectedBatch}</span> • Send to each patron individually via WhatsApp or Email
+                <p className="font-mono text-[11px] text-[#D8BE99]/80">
+                  Batch: <span className="text-[#F3E6D0]">{selectedBatch}</span> • Send to patrons individually via WhatsApp, Email & Website
                 </p>
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 {/* Single Button: Gather all messages into one PDF */}
                 <button
                   type="button"
                   onClick={() => handleExportPdfReport(selectedBatch)}
                   disabled={exportingPdfId === selectedBatch}
-                  className="px-3.5 py-1.5 rounded-xl border border-[#D4AF37] bg-[#D4AF37]/20 text-xs font-cinzel font-bold text-[#F2D675] hover:bg-[#D4AF37] hover:text-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                  className="px-3 py-1.5 rounded-xl border border-[#D4AF37] bg-[#D4AF37]/20 text-xs font-cinzel font-bold text-[#F2D675] hover:bg-[#D4AF37] hover:text-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
                   title="Gather all messages into one PDF file"
                 >
                   {exportingPdfId === selectedBatch ? (
@@ -683,8 +794,8 @@ export default function AdminSentNotifications() {
               </div>
             </div>
 
-            {/* Recipients List with Direct 1-by-1 Send Buttons */}
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+            {/* Recipients List directly in view without scrolling */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {recipientsLoading ? (
                 <div className="py-12 text-center text-[#D8BE99]">
                   <Loader2 className="w-6 h-6 animate-spin text-[#D4AF37] mx-auto mb-2" />
@@ -700,6 +811,7 @@ export default function AdminSentNotifications() {
                   const email = r.email || '';
                   const language = r.language || 'en';
                   const messageText = r.message || r.body || batchDetails?.body || batchDetails?.message || 'Exclusive offer from Arabian Sheikh';
+                  const couponCode = batchDetails?.couponCode || r.couponCode || '';
 
                   const isSentStatus = manualSentStatus[recipientId] || {};
                   const isMsgLoading = messageLoadingId === recipientId;
@@ -707,12 +819,12 @@ export default function AdminSentNotifications() {
                   return (
                     <div
                       key={recipientId}
-                      className="p-3.5 rounded-xl bg-black/50 border border-[#D4AF37]/25 hover:border-[#D4AF37]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-all"
+                      className="p-3 rounded-xl bg-black/50 border border-[#D4AF37]/25 hover:border-[#D4AF37]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs transition-all"
                     >
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-[#F3E6D0] text-sm">{recipientName}</span>
-                          <span className="uppercase text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[#D8BE99]">
+                          <span className="uppercase text-[9px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-[#D8BE99]">
                             {language}
                           </span>
                         </div>
@@ -732,19 +844,19 @@ export default function AdminSentNotifications() {
                         </div>
                       </div>
 
-                      {/* Manual 1-by-1 Send Actions */}
+                      {/* Manual 1-by-1 Send Actions with link & coupon formatted */}
                       <div className="flex items-center gap-2 self-end sm:self-center">
                         {/* 1. Send WhatsApp 1-by-1 */}
                         {phone && (
                           <button
                             type="button"
-                            onClick={() => handleSendWhatsAppManual(phone, messageText, recipientId)}
+                            onClick={() => handleSendWhatsAppManual(phone, messageText, recipientId, couponCode, batchDetails?.actionUrl)}
                             className={`px-3 py-1.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
                               isSentStatus.whatsapp
                                 ? 'bg-emerald-900/50 border-emerald-400 text-emerald-300'
                                 : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400 hover:bg-emerald-800/40'
                             }`}
-                            title="Open WhatsApp with this patron and prefilled message"
+                            title="Open WhatsApp with this patron, prefilled message, coupon, and website link"
                           >
                             <Smartphone className="w-3.5 h-3.5" />
                             <span>{isSentStatus.whatsapp ? '✓ WhatsApp Sent' : 'Send WhatsApp'}</span>
@@ -755,13 +867,13 @@ export default function AdminSentNotifications() {
                         {email && (
                           <button
                             type="button"
-                            onClick={() => handleSendEmailManual(email, batchDetails?.title || 'Arabian Sheikh Notice', messageText, recipientId)}
+                            onClick={() => handleSendEmailManual(email, batchDetails?.title || 'Arabian Sheikh Notice', messageText, recipientId, couponCode, batchDetails?.actionUrl)}
                             className={`px-3 py-1.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
                               isSentStatus.email
                                 ? 'bg-blue-900/50 border-blue-400 text-blue-300'
                                 : 'bg-blue-950/40 border-blue-500/40 text-blue-400 hover:bg-blue-800/40'
                             }`}
-                            title="Open email client for this patron with prefilled message"
+                            title="Open email client for this patron with prefilled message, coupon, and website link"
                           >
                             <Mail className="w-3.5 h-3.5" />
                             <span>{isSentStatus.email ? '✓ Email Sent' : 'Send Email'}</span>
@@ -776,8 +888,9 @@ export default function AdminSentNotifications() {
                             body: messageText,
                             patronEmail: email,
                             patronPhone: phone,
-                            patronId: recipientId
-                          }, recipientId)}
+                            patronId: recipientId,
+                            actionUrl: batchDetails?.actionUrl
+                          }, recipientId, couponCode, batchDetails?.actionUrl)}
                           className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-sm ${
                             isSentStatus.inApp
                               ? 'bg-amber-900/50 border-amber-400 text-[#F2D675]'
@@ -811,8 +924,8 @@ export default function AdminSentNotifications() {
 
             {/* Message Details Preview Drawer */}
             {selectedMessage && (
-              <div className="p-4 rounded-2xl bg-gradient-to-b from-[#18140E] to-[#0D0B08] border border-[#D4AF37]/50 shadow-2xl space-y-3 animate-fade-in relative">
-                <div className="flex items-start justify-between gap-3 border-b border-[#D4AF37]/20 pb-2">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-b from-[#18140E] to-[#0D0B08] border border-[#D4AF37]/50 shadow-2xl space-y-2 animate-fade-in relative shrink-0">
+                <div className="flex items-start justify-between gap-3 border-b border-[#D4AF37]/20 pb-1.5">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#D4AF37]" />
                     <h4 className="font-cinzel text-xs font-bold text-[#F2D675] uppercase tracking-wide">
@@ -828,8 +941,8 @@ export default function AdminSentNotifications() {
                   </button>
                 </div>
 
-                <div className="p-3 rounded-xl bg-black/60 border border-[#D4AF37]/30 text-xs text-[#F3E6D0] leading-relaxed select-all">
-                  {selectedMessage.body || selectedMessage.text}
+                <div className="p-2.5 rounded-xl bg-black/60 border border-[#D4AF37]/30 text-xs text-[#F3E6D0] leading-relaxed select-all">
+                  {formatPatronMessage(selectedMessage.body || selectedMessage.text, batchDetails?.couponCode, batchDetails?.actionUrl)}
                 </div>
               </div>
             )}
@@ -839,19 +952,22 @@ export default function AdminSentNotifications() {
 
       {/* MANUAL NOTIFICATION COMPOSER (ONE-BY-ONE PATRON SENDING) */}
       {composerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-4xl rounded-3xl bg-[#0B0A08] border border-[#D4AF37]/45 shadow-[0_25px_70px_rgba(0,0,0,0.98)] text-[#F3E6D0] max-h-[92vh] flex flex-col overflow-hidden">
+        <div
+          ref={composerOverlayRef}
+          className="fixed inset-0 z-50 flex items-start justify-center pt-2 sm:pt-4 pb-6 px-2 sm:px-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
+        >
+          <div className="relative w-full max-w-4xl rounded-3xl bg-[#0B0A08] border border-[#D4AF37]/45 shadow-[0_25px_70px_rgba(0,0,0,0.98)] text-[#F3E6D0] max-h-[96vh] flex flex-col overflow-hidden mt-0 mb-auto">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-[#D4AF37]/25 flex items-center justify-between bg-black/50">
+            <div className="p-4 sm:p-5 border-b border-[#D4AF37]/25 flex items-center justify-between bg-black/50 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl border border-[#D4AF37]/50 bg-gradient-to-br from-[#D4AF37]/20 via-black to-[#8C6239]/20 flex items-center justify-center text-[#F2D675] shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                <div className="w-9 h-9 rounded-xl border border-[#D4AF37]/50 bg-gradient-to-br from-[#D4AF37]/20 via-black to-[#8C6239]/20 flex items-center justify-center text-[#F2D675] shadow-[0_0_15px_rgba(212,175,55,0.3)]">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-cinzel text-lg sm:text-xl font-bold uppercase tracking-wider text-[#F2D675]">
+                  <h3 className="font-cinzel text-base sm:text-lg font-bold uppercase tracking-wider text-[#F2D675]">
                     Send Notification to Patron (Manual Dispatch)
                   </h3>
-                  <p className="text-xs text-[#D8BE99]">
+                  <p className="text-[11px] text-[#D8BE99]">
                     Select a customer and send via WhatsApp, Email, and Website Notifications one by one.
                   </p>
                 </div>
@@ -859,14 +975,14 @@ export default function AdminSentNotifications() {
               <button
                 type="button"
                 onClick={() => setComposerOpen(false)}
-                className="p-2 rounded-full text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full text-[#D8BE99] hover:text-[#F3E6D0] hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column: Form & Patron Selection (7 cols) */}
               <form onSubmit={handleSaveManualDispatch} id="manual-patron-form" className="lg:col-span-7 space-y-4 text-xs font-sans">
                 {/* 1. Patron Selection & Directory Search */}
@@ -882,7 +998,7 @@ export default function AdminSentNotifications() {
                       value={customerSearchQuery}
                       onChange={(e) => setCustomerSearchQuery(e.target.value)}
                       placeholder="Search patron by name, email, or phone number..."
-                      className="w-full bg-black/60 border border-[#D4AF37]/40 rounded-xl py-2.5 pl-9 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
+                      className="w-full bg-black/60 border border-[#D4AF37]/40 rounded-xl py-2 pl-9 pr-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none"
                     />
                     <Search className="w-4 h-4 text-[#D4AF37] absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
@@ -957,31 +1073,11 @@ export default function AdminSentNotifications() {
                   />
                 </div>
 
-                {/* 3. Message Body */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="uppercase tracking-wider text-[#D8BE99] font-semibold">
-                      Message Content
-                    </label>
-                    <span className="text-[10px] font-mono text-[#D8BE99]/60">
-                      {patronForm.body.length} chars
-                    </span>
-                  </div>
-                  <textarea
-                    rows={4}
-                    required
-                    value={patronForm.body}
-                    onChange={(e) => setPatronForm({ ...patronForm, body: e.target.value })}
-                    placeholder="Type the message for this patron..."
-                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl p-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none leading-relaxed resize-none"
-                  />
-                </div>
-
-                {/* 4. Action URL & Optional Coupon */}
+                {/* 3. Action URL & Optional Coupon (Auto-types into message!) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block uppercase tracking-wider text-[#D8BE99] font-semibold mb-1">
-                      Link / CTA URL
+                      Website Link URL
                     </label>
                     <input
                       type="text"
@@ -994,14 +1090,14 @@ export default function AdminSentNotifications() {
 
                   <div>
                     <label className="block uppercase tracking-wider text-[#D8BE99] font-semibold mb-1">
-                      Attach Coupon (Optional)
+                      Attach Coupon (Types in message)
                     </label>
                     <select
                       value={patronForm.selectedCouponId}
-                      onChange={(e) => setPatronForm({ ...patronForm, selectedCouponId: e.target.value })}
-                      className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-[#F3E6D0]"
+                      onChange={(e) => handleSelectCoupon(e.target.value)}
+                      className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl py-2 px-3 text-[#F3E6D0] cursor-pointer"
                     >
-                      <option value="">No coupon</option>
+                      <option value="">No coupon attached</option>
                       {activeCoupons.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.code} ({c.type === 'Percentage' ? `${c.value}% OFF` : `€${c.value} OFF`})
@@ -1011,8 +1107,28 @@ export default function AdminSentNotifications() {
                   </div>
                 </div>
 
+                {/* 4. Message Content Body */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="uppercase tracking-wider text-[#D8BE99] font-semibold">
+                      Message Content (Includes Website Link & Coupon)
+                    </label>
+                    <span className="text-[10px] font-mono text-[#D8BE99]/60">
+                      {patronForm.body.length} chars
+                    </span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    required
+                    value={patronForm.body}
+                    onChange={(e) => setPatronForm({ ...patronForm, body: e.target.value })}
+                    placeholder="Type the message for this patron..."
+                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl p-3 text-[#F3E6D0] placeholder-[#D8BE99]/50 focus:border-[#D4AF37] focus:outline-none leading-relaxed resize-none font-mono text-xs"
+                  />
+                </div>
+
                 {/* 5. Direct Manual Send Buttons Box */}
-                <div className="p-4 rounded-2xl bg-black/60 border border-[#D4AF37]/40 space-y-3">
+                <div className="p-3.5 rounded-2xl bg-black/60 border border-[#D4AF37]/40 space-y-2.5">
                   <span className="font-cinzel text-xs uppercase tracking-wider text-[#F2D675] font-bold block">
                     Direct 1-Click Manual Send Actions:
                   </span>
@@ -1020,7 +1136,13 @@ export default function AdminSentNotifications() {
                     {/* Send WhatsApp */}
                     <button
                       type="button"
-                      onClick={() => handleSendWhatsAppManual(patronForm.patronPhone, patronForm.body)}
+                      onClick={() => handleSendWhatsAppManual(
+                        patronForm.patronPhone,
+                        patronForm.body,
+                        null,
+                        activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
+                        patronForm.actionUrl
+                      )}
                       className="py-2.5 px-3 rounded-xl bg-emerald-950/50 border border-emerald-500/60 hover:bg-emerald-900/60 text-emerald-300 font-cinzel font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
                     >
                       <Smartphone className="w-4 h-4 text-emerald-400" />
@@ -1030,7 +1152,14 @@ export default function AdminSentNotifications() {
                     {/* Send Email */}
                     <button
                       type="button"
-                      onClick={() => handleSendEmailManual(patronForm.patronEmail, patronForm.title, patronForm.body)}
+                      onClick={() => handleSendEmailManual(
+                        patronForm.patronEmail,
+                        patronForm.title,
+                        patronForm.body,
+                        null,
+                        activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
+                        patronForm.actionUrl
+                      )}
                       className="py-2.5 px-3 rounded-xl bg-blue-950/50 border border-blue-500/60 hover:bg-blue-900/60 text-blue-300 font-cinzel font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
                     >
                       <Mail className="w-4 h-4 text-blue-400" />
@@ -1040,7 +1169,12 @@ export default function AdminSentNotifications() {
                     {/* Send In-App */}
                     <button
                       type="button"
-                      onClick={() => handleSendInAppManual(patronForm)}
+                      onClick={() => handleSendInAppManual(
+                        patronForm,
+                        null,
+                        activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
+                        patronForm.actionUrl
+                      )}
                       className="py-2.5 px-3 rounded-xl bg-amber-950/50 border border-[#D4AF37]/60 hover:bg-[#D4AF37]/20 text-[#F2D675] font-cinzel font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
                     >
                       <Bell className="w-4 h-4 text-[#D4AF37]" />
@@ -1106,7 +1240,7 @@ export default function AdminSentNotifications() {
                       <span className="text-[10px] font-mono text-emerald-400/80 block uppercase">
                         Patron WhatsApp Screen
                       </span>
-                      <div className="p-4 rounded-2xl bg-[#0B2017] border border-emerald-500/40 text-emerald-100 shadow-xl space-y-2 max-w-sm">
+                      <div className="p-3.5 rounded-2xl bg-[#0B2017] border border-emerald-500/40 text-emerald-100 shadow-xl space-y-2 max-w-sm">
                         <div className="flex items-center gap-2 border-b border-emerald-500/20 pb-1.5">
                           <span className="font-cinzel text-xs font-bold text-emerald-300">
                             Arabian Sheikh Official
@@ -1116,7 +1250,11 @@ export default function AdminSentNotifications() {
                           {patronForm.title || 'Palace Notice'}
                         </p>
                         <p className="text-[11px] font-sans text-emerald-100/90 leading-relaxed whitespace-pre-wrap">
-                          {patronForm.body || 'WhatsApp template message body preview...'}
+                          {formatPatronMessage(
+                            patronForm.body,
+                            activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
+                            patronForm.actionUrl
+                          )}
                         </p>
                         <div className="pt-1 flex items-center justify-between text-[9px] text-emerald-400/60 font-mono">
                           <span>To: {patronForm.patronName || 'Patron'}</span>
@@ -1132,7 +1270,7 @@ export default function AdminSentNotifications() {
                       <span className="text-[10px] font-mono text-blue-400/80 block uppercase">
                         Patron Email Screen
                       </span>
-                      <div className="p-4 rounded-2xl bg-[#111116] border border-blue-500/30 text-[#F3E6D0] shadow-xl space-y-3">
+                      <div className="p-3.5 rounded-2xl bg-[#111116] border border-blue-500/30 text-[#F3E6D0] shadow-xl space-y-2.5">
                         <div className="text-center border-b border-[#D4AF37]/20 pb-2">
                           <span className="font-cinzel text-[11px] font-bold text-[#F2D675] tracking-widest uppercase block">
                             ARABIAN SHEIKH
@@ -1142,8 +1280,12 @@ export default function AdminSentNotifications() {
                           <h4 className="font-cinzel text-xs font-bold text-[#F2D675]">
                             {patronForm.title || 'Email Subject Header'}
                           </h4>
-                          <p className="text-[11px] font-sans text-[#D8BE99] mt-1 leading-relaxed">
-                            {patronForm.body || 'Email content preview will appear here...'}
+                          <p className="text-[11px] font-sans text-[#D8BE99] mt-1 leading-relaxed whitespace-pre-wrap">
+                            {formatPatronMessage(
+                              patronForm.body,
+                              activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
+                              patronForm.actionUrl
+                            )}
                           </p>
                         </div>
                       </div>
@@ -1156,15 +1298,19 @@ export default function AdminSentNotifications() {
                       <span className="text-[10px] font-mono text-[#D8BE99]/60 block uppercase">
                         Website Bell Notification Toast
                       </span>
-                      <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1A140B] via-[#0E0C08] to-[#000000] border border-[#D4AF37]/60 shadow-xl space-y-2">
+                      <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1A140B] via-[#0E0C08] to-[#000000] border border-[#D4AF37]/60 shadow-xl space-y-2">
                         <div className="flex items-center gap-2">
                           <Bell className="w-3.5 h-3.5 text-[#F2D675]" />
                           <span className="font-cinzel text-xs font-bold text-[#F2D675]">
                             {patronForm.title || 'Notification Title'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#F3E6D0]/90 font-sans leading-relaxed">
-                          {patronForm.body || 'In-App toast preview...'}
+                        <p className="text-[11px] text-[#F3E6D0]/90 font-sans leading-relaxed whitespace-pre-wrap">
+                          {formatPatronMessage(
+                            patronForm.body,
+                            activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
+                            patronForm.actionUrl
+                          )}
                         </p>
                       </div>
                     </div>
@@ -1174,7 +1320,7 @@ export default function AdminSentNotifications() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-5 sm:p-6 border-t border-[#D4AF37]/25 flex items-center justify-between bg-black/60">
+            <div className="p-4 sm:p-5 border-t border-[#D4AF37]/25 flex items-center justify-between bg-black/60 shrink-0">
               <button
                 type="button"
                 onClick={() => setComposerOpen(false)}
