@@ -58,6 +58,8 @@ import CheckoutPage from './pages/checkout/CheckoutPage';
 import OrderConfirmation from './pages/checkout/OrderConfirmation';
 import OrderTracking from './pages/checkout/OrderTracking';
 import PaymentReturn from './pages/checkout/PaymentReturn';
+import UnsubscribePage from './pages/notifications/UnsubscribePage';
+
 
 // Admin Suite Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -284,7 +286,12 @@ function MainRouter() {
       case currentPath.startsWith('/order-tracking'):
         return <OrderTracking />;
 
+      // Notifications unsubscribe landing
+      case currentPath.startsWith('/notifications/unsubscribe'):
+        return <UnsubscribePage />;
+
       default:
+
         return <NotFound />;
     }
   };

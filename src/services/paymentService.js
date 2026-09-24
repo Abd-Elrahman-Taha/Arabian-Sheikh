@@ -31,8 +31,15 @@ export function getStripePromise(customKey) {
   const key = (customKey || getStripePublishableKey()).trim();
   if (!key) return null;
   if (!stripePromiseCache.has(key)) {
-    stripePromiseCache.set(key, loadStripe(key));
+    stripePromiseCache.set(
+      key,
+      loadStripe(key).catch((err) => {
+        console.warn('[Stripe] Failed to load Stripe.js:', err?.message || err);
+        return null;
+      })
+    );
   }
+
   return stripePromiseCache.get(key);
 }
 

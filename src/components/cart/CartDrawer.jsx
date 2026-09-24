@@ -404,12 +404,8 @@ export default function CartDrawer() {
                 </button>
               </form>
 
-              {/* Subtotal & Total */}
+              {/* Total */}
               <div className="space-y-1.5 pt-2 text-xs">
-                <div className="flex justify-between text-[#D8BE99]">
-                  <span className={isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}>Subtotal</span>
-                  <span className={`font-mono font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>€{totals.subtotal.toFixed(2)}</span>
-                </div>
                 {totals.promoDiscountAmount > 0 && (
                   <div className="flex justify-between text-amber-500 font-bold">
                     <span>👑 Palace Offer ({totals.activePromoName || 'Promotion'})</span>
@@ -422,21 +418,12 @@ export default function CartDrawer() {
                     <span>-€{totals.couponDiscountAmount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[#D8BE99]">
-                  <span className={isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}>DHL Express Delivery</span>
-                  <span className={`font-mono font-bold ${isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}`}>
-                    {totals.shipping === 0 ? (
-                      <span className="text-emerald-500 font-bold uppercase text-[11px]">Free</span>
-                    ) : (
-                      `€${totals.shipping.toFixed(2)}`
-                    )}
-                  </span>
-                </div>
                 <div className="flex justify-between text-base font-cinzel font-bold pt-2 border-t border-black/10 dark:border-white/10">
-                  <span className={isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}>Estimated Total</span>
-                  <span className="text-[#D4AF37]">€{totals.total.toFixed(2)}</span>
+                  <span className={isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'}>Total</span>
+                  <span className="text-[#D4AF37] font-mono">€{totals.total.toFixed(2)}</span>
                 </div>
               </div>
+
 
               {/* Checkout Button */}
               <button

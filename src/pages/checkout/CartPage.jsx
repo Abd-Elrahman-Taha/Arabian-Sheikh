@@ -409,13 +409,6 @@ export default function CartPage() {
 
                 {/* Financial Breakdown */}
                 <div className="space-y-3 text-xs text-[#D8BE99] border-t border-[#D4AF37]/20 pt-5">
-                  <div className="flex justify-between items-center">
-                    <span>Subtotal ({totals.totalCount || items.length} items):</span>
-                    <span className="font-mono text-[#F3E6D0] font-bold text-sm">
-                      €{totals.subtotal.toFixed(2)}
-                    </span>
-                  </div>
-
                   {totals.promoDiscountAmount > 0 && (
                     <div className="flex justify-between items-center text-amber-400 font-bold bg-amber-500/10 px-3 py-2 rounded-xl border border-amber-500/30">
                       <span className="flex items-center gap-1.5">
@@ -436,27 +429,11 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-[#D4AF37]" />
-                      <span>Royal Express Courier:</span>
-                    </span>
-                    <span className="font-mono text-[#F3E6D0] font-bold">
-                      {totals.shipping === 0 ? (
-                        <span className="text-[#F2D675] font-cinzel uppercase tracking-wider text-[11px]">
-                          Complimentary
-                        </span>
-                      ) : (
-                        `€${totals.shipping.toFixed(2)}`
-                      )}
-                    </span>
-                  </div>
-
                   {/* Total Row */}
                   <div className="flex justify-between items-baseline pt-4 border-t border-[#D4AF37]/30">
                     <div>
                       <span className="font-cinzel text-base sm:text-lg font-bold text-[#F3E6D0] uppercase tracking-wider block">
-                        Estimated Total:
+                        Total:
                       </span>
                       <span className="text-[10px] text-[#D8BE99]/60 font-light block">
                         Inclusive of all royal duties & VAT
@@ -467,6 +444,7 @@ export default function CartPage() {
                     </span>
                   </div>
                 </div>
+
 
                 {/* Sovereign Checkout CTA */}
                 <div className="space-y-4 pt-2">

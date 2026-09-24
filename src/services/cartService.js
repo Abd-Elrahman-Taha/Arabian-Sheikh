@@ -101,11 +101,10 @@ export const cartService = {
 
     const discountAmount = promoDiscountAmount + couponDiscountAmount;
 
-    // Free express shipping above €200 (or $200), standard DHL delivery is €10 / $10
-    const freeShippingThreshold = 200;
     const finalItemsTotal = Math.max(0, subtotal - discountAmount);
-    const shipping = finalItemsTotal >= freeShippingThreshold || items.length === 0 ? 0 : 10;
-    const total = Math.max(0, finalItemsTotal + shipping);
+    const shipping = 0;
+    const total = finalItemsTotal;
+
 
     const totalCount = items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
 
@@ -119,8 +118,9 @@ export const cartService = {
       total,
       totalCount,
       itemCount: totalCount,
-      freeShippingThreshold,
-      freeShippingRemaining: Math.max(0, freeShippingThreshold - finalItemsTotal),
+      freeShippingThreshold: 0,
+      freeShippingRemaining: 0,
+
       items
     };
   }
