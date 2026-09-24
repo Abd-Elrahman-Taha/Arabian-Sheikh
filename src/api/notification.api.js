@@ -58,25 +58,29 @@ export const notificationApi = {
    * GET /api/Notifications/preferences
    */
   async getPreferences() {
-    let serverData = null;
     try {
-      serverData = await apiClient.get(ENDPOINTS.NOTIFICATIONS.PREFERENCES);
+      const serverData = await apiClient.get(ENDPOINTS.NOTIFICATIONS.PREFERENCES);
+      return {
+        inAppEnabled: serverData?.inAppEnabled ?? true,
+        emailMarketingOptIn: serverData?.emailMarketingOptIn ?? true,
+        whatsAppOptIn: serverData?.whatsAppOptIn ?? false,
+        promotionsOptIn: serverData?.promotionsOptIn ?? true,
+        couponsOptIn: serverData?.couponsOptIn ?? true
+      };
     } catch (e) {
-      console.warn('[notificationApi] getPreferences from server failed:', e?.message);
+      console.warn('[notificationApi] getPreferences failed from backend:', e?.message);
+      return {
+        inAppEnabled: true,
+        emailMarketingOptIn: true,
+        whatsAppOptIn: false,
+        promotionsOptIn: true,
+        couponsOptIn: true
+      };
     }
-
-    const localSaved = this.getLocalPreferences();
-    return {
-      inAppEnabled: localSaved?.inAppEnabled ?? serverData?.inAppEnabled ?? true,
-      emailMarketingOptIn: localSaved?.emailMarketingOptIn ?? serverData?.emailMarketingOptIn ?? true,
-      whatsAppOptIn: localSaved?.whatsAppOptIn ?? serverData?.whatsAppOptIn ?? false,
-      promotionsOptIn: localSaved?.promotionsOptIn ?? serverData?.promotionsOptIn ?? true,
-      couponsOptIn: localSaved?.couponsOptIn ?? serverData?.couponsOptIn ?? true
-    };
   },
 
   /**
-   * Save updated notification preferences (GDPR Audit logged)
+   * Save updated notification preferences (Pure backend persistence)
    * PUT /api/Notifications/preferences
    */
   async updatePreferences(preferences) {
@@ -88,47 +92,8 @@ export const notificationApi = {
       couponsOptIn: Boolean(preferences.couponsOptIn)
     };
 
-    // Cache immediately so client UI remains responsive and reflects choice
-    this.saveLocalPreferences(payload);
-
-    try {
-      const response = await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, payload);
-      return response || payload;
-    } catch (err) {
-      // If backend throws 500 when opt-in flags are enabled (due to unconfigured SMTP or Meta WhatsApp Cloud on server),
-      // persist safe parameters to the server while honoring user preferences in the UI
-      if (err?.status === 500 || err?.code === 'INTERNAL_SERVER_ERROR' || String(err?.message).includes('500')) {
-        try {
-          const safePayload = {
-            inAppEnabled: payload.inAppEnabled,
-            emailMarketingOptIn: false,
-            whatsAppOptIn: false,
-            promotionsOptIn: payload.promotionsOptIn,
-            couponsOptIn: payload.couponsOptIn
-          };
-          await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, safePayload);
-        } catch {}
-        return payload;
-      }
-      throw err;
-    }
-  },
-
-  getLocalPreferences() {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = localStorage.getItem('arabian_sheikh_notification_preferences');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  },
-
-  saveLocalPreferences(preferences) {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem('arabian_sheikh_notification_preferences', JSON.stringify(preferences));
-    } catch {}
+    const response = await apiClient.put(ENDPOINTS.NOTIFICATIONS.PREFERENCES, payload);
+    return response || payload;
   },
 
   /**
@@ -320,34 +285,22 @@ export const notificationApi = {
   },
 
   // ==========================================
-  // 6. ADMIN CUSTOM BROADCAST DISPATCH
+  // 6. ADMIN CAMPAIGN DISPATCH (BACKEND DRIVEN)
   // ==========================================
 
   /**
-   * Send multi-channel broadcast notification to users across Website (In-App), WhatsApp, and Email.
-   * If a coupon is attached and VIP targeted, triggers assignCouponToVip automatically.
+   * Save and dispatch exclusive coupon campaign to patrons via real backend database.
+   * Calls POST /api/admin/coupons/{id}/assign-exclusive which persists the campaign batch
+   * to PostgreSQL, generating records for GET /api/admin/sent-notifications.
    */
   async sendBroadcastNotification(payload) {
-    const { couponId, targetAudience } = payload;
-    if (couponId && targetAudience === 'vip') {
+    const { couponId } = payload;
+    if (couponId) {
       return await this.assignCouponToVip(couponId);
     }
-
-    try {
-      // Attempt backend broadcast endpoint if available
-      const response = await apiClient.post('/admin/notifications/broadcast', payload);
-      return response?.data || response;
-    } catch (err) {
-      // If endpoint doesn't exist yet, return success object for client-side state
-      console.warn('Backend custom broadcast endpoint:', err?.message);
-      return {
-        batchId: 'BATCH-' + Date.now(),
-        dispatchedChannels: payload.channels || ['InApp', 'WhatsApp', 'Email'],
-        targetAudience: payload.targetAudience || 'All',
-        sentCount: payload.estimatedCount || 1,
-        message: 'Notification broadcast successfully dispatched across selected channels.'
-      };
-    }
+    // Directly call backend if a general broadcast endpoint exists
+    const response = await apiClient.post('/admin/notifications/broadcast', payload);
+    return response?.data || response;
   }
 };
 

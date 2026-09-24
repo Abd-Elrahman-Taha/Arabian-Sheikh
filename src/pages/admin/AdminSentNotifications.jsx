@@ -57,7 +57,7 @@ export default function AdminSentNotifications() {
   const [copiedId, setCopiedId] = useState(null);
   const [exportingPdfId, setExportingPdfId] = useState(null);
   const [exportingCsvId, setExportingCsvId] = useState(null);
-  const [manualSentStatus, setManualSentStatus] = useState({}); // recipientId -> { whatsapp: bool, email: bool, inApp: bool }
+  const [manualSentStatus, setManualSentStatus] = useState({}); // recipientId -> { whatsapp: bool, email: bool }
 
   // Overlay scroll refs to guarantee modals render pinned at the absolute TOP of page
   const rosterOverlayRef = useRef(null);
@@ -69,7 +69,7 @@ export default function AdminSentNotifications() {
   const [activeCoupons, setActiveCoupons] = useState([]);
   const [customerDirectory, setCustomerDirectory] = useState([]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
-  const [previewTab, setPreviewTab] = useState('whatsapp'); // 'whatsapp' | 'email' | 'inapp'
+  const [previewTab, setPreviewTab] = useState('whatsapp'); // 'whatsapp' | 'email'
 
   const [patronForm, setPatronForm] = useState({
     patronName: '',
@@ -300,30 +300,6 @@ export default function AdminSentNotifications() {
     info('Email client opened with pre-filled subject, body, and website link.');
   };
 
-  // 1-Click Manual Send to Patron: In-App Website Notification
-  const handleSendInAppManual = async (patronData, recipientId = null, couponCode = '', actionUrl = '') => {
-    const formattedBody = formatPatronMessage(patronData.body, couponCode, actionUrl || patronData.actionUrl);
-    try {
-      await notificationApi.sendBroadcastNotification({
-        title: patronData.title,
-        body: formattedBody,
-        targetAudience: 'specific',
-        specificTarget: patronData.patronEmail || patronData.patronPhone || patronData.patronId,
-        channels: ['InApp'],
-        actionUrl: patronData.actionUrl || '/shop'
-      });
-      if (recipientId) {
-        setManualSentStatus(prev => ({
-          ...prev,
-          [recipientId]: { ...prev[recipientId], inApp: true }
-        }));
-      }
-      success('Website / In-App notification pushed successfully.');
-    } catch (err) {
-      error(err?.message || 'Failed to dispatch in-app notification.');
-    }
-  };
-
   // Open Recipients modal anchored immediately to TOP of screen
   const handleOpenRecipients = async (batchId) => {
     setSelectedBatch(batchId);
@@ -445,54 +421,29 @@ export default function AdminSentNotifications() {
     }
   };
 
-  // Submit manual dispatch to record it in sent notifications log
+  // Save & Assign Campaign to Backend Database (Pure backend persistence, zero local storage)
   const handleSaveManualDispatch = async (e) => {
     e.preventDefault();
-    if (!patronForm.patronName && !patronForm.patronPhone && !patronForm.patronEmail) {
-      error('Please select or specify a patron contact (Phone, Email, or Name).');
-      return;
-    }
-    if (!patronForm.title.trim() || !patronForm.body.trim()) {
-      error('Please provide both a notification title and message body.');
+    if (!patronForm.selectedCouponId) {
+      error('Please select an active coupon to assign to VIP patrons and save the campaign batch to the backend database.');
       return;
     }
 
     setComposerLoading(true);
     try {
       const chosenCoupon = activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId));
-      const formattedBody = formatPatronMessage(patronForm.body, chosenCoupon?.code, patronForm.actionUrl);
-      const targetIdentifier = patronForm.patronEmail || patronForm.patronPhone || patronForm.patronName;
+      
+      // Save campaign directly to the real backend database
+      const res = await notificationApi.assignCouponToVip(patronForm.selectedCouponId);
 
-      const payload = {
-        title: patronForm.title.trim(),
-        body: formattedBody,
-        targetAudience: 'specific',
-        specificTarget: targetIdentifier,
-        eventType: 'Manual_Patron_Notice',
-        channels: ['InApp', 'WhatsApp', 'Email'],
-        actionUrl: patronForm.actionUrl.trim(),
-        couponId: patronForm.selectedCouponId || undefined
-      };
+      // Re-fetch the real campaign list directly from the backend API (GET /api/admin/sent-notifications)
+      await fetchCampaigns();
 
-      const result = await notificationApi.sendBroadcastNotification(payload);
-
-      const newRecord = {
-        batchId: result?.batchId || `MANUAL-${Date.now()}`,
-        title: `${patronForm.title} (${patronForm.patronName || targetIdentifier})`,
-        body: formattedBody,
-        eventType: 'Manual_Patron_Notice',
-        channels: ['InApp', 'WhatsApp', 'Email'],
-        totalRecipients: 1,
-        createdAtUtc: new Date().toISOString(),
-        status: 'Delivered'
-      };
-
-      setCampaigns(prev => [newRecord, ...prev]);
-      success(`Notice for ${patronForm.patronName || targetIdentifier} logged successfully.`);
+      success(res?.message || `Privilege campaign for '${chosenCoupon?.code}' saved to backend successfully! You can now open its Roster to send via WhatsApp and Email.`);
       setComposerOpen(false);
     } catch (err) {
-      console.error('Save manual dispatch error:', err);
-      error(err?.message || 'Failed to record dispatch.');
+      console.error('Save backend dispatch error:', err);
+      error(err?.message || 'Failed to save campaign in backend.');
     } finally {
       setComposerLoading(false);
     }
@@ -531,7 +482,7 @@ export default function AdminSentNotifications() {
             Sent Notifications & Broadcast Hub
           </h2>
           <p className="text-xs text-[#D8BE99]">
-            Send notifications directly to individual patrons via WhatsApp, Email, and Website Notifications one by one manually, and export unified PDF reports.
+            Send notifications directly to individual patrons via WhatsApp and Email one by one manually, and export unified PDF reports.
           </p>
         </div>
 
@@ -603,7 +554,7 @@ export default function AdminSentNotifications() {
                 campaigns.map((c) => {
                   const batchId = c.batchId || c.id;
                   const dateFormatted = formatBroadcastDate(c.createdAtUtc || c.createdAt || c.sentAt);
-                  const rawChannels = Array.isArray(c.channels) ? c.channels : [c.channel || 'InApp'];
+                  const rawChannels = Array.isArray(c.channels) ? c.channels : [c.channel || 'WhatsApp'];
                   const channels = rawChannels.map(ch => (String(ch).toLowerCase().startsWith('vi') ? 'WhatsApp' : ch));
                   const eventTitle = c.title || (c.eventType ? c.eventType.replace(/_/g, ' ') : 'Campaign');
                   const messageBody = c.body || c.message || c.text || '';
@@ -660,31 +611,32 @@ export default function AdminSentNotifications() {
                       {/* 4. Delivery Channels Column */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {channels.map((ch) => {
-                            const isWhatsApp = ch.toLowerCase().includes('whatsapp');
-                            const isEmail = ch.toLowerCase().includes('email');
-                            const isInApp = ch.toLowerCase().includes('inapp') || ch.toLowerCase().includes('web');
+                          {channels
+                            .filter(ch => !ch.toLowerCase().includes('inapp') && !ch.toLowerCase().includes('web') && !ch.toLowerCase().includes('viber'))
+                            .concat(
+                              channels.filter(ch => !ch.toLowerCase().includes('inapp') && !ch.toLowerCase().includes('web') && !ch.toLowerCase().includes('viber')).length === 0
+                                ? ['WhatsApp', 'Email']
+                                : []
+                            )
+                            .map((ch) => {
+                              const isWhatsApp = ch.toLowerCase().includes('whatsapp');
+                              const isEmail = ch.toLowerCase().includes('email');
 
-                            return (
-                              <span
-                                key={ch}
-                                className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase border flex items-center gap-1 ${
-                                  isWhatsApp
-                                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                                    : isEmail
-                                    ? 'bg-blue-950/40 border-blue-500/40 text-blue-300'
-                                    : isInApp
-                                    ? 'bg-amber-950/40 border-[#D4AF37]/40 text-[#F2D675]'
-                                    : 'bg-black/40 border-[#D4AF37]/30 text-[#F3E6D0]'
-                                }`}
-                              >
-                                {isWhatsApp && <Smartphone className="w-2.5 h-2.5" />}
-                                {isEmail && <Mail className="w-2.5 h-2.5" />}
-                                {isInApp && <Bell className="w-2.5 h-2.5" />}
-                                <span>{ch}</span>
-                              </span>
-                            );
-                          })}
+                              return (
+                                <span
+                                  key={ch}
+                                  className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase border flex items-center gap-1 ${
+                                    isWhatsApp
+                                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                                      : 'bg-blue-950/40 border-blue-500/40 text-blue-300'
+                                  }`}
+                                >
+                                  {isWhatsApp && <Smartphone className="w-2.5 h-2.5" />}
+                                  {isEmail && <Mail className="w-2.5 h-2.5" />}
+                                  <span>{ch}</span>
+                                </span>
+                              );
+                            })}
                         </div>
                       </td>
 
@@ -763,7 +715,7 @@ export default function AdminSentNotifications() {
                   <span>Patron Delivery Roster — Manual 1-by-1 Sending</span>
                 </h3>
                 <p className="font-mono text-[11px] text-[#D8BE99]/80">
-                  Batch: <span className="text-[#F3E6D0]">{selectedBatch}</span> • Send to patrons individually via WhatsApp, Email & Website
+                  Batch: <span className="text-[#F3E6D0]">{selectedBatch}</span> • Send to patrons individually via WhatsApp & Email
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -880,28 +832,7 @@ export default function AdminSentNotifications() {
                           </button>
                         )}
 
-                        {/* 3. Send In-App 1-by-1 */}
-                        <button
-                          type="button"
-                          onClick={() => handleSendInAppManual({
-                            title: batchDetails?.title || 'Palace Notice',
-                            body: messageText,
-                            patronEmail: email,
-                            patronPhone: phone,
-                            patronId: recipientId,
-                            actionUrl: batchDetails?.actionUrl
-                          }, recipientId, couponCode, batchDetails?.actionUrl)}
-                          className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-sm ${
-                            isSentStatus.inApp
-                              ? 'bg-amber-900/50 border-amber-400 text-[#F2D675]'
-                              : 'border-[#D4AF37]/30 bg-black/40 text-[#D8BE99] hover:text-[#F2D675] hover:border-[#D4AF37]'
-                          }`}
-                          title="Push Website / In-App Notification to this patron"
-                        >
-                          <Bell className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* 4. Inspect Message */}
+                        {/* 3. Inspect Message */}
                         <button
                           type="button"
                           onClick={() => handleViewMessage(recipientId)}
@@ -968,7 +899,7 @@ export default function AdminSentNotifications() {
                     Send Notification to Patron (Manual Dispatch)
                   </h3>
                   <p className="text-[11px] text-[#D8BE99]">
-                    Select a customer and send via WhatsApp, Email, and Website Notifications one by one.
+                    Select a patron to message via WhatsApp and Email one by one, or assign an exclusive coupon campaign to the backend.
                   </p>
                 </div>
               </div>
@@ -1132,7 +1063,7 @@ export default function AdminSentNotifications() {
                   <span className="font-cinzel text-xs uppercase tracking-wider text-[#F2D675] font-bold block">
                     Direct 1-Click Manual Send Actions:
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* Send WhatsApp */}
                     <button
                       type="button"
@@ -1164,21 +1095,6 @@ export default function AdminSentNotifications() {
                     >
                       <Mail className="w-4 h-4 text-blue-400" />
                       <span>Email (1-Click)</span>
-                    </button>
-
-                    {/* Send In-App */}
-                    <button
-                      type="button"
-                      onClick={() => handleSendInAppManual(
-                        patronForm,
-                        null,
-                        activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
-                        patronForm.actionUrl
-                      )}
-                      className="py-2.5 px-3 rounded-xl bg-amber-950/50 border border-[#D4AF37]/60 hover:bg-[#D4AF37]/20 text-[#F2D675] font-cinzel font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
-                    >
-                      <Bell className="w-4 h-4 text-[#D4AF37]" />
-                      <span>Website Push</span>
                     </button>
                   </div>
                 </div>
@@ -1216,19 +1132,6 @@ export default function AdminSentNotifications() {
                   >
                     <Mail className="w-3 h-3" />
                     <span>Email</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPreviewTab('inapp')}
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-cinzel font-bold uppercase transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                      previewTab === 'inapp'
-                        ? 'bg-[#D4AF37] text-black shadow-sm'
-                        : 'text-[#D8BE99] hover:text-[#F3E6D0]'
-                    }`}
-                  >
-                    <Bell className="w-3 h-3" />
-                    <span>Website</span>
                   </button>
                 </div>
 
@@ -1292,29 +1195,6 @@ export default function AdminSentNotifications() {
                     </div>
                   )}
 
-                  {/* IN-APP PREVIEW */}
-                  {previewTab === 'inapp' && (
-                    <div className="space-y-3 animate-fade-in">
-                      <span className="text-[10px] font-mono text-[#D8BE99]/60 block uppercase">
-                        Website Bell Notification Toast
-                      </span>
-                      <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1A140B] via-[#0E0C08] to-[#000000] border border-[#D4AF37]/60 shadow-xl space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Bell className="w-3.5 h-3.5 text-[#F2D675]" />
-                          <span className="font-cinzel text-xs font-bold text-[#F2D675]">
-                            {patronForm.title || 'Notification Title'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-[#F3E6D0]/90 font-sans leading-relaxed whitespace-pre-wrap">
-                          {formatPatronMessage(
-                            patronForm.body,
-                            activeCoupons.find(c => String(c.id) === String(patronForm.selectedCouponId))?.code,
-                            patronForm.actionUrl
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -1338,12 +1218,12 @@ export default function AdminSentNotifications() {
                 {composerLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-black" />
-                    <span>Saving Dispatch...</span>
+                    <span>Saving to Backend...</span>
                   </>
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>Save & Log Manual Dispatch</span>
+                    <span>Assign & Save Campaign to Backend</span>
                   </>
                 )}
               </button>
