@@ -331,7 +331,8 @@ export function normalizeProduct(raw) {
     cutoutImage: cleanImageUrl(p.cutoutImage || p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
     originalImage: cleanImageUrl(p.originalImage || p.imageUrl || p.image || '/products/luxury_designs/07_arabian_gold.webp'),
     reviewsPreview: Array.isArray(p.reviewsPreview) ? p.reviewsPreview.map(normalizeReview).filter(Boolean) : (Array.isArray(p.reviews) ? p.reviews.map(normalizeReview).filter(Boolean) : []),
-    reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview).filter(Boolean) : []
+    reviews: Array.isArray(p.reviews) ? p.reviews.map(normalizeReview).filter(Boolean) : [],
+    offers: Array.isArray(p.offers) ? p.offers : []
   };
 }
 

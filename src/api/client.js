@@ -320,8 +320,20 @@ function buildUrl(endpoint, params = {}) {
   let url = `${baseUrl}${cleanEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
 
   const searchParams = new URLSearchParams();
+  const SUPPORTED_BACKEND_LANGS = ['en', 'bg', 'es'];
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
+      if (key.toLowerCase() === 'language') {
+        const langVal = String(value).toLowerCase().trim();
+        // Backend ASP.NET strictly accepts 'en', 'bg', 'es'. Map other languages like 'ar' to 'en'
+        if (SUPPORTED_BACKEND_LANGS.includes(langVal)) {
+          searchParams.append(key, langVal);
+        } else {
+          searchParams.append(key, 'en');
+        }
+        return;
+      }
       if (Array.isArray(value)) {
         value.forEach(v => searchParams.append(`${key}[]`, v));
       } else {

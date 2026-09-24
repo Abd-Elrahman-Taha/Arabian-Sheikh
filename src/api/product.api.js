@@ -19,7 +19,11 @@ export const productApi = {
     if (!isNaN(page) && page > 0) params.Page = page;
 
     const pageSize = Number(filters.pageSize || filters.PageSize);
-    if (!isNaN(pageSize) && pageSize > 0) params.PageSize = pageSize;
+    if (!isNaN(pageSize) && pageSize > 0) {
+      params.PageSize = pageSize;
+    } else {
+      params.PageSize = 50; // Standard batch size to ensure full catalog is retrieved
+    }
 
     // Search query (only non-empty strings)
     const search = (filters.search || filters.Search || '').toString().trim();
@@ -38,15 +42,52 @@ export const productApi = {
     const perfumeCategoryId = Number(filters.perfumeCategoryId || filters.PerfumeCategoryId);
     if (!isNaN(perfumeCategoryId) && perfumeCategoryId > 0) params.PerfumeCategoryId = perfumeCategoryId;
 
-    // Gender enum: STRICTLY 'Male' | 'Female' | 'Unisex'.
+    // Gender enum: STRICTLY 'Male' | 'Female' | 'Unisex'
     const rawGender = (filters.gender || filters.Gender || '').toString().toLowerCase().trim();
     if (rawGender === 'men' || rawGender === 'male') params.Gender = 'Male';
     else if (rawGender === 'women' || rawGender === 'female') params.Gender = 'Female';
     else if (rawGender === 'unisex') params.Gender = 'Unisex';
 
-    // Language
-    const activeLang = (filters.language || filters.Language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().trim();
-    params.Language = activeLang.toLowerCase();
+    // MinPrice & MaxPrice
+    const minPrice = Number(filters.minPrice || filters.MinPrice);
+    if (!isNaN(minPrice) && minPrice > 0) params.MinPrice = minPrice;
+
+    const maxPrice = Number(filters.maxPrice || filters.MaxPrice);
+    if (!isNaN(maxPrice) && maxPrice > 0 && maxPrice < 500) params.MaxPrice = maxPrice;
+
+    // Rating
+    const rating = Number(filters.rating || filters.Rating);
+    if (!isNaN(rating) && rating > 0) params.Rating = rating;
+
+    // SortBy & SortDirection
+    const sortBy = (filters.sortBy || filters.SortBy || '').toString().trim();
+    if (sortBy && sortBy !== 'featured') {
+      if (sortBy === 'price_asc' || sortBy === 'price-asc') {
+        params.SortBy = 'price';
+        params.SortDirection = 'asc';
+      } else if (sortBy === 'price_desc' || sortBy === 'price-desc') {
+        params.SortBy = 'price';
+        params.SortDirection = 'desc';
+      } else if (sortBy === 'name' || sortBy === 'name_asc') {
+        params.SortBy = 'name';
+        params.SortDirection = 'asc';
+      } else if (sortBy === 'rating') {
+        params.SortBy = 'rating';
+        params.SortDirection = 'desc';
+      } else if (sortBy === 'newest') {
+        params.SortBy = 'createdAt';
+        params.SortDirection = 'desc';
+      } else {
+        params.SortBy = sortBy;
+      }
+    }
+    const sortDir = (filters.sortDirection || filters.SortDirection || '').toString().trim();
+    if (sortDir && !params.SortDirection) params.SortDirection = sortDir;
+
+    // Language: Backend ONLY accepts 'en', 'bg', 'es'
+    const SUPPORTED_API_LANGUAGES = ['en', 'bg', 'es'];
+    const activeLang = (filters.language || filters.Language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().toLowerCase().trim();
+    params.Language = SUPPORTED_API_LANGUAGES.includes(activeLang) ? activeLang : 'en';
 
     const response = await apiClient.get(ENDPOINTS.PRODUCTS.LIST, { params, requiresAuth: false });
     const rawList = Array.isArray(response) 
@@ -56,7 +97,7 @@ export const productApi = {
     return {
       items: rawList.map(normalizeProduct).filter(Boolean),
       page: response?.page || 1,
-      pageSize: response?.pageSize || 20,
+      pageSize: response?.pageSize || 50,
       totalCount: response?.totalCount || rawList.length,
       totalPages: response?.totalPages || 1,
       hasPreviousPage: Boolean(response?.hasPreviousPage),
@@ -69,8 +110,10 @@ export const productApi = {
    * GET /api/products/{id}
    */
   async getProductById(id, language) {
-    const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
-    const response = await apiClient.get(ENDPOINTS.PRODUCTS.DETAILS(id), { params: { language: activeLang }, requiresAuth: false });
+    const SUPPORTED_API_LANGUAGES = ['en', 'bg', 'es'];
+    const activeLang = (language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().toLowerCase().trim();
+    const safeLang = SUPPORTED_API_LANGUAGES.includes(activeLang) ? activeLang : 'en';
+    const response = await apiClient.get(ENDPOINTS.PRODUCTS.DETAILS(id), { params: { language: safeLang }, requiresAuth: false });
     const rawProduct = response?.product || response?.data || response;
     return normalizeProduct(rawProduct);
   },
@@ -80,8 +123,10 @@ export const productApi = {
    * GET /api/home
    */
   async getHome(language) {
-    const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
-    const response = await apiClient.get(ENDPOINTS.HOME, { params: { language: activeLang }, requiresAuth: false });
+    const SUPPORTED_API_LANGUAGES = ['en', 'bg', 'es'];
+    const activeLang = (language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().toLowerCase().trim();
+    const safeLang = SUPPORTED_API_LANGUAGES.includes(activeLang) ? activeLang : 'en';
+    const response = await apiClient.get(ENDPOINTS.HOME, { params: { language: safeLang }, requiresAuth: false });
     return response;
   },
 
@@ -90,8 +135,10 @@ export const productApi = {
    * GET /api/categories
    */
   async getCategories(language) {
-    const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en';
-    const response = await apiClient.get(ENDPOINTS.CATEGORIES.LIST, { params: { language: activeLang }, requiresAuth: false });
+    const SUPPORTED_API_LANGUAGES = ['en', 'bg', 'es'];
+    const activeLang = (language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().toLowerCase().trim();
+    const safeLang = SUPPORTED_API_LANGUAGES.includes(activeLang) ? activeLang : 'en';
+    const response = await apiClient.get(ENDPOINTS.CATEGORIES.LIST, { params: { language: safeLang }, requiresAuth: false });
     return response?.items || (Array.isArray(response) ? response : []);
   },
 
@@ -100,7 +147,10 @@ export const productApi = {
    * GET /api/brands
    */
   async getBrands(language = 'en') {
-    const response = await apiClient.get(ENDPOINTS.BRANDS.LIST, { params: { language }, requiresAuth: false });
+    const SUPPORTED_API_LANGUAGES = ['en', 'bg', 'es'];
+    const activeLang = (language || (typeof window !== 'undefined' ? localStorage.getItem('arabian_sheikh_lang') : 'en') || 'en').toString().toLowerCase().trim();
+    const safeLang = SUPPORTED_API_LANGUAGES.includes(activeLang) ? activeLang : 'en';
+    const response = await apiClient.get(ENDPOINTS.BRANDS.LIST, { params: { language: safeLang }, requiresAuth: false });
     return response?.items || (Array.isArray(response) ? response : []);
   },
 
