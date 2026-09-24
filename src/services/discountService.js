@@ -268,11 +268,12 @@ export const discountService = {
       value: Number(discountData.value) || 0,
       startDate: new Date().toISOString(),
       endDate: discountData.validUntil ? new Date(discountData.validUntil).toISOString() : '2027-12-31T23:59:59Z',
-      minOrderAmount: Number(discountData.minSpend) || 0,
-      maxDiscountAmount: null,
-      allowOnDiscountedItems: true,
+      usageLimit: Number(discountData.usageLimit) || 0,
+      minOrderAmount: Number(discountData.minSpend || discountData.minOrderAmount) || 0,
+      maxDiscountAmount: Number(discountData.maxDiscountAmount) || 0,
+      allowOnDiscountedItems: discountData.allowOnDiscountedItems !== undefined ? Boolean(discountData.allowOnDiscountedItems) : true,
       isActive: true,
-      applicability: []
+      applicability: Array.isArray(discountData.applicability) ? discountData.applicability : []
     });
   },
 

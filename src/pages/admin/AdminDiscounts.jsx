@@ -254,12 +254,12 @@ export default function AdminDiscounts() {
         value: activeData.value || 0,
         startDate: toLocalInputDateTime(activeData.startDate),
         endDate: toLocalInputDateTime(activeData.endDate),
-        isUnlimitedUsage: activeData.usageLimit === null || activeData.usageLimit === undefined,
-        usageLimit: activeData.usageLimit || 100,
-        minOrderAmount: activeData.minOrderAmount !== null && activeData.minOrderAmount !== undefined ? activeData.minOrderAmount : '',
-        maxDiscountAmount: activeData.maxDiscountAmount !== null && activeData.maxDiscountAmount !== undefined ? activeData.maxDiscountAmount : '',
-        allowOnDiscountedItems: Boolean(activeData.allowOnDiscountedItems),
-        isActive: Boolean(activeData.isActive),
+        isUnlimitedUsage: activeData.usageLimit === null || activeData.usageLimit === undefined || Number(activeData.usageLimit) === 0,
+        usageLimit: Number(activeData.usageLimit) > 0 ? activeData.usageLimit : 100,
+        minOrderAmount: activeData.minOrderAmount !== null && activeData.minOrderAmount !== undefined && Number(activeData.minOrderAmount) > 0 ? activeData.minOrderAmount : '',
+        maxDiscountAmount: activeData.maxDiscountAmount !== null && activeData.maxDiscountAmount !== undefined && Number(activeData.maxDiscountAmount) > 0 ? activeData.maxDiscountAmount : '',
+        allowOnDiscountedItems: activeData.allowOnDiscountedItems !== undefined ? Boolean(activeData.allowOnDiscountedItems) : true,
+        isActive: activeData.isActive !== undefined ? Boolean(activeData.isActive) : true,
         applicability: Array.isArray(activeData.applicability) ? activeData.applicability : []
       });
       setFormErrors({});
@@ -941,6 +941,68 @@ export default function AdminDiscounts() {
                     className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 font-mono text-sm text-[#F3E6D0]"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
+                    Minimum Order Spend (€)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.minOrderAmount}
+                    onChange={(e) => setFormData(p => ({ ...p, minOrderAmount: e.target.value }))}
+                    placeholder="0 (No minimum)"
+                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 font-mono text-sm text-[#F3E6D0]"
+                  />
+                  <span className="text-[10px] text-[#A69B8D] mt-1 block">Minimum cart amount required (0 = none)</span>
+                </div>
+                <div>
+                  <label className="block text-xs font-cinzel text-[#F2D675] uppercase tracking-wider mb-1.5 font-bold">
+                    Max Discount Cap (€)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    disabled={formData.type === 'Fixed'}
+                    value={formData.type === 'Fixed' ? '' : formData.maxDiscountAmount}
+                    onChange={(e) => setFormData(p => ({ ...p, maxDiscountAmount: e.target.value }))}
+                    placeholder={formData.type === 'Fixed' ? 'N/A for fixed amounts' : '0 (No cap)'}
+                    className="w-full bg-black/60 border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 font-mono text-sm text-[#F3E6D0] disabled:opacity-40 disabled:cursor-not-allowed"
+                  />
+                  <span className="text-[10px] text-[#A69B8D] mt-1 block">Maximum deduction cap (0 = unlimited)</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className="flex items-center gap-3 bg-black/40 border border-[#D4AF37]/20 rounded-xl px-4 py-3 cursor-pointer hover:border-[#D4AF37]/40 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowOnDiscountedItems}
+                    onChange={(e) => setFormData(p => ({ ...p, allowOnDiscountedItems: e.target.checked }))}
+                    className="rounded border-[#D4AF37]/40 text-[#D4AF37] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                  <div className="text-left">
+                    <span className="text-xs font-cinzel text-[#F2D675] uppercase font-bold block">Allow on Sale Items</span>
+                    <span className="text-[10px] text-[#A69B8D] block">Can apply to already discounted perfumes</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 bg-black/40 border border-[#D4AF37]/20 rounded-xl px-4 py-3 cursor-pointer hover:border-[#D4AF37]/40 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData(p => ({ ...p, isActive: e.target.checked }))}
+                    className="rounded border-[#D4AF37]/40 text-[#D4AF37] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                  <div className="text-left">
+                    <span className="text-xs font-cinzel text-[#F2D675] uppercase font-bold block">Active Immediately</span>
+                    <span className="text-[10px] text-[#A69B8D] block">Immediately enable for checkout</span>
+                  </div>
+                </label>
               </div>
 
               <div className="border border-[#D4AF37]/30 rounded-xl p-4 bg-black/50 space-y-3">
