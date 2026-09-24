@@ -9,6 +9,7 @@
 
 import apiClient, { resolveBaseUrl } from './client';
 import { ENDPOINTS } from './endpoints';
+import { normalizeObjectKeys } from './normalizers';
 
 export const notificationApi = {
   // ==========================================
@@ -200,7 +201,8 @@ export const notificationApi = {
    */
   async getSentNotifications(params = {}) {
     const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.LIST, { params });
-    return response?.data || response?.items || response || [];
+    const raw = response?.data || response?.items || response || [];
+    return normalizeObjectKeys(raw);
   },
 
   /**
@@ -208,7 +210,8 @@ export const notificationApi = {
    * GET /api/admin/sent-notifications/{batchId}
    */
   async getSentNotificationDetails(batchId) {
-    return await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.DETAILS(batchId));
+    const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.DETAILS(batchId));
+    return normalizeObjectKeys(response);
   },
 
   /**
@@ -217,7 +220,8 @@ export const notificationApi = {
    */
   async getSentNotificationRecipients(batchId, params = {}) {
     const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.RECIPIENTS(batchId), { params });
-    return response?.data || response?.items || response || [];
+    const raw = response?.data || response?.items || response || [];
+    return normalizeObjectKeys(raw);
   },
 
   /**
@@ -225,7 +229,8 @@ export const notificationApi = {
    * GET /api/admin/sent-notifications/{batchId}/recipients/{recipientId}/message
    */
   async getRecipientMessage(batchId, recipientId) {
-    return await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.RECIPIENT_MESSAGE(batchId, recipientId));
+    const response = await apiClient.get(ENDPOINTS.ADMIN.SENT_NOTIFICATIONS.RECIPIENT_MESSAGE(batchId, recipientId));
+    return normalizeObjectKeys(response);
   },
 
   /**

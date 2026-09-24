@@ -85,14 +85,23 @@ export default function AdminSentNotifications() {
 
   // View specific personalized message
   const handleViewMessage = async (recipientId) => {
-    if (!selectedBatch || !recipientId) return;
+    if (!selectedBatch) return;
+    if (recipientId === undefined || recipientId === null) {
+      error('Recipient ID is missing from this record.');
+      return;
+    }
     setMessageLoadingId(recipientId);
     try {
       const msg = await notificationApi.getRecipientMessage(selectedBatch, recipientId);
-      setSelectedMessage(msg);
+      if (msg) {
+        setSelectedMessage(msg);
+      } else {
+        error('No message content returned for this recipient.');
+      }
     } catch (e) {
       console.error('Failed to load recipient message:', e);
-      error(e?.message || 'Failed to load recipient message');
+      const detail = e?.data?.detail || e?.data?.message || e?.message || 'Failed to load recipient message';
+      error(`Failed to load recipient message: ${detail}`);
     } finally {
       setMessageLoadingId(null);
     }
@@ -415,7 +424,7 @@ export default function AdminSentNotifications() {
                 <p className="py-8 text-center text-xs text-[#D8BE99]/70">No individual recipient records available for this batch.</p>
               ) : (
                 recipients.map((r) => {
-                  const recipientId = r.recipientId ?? r.id;
+                  const recipientId = r.recipientId ?? r.id ?? r.recipient_id ?? r.userId;
                   const recipientName = r.recipientName || r.fullName || r.name || r.email || 'Patron';
                   const phone = r.phone || r.phoneNumber || (r.email ? r.email : 'No phone');
                   const language = r.language || 'en';

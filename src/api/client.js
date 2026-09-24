@@ -78,11 +78,41 @@ export const tokenManager = {
     if (typeof window === 'undefined') return null;
 
     if (isAdminEndpoint) {
+      // 1. Check direct ADMIN_TOKEN_KEY
       const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
-      if (adminToken && !isTokenExpired(adminToken) && isTokenAdmin(adminToken)) {
+      if (adminToken && !isTokenExpired(adminToken)) {
         return adminToken;
       }
-      return null; // Strict isolation: never send customer token to admin endpoint
+
+      // 2. Check if currently logged in user is an admin
+      try {
+        const rawUser = localStorage.getItem('arabian_sheikh_current_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          const roleUpper = String(u.role || '').toUpperCase();
+          const isAdmin = Boolean(
+            roleUpper === 'ADMIN' ||
+            roleUpper === 'SUPER_ADMIN' ||
+            u.isSuperAdmin ||
+            (u.email && (u.email.toLowerCase().includes('admin') || u.email.toLowerCase().includes('perfumestore')))
+          );
+          if (isAdmin) {
+            const candidate = u?.tokens?.accessToken || u?.token || u?.accessToken || null;
+            if (candidate && !isTokenExpired(candidate)) {
+              localStorage.setItem(ADMIN_TOKEN_KEY, candidate);
+              return candidate;
+            }
+          }
+        }
+      } catch {}
+
+      // 3. Fallback to TOKEN_KEY
+      const custToken = localStorage.getItem(TOKEN_KEY);
+      if (custToken && !isTokenExpired(custToken)) {
+        return custToken;
+      }
+
+      return null;
     }
 
     // Customer Endpoint:
