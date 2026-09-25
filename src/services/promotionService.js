@@ -329,19 +329,46 @@ export const promotionService = {
    */
   async getActivePromotions(forceRefresh = false) {
     const now = Date.now();
-    if (!forceRefresh && this._cachedActivePromos && (now - this._lastFetchTime < 60000)) {
+    if (!forceRefresh && this._cachedActivePromos && (now - this._lastFetchTime < 30000)) {
       return this._cachedActivePromos;
     }
 
     try {
-      const response = await promotionApi.getPromotions();
-      const items = response?.items || (Array.isArray(response) ? response : []);
+      let items = [];
+      try {
+        const response = await promotionApi.getPromotions();
+        items = Array.isArray(response) ? response : (response?.items || []);
+      } catch (err) {
+        console.warn('[promotionService] Public getPromotions fallback:', err.message);
+      }
+
+      // If public promotions is empty, or to ensure we have all active campaigns, check admin promotions
+      if (items.length === 0) {
+        try {
+          const adminP = await promotionApi.adminGetPromotions({ page: 1, pageSize: 50 });
+          const adminItems = adminP?.items || (Array.isArray(adminP) ? adminP : []);
+          if (adminItems.length > 0) {
+            items = adminItems.filter(p => {
+              const st = String(p.status || '').toLowerCase();
+              return st !== 'inactive' && p.status !== 1 && st !== 'expired' && p.status !== 2;
+            });
+          }
+        } catch {}
+      }
 
       // Fetch full details with applicability rules for active campaigns
       const fullItems = await Promise.all(
         items.map(async (item) => {
           try {
-            const detail = await promotionApi.getPromotionById(item.id);
+            if (Array.isArray(item.applicabilities) && item.applicabilities.length > 0) return item;
+            if (Array.isArray(item.applicability) && item.applicability.length > 0) return item;
+
+            let detail = null;
+            try {
+              detail = await promotionApi.getPromotionById(item.id);
+            } catch {
+              detail = await promotionApi.adminGetPromotionById(item.id).catch(() => null);
+            }
             return detail || item;
           } catch {
             return item;
@@ -353,7 +380,7 @@ export const promotionService = {
       this._lastFetchTime = now;
       return fullItems;
     } catch (err) {
-      console.warn('[promotionService] Could not fetch public promotions:', err.message);
+      console.warn('[promotionService] Could not fetch promotions:', err.message);
       return this._cachedActivePromos || [];
     }
   },
@@ -366,28 +393,35 @@ export const promotionService = {
       return {
         hasPromotion: false,
         discountPercent: product?.discountPercent || 0,
-        price: product?.price || 0,
+        price: Number(product?.price || 0),
         originalPrice: product?.originalPrice || null
       };
     }
 
     const now = new Date();
+    const nowBuffer = new Date(Date.now() + 10 * 60 * 1000); // 10m buffer for client/server clock drifts
 
-    const prodId = Number(product.id || product.numericId || 0);
+    const prodId = Number(product.id || product.numericId || product.productId || 0);
     const catId = Number(product.categoryId || product.category?.id || (typeof product.category === 'object' ? product.category?.id : 0) || (product.category === 'perfumes' ? 1 : 0));
     const brandId = Number(product.brandId || product.brand?.id || (typeof product.brand === 'object' ? product.brand?.id : 0) || 0);
     const subcatId = Number(product.subcategoryId || product.subcategory?.id || 0);
-    const perfumeCatId = Number(product.perfumeCategoryId || product.perfumeCategory?.id || 0);
+    const perfumeCatId = Number(product.perfumeCategoryId || product.perfumeCategory?.id || (product.tier === 'Standard' ? 1 : product.tier === 'Premium' ? 2 : product.tier === 'Luxury' ? 3 : 0));
 
     for (const promo of activePromos) {
-      if (promo.type !== 'Discount') continue;
+      // Promo type check: handles 'Discount', 'discount', 0
+      const isDiscountPromo = promo.type === 0 || String(promo.type || '').toLowerCase() === 'discount';
+      if (!isDiscountPromo) continue;
+
+      // Status check: skip inactive or expired
+      const st = String(promo.status || '').toLowerCase();
+      if (st === 'inactive' || promo.status === 1 || st === 'expired' || promo.status === 2) continue;
 
       // Check dates
-      if (promo.startDate && new Date(promo.startDate) > now) continue;
+      if (promo.startDate && new Date(promo.startDate) > nowBuffer) continue;
       if (promo.endDate && new Date(promo.endDate) < now) continue;
 
       // Check applicability rules if present
-      const rules = promo.applicability || promo.applicabilities || [];
+      const rules = Array.isArray(promo.applicability) ? promo.applicability : (Array.isArray(promo.applicabilities) ? promo.applicabilities : []);
       let isEligible = true;
 
       if (rules.length > 0) {
@@ -396,13 +430,19 @@ export const promotionService = {
 
         for (const r of rules) {
           const targetId = Number(r.targetId);
-          let match = false;
+          let tType = String(r.targetType || '').toLowerCase();
+          if (r.targetType === 0) tType = 'product';
+          else if (r.targetType === 1) tType = 'category';
+          else if (r.targetType === 2) tType = 'subcategory';
+          else if (r.targetType === 3) tType = 'brand';
+          else if (r.targetType === 4) tType = 'perfumecategory';
 
-          if (r.targetType === 'Product' && prodId > 0 && prodId === targetId) match = true;
-          if (r.targetType === 'Category' && catId > 0 && catId === targetId) match = true;
-          if (r.targetType === 'Subcategory' && subcatId > 0 && subcatId === targetId) match = true;
-          if (r.targetType === 'Brand' && brandId > 0 && brandId === targetId) match = true;
-          if (r.targetType === 'PerfumeCategory' && perfumeCatId > 0 && perfumeCatId === targetId) match = true;
+          let match = false;
+          if ((tType === 'product' || tType.includes('prod') || tType === '0') && prodId > 0 && prodId === targetId) match = true;
+          if ((tType === 'category' || tType.includes('cat') || tType === '1') && catId > 0 && catId === targetId) match = true;
+          if ((tType === 'subcategory' || tType.includes('subcat') || tType === '2') && subcatId > 0 && subcatId === targetId) match = true;
+          if ((tType === 'brand' || tType.includes('brand') || tType === '3') && brandId > 0 && brandId === targetId) match = true;
+          if ((tType === 'perfumecategory' || tType.includes('tier') || tType.includes('perfume') || tType === '4') && perfumeCatId > 0 && perfumeCatId === targetId) match = true;
 
           if (match) {
             if (r.isExcluded) {
@@ -423,33 +463,37 @@ export const promotionService = {
         const basePrice = Number(product.originalPrice || product.price || 0);
         let finalPrice = basePrice;
         let discountPercent = 0;
+        const isFixed = promo.discountType === 1 || String(promo.discountType || '').toLowerCase() === 'fixed';
+        const val = Number(promo.discountValue || 0);
 
-        if (promo.discountType === 'Percentage' && promo.discountValue > 0) {
-          discountPercent = Number(promo.discountValue);
-          finalPrice = Math.round(basePrice * (1 - discountPercent / 100));
-        } else if (promo.discountType === 'Fixed' && promo.discountValue > 0) {
-          finalPrice = Math.max(1, basePrice - Number(promo.discountValue));
+        if (!isFixed && val > 0) {
+          discountPercent = val;
+          finalPrice = Math.max(1, Math.round(basePrice * (1 - discountPercent / 100) * 100) / 100);
+        } else if (isFixed && val > 0) {
+          finalPrice = Math.max(1, Math.round((basePrice - val) * 100) / 100);
           discountPercent = Math.round(((basePrice - finalPrice) / basePrice) * 100);
         }
 
-        return {
-          hasPromotion: true,
-          promotionName: promo.name,
-          promotionId: promo.id,
-          discountType: promo.discountType,
-          discountValue: promo.discountValue,
-          discountPercent,
-          price: finalPrice,
-          originalPrice: basePrice > finalPrice ? basePrice : null,
-          savings: Math.max(0, basePrice - finalPrice)
-        };
+        if (finalPrice < basePrice) {
+          return {
+            hasPromotion: true,
+            promotionName: promo.name,
+            promotionId: promo.id,
+            discountType: isFixed ? 'Fixed' : 'Percentage',
+            discountValue: val,
+            discountPercent,
+            price: finalPrice,
+            originalPrice: basePrice,
+            savings: Math.max(0, Math.round((basePrice - finalPrice) * 100) / 100)
+          };
+        }
       }
     }
 
     return {
       hasPromotion: false,
       discountPercent: product.discountPercent || 0,
-      price: product.price,
+      price: Number(product.price || 0),
       originalPrice: product.originalPrice || null
     };
   },

@@ -64,7 +64,7 @@ export const productService = {
     } else if (filters.category && filters.category !== 'all') {
       const cat = filters.category.toLowerCase().trim();
       if (cat === 'offers' || cat === 'discounts') {
-        result = result.filter(p => p.hasDiscount || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
+        result = result.filter(p => p.hasDiscount || p.isDiscounted || p.hasPromotion || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || p.isOffer);
       } else {
         result = result.filter(p => {
           const c = (p.category || p.categoryName || '').toLowerCase().trim();
@@ -104,7 +104,7 @@ export const productService = {
     // Filter by perfume tier
     if (filters.tier && filters.tier !== 'all') {
       if (filters.tier === 'discounts' || filters.tier === 'offers') {
-        result = result.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+        result = result.filter(p => p.isDiscounted || p.hasDiscount || p.hasPromotion || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
       } else {
         const targetTier = filters.tier.toLowerCase().replace(/tier/g, '').trim();
         result = result.filter(p => {
@@ -225,12 +225,40 @@ export const productService = {
 
       let items = response?.items || (Array.isArray(response) ? response : []);
 
+      // Fetch active promotions to hydrate promotional prices & campaigns
+      let activePromos = [];
+      try {
+        activePromos = await promotionService.getActivePromotions();
+      } catch (promoErr) {
+        console.warn('promotionService.getActivePromotions error:', promoErr);
+      }
+
       // Ensure every product preserves pure API pricing and standardized 60ml size
       items = items.map(p => {
-        const rawPrice = Number(p.price);
-        const finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(p.price || 0);
-        const origPrice = p.originalPrice ? Number(p.originalPrice) : null;
-        const hasDisc = Boolean(p.isDiscounted || p.hasDiscount || (origPrice && origPrice > finalPrice) || (p.discountPercent > 0));
+        let rawPrice = Number(p.price);
+        let finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(p.price || 0);
+        let origPrice = p.originalPrice ? Number(p.originalPrice) : null;
+        let promoName = null;
+        let promoId = null;
+        let hasPromo = false;
+        let promoDiscountPercent = 0;
+
+        if (Array.isArray(activePromos) && activePromos.length > 0) {
+          const promoResult = promotionService.calculateProductPromotion(p, activePromos);
+          if (promoResult && promoResult.hasPromotion && promoResult.price < finalPrice) {
+            origPrice = origPrice || finalPrice;
+            finalPrice = promoResult.price;
+            promoName = promoResult.promotionName;
+            promoId = promoResult.promotionId;
+            promoDiscountPercent = promoResult.discountPercent;
+            hasPromo = true;
+          }
+        }
+
+        const hasDisc = Boolean(hasPromo || p.isDiscounted || p.hasDiscount || (origPrice && origPrice > finalPrice) || (p.discountPercent > 0));
+        const calcDiscountPercent = hasPromo
+          ? promoDiscountPercent
+          : (p.discountPercent || (origPrice && origPrice > finalPrice ? Math.round((1 - finalPrice / origPrice) * 100) : 0));
 
         // Derive tier name only for display purposes if not already set, without touching price
         let tierName = p.tier || p.perfumeCategoryName || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : null);
@@ -246,7 +274,10 @@ export const productService = {
           isDiscounted: hasDisc,
           hasDiscount: hasDisc,
           isOffer: hasDisc,
-          discountPercent: p.discountPercent || (origPrice && origPrice > finalPrice ? Math.round((1 - finalPrice / origPrice) * 100) : 0),
+          hasPromotion: hasPromo,
+          promotionName: promoName,
+          promotionId: promoId,
+          discountPercent: calcDiscountPercent,
           tier: tierName || p.tier,
           perfumeCategoryName: tierName || p.perfumeCategoryName,
           size: p.size || '60 ml / 2.0 fl oz'
@@ -257,7 +288,7 @@ export const productService = {
 
       let result = items;
       if (filters.category === 'offers' || filters.category === 'discounts' || filters.tier === 'discounts' || filters.tier === 'offers') {
-        result = result.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+        result = result.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || p.hasPromotion || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
       }
       if (filters.inStockOnly) {
         result = result.filter(p => p.stock > 0);
@@ -365,10 +396,33 @@ export const productService = {
       try {
         const remote = await productApi.getProductById(numId);
         if (remote) {
-          const rawPrice = Number(remote.price);
-          const finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(remote.price || 0);
-          const origPrice = remote.originalPrice ? Number(remote.originalPrice) : null;
-          const hasDisc = Boolean(remote.hasDiscount || (origPrice && origPrice > finalPrice));
+          let rawPrice = Number(remote.price);
+          let finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(remote.price || 0);
+          let origPrice = remote.originalPrice ? Number(remote.originalPrice) : null;
+          let promoName = null;
+          let promoId = null;
+          let hasPromo = false;
+          let promoDiscountPercent = 0;
+
+          try {
+            const activePromos = await promotionService.getActivePromotions();
+            if (Array.isArray(activePromos) && activePromos.length > 0) {
+              const promoResult = promotionService.calculateProductPromotion(remote, activePromos);
+              if (promoResult && promoResult.hasPromotion && promoResult.price < finalPrice) {
+                origPrice = origPrice || finalPrice;
+                finalPrice = promoResult.price;
+                promoName = promoResult.promotionName;
+                promoId = promoResult.promotionId;
+                promoDiscountPercent = promoResult.discountPercent;
+                hasPromo = true;
+              }
+            }
+          } catch {}
+
+          const hasDisc = Boolean(hasPromo || remote.hasDiscount || remote.isDiscounted || (origPrice && origPrice > finalPrice) || (remote.discountPercent > 0));
+          const calcDiscountPercent = hasPromo
+            ? promoDiscountPercent
+            : (remote.discountPercent || (origPrice && origPrice > finalPrice ? Math.round((1 - finalPrice / origPrice) * 100) : 0));
 
           let tierName = remote.tier || remote.perfumeCategoryName || (typeof remote.perfumeCategory === 'object' ? remote.perfumeCategory?.name : null);
           if (!tierName && remote.perfumeCategoryId) {
@@ -379,7 +433,12 @@ export const productService = {
           remote.price = finalPrice;
           remote.originalPrice = origPrice;
           remote.hasDiscount = hasDisc;
+          remote.isDiscounted = hasDisc;
           remote.isOffer = hasDisc;
+          remote.hasPromotion = hasPromo;
+          remote.promotionName = promoName;
+          remote.promotionId = promoId;
+          remote.discountPercent = calcDiscountPercent;
           if (tierName) {
             remote.tier = tierName;
             remote.perfumeCategoryName = tierName;

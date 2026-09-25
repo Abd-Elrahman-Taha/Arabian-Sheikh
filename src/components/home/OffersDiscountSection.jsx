@@ -43,7 +43,7 @@ export default function OffersDiscountSection({ products = [] }) {
   const [copiedCode, setCopiedCode] = useState(null);
 
   const discountedFlacons = useMemo(() => {
-    return (products || []).filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+    return (products || []).filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || p.hasPromotion || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
   }, [products]);
 
   // Fetch active promotions, bundles, and coupons from backend API

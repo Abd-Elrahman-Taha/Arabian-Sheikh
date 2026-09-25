@@ -213,7 +213,7 @@ export default function Home() {
         const oilsProducts = prods.filter(p => p.category === 'oils' || p.size?.includes('12 ml') || p.name?.toLowerCase().includes('oil') || p.name?.toLowerCase().includes('attar'));
         const bundlesProducts = prods.filter(p => p.category === 'bundles' || p.category === 'gift sets' || p.size?.includes('Set') || p.size?.includes('Full Set'));
 
-        const discountedProducts = prods.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+        const discountedProducts = prods.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || p.hasPromotion || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
 
         const curatedCollections = [
           ...(discountedProducts.length > 0 ? [{

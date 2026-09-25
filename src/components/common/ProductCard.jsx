@@ -24,6 +24,7 @@ export default function ProductCard({ product, onCompare }) {
 
   const currentPrice = Number(product.price) || 0;
   const hasActiveDiscount = Boolean(
+    product.hasPromotion ||
     product.isDiscounted ||
     product.hasDiscount ||
     product.isOffer ||
@@ -50,7 +51,11 @@ export default function ProductCard({ product, onCompare }) {
     const itemToAdd = {
       ...product,
       price: currentPrice,
-      originalPrice: strikePrice
+      originalPrice: strikePrice,
+      hasPromotion: Boolean(product.hasPromotion),
+      promotionName: product.promotionName || null,
+      promotionId: product.promotionId || null,
+      discountPercent: discountPct
     };
     addToCart(itemToAdd, product.size || '60 ml', 1);
   };
@@ -102,7 +107,7 @@ export default function ProductCard({ product, onCompare }) {
         {hasActiveDiscount && discountPct > 0 ? (
           <span className="bg-gradient-to-r from-red-700 via-amber-600 to-red-800 text-white text-[10px] font-bold font-cinzel tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-amber-300/50 flex items-center gap-1">
             <Percent className="w-2.5 h-2.5" />
-            <span>-{discountPct}%</span>
+            <span>-{discountPct}%{product.promotionName ? ` • ${product.promotionName}` : ''}</span>
           </span>
         ) : null}
         {/* Tier Badge - Always visible on every card on all devices */}

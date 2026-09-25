@@ -2111,11 +2111,21 @@ export default function CheckoutPage() {
                         {isBundle ? item.size : `${item.size || '60 ml'} • Qty: ${item.quantity}`}
                         {isBundle && ` • Qty: ${item.quantity}`}
                       </p>
+                      {(item.promotionName || item.hasPromotion) && (
+                        <span className="text-[9.5px] font-cinzel font-bold text-amber-400 block mt-0.5">
+                          🔥 {item.discountPercent ? `-${item.discountPercent}% ` : ''}{item.promotionName || 'Promotion Applied'}
+                        </span>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <span className="font-mono font-bold text-[#D4AF37] block">
                         €{(item.price * item.quantity).toFixed(2)}
                       </span>
+                      {(item.hasPromoDiscount || (item.originalPrice && item.originalPrice > item.price)) && (
+                        <span className="text-[10px] text-neutral-400 line-through font-mono block">
+                          €{((item.originalPrice || item.unitBasePrice) * item.quantity).toFixed(2)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -2185,7 +2195,19 @@ export default function CheckoutPage() {
                   )}
                 </span>
               </div>
-              {totals.discountAmount > 0 && (
+              {totals.promoDiscountAmount > 0 && (
+                <div className="flex justify-between text-amber-400 font-bold">
+                  <span>Palace Offer ({totals.activePromoName || 'Promotion'})</span>
+                  <span>-€{totals.promoDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {totals.couponDiscountAmount > 0 && (
+                <div className="flex justify-between text-emerald-400">
+                  <span>Privilege Discount ({cart.discountCode})</span>
+                  <span>-€{totals.couponDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {(!totals.promoDiscountAmount && !totals.couponDiscountAmount && totals.discountAmount > 0) && (
                 <div className="flex justify-between text-emerald-400">
                   <span>Privilege Discount</span>
                   <span>-€{totals.discountAmount.toFixed(2)}</span>

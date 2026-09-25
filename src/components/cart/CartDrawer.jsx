@@ -263,6 +263,16 @@ export default function CartDrawer() {
                           {isBundle ? item.size : `Size: ${item.size || '60 ml'}`}
                         </p>
 
+                        {/* Promotion Badge */}
+                        {(item.promotionName || item.hasPromotion) && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 text-[9px] font-cinzel font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                              <span>🔥</span>
+                              <span>{item.discountPercent ? `-${item.discountPercent}% • ` : ''}{item.promotionName || 'Promotion Applied'}</span>
+                            </span>
+                          </div>
+                        )}
+
                         {/* If bundle: show mini list of included flacons */}
                         {isBundle && Array.isArray(item.bundleItems) && item.bundleItems.length > 0 && (
                           <p className={`text-[9.5px] truncate mt-0.5 font-sans ${isDark ? 'text-[#D8BE99]/70' : 'text-[#5A3517]/80'}`}>

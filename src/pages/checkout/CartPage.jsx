@@ -231,10 +231,16 @@ export default function CartPage() {
                             </p>
                           )}
 
-                          <div className="pt-0.5">
+                          <div className="pt-0.5 flex flex-wrap items-center gap-2">
                             <span className="inline-block text-[11px] text-[#D8BE99] font-mono bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/20">
                               {isBundle ? item.size : `Size: ${item.size || '60ml'}`}
                             </span>
+                            {(item.promotionName || item.hasPromotion) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-cinzel font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                                <span>🔥</span>
+                                <span>{item.discountPercent ? `-${item.discountPercent}% • ` : ''}{item.promotionName || 'Promotion Applied'}</span>
+                              </span>
+                            )}
                           </div>
 
                           {isBundle && Array.isArray(item.bundleItems) && item.bundleItems.length > 0 && (

@@ -443,6 +443,7 @@ export function normalizeCartItem(raw) {
   const unitPrice = Number(item.unitPriceSnapshot !== undefined && item.unitPriceSnapshot !== null ? item.unitPriceSnapshot : (item.price || 0));
   const qty = Math.max(1, Number(item.quantity || 1));
   const lineTotal = Number(item.lineTotal !== undefined && item.lineTotal !== null ? item.lineTotal : unitPrice * qty);
+  const productObj = item.product || {};
 
   return {
     id: item.id !== undefined && item.id !== null ? item.id : `ci-${Date.now()}`,
@@ -454,6 +455,18 @@ export function normalizeCartItem(raw) {
     priceChangeDetectedAt: item.priceChangeDetectedAt || null,
     priceLockExpiresAt: item.priceLockExpiresAt || null,
     lineTotal,
+    // Taxonomy metadata for promotion applicability
+    categoryId: item.categoryId || productObj.categoryId || productObj.category?.id || null,
+    category: item.category || productObj.category?.name || productObj.category || null,
+    subcategoryId: item.subcategoryId || productObj.subcategoryId || productObj.subcategory?.id || null,
+    brandId: item.brandId || productObj.brandId || productObj.brand?.id || null,
+    brand: item.brand || productObj.brand?.name || productObj.brand || null,
+    perfumeCategoryId: item.perfumeCategoryId || productObj.perfumeCategoryId || productObj.perfumeCategory?.id || null,
+    perfumeCategory: item.perfumeCategory || productObj.perfumeCategory || null,
+    hasPromotion: Boolean(item.hasPromotion || productObj.hasPromotion),
+    promotionName: item.promotionName || productObj.promotionName || null,
+    promotionId: item.promotionId || productObj.promotionId || null,
+    discountPercent: Number(item.discountPercent || productObj.discountPercent || 0),
     // UI Compatibility Aliases
     name: item.productName || item.product?.name || item.name || 'Imperial Extrait',
     image: cleanImageUrl(resolvedImg),
@@ -461,8 +474,8 @@ export function normalizeCartItem(raw) {
     originalPrice: Number(item.originalPrice || unitPrice),
     unitBasePrice: Number(item.unitBasePrice || unitPrice),
     size: item.size || '60ml',
-    fragranceFamily: item.fragranceFamily || 'Haute Parfumerie',
-    arabicName: item.arabicName || '',
+    fragranceFamily: item.fragranceFamily || productObj.fragranceFamily || 'Haute Parfumerie',
+    arabicName: item.arabicName || productObj.arabicName || '',
     isBundle: Boolean(item.isBundle || String(item.productId || '').startsWith('bundle-')),
     bundleId: item.bundleId || null,
     bundleItems: Array.isArray(item.bundleItems) ? item.bundleItems : []
@@ -1421,9 +1434,25 @@ export function normalizeBundle(raw) {
 export function normalizePromotionApplicability(raw) {
   if (!raw) return null;
   const rule = normalizeObjectKeys(raw);
+
+  let targetType = 'Product';
+  const rawTarget = rule.targetType;
+  if (typeof rawTarget === 'number') {
+    const map = { 0: 'Product', 1: 'Category', 2: 'Subcategory', 3: 'Brand', 4: 'PerfumeCategory' };
+    targetType = map[rawTarget] || 'Product';
+  } else if (rawTarget !== undefined && rawTarget !== null) {
+    const s = String(rawTarget).toLowerCase();
+    if (s.includes('product') || s === '0') targetType = 'Product';
+    else if (s.includes('perfume') || s === '4') targetType = 'PerfumeCategory';
+    else if (s.includes('subcat') || s === '2') targetType = 'Subcategory';
+    else if (s.includes('cat') || s === '1') targetType = 'Category';
+    else if (s.includes('brand') || s === '3') targetType = 'Brand';
+    else targetType = String(rawTarget);
+  }
+
   return {
     id: Number(rule.id || 0),
-    targetType: rule.targetType || 'Category',
+    targetType,
     targetId: Number(rule.targetId || 0),
     isExcluded: Boolean(rule.isExcluded)
   };
@@ -1436,12 +1465,17 @@ export function normalizePromotion(raw) {
   if (!raw) return null;
   const p = normalizeObjectKeys(raw);
 
-  const rawType = p.type || 'Discount';
-  const type = rawType.toLowerCase() === 'bundle' ? 'Bundle' : 'Discount';
-  const rawDiscountType = p.discountType;
-  const discountType = type === 'Discount'
-    ? (rawDiscountType?.toLowerCase() === 'fixed' ? 'Fixed' : 'Percentage')
-    : null;
+  const isBundle = p.type === 1 || String(p.type || '').toLowerCase() === 'bundle';
+  const type = isBundle ? 'Bundle' : 'Discount';
+
+  let discountType = null;
+  if (type === 'Discount') {
+    if (p.discountType === 1 || String(p.discountType || '').toLowerCase() === 'fixed') {
+      discountType = 'Fixed';
+    } else {
+      discountType = 'Percentage';
+    }
+  }
 
   const rawApplicabilities = p.applicabilities || p.applicability || [];
   const applicability = Array.isArray(rawApplicabilities)
@@ -1452,6 +1486,12 @@ export function normalizePromotion(raw) {
   const bundles = Array.isArray(rawBundles)
     ? rawBundles.map(normalizeBundle).filter(Boolean)
     : [];
+
+  let status = p.status;
+  if (status === 0 || status === '0') status = 'Active';
+  else if (status === 1 || status === '1') status = 'Inactive';
+  else if (status === 2 || status === '2') status = 'Expired';
+  else if (!status) status = (p.isActive === false ? 'Inactive' : 'Active');
 
   return {
     id: Number(p.id || 0),
@@ -1465,7 +1505,7 @@ export function normalizePromotion(raw) {
     maxDiscountAmount: p.maxDiscountAmount !== null && p.maxDiscountAmount !== undefined ? Number(p.maxDiscountAmount) : null,
     usageLimit: p.usageLimit !== null && p.usageLimit !== undefined ? Number(p.usageLimit) : null,
     usageCount: Number(p.usageCount || 0),
-    status: p.status || (p.isActive === false ? 'Inactive' : 'Active'),
+    status,
     deactivatedBy: p.deactivatedBy || null,
     deactivatedAt: p.deactivatedAt || null,
     applicability,

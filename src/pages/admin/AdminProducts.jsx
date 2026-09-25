@@ -183,6 +183,15 @@ export default function AdminProducts() {
     setDetailsLoading(true);
     try {
       const details = await productApi.adminGetProductById(id);
+      const loadedProd = products.find(p => p.id === id || p.numericId === id);
+      if (loadedProd?.hasPromotion) {
+        details.hasPromotion = true;
+        details.promotionName = loadedProd.promotionName;
+        details.promotionId = loadedProd.promotionId;
+        details.discountPercent = loadedProd.discountPercent;
+        details.originalPrice = loadedProd.originalPrice || details.originalPrice || details.price;
+        details.price = loadedProd.price;
+      }
       setSelectedProductDetails(details);
     } catch (err) {
       console.warn('Failed to load product details from server:', err);
@@ -291,7 +300,7 @@ export default function AdminProducts() {
               <th className="py-4 px-4">Flacon</th>
               <th className="py-4 px-4">Product Name</th>
               <th className="py-4 px-4">Tier / Category</th>
-              <th className="py-4 px-4">Price</th>
+              <th className="py-4 px-4">Price & Promotion</th>
               <th className="py-4 px-4">Status</th>
               <th className="py-4 px-4 text-right rtl:text-left">Actions</th>
             </tr>
@@ -334,6 +343,15 @@ export default function AdminProducts() {
                       <div className="font-cinzel font-bold text-[#F3E6D0] text-sm sm:text-base">{p.name}</div>
                       {p.arabicName && <div className="font-arabic text-[#D4AF37] text-xs sm:text-sm mt-0.5">{p.arabicName}</div>}
                       <div className="text-xs text-[#D8BE99] mt-0.5">{p.size || '60 ml'}</div>
+                      {(p.hasPromotion || p.promotionName) && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-red-950/90 via-amber-950/90 to-red-900/90 text-amber-300 border border-amber-500/50 text-[10px] font-cinzel font-bold shadow-sm">
+                            <span className="text-red-400">🔥</span>
+                            <span>{p.discountPercent > 0 ? `-${p.discountPercent}%` : 'PROMO'}</span>
+                            {p.promotionName && <span>• {p.promotionName}</span>}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4">
                       {effectiveTier ? (
@@ -351,9 +369,21 @@ export default function AdminProducts() {
                         <div>
                           <div className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</div>
                           <div className="text-xs text-neutral-500 line-through">€{p.originalPrice}</div>
+                          {p.hasPromotion && (
+                            <span className="text-[10px] text-emerald-400 font-semibold block mt-0.5 font-sans">
+                              Promotion Active
+                            </span>
+                          )}
                         </div>
                       ) : (
-                        <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</span>
+                        <div>
+                          <span className="text-[#D4AF37] text-sm sm:text-base font-bold">€{effectivePrice}</span>
+                          {p.hasPromotion && (
+                            <span className="text-[10px] text-emerald-400 font-semibold block mt-0.5 font-sans">
+                              Promotion Active
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
                   <td className="py-4 px-4">
@@ -486,6 +516,24 @@ export default function AdminProducts() {
                         <p className="font-arabic text-[#D4AF37] text-base">
                           {selectedProductDetails.arabicName}
                         </p>
+                      )}
+
+                      {selectedProductDetails.hasPromotion && (
+                        <div className="p-3 rounded-xl bg-gradient-to-r from-red-950/80 via-amber-950/60 to-black border border-amber-500/40 text-xs space-y-1.5 my-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-cinzel font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>🔥</span>
+                              <span>Active Campaign: {selectedProductDetails.promotionName || 'Palace Discount'}</span>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-red-600/30 text-amber-300 border border-amber-400/50 text-[10px] font-bold">
+                              {selectedProductDetails.discountPercent}% OFF
+                            </span>
+                          </div>
+                          <div className="text-[#D8BE99] flex items-center gap-4 font-mono text-[11px]">
+                            <span>Original Base: <span className="line-through">€{Number(selectedProductDetails.originalPrice).toFixed(2)}</span></span>
+                            <span>Promotional Price: <span className="text-amber-400 font-bold">€{Number(selectedProductDetails.price).toFixed(2)}</span></span>
+                          </div>
+                        </div>
                       )}
 
                       <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
