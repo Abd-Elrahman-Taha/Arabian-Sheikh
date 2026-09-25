@@ -214,37 +214,22 @@ export function normalizeProduct(raw) {
     finalPrice = Number(p.price);
   }
 
-  // Derive tier dynamically from backend perfume categories / tiers
+  // Derive tier dynamically from backend perfume categories / API data
   let derivedTier = (perfumeCategoryName ? String(perfumeCategoryName).trim() : null)
     || (p.perfumeCategory && typeof p.perfumeCategory === 'object' ? String(p.perfumeCategory.name).trim() : null)
     || (p.tier ? String(p.tier).trim() : null)
     || null;
 
-  if (!derivedTier) {
+  if (!derivedTier && (p.perfumeCategoryId || (p.perfumeCategory && p.perfumeCategory.id))) {
     try {
-      derivedTier = perfumeCategoryService.getTierForProduct({
-        ...p,
-        price: finalPrice,
-        categoryId: p.categoryId || (typeof p.category === 'object' ? p.category?.id : null),
-        category: categoryName,
-        perfumeCategoryId: p.perfumeCategoryId || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.id : null),
-        perfumeCategoryName: perfumeCategoryName,
-        tier: p.tier
-      });
+      const pcid = Number(p.perfumeCategoryId || p.perfumeCategory?.id);
+      const tierObj = perfumeCategoryService.getTierById(pcid);
+      if (tierObj?.name) {
+        derivedTier = String(tierObj.name).trim();
+      }
     } catch {
       derivedTier = null;
     }
-  }
-
-  // Ensure EVERY product on EVERY device has a valid resolved tier
-  if (!derivedTier) {
-    const pcid = Number(p.perfumeCategoryId || (p.perfumeCategory && p.perfumeCategory.id));
-    if (pcid === 1) derivedTier = 'Standard';
-    else if (pcid === 2) derivedTier = 'Premium';
-    else if (pcid === 3) derivedTier = 'Luxury';
-    else if (finalPrice >= 250) derivedTier = 'Luxury';
-    else if (finalPrice >= 130) derivedTier = 'Premium';
-    else derivedTier = 'Standard';
   }
 
   const discountObj = p.discount && typeof p.discount === 'object' ? p.discount : null;

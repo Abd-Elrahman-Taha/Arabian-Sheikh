@@ -119,34 +119,17 @@ export default function AdminProductEdit() {
             const catId = Number(item.categoryId || item.category?.id || (item.category === 'perfumes' ? 1 : 2)) || 1;
             const isPerfume = catId === 1;
 
-            // Resolve tier carefully: DO NOT blindly default to 1 (which is €30)!
+            // Resolve tier directly from backend API
             let resolvedTierId = '';
             if (isPerfume) {
               const rawTierId = item.perfumeCategoryId || item.perfumeCategory?.id;
-              if (rawTierId && loadedTiers.some(t => Number(t.id) === Number(rawTierId))) {
+              if (rawTierId) {
                 resolvedTierId = Number(rawTierId);
-              } else {
-                // Try matching by price (e.g. 150 matches Premium tier)
-                const numPrice = Number(item.price);
-                if (!isNaN(numPrice) && numPrice > 0) {
-                  const matchByPrice = loadedTiers.find(t => Math.abs(Number(t.price) - numPrice) < 0.01);
-                  if (matchByPrice) {
-                    resolvedTierId = Number(matchByPrice.id);
-                  }
-                }
-                // Try matching by tier name
-                if (!resolvedTierId && (item.perfumeCategoryName || item.tier || item.perfumeCategory)) {
-                  const nameToMatch = String(item.perfumeCategoryName || item.tier || (typeof item.perfumeCategory === 'string' ? item.perfumeCategory : item.perfumeCategory?.name) || '').toLowerCase().trim();
-                  const matchByName = loadedTiers.find(t => t.name?.toLowerCase().trim() === nameToMatch);
-                  if (matchByName) {
-                    resolvedTierId = Number(matchByName.id);
-                  }
-                }
-                // If rawTierId exists even if not in loadedTiers, preserve it
-                if (!resolvedTierId && rawTierId) {
-                  resolvedTierId = Number(rawTierId);
-                } else if (!resolvedTierId && (isNaN(numPrice) || numPrice <= 0) && loadedTiers.length > 0) {
-                  resolvedTierId = Number(loadedTiers[0].id);
+              } else if (item.perfumeCategoryName || item.tier) {
+                const nameToMatch = String(item.perfumeCategoryName || item.tier).toLowerCase().trim();
+                const matchByName = loadedTiers.find(t => t.name?.toLowerCase().trim() === nameToMatch);
+                if (matchByName) {
+                  resolvedTierId = Number(matchByName.id);
                 }
               }
             }
@@ -361,14 +344,18 @@ export default function AdminProductEdit() {
         });
       }
 
+      const effectivePrice = isPerfumeCategory
+        ? Number(tierPrice || formData.price || 0)
+        : Number(formData.price || 0);
+
       // Exact backend payload (CreateAdminProductRequest / UpdateAdminProductRequest)
       const payload = {
         brandId: Number(formData.brandId) || 1,
         categoryId: Number(formData.categoryId) || 1,
         subcategoryId: formData.subcategoryId ? Number(formData.subcategoryId) : null,
-        perfumeCategoryId: isPerfumeCategory ? (Number(formData.perfumeCategoryId) || 1) : null,
+        perfumeCategoryId: isPerfumeCategory && formData.perfumeCategoryId ? Number(formData.perfumeCategoryId) : null,
         gender: formData.gender || 'Unisex',
-        price: isPerfumeCategory ? null : Number(formData.price || 0),
+        price: effectivePrice,
         shippingWeight: Number(formData.shippingWeight) || 0.45,
         nameIsTranslatable: Boolean(formData.nameIsTranslatable),
         isActive: Boolean(formData.isActive),
@@ -574,7 +561,15 @@ export default function AdminProductEdit() {
                   </label>
                   <select
                     value={formData.perfumeCategoryId}
-                    onChange={(e) => setFormData({ ...formData, perfumeCategoryId: e.target.value })}
+                    onChange={(e) => {
+                      const selectedId = Number(e.target.value);
+                      const matched = perfumeCategories.find(t => Number(t.id) === selectedId);
+                      setFormData(prev => ({
+                        ...prev,
+                        perfumeCategoryId: selectedId,
+                        price: matched?.price !== undefined ? String(matched.price) : prev.price
+                      }));
+                    }}
                     className={`w-full bg-black/80 border ${formErrors.perfumeCategoryId ? 'border-rose-500' : 'border-[#D4AF37]/50'} rounded-xl py-2.5 px-3 text-xs text-[#F3E6D0] focus:border-[#D4AF37] focus:outline-none cursor-pointer`}
                   >
                     <option value="" disabled className="bg-[#120B06]">Select Pricing Tier...</option>

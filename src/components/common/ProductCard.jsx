@@ -81,7 +81,7 @@ export default function ProductCard({ product, onCompare }) {
     product.perfumeCategoryName ||
     (product.perfumeCategory && (typeof product.perfumeCategory === 'object' ? product.perfumeCategory.name : product.perfumeCategory)) ||
     perfumeCategoryService.getTierForProduct(product) ||
-    (Number(product.perfumeCategoryId) === 1 ? 'Standard' : Number(product.perfumeCategoryId) === 2 ? 'Premium' : Number(product.perfumeCategoryId) === 3 ? 'Luxury' : (currentPrice >= 250 ? 'Luxury' : currentPrice >= 130 ? 'Premium' : 'Standard'));
+    null;
 
   const tierBadges = {
     Luxury: 'bg-gradient-to-r from-amber-500 to-amber-700 text-black font-bold border border-amber-300 shadow-md',
@@ -110,10 +110,12 @@ export default function ProductCard({ product, onCompare }) {
             <span>-{discountPct}%{product.promotionName ? ` • ${product.promotionName}` : ''}</span>
           </span>
         ) : null}
-        {/* Tier Badge - Always visible on every card on all devices */}
-        <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[resolvedTier] || tierBadges[String(resolvedTier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
-          {resolvedTier && resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier || 'Standard'} Tier`}
-        </span>
+        {/* Tier Badge - Visible when product has a perfume tier */}
+        {resolvedTier && (
+          <span className={`text-[10px] uppercase font-cinzel tracking-widest px-2.5 py-0.5 rounded-full shadow-md ${tierBadges[resolvedTier] || tierBadges[String(resolvedTier).trim()] || 'bg-[#D4AF37] text-black font-bold border border-[#F2D675]'}`}>
+            {resolvedTier.toLowerCase().includes('tier') ? resolvedTier : `${resolvedTier} Tier`}
+          </span>
+        )}
         {product.featured && (
           <span className="bg-[#D4AF37] text-black text-[10px] font-bold font-cinzel tracking-widest uppercase px-2 py-0.5 rounded-full shadow-md">
             {t('shop.featured') || 'Featured'}

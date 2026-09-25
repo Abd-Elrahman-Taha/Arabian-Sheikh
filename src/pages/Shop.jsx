@@ -192,6 +192,7 @@ export default function Shop() {
           categoryId: activeCategoryId || undefined,
           subcategoryId: selectedSubcategory !== 'all' ? selectedSubcategory : undefined,
           brandId: selectedBrand !== 'all' ? selectedBrand : undefined,
+          perfumeCategoryId: (!isNaN(Number(selectedTier)) && Number(selectedTier) > 0) ? Number(selectedTier) : undefined,
           tier: selectedTier !== 'all' ? selectedTier : undefined,
           gender: selectedGender !== 'all' ? selectedGender : undefined,
           search: search.trim() || undefined,
@@ -236,6 +237,7 @@ export default function Shop() {
         categoryId: activeCategoryId || undefined,
         subcategoryId: selectedSubcategory !== 'all' ? selectedSubcategory : undefined,
         brandId: selectedBrand !== 'all' ? selectedBrand : undefined,
+        perfumeCategoryId: (!isNaN(Number(selectedTier)) && Number(selectedTier) > 0) ? Number(selectedTier) : undefined,
         tier: selectedTier !== 'all' ? selectedTier : undefined,
         gender: selectedGender !== 'all' ? selectedGender : undefined,
         search: search.trim() || undefined,
@@ -451,7 +453,8 @@ export default function Shop() {
       isDiscountTier: true
     },
     ...perfumeCategories.map(tier => ({
-      id: tier.name,
+      id: String(tier.id),
+      tierName: tier.name,
       rawId: tier.id,
       label: `${tier.name} Tier (€${Number(tier.price).toFixed(0)})`
     }))
@@ -460,12 +463,15 @@ export default function Shop() {
   // Active Category Name for Header
   const activeCategoryTitle = useMemo(() => {
     if (selectedTier === 'discounts') return language === 'ar' ? 'عطور التخفيضات والعروض الملكية' : language === 'bg' ? 'Намалени Аромати и Оферти' : language === 'es' ? 'Aromas con Descuento y Ofertas' : 'Discounts & Special Offers';
-    if (selectedTier && selectedTier !== 'all') return `${selectedTier} Tier`;
+    if (selectedTier && selectedTier !== 'all') {
+      const matched = perfumeCategories.find(t => String(t.id) === String(selectedTier) || t.name?.toLowerCase() === String(selectedTier).toLowerCase());
+      return matched ? `${matched.name} Tier` : `${selectedTier} Tier`;
+    }
     if (selectedCategory === 'all') return t('ALL Catalog') || 'All Creations';
     if (selectedCategory === 'offers') return t('catalog.offersAndDiscounts') || 'Offers & Discounts';
     const found = categories.find(c => String(c.id) === String(selectedCategory));
     return found ? found.name : selectedCategory.toUpperCase();
-  }, [selectedCategory, selectedTier, categories, language, t]);
+  }, [selectedCategory, selectedTier, categories, perfumeCategories, language, t]);
 
   // Filter Sidebar UI
   const filterSidebar = (

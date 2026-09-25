@@ -274,19 +274,15 @@ export const productApi = {
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
+      perfumeCategoryId: payload.perfumeCategoryId ? Number(payload.perfumeCategoryId) : null,
       gender: payload.gender === 'Female' ? 'Female' : (payload.gender === 'Male' ? 'Male' : 'Unisex'),
+      price: Number(payload.price || 0),
       shippingWeight,
       nameIsTranslatable: payload.nameIsTranslatable !== false,
       isActive: payload.isActive !== false,
       imageUrl: payload.imageUrl ? toAbsoluteUrl(payload.imageUrl) : null,
       translations
     };
-
-    if (isPerfume) {
-      body.perfumeCategoryId = Number(payload.perfumeCategoryId) || 1;
-    } else {
-      body.price = Number(payload.price) || 0;
-    }
 
     const response = await apiClient.post(ENDPOINTS.ADMIN.PRODUCTS.CREATE, body);
     return normalizeProduct(response);
@@ -324,26 +320,17 @@ export const productApi = {
         ];
 
     const body = {
-      id: Number(id),
       brandId: Number(payload.brandId) || 1,
       categoryId: Number(payload.categoryId) || (isPerfume ? 1 : 2),
       subcategoryId: payload.subcategoryId ? Number(payload.subcategoryId) : null,
+      perfumeCategoryId: payload.perfumeCategoryId ? Number(payload.perfumeCategoryId) : null,
       gender: payload.gender === 'Female' ? 'Female' : (payload.gender === 'Male' ? 'Male' : 'Unisex'),
+      price: Number(payload.price || 0),
       shippingWeight,
       nameIsTranslatable: payload.nameIsTranslatable !== false,
       isActive: payload.isActive !== false,
-      imageUrl: payload.imageUrl ? toAbsoluteUrl(payload.imageUrl) : null,
-      translations,
-      name: payload.name || translations[0]?.name || 'Imperial Extrait',
-      description: payload.description !== undefined && payload.description !== null ? String(payload.description) : (translations[0]?.description || ''),
-      ingredients: payload.ingredients !== undefined && payload.ingredients !== null ? String(payload.ingredients) : (translations[0]?.ingredients || '')
+      imageUrl: payload.imageUrl ? toAbsoluteUrl(payload.imageUrl) : null
     };
-
-    if (isPerfume) {
-      body.perfumeCategoryId = Number(payload.perfumeCategoryId) || 1;
-    } else {
-      body.price = Number(payload.price) || 0;
-    }
 
     const response = await apiClient.put(ENDPOINTS.ADMIN.PRODUCTS.UPDATE(id), body);
 
@@ -562,6 +549,12 @@ export const productApi = {
 
   async adminUpdateBrandTranslation(id, languageCode, payload) {
     return await apiClient.put(ENDPOINTS.ADMIN.BRANDS.UPDATE_TRANSLATION(id, languageCode), payload);
+  },
+
+  // Perfume Categories
+  async adminGetPerfumeCategories(params = {}) {
+    const response = await apiClient.get(ENDPOINTS.ADMIN.PERFUME_CATEGORIES.LIST, { params });
+    return response?.items || (Array.isArray(response) ? response : []);
   }
 };
 

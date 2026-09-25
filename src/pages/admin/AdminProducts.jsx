@@ -328,10 +328,10 @@ export default function AdminProducts() {
                 const effectivePrice = (p.price && Number(p.price) > 0)
                   ? Number(p.price)
                   : (matchedTier && matchedTier.price !== undefined ? Number(matchedTier.price) : Number(p.price || 0));
-                const effectiveTier = matchedTier?.name 
-                  || p.perfumeCategoryName 
+                const effectiveTier = p.perfumeCategoryName 
+                  || matchedTier?.name 
                   || p.tier 
-                  || (Number(p.categoryId) === 1 || p.categoryName === 'Perfumes' || p.category === 'perfumes' ? (effectivePrice >= 250 ? 'Luxury' : effectivePrice >= 130 ? 'Premium' : 'Standard') : null);
+                  || null;
 
                 return (
                   <tr key={p.id} className="hover:bg-white/5 transition-colors">

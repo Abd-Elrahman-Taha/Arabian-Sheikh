@@ -1,17 +1,14 @@
 import { productApi } from '../api/product.api';
 import { perfumeCategoryService } from './perfumeCategoryService';
-import { promotionApi } from '../api/promotion.api';
 import { promotionService } from './promotionService';
 
-// Purge any legacy device-specific discount overrides so backend API is the sole source of truth
+// Purge any legacy device-specific overrides
 if (typeof window !== 'undefined') {
   try {
     localStorage.removeItem('arabian_sheikh_product_discounts');
     localStorage.removeItem('arabian_sheikh_perfume_tiers');
   } catch {}
 }
-
-let memoryCatalog = [];
 
 export const productService = {
   /**
@@ -162,11 +159,11 @@ export const productService = {
   },
 
   getAllProductsSync(filters = {}) {
-    return this.applyFilters(memoryCatalog, filters);
+    return [];
   },
 
   /**
-   * Fresh, pure Live API fetch. Zero localStorage caching.
+   * Fresh, pure Live API fetch. Zero caching, zero storage.
    */
   async getAllProducts(filters = {}) {
     try {
@@ -199,15 +196,25 @@ export const productService = {
       }
 
       // Map tier name or id to perfumeCategoryId for backend API filtering (exclude discounts virtual tier)
-      if (filters.tier && filters.tier !== 'all' && filters.tier !== 'discounts' && filters.tier !== 'offers') {
-        const tiers = perfumeCategoryService.getCachedTiers() || [];
-        const targetTierName = String(filters.tier).toLowerCase().replace(/tier/g, '').trim();
-        const matched = tiers.find(t =>
-          String(t.id) === targetTierName ||
-          (t.name && t.name.toLowerCase().replace(/tier/g, '').trim() === targetTierName)
-        );
-        if (matched?.id) {
-          apiFilters.perfumeCategoryId = matched.id;
+      if (filters.perfumeCategoryId && !isNaN(Number(filters.perfumeCategoryId)) && Number(filters.perfumeCategoryId) > 0) {
+        apiFilters.perfumeCategoryId = Number(filters.perfumeCategoryId);
+      } else if (filters.tier && filters.tier !== 'all' && filters.tier !== 'discounts' && filters.tier !== 'offers') {
+        const numTier = Number(filters.tier);
+        if (!isNaN(numTier) && numTier > 0) {
+          apiFilters.perfumeCategoryId = numTier;
+        } else {
+          try {
+            const tiersData = await perfumeCategoryService.getAdminPerfumeCategories({ pageSize: 100 });
+            const tiers = tiersData?.items || [];
+            const targetTierName = String(filters.tier).toLowerCase().replace(/tier/g, '').trim();
+            const matched = tiers.find(t =>
+              String(t.id) === targetTierName ||
+              (t.name && t.name.toLowerCase().replace(/tier/g, '').trim() === targetTierName)
+            );
+            if (matched?.id) {
+              apiFilters.perfumeCategoryId = matched.id;
+            }
+          } catch {}
         }
       }
 
@@ -264,7 +271,6 @@ export const productService = {
           ? promoDiscountPercent
           : (p.discountPercent || (origPrice && origPrice > finalPrice ? Math.round((1 - finalPrice / origPrice) * 100) : 0));
 
-        // Derive tier name only for display purposes if not already set, without touching price
         let tierName = p.tier || p.perfumeCategoryName || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : null);
         if (!tierName && p.perfumeCategoryId) {
           const matched = perfumeCategoryService.getTierById(p.perfumeCategoryId);
@@ -282,13 +288,11 @@ export const productService = {
           promotionName: promoName,
           promotionId: promoId,
           discountPercent: calcDiscountPercent,
-          tier: tierName || p.tier,
-          perfumeCategoryName: tierName || p.perfumeCategoryName,
+          tier: tierName || p.tier || null,
+          perfumeCategoryName: tierName || p.perfumeCategoryName || null,
           size: p.size || '60 ml / 2.0 fl oz'
         };
       });
-
-      memoryCatalog = items;
 
       let result = items;
       if (filters.category === 'offers' || filters.category === 'discounts' || filters.tier === 'discounts' || filters.tier === 'offers') {
@@ -301,7 +305,7 @@ export const productService = {
       return result;
     } catch (err) {
       console.warn('API getAllProducts error:', err.message);
-      return memoryCatalog;
+      return [];
     }
   },
 
@@ -309,7 +313,6 @@ export const productService = {
     if (!prod) return null;
     const enriched = { ...prod };
 
-    // 1. If notes are already provided
     const hasTop = Array.isArray(enriched.topNotes) && enriched.topNotes.length > 0;
     const hasHeart = Array.isArray(enriched.heartNotes) && enriched.heartNotes.length > 0;
     const hasBase = Array.isArray(enriched.baseNotes) && enriched.baseNotes.length > 0;
@@ -328,7 +331,6 @@ export const productService = {
       return enriched;
     }
 
-    // 2. Try parsing from ingredients if present (e.g. "Rare Oud, Amber Crystals, Taif Rose, White Musk")
     if (enriched.ingredients && typeof enriched.ingredients === 'string' && enriched.ingredients.trim()) {
       const parts = enriched.ingredients.split(/[,،•\n]+/).map(s => s.trim()).filter(Boolean);
       if (parts.length >= 3) {
@@ -350,7 +352,6 @@ export const productService = {
       }
     }
 
-    // 4. Default Sovereign Royal Fragrance Notes
     const defaultTop = ['Imperial Saffron', 'Wild Bergamot', 'Golden Amber Dust'];
     const defaultHeart = ['Assamese Royal Oud', 'Smoked Incense', 'Taif Rose Petals'];
     const defaultBase = ['Black Ambergris', 'Dark Sandalwood', 'Cashmere Musk'];
@@ -370,24 +371,6 @@ export const productService = {
   },
 
   getProductByIdSync(idOrSlug) {
-    if (!idOrSlug) return null;
-    const clean = String(idOrSlug).trim().toLowerCase();
-    let found = memoryCatalog.find(p => 
-      String(p.id).toLowerCase() === clean || 
-      String(p.slug || '').toLowerCase() === clean || 
-      String(p.numericId || '').toLowerCase() === clean ||
-      (p.name && p.name.toLowerCase().trim() === clean)
-    ) || null;
-
-    if (found) {
-      if (!found.numericId || isNaN(Number(found.numericId)) || Number(found.numericId) <= 0) {
-        if (typeof found.id === 'number' && found.id > 0) {
-          found.numericId = found.id;
-        }
-      }
-      return this.enrichProductWithNotes(found);
-    }
-
     return null;
   },
 
@@ -398,7 +381,13 @@ export const productService = {
     const numId = Number(idOrSlug);
     if (!isNaN(numId) && numId > 0) {
       try {
-        const remote = await productApi.getProductById(numId);
+        let remote = null;
+        try {
+          remote = await productApi.adminGetProductById(numId);
+        } catch {
+          remote = await productApi.getProductById(numId);
+        }
+
         if (remote) {
           const rawBasePrice = Number(remote.originalPrice || remote.unitBasePrice || remote.basePrice || remote.price || 0);
           let finalPrice = rawBasePrice;
@@ -456,23 +445,11 @@ export const productService = {
           return this.enrichProductWithNotes(remote);
         }
       } catch (err) {
-        console.warn('API getProductById fallback:', err.message);
+        console.warn('API getProductById error:', err.message);
       }
     }
 
-    // 2. Check if local memoryCatalog already contains a live-hydrated product with numeric ID
-    const liveHydrated = memoryCatalog.find(p => 
-      (typeof p.numericId === 'number' && p.numericId > 0 || typeof p.id === 'number' && p.id > 0) &&
-      (String(p.id).toLowerCase() === clean || 
-       String(p.slug || '').toLowerCase() === clean || 
-       String(p.numericId || '').toLowerCase() === clean ||
-       (p.name && p.name.toLowerCase().trim() === clean))
-    );
-    if (liveHydrated) {
-      return this.enrichProductWithNotes(liveHydrated);
-    }
-
-    // 3. Fetch from all products from live backend API to resolve authoritative numeric ID
+    // Resolve by slug or name directly from live API
     try {
       const all = await this.getAllProducts({ pageSize: 100, includeDrafts: true });
       const found = all.find(p => 
@@ -490,7 +467,7 @@ export const productService = {
   },
 
   getFeaturedProductsSync(limit = 4) {
-    return memoryCatalog.filter(p => p.featured).slice(0, limit);
+    return [];
   },
 
   async getFeaturedProducts(limit = 4) {
@@ -499,8 +476,7 @@ export const productService = {
   },
 
   getProductsByCategorySync(category, limit) {
-    const filtered = this.applyFilters(memoryCatalog, { category });
-    return limit ? filtered.slice(0, limit) : filtered;
+    return [];
   },
 
   async getProductsByCategory(category, limit) {
@@ -509,8 +485,7 @@ export const productService = {
   },
 
   getProductsByTierSync(tier, limit) {
-    const filtered = this.applyFilters(memoryCatalog, { tier });
-    return limit ? filtered.slice(0, limit) : filtered;
+    return [];
   },
 
   async getProductsByTier(tier, limit) {
@@ -551,9 +526,7 @@ export const productService = {
   },
 
   getRelatedProductsSync(currentId, limit = 4) {
-    const current = memoryCatalog.find(p => String(p.id) === String(currentId) || p.slug === currentId);
-    if (!current) return memoryCatalog.slice(0, limit);
-    return memoryCatalog.filter(p => (String(p.id) !== String(current.id)) && (!p.status || p.status === 'ACTIVE') && (p.category === current.category || p.tier === current.tier)).slice(0, limit);
+    return [];
   },
 
   async searchProducts(query, limit = 10) {
@@ -573,16 +546,6 @@ export const productService = {
     if (typeof id === 'number' && !isNaN(id) && id > 0) return id;
     const num = Number(id);
     if (!isNaN(num) && num > 0) return num;
-    const clean = String(id || '').trim().toLowerCase();
-    const found = memoryCatalog.find(p => 
-      String(p.id).toLowerCase() === clean || 
-      String(p.numericId || '').toLowerCase() === clean || 
-      String(p.slug || '').toLowerCase() === clean ||
-      (p.name && p.name.toLowerCase().trim() === clean)
-    );
-    if (found?.numericId && Number(found.numericId) > 0) return Number(found.numericId);
-    if (found?.id && !isNaN(Number(found.id)) && Number(found.id) > 0) return Number(found.id);
-
     return null;
   },
 
@@ -592,18 +555,21 @@ export const productService = {
   },
 
   async createProduct(productData) {
-    const created = await productApi.adminCreateProduct(productData);
-    await this.getAllProducts({ includeDrafts: true });
-    return created;
+    return await productApi.adminCreateProduct(productData);
   },
 
   async updateProduct(id, productData) {
     const targetId = this.resolveTargetId(id) || (Number(id) > 0 ? Number(id) : id);
-    const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
-    
+    let existing = {};
+    if (targetId) {
+      try {
+        existing = await productApi.adminGetProductById(targetId);
+      } catch {}
+    }
+
     const isPerfume = Boolean(
       productData.perfumeCategoryId ||
-      (existing?.perfumeCategoryId) ||
+      existing?.perfumeCategoryId ||
       productData.category === 'perfumes' ||
       existing?.category === 'perfumes' ||
       productData.tier ||
@@ -611,19 +577,9 @@ export const productService = {
       Number(productData.categoryId || existing?.categoryId) === 1
     );
 
-    let perfumeCatId = productData.perfumeCategoryId !== undefined && productData.perfumeCategoryId !== null
+    const perfumeCatId = productData.perfumeCategoryId !== undefined && productData.perfumeCategoryId !== null
       ? productData.perfumeCategoryId 
       : existing?.perfumeCategoryId;
-
-    if (!perfumeCatId && isPerfume) {
-      const tierName = productData.tier || existing?.tier;
-      if (tierName) {
-        const tiers = perfumeCategoryService.getCachedTiers();
-        const found = tiers.find(t => t.name?.toLowerCase() === String(tierName).toLowerCase());
-        if (found) perfumeCatId = found.id;
-      }
-      if (!perfumeCatId) perfumeCatId = 1;
-    }
 
     let updatedRemote = null;
     if (targetId) {
@@ -632,7 +588,7 @@ export const productService = {
         brandId: Number(productData.brandId || existing?.brandId) || 1,
         categoryId: Number(productData.categoryId || existing?.categoryId) || (isPerfume ? 1 : 2),
         subcategoryId: productData.subcategoryId !== undefined ? productData.subcategoryId : (existing?.subcategoryId || null),
-        perfumeCategoryId: isPerfume ? Number(perfumeCatId || 1) : null,
+        perfumeCategoryId: isPerfume && perfumeCatId ? Number(perfumeCatId) : null,
         gender: productData.gender || existing?.gender || 'Unisex',
         price: productData.price !== undefined && productData.price !== null ? Number(productData.price) : Number(existing?.price || 0),
         isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : (existing?.isActive !== false),
@@ -650,7 +606,6 @@ export const productService = {
       updatedRemote = await productApi.adminUpdateProduct(targetId, mergedPayload);
     }
 
-    await this.getAllProducts({ includeDrafts: true });
     return updatedRemote || productData;
   },
 
@@ -659,29 +614,18 @@ export const productService = {
     if (targetId) {
       await productApi.adminDeleteProduct(targetId);
     }
-    memoryCatalog = memoryCatalog.filter(p => String(p.id) !== String(id) && (!targetId || String(p.numericId) !== String(targetId)));
     return true;
   },
 
   async toggleProductActive(id, isActive) {
     const targetId = this.resolveTargetId(id) || (Number(id) > 0 ? Number(id) : id);
-    const existing = memoryCatalog.find(p => String(p.id) === String(id) || String(p.numericId) === String(id) || p.slug === id) || {};
-    
     if (targetId) {
       if (Boolean(isActive)) {
-        await productApi.adminActivateProduct(targetId, existing);
+        await productApi.adminActivateProduct(targetId);
       } else {
-        await productApi.adminDeactivateProduct(targetId, existing);
+        await productApi.adminDeactivateProduct(targetId);
       }
     }
-
-    memoryCatalog = memoryCatalog.map(p => {
-      if (String(p.id) === String(id) || (targetId && String(p.numericId) === String(targetId)) || p.slug === id) {
-        return { ...p, isActive: Boolean(isActive), status: isActive ? 'ACTIVE' : 'INACTIVE' };
-      }
-      return p;
-    });
-
     return { id: targetId || id, isActive: Boolean(isActive) };
   },
 
@@ -703,16 +647,8 @@ export const productService = {
   },
 
   getDiscountedProductsSync() {
-    return memoryCatalog.filter(p => 
-      (!p.status || p.status === 'ACTIVE') && (
-        p.hasDiscount || 
-        (p.discountPercent && p.discountPercent > 0) || 
-        (p.originalPrice && p.originalPrice > p.price) ||
-        p.isOffer
-      )
-    );
+    return [];
   }
 };
 
 export default productService;
-
