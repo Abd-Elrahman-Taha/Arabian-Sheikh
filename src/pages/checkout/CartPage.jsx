@@ -32,8 +32,13 @@ export default function CartPage() {
     cart,
     toggleGiftWrap,
     applyDiscount,
-    removeDiscount
+    removeDiscount,
+    refreshPromotions
   } = useCart();
+
+  useEffect(() => {
+    refreshPromotions?.();
+  }, [refreshPromotions]);
 
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
@@ -54,8 +59,8 @@ export default function CartPage() {
 
   const netCheckoutTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0));
   const bulgariaThreshold = 49;
-  const isBulgariaFreeUnlocked = netCheckoutTotal >= bulgariaThreshold;
-  const bulgariaRemaining = Math.max(0, bulgariaThreshold - netCheckoutTotal);
+  const isBulgariaFreeUnlocked = netCheckoutTotal > bulgariaThreshold;
+  const bulgariaRemaining = Math.max(0, Math.round((bulgariaThreshold - netCheckoutTotal + 0.01) * 100) / 100);
   const bulgariaProgress = Math.min(100, Math.round((netCheckoutTotal / bulgariaThreshold) * 100));
 
   return (

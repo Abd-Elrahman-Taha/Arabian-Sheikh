@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, Link } from '../../router/RouterContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useCart } from '../../context/CartContext';
@@ -6,6 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
 import { promotionService } from '../../services/promotionService';
 import { discountService } from '../../services/discountService';
+import { isPromotionActive } from '../../api/normalizers';
 import {
   Tag,
   Percent,
@@ -46,46 +47,49 @@ export default function OffersDiscountSection({ products = [] }) {
     return (products || []).filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || p.hasPromotion || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
   }, [products]);
 
-  // Fetch active promotions, bundles, and coupons from backend API
-  useEffect(() => {
-    let isMounted = true;
-    async function loadOffers() {
-      setLoading(true);
-      try {
-        const [promosRes, bundlesRes, couponsRes] = await Promise.allSettled([
-          promotionService.getPublicPromotions(),
-          promotionService.getPublicBundles(),
-          discountService.getAllDiscounts()
-        ]);
+  // Fetch strictly active promotions, bundles, and coupons from live backend API
+  const loadOffers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [promosRes, bundlesRes, couponsRes] = await Promise.allSettled([
+        promotionService.getActivePromotions(),
+        promotionService.getPublicBundles(),
+        discountService.getAllDiscounts()
+      ]);
 
-        if (isMounted) {
-          let loadedPromos = promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : [];
-          if (loadedPromos.length === 0) {
-            try {
-              const adminP = await promotionService.getPromotions({ page: 1, pageSize: 20 });
-              if (adminP?.items && adminP.items.length > 0) {
-                loadedPromos = adminP.items.filter(p => p.status !== 'Inactive');
-              }
-            } catch {}
-          }
-          const loadedBundles = bundlesRes.status === 'fulfilled' && Array.isArray(bundlesRes.value) ? bundlesRes.value : [];
-          const loadedCoupons = couponsRes.status === 'fulfilled' && Array.isArray(couponsRes.value)
-            ? couponsRes.value.filter(c => c.isActive !== false && c.status !== 'Inactive' && c.status !== 'Expired')
-            : [];
+      let loadedPromos = promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : [];
+      loadedPromos = loadedPromos.filter(isPromotionActive);
 
-          setPromotions(loadedPromos);
-          setBundles(loadedBundles);
-          setCoupons(loadedCoupons);
-        }
-      } catch (err) {
-        console.warn('[OffersDiscountSection] Error loading offers:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+      const loadedBundles = bundlesRes.status === 'fulfilled' && Array.isArray(bundlesRes.value) ? bundlesRes.value : [];
+      const loadedCoupons = couponsRes.status === 'fulfilled' && Array.isArray(couponsRes.value)
+        ? couponsRes.value.filter(c => c.isActive !== false && c.status !== 'Inactive' && c.status !== 'Expired')
+        : [];
+
+      setPromotions(loadedPromos);
+      setBundles(loadedBundles);
+      setCoupons(loadedCoupons);
+    } catch (err) {
+      console.warn('[OffersDiscountSection] Error loading offers:', err);
+    } finally {
+      setLoading(false);
     }
-    loadOffers();
-    return () => { isMounted = false; };
   }, []);
+
+  useEffect(() => {
+    loadOffers();
+
+    const handleUpdate = () => {
+      loadOffers();
+    };
+
+    window.addEventListener('arabian_sheikh_promotions_updated', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_promotions_updated', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+    };
+  }, [loadOffers]);
 
   // Default / Curated Fallback Bundles if no backend bundles exist yet
   const displayBundles = useMemo(() => {

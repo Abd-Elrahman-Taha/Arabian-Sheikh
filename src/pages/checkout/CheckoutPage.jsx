@@ -75,9 +75,13 @@ export const COUNTRIES = [
 export default function CheckoutPage() {
   const { navigate } = useRouter();
   const { t, isRtl } = useTranslation();
-  const { items, totals, cart, clearCart, applyDiscount, removeDiscount, refreshCart } = useCart();
+  const { items, totals, cart, clearCart, applyDiscount, removeDiscount, refreshCart, refreshPromotions } = useCart();
   const { user } = useAuth();
   const { success, error } = useToast();
+
+  useEffect(() => {
+    refreshPromotions?.();
+  }, [refreshPromotions]);
 
   const [step, setStep] = useState(1);
   const [processing, setProcessing] = useState(false);
@@ -626,13 +630,18 @@ export default function CheckoutPage() {
     );
   }
 
+  // Total after ALL promotions and privilege codes
   const netTotalAfterDiscounts = Math.max(0, totals.subtotal - (totals.discountAmount || 0));
   const isBulgaria = (formData.countryCode || 'BG').toUpperCase() === 'BG';
-  const qualifiesForBulgariaFreeShipping = isBulgaria && netTotalAfterDiscounts >= 49;
+  // Strictly free ONLY when the net total after all promotions and privilege codes is MORE than 49
+  const qualifiesForFreeShipping = isBulgaria && netTotalAfterDiscounts > 49;
 
   const getOptionShippingFee = (opt) => {
     if (!opt) return 0;
-    if (qualifiesForBulgariaFreeShipping) return 0;
+    // Free shipment ONLY when total after promotions and promo codes is more than 49
+    if (qualifiesForFreeShipping) return 0;
+
+    // If net total is <= 49, shipment is NEVER free even if quote returned isFree: true
     const isExpress = String(opt.carrier || '').toLowerCase().includes('express') || String(opt.shippingMethod || '').toLowerCase().includes('express');
     const quotedFee = Number(opt.shippingFee !== undefined && opt.shippingFee !== null ? opt.shippingFee : (opt.cost ?? opt.price));
     if (!isNaN(quotedFee) && quotedFee > 0) return quotedFee;
@@ -1353,20 +1362,22 @@ export default function CheckoutPage() {
                   1. Contact & Delivery Destination
                 </h2>
 
-                {/* Bulgaria Free Delivery Notice */}
+                {/* Delivery Privilege Notice */}
                 <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#0B0A08] to-[#1A1208] border border-[#D4AF37]/35 text-xs flex items-center justify-between gap-3 shadow-sm">
                   <div className="flex items-center gap-2 text-[#D4AF37]">
                     <Truck className="w-4 h-4 shrink-0" />
-                    <span className="font-cinzel font-bold text-[11px] uppercase tracking-wider">Bulgaria Delivery Privilege</span>
+                    <span className="font-cinzel font-bold text-[11px] uppercase tracking-wider">
+                      {isBulgaria ? 'Bulgaria Delivery Privilege' : 'Complimentary Delivery Privilege'}
+                    </span>
                   </div>
                   <span className="text-[11px] text-[#D8BE99]">
-                    {qualifiesForBulgariaFreeShipping ? (
-                      <span className="text-emerald-400 font-bold">✓ Free Delivery Unlocked for Bulgaria (Orders ≥ €49)</span>
+                    {qualifiesForFreeShipping ? (
+                      <span className="text-emerald-400 font-bold">✓ Free Delivery Unlocked (Order total &gt; €49 after discounts)</span>
                     ) : (
                       <span>
-                        Orders above €49 receive <strong>Free Delivery in Bulgaria</strong>
+                        Orders over €49 after promotions & privilege codes receive <strong>Free Delivery</strong>
                         {netTotalAfterDiscounts > 0 && isBulgaria && (
-                          <span className="text-amber-300 font-semibold"> (Add €{(49 - netTotalAfterDiscounts).toFixed(2)} more)</span>
+                          <span className="text-amber-300 font-semibold"> (Add €{Math.max(0.01, 49.01 - netTotalAfterDiscounts).toFixed(2)} more)</span>
                         )}
                       </span>
                     )}
@@ -1655,11 +1666,11 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {qualifiesForBulgariaFreeShipping && (
+                {qualifiesForFreeShipping && (
                   <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs flex items-center gap-2.5 text-emerald-300">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>
-                      <strong>Bulgaria Free Delivery Applied:</strong> Your order qualifies for 100% complimentary delivery (orders over €49).
+                      <strong>Free Delivery Applied:</strong> Your order qualifies for 100% complimentary delivery (order total over €49 after promotions and privilege codes).
                     </span>
                   </div>
                 )}
@@ -1734,23 +1745,27 @@ export default function CheckoutPage() {
                               <p className="text-[11px] text-[#D8BE99]">
                                 Insured temperature-controlled transport
                               </p>
-                              {opt.estimatedDeliveryDays && (
+                              {(opt.estimatedDeliveryDays !== undefined && opt.estimatedDeliveryDays !== null && opt.estimatedDeliveryDays !== '') && (
                                 <p className="text-[11px] text-amber-300 font-mono flex items-center gap-1.5 pt-0.5">
                                   <Clock className="w-3 h-3 text-[#D4AF37] shrink-0" />
-                                  <span>Estimated delivery: {opt.estimatedDeliveryDays} {String(opt.estimatedDeliveryDays) === '1' ? 'business day' : 'business days'}</span>
+                                  <span>
+                                    Estimated delivery: {Number(opt.estimatedDeliveryDays) > 0
+                                      ? `${opt.estimatedDeliveryDays} ${Number(opt.estimatedDeliveryDays) === 1 ? 'business day' : 'business days'}`
+                                      : '1-2 business days (real-time carrier quote)'}
+                                  </span>
                                 </p>
                               )}
                             </label>
                           </div>
                           <div className="text-right">
-                            {qualifiesForBulgariaFreeShipping ? (
+                            {qualifiesForFreeShipping ? (
                               <div className="space-y-0.5">
                                 <span className="font-mono text-xs font-bold text-emerald-400">
                                   FREE
                                 </span>
-                                {(Number(opt.baseShippingFee) > 0 || Number(opt.cost) > 0) && (
+                                {(Number(opt.baseShippingFee) > 0 || Number(opt.cost) > 0 || Number(opt.shippingFee) > 0) && (
                                   <span className="block font-mono text-[10px] text-neutral-400 line-through">
-                                    €{Number(opt.baseShippingFee || opt.cost).toFixed(2)}
+                                    €{Number(opt.baseShippingFee || opt.cost || opt.shippingFee || 5).toFixed(2)}
                                   </span>
                                 )}
                               </div>
@@ -2217,16 +2232,18 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-[#D8BE99]">
                 <div>
                   <span>{selectedQuote ? (selectedQuote.shippingMethod || selectedQuote.carrier || 'Shipping') : 'Shipping'}</span>
-                  {selectedQuote?.estimatedDeliveryDays && (
+                  {(selectedQuote && selectedQuote.estimatedDeliveryDays !== undefined && selectedQuote.estimatedDeliveryDays !== null && selectedQuote.estimatedDeliveryDays !== '') && (
                     <span className="block text-[10px] text-amber-300 font-mono">
-                      Estimated: {selectedQuote.estimatedDeliveryDays} {String(selectedQuote.estimatedDeliveryDays) === '1' ? 'business day' : 'business days'}
+                      Estimated: {Number(selectedQuote.estimatedDeliveryDays) > 0
+                        ? `${selectedQuote.estimatedDeliveryDays} ${Number(selectedQuote.estimatedDeliveryDays) === 1 ? 'business day' : 'business days'}`
+                        : '1-2 business days (real-time carrier quote)'}
                     </span>
                   )}
                 </div>
                 <span className="font-mono text-[#F3E6D0]">
                   {selectedQuote ? (
-                    qualifiesForBulgariaFreeShipping ? (
-                      <span className="text-emerald-400 font-bold">FREE (Bulgaria ≥ €49)</span>
+                    qualifiesForFreeShipping ? (
+                      <span className="text-emerald-400 font-bold">FREE (&gt; €49 after discounts)</span>
                     ) : (
                       `€${Number(shippingCost).toFixed(2)}`
                     )

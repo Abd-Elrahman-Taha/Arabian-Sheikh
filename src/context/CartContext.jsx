@@ -78,16 +78,36 @@ export function CartProvider({ children }) {
   const [cartBadgeAnimated, setCartBadgeAnimated] = useState(false);
 
   // Load active promotions for automatic cart discounts
-  useEffect(() => {
-    promotionService.getActivePromotions().then(promos => {
+  const refreshPromotions = useCallback(async () => {
+    try {
+      const promos = await promotionService.getActivePromotions();
       if (Array.isArray(promos)) {
         setActivePromos(promos);
       }
-    }).catch(() => {});
+    } catch (e) {
+      console.warn('[Cart] Error loading promotions:', e);
+    }
   }, []);
+
+  useEffect(() => {
+    refreshPromotions();
+
+    const handlePromotionsUpdated = () => {
+      refreshPromotions();
+    };
+
+    window.addEventListener('arabian_sheikh_promotions_updated', handlePromotionsUpdated);
+    window.addEventListener('focus', handlePromotionsUpdated);
+
+    return () => {
+      window.removeEventListener('arabian_sheikh_promotions_updated', handlePromotionsUpdated);
+      window.removeEventListener('focus', handlePromotionsUpdated);
+    };
+  }, [refreshPromotions]);
 
   // Hydrate cart from live backend API whenever authentication status or user changes
   const fetchBackendCart = useCallback(async () => {
+    refreshPromotions();
     const customerToken = tokenManager.getToken(false);
     if (!isAuthenticated || isAdmin || !customerToken) {
       setCart(prev => mergeWithSavedDiscount(cartService.getInitialCart(), prev));
@@ -434,6 +454,7 @@ export function CartProvider({ children }) {
             setAuthModalOpen(true);
             return;
           }
+          refreshPromotions();
           setIsDrawerOpen(true);
         },
         closeDrawer: () => setIsDrawerOpen(false),
@@ -446,6 +467,7 @@ export function CartProvider({ children }) {
         removeDiscount,
         clearCart,
         refreshCart: fetchBackendCart,
+        refreshPromotions,
         cartBadgeAnimated,
         openAuthModal: () => setAuthModalOpen(true),
         closeAuthModal: handleCloseAuthModal

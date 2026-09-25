@@ -1508,11 +1508,29 @@ export function normalizePromotion(raw) {
     ? rawBundles.map(normalizeBundle).filter(Boolean)
     : [];
 
-  let status = p.status;
-  if (status === 0 || status === '0') status = 'Active';
-  else if (status === 1 || status === '1') status = 'Inactive';
-  else if (status === 2 || status === '2') status = 'Expired';
-  else if (!status) status = (p.isActive === false ? 'Inactive' : 'Active');
+  let status = 'Active';
+  const rawStatus = p.status !== undefined && p.status !== null ? p.status : (p.Status !== undefined ? p.Status : null);
+  if (typeof rawStatus === 'string' && rawStatus.trim()) {
+    const sLower = rawStatus.trim().toLowerCase();
+    if (sLower === 'active') status = 'Active';
+    else if (sLower === 'inactive') status = 'Inactive';
+    else if (sLower === 'scheduled') status = 'Scheduled';
+    else if (sLower === 'expired') status = 'Expired';
+    else status = rawStatus.trim();
+  } else if (typeof rawStatus === 'number' || (typeof rawStatus === 'string' && !isNaN(Number(rawStatus)))) {
+    const num = Number(rawStatus);
+    if (num === 0) status = 'Scheduled';
+    else if (num === 1) status = 'Active';
+    else if (num === 2) status = 'Inactive';
+    else if (num === 3) status = 'Expired';
+  }
+
+  // Deactivated indicators strictly override
+  if (p.deactivatedAt || p.deactivatedBy || p.isActive === false || p.is_active === false || p.isActive === 0 || p.isActive === 'false') {
+    status = 'Inactive';
+  } else if (!status) {
+    status = 'Active';
+  }
 
   return {
     id: Number(p.id || 0),
@@ -1527,6 +1545,7 @@ export function normalizePromotion(raw) {
     usageLimit: p.usageLimit !== null && p.usageLimit !== undefined ? Number(p.usageLimit) : null,
     usageCount: Number(p.usageCount || 0),
     status,
+    isActive: status === 'Active',
     deactivatedBy: p.deactivatedBy || null,
     deactivatedAt: p.deactivatedAt || null,
     applicability,
@@ -1536,6 +1555,52 @@ export function normalizePromotion(raw) {
     createdAt: p.createdAt || null,
     updatedAt: p.updatedAt || null
   };
+}
+
+/**
+ * Check if a promotion is strictly active right now (not inactive, not scheduled, not expired, not deactivated)
+ */
+export function isPromotionActive(promo) {
+  if (!promo || typeof promo !== 'object') return false;
+
+  // 1. Explicit deactivation markers
+  if (promo.deactivatedAt || promo.deactivatedBy) return false;
+  if (promo.isActive === false || promo.is_active === false || promo.isActive === 0 || promo.isActive === 'false') {
+    return false;
+  }
+
+  // 2. Status string / enum checks
+  const rawStatus = promo.status !== undefined && promo.status !== null ? promo.status : '';
+  const statusStr = String(rawStatus).trim().toLowerCase();
+
+  if (statusStr === 'inactive' || statusStr === 'expired' || statusStr === 'scheduled' || statusStr === 'draft') {
+    return false;
+  }
+  // In C# ASP.NET Core enum: Scheduled = 0, Active = 1, Inactive = 2, Expired = 3
+  if (rawStatus === 2 || rawStatus === '2' || rawStatus === 3 || rawStatus === '3') {
+    return false;
+  }
+  if (statusStr && statusStr !== 'active' && rawStatus !== 1 && rawStatus !== '1' && rawStatus !== 0) {
+    return false;
+  }
+
+  // 3. Date validity check (real-time UTC)
+  const now = new Date();
+  if (promo.startDate) {
+    const start = new Date(promo.startDate);
+    if (!isNaN(start.getTime()) && start > now) {
+      return false; // Scheduled for future
+    }
+  }
+
+  if (promo.endDate) {
+    const end = new Date(promo.endDate);
+    if (!isNaN(end.getTime()) && end < now) {
+      return false; // Expired in past
+    }
+  }
+
+  return true;
 }
 
 /**

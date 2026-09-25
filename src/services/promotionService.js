@@ -1,4 +1,5 @@
 import { promotionApi } from '../api/promotion.api';
+import { isPromotionActive } from '../api/normalizers';
 
 /**
  * Arabian Sheikh - Admin Promotion & Bundle Service
@@ -316,77 +317,80 @@ export const promotionService = {
   // 4. PUBLIC STOREFRONT PROMOTIONS
   // ==========================================
 
-  _cachedActivePromos: null,
-  _lastFetchTime: 0,
-
   clearCache() {
-    this._cachedActivePromos = null;
-    this._lastFetchTime = 0;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arabian_sheikh_promotions_updated'));
+    }
   },
 
   /**
-   * Get currently active promotions for customer storefront with full applicability rules
+   * Get currently active promotions for customer storefront with full applicability rules.
+   * Strictly live (zero caching in memory, zero localStorage, zero sessionStorage)
+   * and strictly filtered to active promotions only.
    */
-  async getActivePromotions(forceRefresh = false) {
-    const now = Date.now();
-    if (!forceRefresh && this._cachedActivePromos && (now - this._lastFetchTime < 30000)) {
-      return this._cachedActivePromos;
-    }
-
+  async getActivePromotions() {
     try {
-      let items = [];
+      let rawItems = [];
+
+      // 1. Check admin promotions with Status=Active query first to get authoritative active list
       try {
-        const response = await promotionApi.getPromotions();
-        items = Array.isArray(response) ? response : (response?.items || []);
-      } catch (err) {
-        console.warn('[promotionService] Public getPromotions fallback:', err.message);
+        const adminRes = await promotionApi.adminGetPromotions({ Status: 'Active', page: 1, pageSize: 100 });
+        const adminItems = adminRes?.items || (Array.isArray(adminRes) ? adminRes : []);
+        if (Array.isArray(adminItems) && adminItems.length > 0) {
+          rawItems = adminItems;
+        }
+      } catch (adminErr) {
+        // Non-blocking fallback if patron is not admin
       }
 
-      // If public promotions is empty, or to ensure we have all active campaigns, check admin promotions
-      if (items.length === 0) {
+      // 2. If no admin promotions retrieved, fetch from public storefront promotions endpoint
+      if (rawItems.length === 0) {
         try {
-          const adminP = await promotionApi.adminGetPromotions({ page: 1, pageSize: 50 });
-          const adminItems = adminP?.items || (Array.isArray(adminP) ? adminP : []);
-          if (adminItems.length > 0) {
-            items = adminItems.filter(p => {
-              const st = String(p.status || '').toLowerCase();
-              return st !== 'inactive' && p.status !== 1 && st !== 'expired' && p.status !== 2;
-            });
-          }
-        } catch {}
+          const publicRes = await promotionApi.getPromotions({ Status: 'Active' });
+          rawItems = Array.isArray(publicRes) ? publicRes : (publicRes?.items || []);
+        } catch (pubErr) {
+          console.warn('[promotionService] getPromotions notice:', pubErr?.message || pubErr);
+        }
       }
 
-      // Fetch full details with applicability rules for active campaigns
+      // 3. Strictly filter out any inactive, scheduled, expired, or deactivated promotions
+      const activeCandidates = (Array.isArray(rawItems) ? rawItems : []).filter(isPromotionActive);
+
+      // 4. Hydrate full details (applicability rules and bundle items) for each active campaign
       const fullItems = await Promise.all(
-        items.map(async (item) => {
+        activeCandidates.map(async (item) => {
           try {
             if (Array.isArray(item.applicabilities) && item.applicabilities.length > 0) return item;
             if (Array.isArray(item.applicability) && item.applicability.length > 0) return item;
 
             let detail = null;
             try {
-              detail = await promotionApi.getPromotionById(item.id);
+              detail = await promotionApi.adminGetPromotionById(item.id);
             } catch {
-              detail = await promotionApi.adminGetPromotionById(item.id).catch(() => null);
+              detail = await promotionApi.getPromotionById(item.id).catch(() => null);
             }
-            return detail || item;
+            if (detail && isPromotionActive(detail)) {
+              return detail;
+            }
+            return isPromotionActive(item) ? item : null;
           } catch {
-            return item;
+            return isPromotionActive(item) ? item : null;
           }
         })
       );
 
-      this._cachedActivePromos = fullItems;
-      this._lastFetchTime = now;
-      return fullItems;
+      // Return strictly active promotions
+      return fullItems.filter(p => p && isPromotionActive(p));
     } catch (err) {
-      console.warn('[promotionService] Could not fetch promotions:', err.message);
-      return this._cachedActivePromos || [];
+      console.warn('[promotionService] Could not fetch active promotions:', err.message);
+      return [];
     }
   },
 
   /**
-   * Calculate live promotion discount for a product
+   * Calculate live promotion discount for a product.
+   * Priority rule: ONLY strictly active promotions are evaluated.
+   * If a product qualifies for multiple active promotions, the BIGGER ACTIVE ONE (maximum savings) wins!
    */
   calculateProductPromotion(product, activePromos = []) {
     if (!product || !Array.isArray(activePromos) || activePromos.length === 0) {
@@ -398,8 +402,15 @@ export const promotionService = {
       };
     }
 
-    const now = new Date();
-    const nowBuffer = new Date(Date.now() + 10 * 60 * 1000); // 10m buffer for client/server clock drifts
+    const basePrice = Number(product.originalPrice || product.unitBasePrice || product.basePrice || product.price || 0);
+    if (isNaN(basePrice) || basePrice <= 0) {
+      return {
+        hasPromotion: false,
+        discountPercent: 0,
+        price: Number(product?.price || 0),
+        originalPrice: null
+      };
+    }
 
     const prodId = Number(product.id || product.numericId || product.productId || 0);
     const catId = Number(product.categoryId || product.category?.id || (typeof product.category === 'object' ? product.category?.id : 0) || (product.category === 'perfumes' ? 1 : 0));
@@ -407,20 +418,19 @@ export const promotionService = {
     const subcatId = Number(product.subcategoryId || product.subcategory?.id || 0);
     const perfumeCatId = Number(product.perfumeCategoryId || product.perfumeCategory?.id || (product.tier === 'Standard' ? 1 : product.tier === 'Premium' ? 2 : product.tier === 'Luxury' ? 3 : 0));
 
+    let bestPromo = null;
+
     for (const promo of activePromos) {
-      // Promo type check: handles 'Discount', 'discount', 0
+      // 1. Strictly verify the promotion is active right now
+      if (!isPromotionActive(promo)) {
+        continue;
+      }
+
+      // 2. Type check: Discount only (bundles are handled separately as suites)
       const isDiscountPromo = promo.type === 0 || String(promo.type || '').toLowerCase() === 'discount';
       if (!isDiscountPromo) continue;
 
-      // Status check: skip inactive or expired
-      const st = String(promo.status || '').toLowerCase();
-      if (st === 'inactive' || promo.status === 1 || st === 'expired' || promo.status === 2) continue;
-
-      // Check dates
-      if (promo.startDate && new Date(promo.startDate) > nowBuffer) continue;
-      if (promo.endDate && new Date(promo.endDate) < now) continue;
-
-      // Check applicability rules if present
+      // 3. Check applicability rules if present
       const rules = Array.isArray(promo.applicability) ? promo.applicability : (Array.isArray(promo.applicabilities) ? promo.applicabilities : []);
       let isEligible = true;
 
@@ -460,7 +470,6 @@ export const promotionService = {
       }
 
       if (isEligible) {
-        const basePrice = Number(product.originalPrice || product.price || 0);
         let finalPrice = basePrice;
         let discountPercent = 0;
         const isFixed = promo.discountType === 1 || String(promo.discountType || '').toLowerCase() === 'fixed';
@@ -474,20 +483,29 @@ export const promotionService = {
           discountPercent = Math.round(((basePrice - finalPrice) / basePrice) * 100);
         }
 
-        if (finalPrice < basePrice) {
-          return {
-            hasPromotion: true,
-            promotionName: promo.name,
-            promotionId: promo.id,
-            discountType: isFixed ? 'Fixed' : 'Percentage',
-            discountValue: val,
-            discountPercent,
-            price: finalPrice,
-            originalPrice: basePrice,
-            savings: Math.max(0, Math.round((basePrice - finalPrice) * 100) / 100)
-          };
+        const savings = Math.max(0, Math.round((basePrice - finalPrice) * 100) / 100);
+
+        // Keep the BIGGER active promotion (maximum savings / discount)
+        if (finalPrice < basePrice && savings > 0) {
+          if (!bestPromo || savings > bestPromo.savings) {
+            bestPromo = {
+              hasPromotion: true,
+              promotionName: promo.name,
+              promotionId: promo.id,
+              discountType: isFixed ? 'Fixed' : 'Percentage',
+              discountValue: val,
+              discountPercent,
+              price: finalPrice,
+              originalPrice: basePrice,
+              savings
+            };
+          }
         }
       }
+    }
+
+    if (bestPromo) {
+      return bestPromo;
     }
 
     return {
@@ -508,7 +526,8 @@ export const promotionService = {
   async getPublicPromotions(params = {}) {
     try {
       const res = await promotionApi.getPromotions(params);
-      return res?.items || (Array.isArray(res) ? res : []);
+      const raw = res?.items || (Array.isArray(res) ? res : []);
+      return raw.filter(isPromotionActive);
     } catch (err) {
       console.warn('[promotionService] Error fetching public promotions:', err.message);
       return [];

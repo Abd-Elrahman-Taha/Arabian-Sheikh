@@ -60,36 +60,55 @@ export const cartService = {
         };
       }
 
-      const baseUnitPrice = Number(item.price !== undefined && item.price !== null ? item.price : (item.unitPriceSnapshot || item.originalPrice || 0));
-      calculatedSubtotal += (baseUnitPrice * qty);
+      // Resolve the true base retail price before any promotional discounts
+      const originalPriceVal = Number(item.originalPrice);
+      const unitBasePriceVal = Number(item.unitBasePrice);
+      const basePriceVal = Number(item.basePrice);
+      const snapshotVal = Number(item.unitPriceSnapshot);
+      const priceVal = Number(item.price);
+
+      const trueBaseRetailPrice = (!isNaN(originalPriceVal) && originalPriceVal > 0)
+        ? originalPriceVal
+        : ((!isNaN(unitBasePriceVal) && unitBasePriceVal > 0)
+          ? unitBasePriceVal
+          : ((!isNaN(basePriceVal) && basePriceVal > 0)
+            ? basePriceVal
+            : ((!isNaN(snapshotVal) && snapshotVal > 0)
+              ? snapshotVal
+              : (!isNaN(priceVal) ? priceVal : 0))));
+
+      calculatedSubtotal += (trueBaseRetailPrice * qty);
 
       // Check if this specific item matches any active promotion applicability rules
-      const promoResult = promotionService.calculateProductPromotion(item, activePromos);
+      // Evaluated against trueBaseRetailPrice so inactive promotions never stick
+      const promoResult = promotionService.calculateProductPromotion({
+        ...item,
+        price: trueBaseRetailPrice,
+        originalPrice: trueBaseRetailPrice
+      }, activePromos);
 
-      let effectiveUnitPrice = baseUnitPrice;
+      let effectiveUnitPrice = trueBaseRetailPrice;
       let itemPromoSavings = 0;
 
-      if (promoResult?.hasPromotion && promoResult.price < baseUnitPrice) {
+      if (promoResult?.hasPromotion && promoResult.price < trueBaseRetailPrice) {
         effectiveUnitPrice = promoResult.price;
-        itemPromoSavings = (baseUnitPrice - effectiveUnitPrice) * qty;
+        itemPromoSavings = (trueBaseRetailPrice - effectiveUnitPrice) * qty;
         promoDiscountAmount += itemPromoSavings;
         if (promoResult.promotionName) {
           qualifyingPromoNames.add(promoResult.promotionName);
         }
       }
 
-      const origPrice = (item.originalPrice && Number(item.originalPrice) > effectiveUnitPrice)
-        ? Number(item.originalPrice)
-        : (item.unitBasePrice && Number(item.unitBasePrice) > effectiveUnitPrice ? Number(item.unitBasePrice) : null);
+      const origPrice = itemPromoSavings > 0 ? trueBaseRetailPrice : null;
 
       return {
         ...item,
         price: effectiveUnitPrice,
         originalPrice: origPrice,
-        unitBasePrice: origPrice || baseUnitPrice,
+        unitBasePrice: trueBaseRetailPrice,
         unitEffectivePrice: effectiveUnitPrice,
         lineTotal: effectiveUnitPrice * qty,
-        hasPromoDiscount: itemPromoSavings > 0 || Boolean(origPrice && origPrice > effectiveUnitPrice),
+        hasPromoDiscount: itemPromoSavings > 0,
         promoDiscountAmount: itemPromoSavings
       };
     });

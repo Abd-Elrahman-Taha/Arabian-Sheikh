@@ -87,8 +87,8 @@ export default function CartDrawer() {
 
   const netCheckoutTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0));
   const bulgariaFreeThreshold = 49;
-  const isBulgariaFreeUnlocked = netCheckoutTotal >= bulgariaFreeThreshold;
-  const bulgariaFreeRemaining = Math.max(0, bulgariaFreeThreshold - netCheckoutTotal);
+  const isBulgariaFreeUnlocked = netCheckoutTotal > bulgariaFreeThreshold;
+  const bulgariaFreeRemaining = Math.max(0, Math.round((bulgariaFreeThreshold - netCheckoutTotal + 0.01) * 100) / 100);
   const bulgariaProgress = Math.min(100, Math.round((netCheckoutTotal / bulgariaFreeThreshold) * 100));
 
   return (

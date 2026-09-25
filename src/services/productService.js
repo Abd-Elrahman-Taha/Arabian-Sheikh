@@ -235,8 +235,8 @@ export const productService = {
 
       // Ensure every product preserves pure API pricing and standardized 60ml size
       items = items.map(p => {
-        let rawPrice = Number(p.price);
-        let finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(p.price || 0);
+        const rawBasePrice = Number(p.originalPrice || p.unitBasePrice || p.basePrice || p.price || 0);
+        let finalPrice = rawBasePrice;
         let origPrice = p.originalPrice ? Number(p.originalPrice) : null;
         let promoName = null;
         let promoId = null;
@@ -244,9 +244,13 @@ export const productService = {
         let promoDiscountPercent = 0;
 
         if (Array.isArray(activePromos) && activePromos.length > 0) {
-          const promoResult = promotionService.calculateProductPromotion(p, activePromos);
-          if (promoResult && promoResult.hasPromotion && promoResult.price < finalPrice) {
-            origPrice = origPrice || finalPrice;
+          const promoResult = promotionService.calculateProductPromotion({
+            ...p,
+            price: rawBasePrice,
+            originalPrice: rawBasePrice
+          }, activePromos);
+          if (promoResult && promoResult.hasPromotion && promoResult.price < rawBasePrice) {
+            origPrice = rawBasePrice;
             finalPrice = promoResult.price;
             promoName = promoResult.promotionName;
             promoId = promoResult.promotionId;
@@ -396,8 +400,8 @@ export const productService = {
       try {
         const remote = await productApi.getProductById(numId);
         if (remote) {
-          let rawPrice = Number(remote.price);
-          let finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(remote.price || 0);
+          const rawBasePrice = Number(remote.originalPrice || remote.unitBasePrice || remote.basePrice || remote.price || 0);
+          let finalPrice = rawBasePrice;
           let origPrice = remote.originalPrice ? Number(remote.originalPrice) : null;
           let promoName = null;
           let promoId = null;
@@ -407,9 +411,13 @@ export const productService = {
           try {
             const activePromos = await promotionService.getActivePromotions();
             if (Array.isArray(activePromos) && activePromos.length > 0) {
-              const promoResult = promotionService.calculateProductPromotion(remote, activePromos);
-              if (promoResult && promoResult.hasPromotion && promoResult.price < finalPrice) {
-                origPrice = origPrice || finalPrice;
+              const promoResult = promotionService.calculateProductPromotion({
+                ...remote,
+                price: rawBasePrice,
+                originalPrice: rawBasePrice
+              }, activePromos);
+              if (promoResult && promoResult.hasPromotion && promoResult.price < rawBasePrice) {
+                origPrice = rawBasePrice;
                 finalPrice = promoResult.price;
                 promoName = promoResult.promotionName;
                 promoId = promoResult.promotionId;

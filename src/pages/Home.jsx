@@ -330,6 +330,14 @@ export default function Home() {
       }
     }
     loadData();
+
+    const handlePromosUpdated = () => {
+      loadData();
+    };
+    window.addEventListener('arabian_sheikh_promotions_updated', handlePromosUpdated);
+    return () => {
+      window.removeEventListener('arabian_sheikh_promotions_updated', handlePromosUpdated);
+    };
   }, []);
 
   const currentHeroFlacon = heroFlacons[activeHeroIndex];

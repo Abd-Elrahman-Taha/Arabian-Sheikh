@@ -81,6 +81,13 @@ export default function AdminProducts() {
 
   useEffect(() => {
     fetchProducts();
+    const handlePromosUpdated = () => {
+      fetchProducts();
+    };
+    window.addEventListener('arabian_sheikh_promotions_updated', handlePromosUpdated);
+    return () => {
+      window.removeEventListener('arabian_sheikh_promotions_updated', handlePromosUpdated);
+    };
   }, []);
 
   const displayedProducts = useMemo(() => {
