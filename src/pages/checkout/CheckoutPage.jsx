@@ -47,7 +47,8 @@ import {
   Globe,
   Building,
   ShoppingBag,
-  XCircle
+  XCircle,
+  Clock
 } from 'lucide-react';
 
 export const COUNTRIES = [
@@ -275,33 +276,12 @@ export default function CheckoutPage() {
         ? (currentCouponCode || undefined)
         : (cart?.discountCode || undefined);
 
-      // 3. Query GET /api/checkout?addressId={id}&couponCode={coupon} without shippingMethodId
-      // The backend returns the authoritative list of shippingOptions available for this address
+      // 3. Query POST /api/Shipping/quotes with { addressId: rawId }
+      // This is the authoritative endpoint returning carrier quotes and dynamic estimatedDeliveryDays
       let validOpts = [];
       let topQuoteId = null;
 
       try {
-        const summary = await checkoutApi.getCheckout({
-          addressId: rawId,
-          couponCode: coupon
-        });
-        topQuoteId = summary?.quoteId || summary?.selectedShippingMethod?.quoteId || null;
-        const summaryOpts = (Array.isArray(summary?.shippingOptions) ? summary.shippingOptions : [])
-          .map(normalizeShippingOption)
-          .filter(opt => opt && opt.shippingMethodId && Number(opt.shippingMethodId) > 0);
-
-        if (summaryOpts.length > 0) {
-          validOpts = summaryOpts.map(opt => ({
-            ...opt,
-            quoteId: opt.quoteId || (topQuoteId ? String(topQuoteId) : opt.quoteId)
-          }));
-        }
-      } catch (sumErr) {
-        console.warn('[Checkout] getCheckout options notice:', sumErr?.message || sumErr);
-      }
-
-      // 4. Fallback to shippingService.getQuotes if getCheckout returned no options
-      if (validOpts.length === 0) {
         const quoteParams = {
           addressId: rawId,
           countryCode: destCountry || formData.countryCode || 'BG',
@@ -315,11 +295,44 @@ export default function CheckoutPage() {
         };
 
         const res = await shippingService.getQuotes(quoteParams, { signal: abortController.signal });
-        const rawOpts = res?.options || [];
-        validOpts = rawOpts.filter(opt => {
-          const mid = Number(opt.shippingMethodId || opt.id);
-          return mid && !isNaN(mid) && mid > 0;
-        });
+        topQuoteId = res?.quoteId || null;
+        const rawOpts = Array.isArray(res?.options) ? res.options : [];
+        if (rawOpts.length > 0) {
+          validOpts = rawOpts
+            .filter(Boolean)
+            .map((opt, idx) => ({
+              ...opt,
+              shippingMethodId: Number(opt.shippingMethodId || opt.id) || (idx + 1),
+              quoteId: opt.quoteId || (topQuoteId ? String(topQuoteId) : opt.quoteId)
+            }));
+        }
+      } catch (quoteErr) {
+        if (abortController.signal.aborted) return null;
+        console.warn('[Checkout] shippingService.getQuotes notice:', quoteErr?.message || quoteErr);
+      }
+
+      // 4. Secondary fallback: Query GET /api/checkout if POST /api/Shipping/quotes returned no options
+      if (validOpts.length === 0) {
+        try {
+          const summary = await checkoutApi.getCheckout({
+            addressId: rawId,
+            couponCode: coupon
+          });
+          topQuoteId = topQuoteId || summary?.quoteId || summary?.selectedShippingMethod?.quoteId || null;
+          const summaryOpts = (Array.isArray(summary?.shippingOptions) ? summary.shippingOptions : [])
+            .map(normalizeShippingOption)
+            .filter(Boolean);
+
+          if (summaryOpts.length > 0) {
+            validOpts = summaryOpts.map((opt, idx) => ({
+              ...opt,
+              shippingMethodId: Number(opt.shippingMethodId || opt.id) || (idx + 1),
+              quoteId: opt.quoteId || (topQuoteId ? String(topQuoteId) : opt.quoteId)
+            }));
+          }
+        } catch (sumErr) {
+          console.warn('[Checkout] getCheckout fallback options notice:', sumErr?.message || sumErr);
+        }
       }
 
       // If a newer request was dispatched while this was in-flight, discard
@@ -613,14 +626,23 @@ export default function CheckoutPage() {
     );
   }
 
+  const netTotalAfterDiscounts = Math.max(0, totals.subtotal - (totals.discountAmount || 0));
   const isBulgaria = (formData.countryCode || 'BG').toUpperCase() === 'BG';
-  const qualifiesForBulgariaFreeShipping = isBulgaria && totals.subtotal > 49;
+  const qualifiesForBulgariaFreeShipping = isBulgaria && netTotalAfterDiscounts >= 49;
 
-  const dynamicShippingCost = selectedQuote
-    ? (qualifiesForBulgariaFreeShipping ? 0 : (Number(selectedQuote.cost) || 0))
-    : 0;
+  const getOptionShippingFee = (opt) => {
+    if (!opt) return 0;
+    if (qualifiesForBulgariaFreeShipping) return 0;
+    const isExpress = String(opt.carrier || '').toLowerCase().includes('express') || String(opt.shippingMethod || '').toLowerCase().includes('express');
+    const quotedFee = Number(opt.shippingFee !== undefined && opt.shippingFee !== null ? opt.shippingFee : (opt.cost ?? opt.price));
+    if (!isNaN(quotedFee) && quotedFee > 0) return quotedFee;
+    if (opt.baseShippingFee && Number(opt.baseShippingFee) > 0) return Number(opt.baseShippingFee);
+    return isExpress ? 12.00 : 5.00;
+  };
+
+  const dynamicShippingCost = selectedQuote ? getOptionShippingFee(selectedQuote) : 0;
   const shippingCost = dynamicShippingCost;
-  const grandTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0) + dynamicShippingCost);
+  const grandTotal = Math.max(0, netTotalAfterDiscounts + dynamicShippingCost);
 
   // ─── STEP 1: Address submission & quote fetching ───────────────
   const handleAddressSubmit = async (e) => {
@@ -858,7 +880,7 @@ export default function CheckoutPage() {
       console.warn('[Checkout] Pre-order setCheckoutShipping notice:', lockErr?.message || lockErr);
     });
 
-    const orderShippingCost = qualifiesForBulgariaFreeShipping ? 0 : (Number(selectedQuote?.cost) || 0);
+    const orderShippingCost = getOptionShippingFee(selectedQuote);
 
     // Retrieve authoritative address snapshot from backend for order record
     let authoritativeAddress = {
@@ -1338,10 +1360,15 @@ export default function CheckoutPage() {
                     <span className="font-cinzel font-bold text-[11px] uppercase tracking-wider">Bulgaria Delivery Privilege</span>
                   </div>
                   <span className="text-[11px] text-[#D8BE99]">
-                    {totals.subtotal > 49 ? (
-                      <span className="text-emerald-400 font-bold">✓ Free Delivery Unlocked for Bulgaria (Orders &gt; €49)</span>
+                    {qualifiesForBulgariaFreeShipping ? (
+                      <span className="text-emerald-400 font-bold">✓ Free Delivery Unlocked for Bulgaria (Orders ≥ €49)</span>
                     ) : (
-                      <span>Orders above €49 receive <strong>Free Delivery in Bulgaria</strong> (Exclusive option)</span>
+                      <span>
+                        Orders above €49 receive <strong>Free Delivery in Bulgaria</strong>
+                        {netTotalAfterDiscounts > 0 && isBulgaria && (
+                          <span className="text-amber-300 font-semibold"> (Add €{(49 - netTotalAfterDiscounts).toFixed(2)} more)</span>
+                        )}
+                      </span>
                     )}
                   </span>
                 </div>
@@ -1707,6 +1734,12 @@ export default function CheckoutPage() {
                               <p className="text-[11px] text-[#D8BE99]">
                                 Insured temperature-controlled transport
                               </p>
+                              {opt.estimatedDeliveryDays && (
+                                <p className="text-[11px] text-amber-300 font-mono flex items-center gap-1.5 pt-0.5">
+                                  <Clock className="w-3 h-3 text-[#D4AF37] shrink-0" />
+                                  <span>Estimated delivery: {opt.estimatedDeliveryDays} {String(opt.estimatedDeliveryDays) === '1' ? 'business day' : 'business days'}</span>
+                                </p>
+                              )}
                             </label>
                           </div>
                           <div className="text-right">
@@ -1715,15 +1748,15 @@ export default function CheckoutPage() {
                                 <span className="font-mono text-xs font-bold text-emerald-400">
                                   FREE
                                 </span>
-                                {Number(opt.cost) > 0 && (
+                                {(Number(opt.baseShippingFee) > 0 || Number(opt.cost) > 0) && (
                                   <span className="block font-mono text-[10px] text-neutral-400 line-through">
-                                    €{Number(opt.cost).toFixed(2)}
+                                    €{Number(opt.baseShippingFee || opt.cost).toFixed(2)}
                                   </span>
                                 )}
                               </div>
                             ) : (
                               <span className="font-mono text-xs font-bold text-[#D4AF37]">
-                                €{Number(opt.cost).toFixed(2)}
+                                €{getOptionShippingFee(opt).toFixed(2)}
                               </span>
                             )}
                           </div>
@@ -2182,11 +2215,18 @@ export default function CheckoutPage() {
                 <span className="font-mono text-[#F3E6D0]">€{totals.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[#D8BE99]">
-                <span>{selectedQuote ? (selectedQuote.shippingMethod || selectedQuote.carrier || 'Shipping') : 'Shipping'}</span>
+                <div>
+                  <span>{selectedQuote ? (selectedQuote.shippingMethod || selectedQuote.carrier || 'Shipping') : 'Shipping'}</span>
+                  {selectedQuote?.estimatedDeliveryDays && (
+                    <span className="block text-[10px] text-amber-300 font-mono">
+                      Estimated: {selectedQuote.estimatedDeliveryDays} {String(selectedQuote.estimatedDeliveryDays) === '1' ? 'business day' : 'business days'}
+                    </span>
+                  )}
+                </div>
                 <span className="font-mono text-[#F3E6D0]">
                   {selectedQuote ? (
                     qualifiesForBulgariaFreeShipping ? (
-                      <span className="text-emerald-400 font-bold">FREE (Bulgaria &gt; €49)</span>
+                      <span className="text-emerald-400 font-bold">FREE (Bulgaria ≥ €49)</span>
                     ) : (
                       `€${Number(shippingCost).toFixed(2)}`
                     )

@@ -52,10 +52,11 @@ export default function CartPage() {
     }
   };
 
+  const netCheckoutTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0));
   const bulgariaThreshold = 49;
-  const isBulgariaFreeUnlocked = totals.subtotal >= bulgariaThreshold;
-  const bulgariaRemaining = Math.max(0, bulgariaThreshold - totals.subtotal);
-  const bulgariaProgress = Math.min(100, Math.round((totals.subtotal / bulgariaThreshold) * 100));
+  const isBulgariaFreeUnlocked = netCheckoutTotal >= bulgariaThreshold;
+  const bulgariaRemaining = Math.max(0, bulgariaThreshold - netCheckoutTotal);
+  const bulgariaProgress = Math.min(100, Math.round((netCheckoutTotal / bulgariaThreshold) * 100));
 
   return (
     <div className="relative min-h-screen text-[#F3E6D0] pt-28 sm:pt-36 pb-20 overflow-hidden">

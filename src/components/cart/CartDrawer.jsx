@@ -85,10 +85,11 @@ export default function CartDrawer() {
     navigate('/cart');
   };
 
+  const netCheckoutTotal = Math.max(0, totals.subtotal - (totals.discountAmount || 0));
   const bulgariaFreeThreshold = 49;
-  const isBulgariaFreeUnlocked = totals.subtotal >= bulgariaFreeThreshold;
-  const bulgariaFreeRemaining = Math.max(0, bulgariaFreeThreshold - totals.subtotal);
-  const bulgariaProgress = Math.min(100, Math.round((totals.subtotal / bulgariaFreeThreshold) * 100));
+  const isBulgariaFreeUnlocked = netCheckoutTotal >= bulgariaFreeThreshold;
+  const bulgariaFreeRemaining = Math.max(0, bulgariaFreeThreshold - netCheckoutTotal);
+  const bulgariaProgress = Math.min(100, Math.round((netCheckoutTotal / bulgariaFreeThreshold) * 100));
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">

@@ -877,13 +877,12 @@ export function normalizeShippingOption(raw) {
         ? opt.price
         : (opt.fee !== undefined ? opt.fee : null)));
 
-  let fee = Number(rawFee);
-  if (opt.isFree === true || rawFee === 0 || rawFee === '0' || opt.isFreeDelivery) {
-    fee = 0;
-  } else if (isNaN(fee) || rawFee === undefined || rawFee === null || fee < 0) {
-    fee = isExpress ? 12.00 : 5.00;
-  }
-  const isFree = fee === 0 || Boolean(opt.isFree);
+  const rawFeeNum = Number(rawFee);
+  const hasPositiveRawFee = !isNaN(rawFeeNum) && rawFeeNum > 0;
+  const baseShippingFee = hasPositiveRawFee ? rawFeeNum : (isExpress ? 12.00 : 5.00);
+
+  let fee = hasPositiveRawFee ? rawFeeNum : (opt.isFree === true || rawFee === 0 || rawFee === '0' || opt.isFreeDelivery ? 0 : (isExpress ? 12.00 : 5.00));
+  const isFree = fee === 0 || Boolean(opt.isFree || opt.isFreeDelivery);
 
   const minDays = opt.minDeliveryDays !== undefined && opt.minDeliveryDays !== null
     ? Number(opt.minDeliveryDays)
@@ -891,9 +890,19 @@ export function normalizeShippingOption(raw) {
   const maxDays = opt.maxDeliveryDays !== undefined && opt.maxDeliveryDays !== null
     ? Number(opt.maxDeliveryDays)
     : null;
-  const estDays = (opt.estimatedDeliveryDays !== undefined && opt.estimatedDeliveryDays !== null && String(opt.estimatedDeliveryDays).trim() !== '3-3' && String(opt.estimatedDeliveryDays).trim() !== '0')
-    ? String(opt.estimatedDeliveryDays)
-    : null;
+
+  let estDays = null;
+  if (opt.estimatedDeliveryDays !== undefined && opt.estimatedDeliveryDays !== null) {
+    const rawEst = String(opt.estimatedDeliveryDays).trim();
+    if (rawEst !== '' && rawEst !== '0' && rawEst !== '3-3') {
+      const numEst = Number(rawEst);
+      if (!isNaN(numEst)) {
+        if (numEst > 0) estDays = numEst;
+      } else {
+        estDays = rawEst;
+      }
+    }
+  }
 
   let shippingMethodId = opt.shippingMethodId !== undefined && opt.shippingMethodId !== null && !isNaN(Number(opt.shippingMethodId))
     ? Number(opt.shippingMethodId)
@@ -935,9 +944,20 @@ export function normalizeShippingOption(raw) {
 
   if (!shippingMethodId) {
     const fallbackId = opt.id ?? opt.methodId ?? opt.serviceId;
-    shippingMethodId = fallbackId !== undefined && fallbackId !== null && !isNaN(Number(fallbackId)) && Number(fallbackId) > 0
-      ? Number(fallbackId)
-      : null;
+    if (fallbackId !== undefined && fallbackId !== null && !isNaN(Number(fallbackId)) && Number(fallbackId) > 0) {
+      shippingMethodId = Number(fallbackId);
+    } else {
+      const cUpper = String(carrier || shippingMethod || '').toUpperCase();
+      if (cUpper.includes('ECONT')) {
+        shippingMethodId = 1;
+      } else if (cUpper.includes('SPEEDY')) {
+        shippingMethodId = 2;
+      } else if (cUpper.includes('DHL')) {
+        shippingMethodId = 3;
+      } else {
+        shippingMethodId = 1;
+      }
+    }
   }
 
   return {
@@ -951,6 +971,7 @@ export function normalizeShippingOption(raw) {
     shippingFee: fee,
     cost: fee,
     price: fee,
+    baseShippingFee,
     currency: opt.currency || 'EUR',
     estimatedDeliveryDays: estDays,
     minDeliveryDays: minDays,
