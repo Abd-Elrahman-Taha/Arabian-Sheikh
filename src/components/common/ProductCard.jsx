@@ -22,20 +22,20 @@ export default function ProductCard({ product, onCompare }) {
   const isOutOfStock = product.status === 'OUT_OF_STOCK' || product.stock === 0;
   const isHeartPopping = heartAnimatedId === product.id;
 
+  const currentPrice = Number(product.price) || 0;
   const hasActiveDiscount = Boolean(
-    product.hasDiscount && (
-      (product.discountPercent && Number(product.discountPercent) > 0) ||
-      (product.originalPrice && Number(product.originalPrice) > Number(product.price))
-    )
+    product.isDiscounted ||
+    product.hasDiscount ||
+    product.isOffer ||
+    (product.discountPercent && Number(product.discountPercent) > 0) ||
+    (product.originalPrice && Number(product.originalPrice) > currentPrice) ||
+    (product.discount && Number(product.discount?.value || product.discount?.amount || 0) > 0)
   );
 
-  const currentPrice = Number(product.price) || 0;
-  const strikePrice = hasActiveDiscount && product.originalPrice && Number(product.originalPrice) > currentPrice
+  const strikePrice = (product.originalPrice && Number(product.originalPrice) > currentPrice)
     ? Number(product.originalPrice)
-    : null;
-  const discountPct = hasActiveDiscount
-    ? (Number(product.discountPercent) || (strikePrice ? Math.round((1 - currentPrice / strikePrice) * 100) : 0))
-    : 0;
+    : (hasActiveDiscount && product.originalPrice ? Number(product.originalPrice) : null);
+  const discountPct = Number(product.discountPercent) || (strikePrice && currentPrice > 0 ? Math.round((1 - currentPrice / strikePrice) * 100) : (product.discount?.value ? Number(product.discount.value) : 0));
 
   const displayName = language === 'bg' && product.bulgarianName
     ? product.bulgarianName

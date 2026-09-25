@@ -248,33 +248,48 @@ export function normalizeProduct(raw) {
   }
 
   const discountObj = p.discount && typeof p.discount === 'object' ? p.discount : null;
-  const discountVal = Number(discountObj?.value || p.discountValue || 0);
-  const discountType = discountObj?.type || p.discountType || 'Percentage';
-  let isDiscounted = Boolean(p.isDiscounted || discountVal > 0);
+  const rawDiscountVal = Number(discountObj?.value ?? p.discountValue ?? p.discountPercent ?? 0);
+  const discountType = (discountObj?.type || p.discountType || 'Percentage').toString();
+  const isFixedDiscount = discountType.toLowerCase() === 'fixed' || discountType === '1';
+
+  let hasExplicitDiscount = Boolean(p.isDiscounted || p.hasDiscount || rawDiscountVal > 0);
+  let discountVal = rawDiscountVal > 0 ? rawDiscountVal : 0;
+
+  if (!hasExplicitDiscount && Array.isArray(p.offers) && p.offers.length > 0) {
+    const firstOffer = p.offers[0];
+    const offVal = Number(firstOffer.discountValue || firstOffer.value || firstOffer.discountPercent || 0);
+    if (offVal > 0) {
+      hasExplicitDiscount = true;
+      discountVal = offVal;
+    }
+  }
+
+  const basePrice = Number(p.originalPrice || finalPrice || 0);
   let originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
 
-  if (isDiscounted && !originalPrice && finalPrice > 0 && discountVal > 0) {
-    if (String(discountType).toLowerCase().includes('percent')) {
-      originalPrice = Math.round((finalPrice / (1 - discountVal / 100)) * 100) / 100;
-    } else {
-      originalPrice = finalPrice + discountVal;
+  if (originalPrice && originalPrice > finalPrice) {
+    // Both original and discounted prices are provided by backend
+    hasExplicitDiscount = true;
+    if (discountVal <= 0) {
+      discountVal = Math.round((1 - finalPrice / originalPrice) * 100);
     }
+  } else if (hasExplicitDiscount && discountVal > 0 && basePrice > 0) {
+    // Discount is configured on base product price: calculate discounted selling price
+    originalPrice = basePrice;
+    if (isFixedDiscount) {
+      finalPrice = Math.max(1, Math.round((basePrice - discountVal) * 100) / 100);
+      discountVal = Math.round(((basePrice - finalPrice) / basePrice) * 100);
+    } else {
+      finalPrice = Math.max(1, Math.round(basePrice * (1 - discountVal / 100) * 100) / 100);
+    }
+  } else {
+    originalPrice = null;
   }
 
-  if (!isDiscounted && Array.isArray(p.offers) && p.offers.length > 0) {
-    const firstOffer = p.offers[0];
-    const offVal = Number(firstOffer.discountValue || 0);
-    if (offVal > 0) {
-      isDiscounted = true;
-      if (!originalPrice && finalPrice > 0) {
-        if (String(firstOffer.discountType).toLowerCase().includes('percent')) {
-          originalPrice = Math.round((finalPrice / (1 - offVal / 100)) * 100) / 100;
-        } else {
-          originalPrice = finalPrice + offVal;
-        }
-      }
-    }
-  }
+  const isDiscounted = Boolean(hasExplicitDiscount && originalPrice && originalPrice > finalPrice);
+  const discountPercent = isDiscounted
+    ? (discountVal > 0 ? discountVal : Math.round((1 - finalPrice / originalPrice) * 100))
+    : 0;
 
   const isActive = p.isActive !== undefined ? Boolean(p.isActive) : (p.status ? p.status !== 'INACTIVE' : true);
 
@@ -325,9 +340,9 @@ export function normalizeProduct(raw) {
     price: finalPrice,
     originalPrice,
     isDiscounted,
-    discountPercent: p.discount?.value || (originalPrice && originalPrice > finalPrice ? Math.round((1 - finalPrice / originalPrice) * 100) : (p.discountPercent || 0)),
-    hasDiscount: isDiscounted || Boolean(p.hasDiscount || (p.discountPercent > 0)),
-    isOffer: isDiscounted || Boolean(p.isOffer || p.hasDiscount || (p.discountPercent > 0)),
+    discountPercent,
+    hasDiscount: isDiscounted,
+    isOffer: isDiscounted,
     currency: p.currency || 'EUR',
     stock: Number(p.stock !== undefined ? p.stock : 50),
     status: isActive ? 'ACTIVE' : 'INACTIVE',

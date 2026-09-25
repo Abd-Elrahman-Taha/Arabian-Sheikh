@@ -213,10 +213,25 @@ export default function Home() {
         const oilsProducts = prods.filter(p => p.category === 'oils' || p.size?.includes('12 ml') || p.name?.toLowerCase().includes('oil') || p.name?.toLowerCase().includes('attar'));
         const bundlesProducts = prods.filter(p => p.category === 'bundles' || p.category === 'gift sets' || p.size?.includes('Set') || p.size?.includes('Full Set'));
 
+        const discountedProducts = prods.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+
         const curatedCollections = [
+          ...(discountedProducts.length > 0 ? [{
+            id: 'col-discounts-tier',
+            number: 1,
+            title: 'The Discounts Tier',
+            spanishTitle: 'Nivel de Descuentos Reales',
+            bulgarianTitle: 'Ниво на Намаленията',
+            tag: 'PALACE OFFERS & EXCLUSIVE DISCOUNTS',
+            description: 'Exclusive sovereign flacons with active discounts and preferential promotional pricing.',
+            spanishDescription: 'Frascos soberanos exclusivos con descuentos activos y precios promocionales.',
+            bulgarianDescription: 'Специални флакони с активни намаления и промоционални цени.',
+            accentColor: '#E63946',
+            products: discountedProducts
+          }] : []),
           {
             id: 'col-imperial-tiers',
-            number: 1,
+            number: discountedProducts.length > 0 ? 2 : 1,
             title: 'The Imperial Tiers',
             spanishTitle: 'Gamas Imperiales',
             bulgarianTitle: 'Имперски Нива',

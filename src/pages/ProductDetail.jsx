@@ -252,9 +252,14 @@ export default function ProductDetail() {
   const isOutOfStock = product.status === 'OUT_OF_STOCK' || product.stock === 0;
   const galleryImages = product.images && product.images.length > 0 ? product.images : ['/products/luxury_designs/07_arabian_gold.webp'];
 
-  const currentPrice = promoInfo?.hasPromotion ? promoInfo.price : product.price;
-  const strikePrice = promoInfo?.hasPromotion ? promoInfo.originalPrice : (product.originalPrice || null);
-  const discountPct = promoInfo?.hasPromotion ? promoInfo.discountPercent : (product.discountPercent || 0);
+  const currentPrice = Number(promoInfo?.hasPromotion ? promoInfo.price : product.price) || 0;
+  const strikePrice = promoInfo?.hasPromotion 
+    ? (promoInfo.originalPrice ? Number(promoInfo.originalPrice) : null)
+    : (product.originalPrice && Number(product.originalPrice) > currentPrice ? Number(product.originalPrice) : null);
+  const discountPct = promoInfo?.hasPromotion 
+    ? (promoInfo.discountPercent || 0)
+    : (Number(product.discountPercent) || (strikePrice && currentPrice > 0 ? Math.round((1 - currentPrice / strikePrice) * 100) : (product.discount?.value ? Number(product.discount.value) : 0)));
+  const hasActiveDiscount = Boolean(promoInfo?.hasPromotion || product.isDiscounted || product.hasDiscount || (strikePrice && strikePrice > currentPrice) || discountPct > 0);
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -560,9 +565,9 @@ export default function ProductDetail() {
                   <Sparkles className="w-3 h-3" />
                   <span>{discountPct}% OFF • {promoInfo.promotionName}</span>
                 </span>
-              ) : (product.hasDiscount || (product.discountPercent > 0) || (product.originalPrice && product.originalPrice > product.price)) ? (
+              ) : (hasActiveDiscount && discountPct > 0) ? (
                 <span className="px-3 py-1 rounded-full bg-red-800/90 text-white font-cinzel font-bold text-xs uppercase tracking-widest shadow-md">
-                  {product.discountPercent || Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                  {discountPct}% OFF
                 </span>
               ) : null}
               <span className={`text-xs uppercase tracking-wider font-medium ${isDark ? 'text-[#D8BE99]' : 'text-[#5A3517]'}`}>

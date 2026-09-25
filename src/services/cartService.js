@@ -78,13 +78,18 @@ export const cartService = {
         }
       }
 
+      const origPrice = (item.originalPrice && Number(item.originalPrice) > effectiveUnitPrice)
+        ? Number(item.originalPrice)
+        : (item.unitBasePrice && Number(item.unitBasePrice) > effectiveUnitPrice ? Number(item.unitBasePrice) : null);
+
       return {
         ...item,
         price: effectiveUnitPrice,
-        unitBasePrice: baseUnitPrice,
+        originalPrice: origPrice,
+        unitBasePrice: origPrice || baseUnitPrice,
         unitEffectivePrice: effectiveUnitPrice,
         lineTotal: effectiveUnitPrice * qty,
-        hasPromoDiscount: itemPromoSavings > 0,
+        hasPromoDiscount: itemPromoSavings > 0 || Boolean(origPrice && origPrice > effectiveUnitPrice),
         promoDiscountAmount: itemPromoSavings
       };
     });

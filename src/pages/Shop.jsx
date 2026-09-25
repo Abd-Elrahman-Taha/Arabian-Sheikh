@@ -442,23 +442,30 @@ export default function Shop() {
     }))
   ], [categories, t]);
 
-  // Perfume Tiers - Dynamically populated from backend API
+  // Perfume Tiers - Dynamically populated from backend API with dedicated Discounts Tier
   const tiersList = useMemo(() => [
     { id: 'all', label: t('catalog.allTiers') || 'All Tiers' },
+    {
+      id: 'discounts',
+      label: language === 'ar' ? '🏷️ عطور التخفيضات' : language === 'bg' ? '🏷️ Намалени Аромати' : language === 'es' ? '🏷️ Aromas con Descuento' : '🏷️ Discounts Tier',
+      isDiscountTier: true
+    },
     ...perfumeCategories.map(tier => ({
       id: tier.name,
       rawId: tier.id,
       label: `${tier.name} Tier (€${Number(tier.price).toFixed(0)})`
     }))
-  ], [perfumeCategories, t]);
+  ], [perfumeCategories, language, t]);
 
   // Active Category Name for Header
   const activeCategoryTitle = useMemo(() => {
+    if (selectedTier === 'discounts') return language === 'ar' ? 'عطور التخفيضات والعروض الملكية' : language === 'bg' ? 'Намалени Аромати и Оферти' : language === 'es' ? 'Aromas con Descuento y Ofertas' : 'Discounts & Special Offers';
+    if (selectedTier && selectedTier !== 'all') return `${selectedTier} Tier`;
     if (selectedCategory === 'all') return t('ALL Catalog') || 'All Creations';
     if (selectedCategory === 'offers') return t('catalog.offersAndDiscounts') || 'Offers & Discounts';
     const found = categories.find(c => String(c.id) === String(selectedCategory));
     return found ? found.name : selectedCategory.toUpperCase();
-  }, [selectedCategory, categories, t]);
+  }, [selectedCategory, selectedTier, categories, language, t]);
 
   // Filter Sidebar UI
   const filterSidebar = (
@@ -821,7 +828,44 @@ export default function Shop() {
           </div>
 
           {/* Product Grid */}
-          <div className="lg:col-span-9">
+          <div className="lg:col-span-9 space-y-6">
+            {/* Quick Perfume Tier & Discounts Bar */}
+            <div className={`p-3 rounded-2xl border flex items-center gap-2 overflow-x-auto scrollbar-thin ${
+              isDark ? 'bg-[#0B0A08]/60 border-[#D4AF37]/20' : 'bg-white/90 border-[#D4AF37]/30 shadow-sm'
+            }`}>
+              <div className="flex items-center gap-1.5 shrink-0 px-2 text-xs font-cinzel font-bold text-[#D4AF37]">
+                <Crown className="w-4 h-4" />
+                <span className="hidden sm:inline">{language === 'ar' ? 'المستويات:' : 'Tiers:'}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {tiersList.map((tItem) => {
+                  const isTierActive = selectedTier === tItem.id;
+                  const isDiscountsTier = tItem.id === 'discounts';
+                  return (
+                    <button
+                      key={tItem.id}
+                      onClick={() => handleTierSelect(tItem.id)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-cinzel tracking-wider uppercase transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                        isTierActive
+                          ? isDiscountsTier
+                            ? 'bg-gradient-to-r from-red-700 via-amber-600 to-red-800 text-white font-bold border border-amber-300 shadow-md scale-105'
+                            : 'bg-gradient-to-r from-[#D4AF37] to-[#F2D675] text-black font-bold shadow-md scale-105'
+                          : isDiscountsTier
+                          ? isDark
+                            ? 'bg-red-950/40 text-amber-300 border border-amber-500/40 hover:border-amber-400'
+                            : 'bg-amber-50 text-red-700 border border-red-300 hover:bg-amber-100'
+                          : isDark
+                          ? 'bg-white/5 border border-white/10 text-[#D8BE99] hover:border-[#D4AF37]/40 hover:text-white'
+                          : 'bg-[#FBF6EC] border border-black/10 text-[#5A3517] hover:border-[#D4AF37]/40'
+                      }`}
+                    >
+                      {isDiscountsTier && <Tag className="w-3 h-3 text-amber-300" />}
+                      <span>{tItem.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => <ProductSkeleton key={i} />)}

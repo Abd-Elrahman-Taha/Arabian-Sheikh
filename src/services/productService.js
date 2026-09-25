@@ -103,16 +103,20 @@ export const productService = {
 
     // Filter by perfume tier
     if (filters.tier && filters.tier !== 'all') {
-      const targetTier = filters.tier.toLowerCase().replace(/tier/g, '').trim();
-      result = result.filter(p => {
-        const t = (p.tier || p.perfumeCategoryName || '').toLowerCase().replace(/tier/g, '').trim();
-        const tId = String(p.perfumeCategoryId || p.perfumeCategory?.id || '');
-        return (
-          (t && (t === targetTier || t.includes(targetTier) || targetTier.includes(t))) ||
-          tId === targetTier ||
-          (p.perfumeCategory && String(p.perfumeCategory.name || '').toLowerCase().includes(targetTier))
-        );
-      });
+      if (filters.tier === 'discounts' || filters.tier === 'offers') {
+        result = result.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+      } else {
+        const targetTier = filters.tier.toLowerCase().replace(/tier/g, '').trim();
+        result = result.filter(p => {
+          const t = (p.tier || p.perfumeCategoryName || '').toLowerCase().replace(/tier/g, '').trim();
+          const tId = String(p.perfumeCategoryId || p.perfumeCategory?.id || '');
+          return (
+            (t && (t === targetTier || t.includes(targetTier) || targetTier.includes(t))) ||
+            tId === targetTier ||
+            (p.perfumeCategory && String(p.perfumeCategory.name || '').toLowerCase().includes(targetTier))
+          );
+        });
+      }
     }
 
     // Filter by gender
@@ -194,8 +198,8 @@ export const productService = {
         delete apiFilters.BrandId;
       }
 
-      // Map tier name or id to perfumeCategoryId for backend API filtering
-      if (filters.tier && filters.tier !== 'all') {
+      // Map tier name or id to perfumeCategoryId for backend API filtering (exclude discounts virtual tier)
+      if (filters.tier && filters.tier !== 'all' && filters.tier !== 'discounts' && filters.tier !== 'offers') {
         const tiers = perfumeCategoryService.getCachedTiers() || [];
         const targetTierName = String(filters.tier).toLowerCase().replace(/tier/g, '').trim();
         const matched = tiers.find(t =>
@@ -226,7 +230,7 @@ export const productService = {
         const rawPrice = Number(p.price);
         const finalPrice = !isNaN(rawPrice) && rawPrice > 0 ? rawPrice : Number(p.price || 0);
         const origPrice = p.originalPrice ? Number(p.originalPrice) : null;
-        const hasDisc = Boolean(p.hasDiscount || (origPrice && origPrice > finalPrice));
+        const hasDisc = Boolean(p.isDiscounted || p.hasDiscount || (origPrice && origPrice > finalPrice) || (p.discountPercent > 0));
 
         // Derive tier name only for display purposes if not already set, without touching price
         let tierName = p.tier || p.perfumeCategoryName || (typeof p.perfumeCategory === 'object' ? p.perfumeCategory?.name : null);
@@ -239,8 +243,10 @@ export const productService = {
           ...p,
           price: finalPrice,
           originalPrice: origPrice,
+          isDiscounted: hasDisc,
           hasDiscount: hasDisc,
           isOffer: hasDisc,
+          discountPercent: p.discountPercent || (origPrice && origPrice > finalPrice ? Math.round((1 - finalPrice / origPrice) * 100) : 0),
           tier: tierName || p.tier,
           perfumeCategoryName: tierName || p.perfumeCategoryName,
           size: p.size || '60 ml / 2.0 fl oz'
@@ -250,8 +256,8 @@ export const productService = {
       memoryCatalog = items;
 
       let result = items;
-      if (filters.category === 'offers' || filters.category === 'discounts') {
-        result = result.filter(p => p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+      if (filters.category === 'offers' || filters.category === 'discounts' || filters.tier === 'discounts' || filters.tier === 'offers') {
+        result = result.filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
       }
       if (filters.inStockOnly) {
         result = result.filter(p => p.stock > 0);

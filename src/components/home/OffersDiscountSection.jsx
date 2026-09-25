@@ -25,6 +25,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import BlurText from '../common/BlurText';
+import ProductCard from '../common/ProductCard';
 
 export default function OffersDiscountSection({ products = [] }) {
   const { navigate } = useRouter();
@@ -40,6 +41,10 @@ export default function OffersDiscountSection({ products = [] }) {
   const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'BUNDLES' | 'DISCOUNTS'
   const [selectedBundleModal, setSelectedBundleModal] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
+
+  const discountedFlacons = useMemo(() => {
+    return (products || []).filter(p => p.isDiscounted || p.hasDiscount || p.isOffer || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price));
+  }, [products]);
 
   // Fetch active promotions, bundles, and coupons from backend API
   useEffect(() => {
@@ -217,9 +222,9 @@ export default function OffersDiscountSection({ products = [] }) {
           {/* Navigation Filter Tabs */}
           <div className="inline-flex p-1.5 rounded-2xl bg-black/50 border border-[#D4AF37]/30 backdrop-blur-md gap-1.5 mt-2">
             {[
-              { id: 'ALL', label: language === 'ar' ? 'جميع العروض' : 'All Offers', count: displayBundles.length + displayPromotions.length + displayPromoCodes.length },
-              { id: 'BUNDLES', label: language === 'ar' ? 'باقات العطور' : 'Curated Bundles', count: displayBundles.length, icon: Package },
-              { id: 'DISCOUNTS', label: language === 'ar' ? 'حملات الخصم' : 'Campaigns', count: displayPromotions.length + displayPromoCodes.length, icon: Percent }
+              { id: 'ALL', label: language === 'ar' ? 'جميع العروض' : 'All Offers', count: displayBundles.length + displayPromotions.length + displayPromoCodes.length + discountedFlacons.length },
+              { id: 'DISCOUNTS', label: language === 'ar' ? 'مستوى التخفيضات' : 'Discounts Tier', count: discountedFlacons.length + displayPromotions.length + displayPromoCodes.length, icon: Tag },
+              { id: 'BUNDLES', label: language === 'ar' ? 'باقات العطور' : 'Curated Bundles', count: displayBundles.length, icon: Package }
             ].map(tab => {
               const isSel = activeTab === tab.id;
               const Icon = tab.icon;
@@ -406,6 +411,41 @@ export default function OffersDiscountSection({ products = [] }) {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 2.5 DISCOUNTS TIER FLACONS SHOWCASE (PRODUCTS WITH ACTIVE DISCOUNTS)     */}
+        {/* ========================================================================= */}
+        {(activeTab === 'ALL' || activeTab === 'DISCOUNTS') && discountedFlacons.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <Tag className="w-5 h-5 text-amber-500" />
+                <h3 className={`font-cinzel text-lg sm:text-2xl font-bold uppercase tracking-wider ${
+                  isDark ? 'text-[#F3E6D0]' : 'text-[#704622]'
+                }`}>
+                  {language === 'ar' ? 'عطور التخفيضات والعروض الملكية' : 'The Discounts Tier • Special Offers'}
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-red-800 text-white font-mono text-xs font-bold shadow">
+                  {discountedFlacons.length}
+                </span>
+              </div>
+
+              <Link
+                to="/shop?tier=discounts"
+                className="text-xs font-cinzel font-bold text-[#D4AF37] hover:underline flex items-center gap-1"
+              >
+                <span>{language === 'ar' ? 'استعراض مستوى التخفيضات كاملة' : 'View Full Discounts Tier'}</span>
+                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {discountedFlacons.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
             </div>
           </div>
         )}
