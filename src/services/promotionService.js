@@ -412,7 +412,21 @@ export const promotionService = {
       };
     }
 
-    const prodId = Number(product.id || product.numericId || product.productId || 0);
+    // Resolve authoritative numeric Product IDs (prioritize productId over cart item id)
+    const candidateProdIds = [
+      Number(product.productId),
+      Number(product.product?.id),
+      Number(product.product?.productId),
+      Number(product.numericId)
+    ].filter(id => !isNaN(id) && id > 0);
+
+    // If candidateProdIds is empty, check product.id only if it's numeric and does not look like a cart item string
+    if (candidateProdIds.length === 0 && !isNaN(Number(product.id)) && Number(product.id) > 0 && !String(product.id).startsWith('ci-')) {
+      candidateProdIds.push(Number(product.id));
+    }
+
+    const prodId = candidateProdIds[0] || 0;
+
     const catId = Number(product.categoryId || product.category?.id || (typeof product.category === 'object' ? product.category?.id : 0) || (product.category === 'perfumes' ? 1 : 0));
     const brandId = Number(product.brandId || product.brand?.id || (typeof product.brand === 'object' ? product.brand?.id : 0) || 0);
     const subcatId = Number(product.subcategoryId || product.subcategory?.id || 0);
@@ -439,23 +453,37 @@ export const promotionService = {
         let isExplicitlyExcluded = false;
 
         for (const r of rules) {
-          const targetId = Number(r.targetId);
-          let tType = String(r.targetType || '').toLowerCase();
-          if (r.targetType === 0) tType = 'product';
-          else if (r.targetType === 1) tType = 'category';
-          else if (r.targetType === 2) tType = 'subcategory';
-          else if (r.targetType === 3) tType = 'brand';
-          else if (r.targetType === 4) tType = 'perfumecategory';
+          const targetId = Number(r.targetId !== undefined ? r.targetId : r.TargetId);
+          const rawTargetType = r.targetType !== undefined ? r.targetType : r.TargetType;
+          const isExcluded = Boolean(r.isExcluded !== undefined ? r.isExcluded : r.IsExcluded);
+
+          let tType = String(rawTargetType || '').toLowerCase().trim();
+          if (rawTargetType === 0 || rawTargetType === '0') tType = 'product';
+          else if (rawTargetType === 1 || rawTargetType === '1') tType = 'category';
+          else if (rawTargetType === 2 || rawTargetType === '2') tType = 'subcategory';
+          else if (rawTargetType === 3 || rawTargetType === '3') tType = 'brand';
+          else if (rawTargetType === 4 || rawTargetType === '4') tType = 'perfumecategory';
 
           let match = false;
-          if ((tType === 'product' || tType.includes('prod') || tType === '0') && prodId > 0 && prodId === targetId) match = true;
-          if ((tType === 'category' || tType.includes('cat') || tType === '1') && catId > 0 && catId === targetId) match = true;
-          if ((tType === 'subcategory' || tType.includes('subcat') || tType === '2') && subcatId > 0 && subcatId === targetId) match = true;
-          if ((tType === 'brand' || tType.includes('brand') || tType === '3') && brandId > 0 && brandId === targetId) match = true;
-          if ((tType === 'perfumecategory' || tType.includes('tier') || tType.includes('perfume') || tType === '4') && perfumeCatId > 0 && perfumeCatId === targetId) match = true;
+          // Match candidate product IDs for single-product target rules
+          if ((tType === 'product' || tType.includes('prod') || tType === '0') && (candidateProdIds.includes(targetId) || (prodId > 0 && prodId === targetId))) {
+            match = true;
+          }
+          if ((tType === 'category' || tType.includes('cat') || tType === '1') && catId > 0 && catId === targetId) {
+            match = true;
+          }
+          if ((tType === 'subcategory' || tType.includes('subcat') || tType === '2') && subcatId > 0 && subcatId === targetId) {
+            match = true;
+          }
+          if ((tType === 'brand' || tType.includes('brand') || tType === '3') && brandId > 0 && brandId === targetId) {
+            match = true;
+          }
+          if ((tType === 'perfumecategory' || tType.includes('tier') || tType.includes('perfume') || tType === '4') && perfumeCatId > 0 && perfumeCatId === targetId) {
+            match = true;
+          }
 
           if (match) {
-            if (r.isExcluded) {
+            if (isExcluded) {
               isExplicitlyExcluded = true;
               break;
             } else {
@@ -464,7 +492,8 @@ export const promotionService = {
           }
         }
 
-        if (isExplicitlyExcluded || (!hasMatchingInclude && rules.some(r => !r.isExcluded))) {
+        const hasIncludeRules = rules.some(r => !(r.isExcluded !== undefined ? r.isExcluded : r.IsExcluded));
+        if (isExplicitlyExcluded || (!hasMatchingInclude && hasIncludeRules)) {
           isEligible = false;
         }
       }
@@ -473,7 +502,7 @@ export const promotionService = {
         let finalPrice = basePrice;
         let discountPercent = 0;
         const isFixed = promo.discountType === 1 || String(promo.discountType || '').toLowerCase() === 'fixed';
-        const val = Number(promo.discountValue || 0);
+        const val = Number(promo.discountValue !== undefined ? promo.discountValue : (promo.DiscountValue || 0));
 
         if (!isFixed && val > 0) {
           discountPercent = val;
@@ -490,8 +519,8 @@ export const promotionService = {
           if (!bestPromo || savings > bestPromo.savings) {
             bestPromo = {
               hasPromotion: true,
-              promotionName: promo.name,
-              promotionId: promo.id,
+              promotionName: promo.name || promo.Name,
+              promotionId: promo.id || promo.Id,
               discountType: isFixed ? 'Fixed' : 'Percentage',
               discountValue: val,
               discountPercent,

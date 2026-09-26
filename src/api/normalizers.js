@@ -429,10 +429,14 @@ export function normalizeCartItem(raw) {
   const qty = Math.max(1, Number(item.quantity || 1));
   const lineTotal = Number(item.lineTotal !== undefined && item.lineTotal !== null ? item.lineTotal : unitPrice * qty);
   const productObj = item.product || {};
+  const rawPId = item.productId !== undefined && item.productId !== null ? item.productId : (item.product?.id ?? item.product?.productId);
+  const numPId = Number(rawPId);
+  const resolvedProductId = !isNaN(numPId) && numPId > 0 ? numPId : (rawPId || null);
 
   return {
     id: item.id !== undefined && item.id !== null ? item.id : `ci-${Date.now()}`,
-    productId: item.productId !== undefined && item.productId !== null ? item.productId : item.product?.id,
+    productId: resolvedProductId,
+    numericId: typeof resolvedProductId === 'number' ? resolvedProductId : null,
     productName: item.productName || item.product?.name || item.name || 'Imperial Extrait',
     imageUrl: resolvedImg,
     quantity: qty,
@@ -1549,37 +1553,45 @@ export function isPromotionActive(promo) {
   if (!promo || typeof promo !== 'object') return false;
 
   // 1. Explicit deactivation markers
-  if (promo.deactivatedAt || promo.deactivatedBy) return false;
-  if (promo.isActive === false || promo.is_active === false || promo.isActive === 0 || promo.isActive === 'false') {
+  if (promo.deactivatedAt || promo.deactivatedBy || promo.DeactivatedAt || promo.DeactivatedBy) {
     return false;
   }
 
-  // 2. Status string / enum checks
-  const rawStatus = promo.status !== undefined && promo.status !== null ? promo.status : '';
+  const rawIsActive = promo.isActive !== undefined ? promo.isActive : (promo.is_active !== undefined ? promo.is_active : promo.IsActive);
+  if (rawIsActive === false || rawIsActive === 0 || rawIsActive === 'false' || rawIsActive === '0') {
+    return false;
+  }
+
+  // 2. Status string / enum checks (supporting both camelCase and PascalCase from ASP.NET Core)
+  const rawStatus = promo.status !== undefined && promo.status !== null ? promo.status : (promo.Status !== undefined ? promo.Status : '');
   const statusStr = String(rawStatus).trim().toLowerCase();
 
-  if (statusStr === 'inactive' || statusStr === 'expired' || statusStr === 'scheduled' || statusStr === 'draft') {
+  if (statusStr === 'inactive' || statusStr === 'expired' || statusStr === 'scheduled' || statusStr === 'draft' || statusStr === 'disabled') {
     return false;
   }
+
   // In C# ASP.NET Core enum: Scheduled = 0, Active = 1, Inactive = 2, Expired = 3
-  if (rawStatus === 2 || rawStatus === '2' || rawStatus === 3 || rawStatus === '3') {
+  if (rawStatus === 2 || rawStatus === '2' || rawStatus === 3 || rawStatus === '3' || rawStatus === 0 || rawStatus === '0') {
     return false;
   }
-  if (statusStr && statusStr !== 'active' && rawStatus !== 1 && rawStatus !== '1' && rawStatus !== 0) {
+
+  if (statusStr && statusStr !== 'active' && rawStatus !== 1 && rawStatus !== '1') {
     return false;
   }
 
   // 3. Date validity check (real-time UTC)
   const now = new Date();
-  if (promo.startDate) {
-    const start = new Date(promo.startDate);
+  const rawStartDate = promo.startDate || promo.StartDate;
+  if (rawStartDate) {
+    const start = new Date(rawStartDate);
     if (!isNaN(start.getTime()) && start > now) {
       return false; // Scheduled for future
     }
   }
 
-  if (promo.endDate) {
-    const end = new Date(promo.endDate);
+  const rawEndDate = promo.endDate || promo.EndDate;
+  if (rawEndDate) {
+    const end = new Date(rawEndDate);
     if (!isNaN(end.getTime()) && end < now) {
       return false; // Expired in past
     }

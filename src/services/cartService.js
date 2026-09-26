@@ -109,7 +109,11 @@ export const cartService = {
         unitEffectivePrice: effectiveUnitPrice,
         lineTotal: effectiveUnitPrice * qty,
         hasPromoDiscount: itemPromoSavings > 0,
-        promoDiscountAmount: itemPromoSavings
+        promoDiscountAmount: itemPromoSavings,
+        hasPromotion: Boolean(promoResult?.hasPromotion || itemPromoSavings > 0),
+        promotionName: promoResult?.promotionName || item.promotionName || null,
+        promotionId: promoResult?.promotionId || item.promotionId || null,
+        discountPercent: promoResult?.discountPercent || item.discountPercent || 0
       };
     });
 
