@@ -411,25 +411,25 @@ export default function Home() {
         {/* Full-Bleed 24K Architecture Visual: 9:16 for phones, 16:9 for desktop */}
         <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
           <picture className="w-full h-full">
-            {/* 1. Mobile Phone WebP (< 768px, ~312 KB) */}
+            {/* 1. Mobile Phone WebP (< 768px, ~278 KB) */}
             <source
               media="(max-width: 767px)"
               type="image/webp"
-              srcSet="/editorial/arabian_palace_phone_opt.webp"
+              srcSet="/editorial/mainPhone.webp"
             />
-            {/* 2. Mobile Phone JPG Fallback (< 768px, ~425 KB) */}
+            {/* 2. Mobile Phone JPG Fallback (< 768px, ~310 KB) */}
             <source
               media="(max-width: 767px)"
-              srcSet="/editorial/arabian_palace_phone_opt.jpg"
+              srcSet="/editorial/mainPhone.jpg"
             />
-            {/* 3. Desktop / Tablet WebP (>= 768px, ~426 KB) */}
+            {/* 3. Desktop / Tablet WebP (>= 768px, ~487 KB) */}
             <source
               type="image/webp"
-              srcSet="/editorial/arabian_palace_desktop_opt.webp"
+              srcSet="/editorial/maindesk.webp"
             />
-            {/* 4. Desktop JPG Standard Fallback */}
+            {/* 4. Desktop JPG Standard Fallback (~520 KB) */}
             <img
-              src="/editorial/arabian_palace_desktop_opt.jpg"
+              src="/editorial/maindesk.jpg"
               alt="The Grand Sovereign Palace of Arabian Sheikh"
               className="w-full h-full object-cover object-center transform scale-100 sm:scale-105 transition-transform duration-1000"
               loading="eager"

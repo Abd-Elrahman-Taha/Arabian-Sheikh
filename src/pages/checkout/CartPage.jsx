@@ -71,18 +71,18 @@ export default function CartPage() {
           <source
             media="(max-width: 767px)"
             type="image/webp"
-            srcSet="/editorial/arabian_palace_phone_opt.webp"
+            srcSet="/editorial/mainPhone.webp"
           />
           <source
             media="(max-width: 767px)"
-            srcSet="/editorial/arabian_palace_phone_opt.jpg"
+            srcSet="/editorial/mainPhone.jpg"
           />
           <source
             type="image/webp"
-            srcSet="/editorial/arabian_palace_desktop_opt.webp"
+            srcSet="/editorial/maindesk.webp"
           />
           <img
-            src="/editorial/arabian_palace_desktop_opt.jpg"
+            src="/editorial/maindesk.jpg"
             alt="The Grand Sovereign Palace of Arabian Sheikh"
             className="w-full h-full object-cover object-center scale-105 filter brightness-[0.72] contrast-[1.12]"
             loading="eager"

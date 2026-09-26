@@ -85,15 +85,11 @@ export default function ThePalace() {
       <section className="relative min-h-[82vh] flex items-center justify-center overflow-hidden pt-36 sm:pt-44 pb-20">
         <div className="absolute inset-0 z-0">
           <img
-            src="/hero_arabian_palace.jpg"
+            src="/public/editorial/maindesk.jpg"
             alt="The Sovereign Palace of Arabian Sheikh"
-            className="w-full h-full object-cover object-center opacity-40 scale-105"
+            className="w-full h-full object-cover object-center opacity-100 scale-105"
           />
-          <div className={`absolute inset-0 ${
-            isDark
-              ? 'bg-gradient-to-t from-[#0B0A08] via-[#0B0A08]/75 to-[#0B0A08]/90'
-              : 'bg-gradient-to-t from-[#FAF7F2] via-[#FAF7F2]/75 to-[#FAF7F2]/90'
-          }`} />
+          
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.15)_0%,transparent_70%)] pointer-events-none" />
         </div>
 
@@ -115,13 +111,13 @@ export default function ThePalace() {
             animateBy="words"
             direction="top"
             className={`font-cinzel text-4xl sm:text-6xl lg:text-7xl font-bold tracking-[0.08em] uppercase leading-tight justify-center drop-shadow-2xl ${
-              isDark ? 'text-[#F3E6D0]' : 'text-[#120B06]'
+              isDark ? 'text-[#F3E6D0]' : 'text-[#F3E6D0]'
             }`}
             as="h1"
           />
 
           <p className={`italic text-xl sm:text-2xl max-w-3xl mx-auto font-serif drop-shadow-md ${
-            isDark ? 'text-[#D4AF37]' : 'text-[#8C6239] font-semibold'
+            isDark ? 'text-[#D4AF37]' : 'text-[#F3E6D0] font-semibold'
           }`}>
             "{language === 'ar' ? 'حيث يتحول الزمان إلى شذى، والذاكرة إلى خلود ملكي.' : language === 'bg' ? 'Където времето се превръща в аромат, а паметта – във вечност.' : language === 'es' ? 'Donde el tiempo se convierte en aroma y la memoria en eternidad.' : 'Where time dissolves into fragrance and memory into eternity.'}"
           </p>

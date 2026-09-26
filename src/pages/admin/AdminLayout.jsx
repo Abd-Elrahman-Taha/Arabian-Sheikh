@@ -107,21 +107,21 @@ export default function AdminLayout({ children }) {
           <source
             media="(max-width: 767px)"
             type="image/webp"
-            srcSet="/editorial/arabian_palace_phone_opt.webp"
+            srcSet="/editorial/mainPhone.webp"
           />
           {/* Mobile Phone JPG Fallback (< 768px) */}
           <source
             media="(max-width: 767px)"
-            srcSet="/editorial/arabian_palace_phone_opt.jpg"
+            srcSet="/editorial/mainPhone.jpg"
           />
           {/* Desktop / Tablet WebP (>= 768px) */}
           <source
             type="image/webp"
-            srcSet="/editorial/arabian_palace_desktop_opt.webp"
+            srcSet="/editorial/maindesk.webp"
           />
           {/* Desktop Fallback */}
           <img
-            src="/editorial/arabian_palace_desktop_opt.jpg"
+            src="/editorial/maindesk.jpg"
             alt="The Grand Sovereign Palace of Arabian Sheikh"
             className="w-full h-full object-cover object-center transform scale-100 sm:scale-105"
             loading="eager"
