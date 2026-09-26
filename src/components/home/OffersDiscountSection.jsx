@@ -262,7 +262,7 @@ export default function OffersDiscountSection({ products = [] }) {
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-3">
               <div className="flex items-center gap-2.5">
-                <Package className="w-5 h-5 text-purple-400" />
+                <Package className="w-5 h-5 text-[#D4AF37]" />
                 <h3 className={`font-cinzel text-lg sm:text-2xl font-bold uppercase tracking-wider ${
                   isDark ? 'text-[#F3E6D0]' : 'text-[#704622]'
                 }`}>
@@ -293,8 +293,8 @@ export default function OffersDiscountSection({ products = [] }) {
                   >
                     {/* Top Ad Banner Ribbon */}
                     <div className="flex items-center justify-between gap-2 mb-4">
-                      <span className="px-3 py-1 rounded-full bg-gradient-to-r from-purple-800 to-purple-600 text-white font-cinzel font-bold text-[10px] uppercase tracking-widest shadow-md flex items-center gap-1.5">
-                        <Gift className="w-3 h-3" />
+                      <span className="px-3 py-1 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black font-cinzel font-extrabold text-[10px] uppercase tracking-widest shadow-md flex items-center gap-1.5 border border-[#FFFDF8]/40">
+                        <Crown className="w-3 h-3 text-black" />
                         <span>{language === 'ar' ? 'باقة عطور ملكية' : 'Curated Suite'}</span>
                       </span>
 
@@ -314,7 +314,7 @@ export default function OffersDiscountSection({ products = [] }) {
                         {bundle.items.slice(0, 3).map((item, idx) => (
                           <div
                             key={idx}
-                            className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-xl overflow-hidden bg-black/60 border border-purple-500/30 p-2 shadow-xl transform transition-transform group-hover:scale-105"
+                            className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-xl overflow-hidden bg-black/60 border border-[#D4AF37]/35 p-2 shadow-xl transform transition-transform group-hover:scale-105"
                             style={{ zIndex: 10 - idx }}
                           >
                             <img
@@ -363,7 +363,7 @@ export default function OffersDiscountSection({ products = [] }) {
                     </div>
 
                     {/* Pricing & Economics Card */}
-                    <div className="p-3.5 rounded-xl bg-black/60 border border-purple-500/20 mb-4 space-y-2">
+                    <div className="p-3.5 rounded-xl bg-black/60 border border-[#D4AF37]/30 mb-4 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-[#D8BE99] font-cinzel text-[11px]">{language === 'ar' ? 'سعر التجزئة الأصلي' : 'Retail Value:'}</span>
                         <span className="font-mono text-[#D8BE99] line-through">€{Number(bundle.originalItemsPrice || 0).toFixed(2)}</span>
@@ -371,7 +371,7 @@ export default function OffersDiscountSection({ products = [] }) {
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-[10px] uppercase font-cinzel text-purple-300 font-bold block">
+                          <span className="text-[10px] uppercase font-cinzel text-[#D8BE99] font-bold block">
                             {language === 'ar' ? 'سعر الباقة الخاص' : 'Special Suite Price'}
                           </span>
                           <span className="font-cinzel text-2xl font-extrabold text-[#F2D675] drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">
@@ -397,18 +397,18 @@ export default function OffersDiscountSection({ products = [] }) {
                       <button
                         type="button"
                         onClick={() => navigate(`/bundle/${bundle.id}`)}
-                        className="px-3 py-2.5 rounded-xl border border-white/20 hover:border-[#D4AF37] text-xs font-cinzel font-bold uppercase text-[#D8BE99] hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="px-3 py-2.5 rounded-xl border border-[#D4AF37]/35 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 text-xs font-cinzel font-bold uppercase text-[#D8BE99] hover:text-[#F2D675] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-3.5 h-3.5 text-[#D4AF37]" />
                         <span>{language === 'ar' ? 'استعراض الباقة' : 'View Suite'}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleAddBundleToCart(bundle)}
-                        className="px-3 py-2.5 rounded-xl bg-gradient-to-r from-purple-800 via-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-500 text-white font-cinzel font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-102 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] hover:brightness-110 text-black font-cinzel font-bold text-xs uppercase tracking-wider shadow-[0_4px_15px_rgba(212,175,55,0.35)] hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <ShoppingBag className="w-3.5 h-3.5 text-black" />
                         <span>{language === 'ar' ? 'إضافة للحقيبة' : 'Add to Bag'}</span>
                       </button>
                     </div>
@@ -621,11 +621,11 @@ export default function OffersDiscountSection({ products = [] }) {
       {/* ========================================================================= */}
       {selectedBundleModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-[#0B0A08] border border-purple-500/40 rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto my-auto text-[#F3E6D0]">
+          <div className="bg-[#0B0A08] border border-[#D4AF37]/40 rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-[0_10px_40px_rgba(0,0,0,0.9)] space-y-6 max-h-[92vh] overflow-y-auto my-auto text-[#F3E6D0]">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-4">
               <div className="flex items-center gap-2.5">
-                <Package className="w-5 h-5 text-purple-400" />
+                <Package className="w-5 h-5 text-[#D4AF37]" />
                 <div>
                   <h3 className="font-cinzel text-lg sm:text-xl font-bold uppercase tracking-wider text-[#F3E6D0]">
                     {selectedBundleModal.name}
@@ -657,7 +657,7 @@ export default function OffersDiscountSection({ products = [] }) {
                 {selectedBundleModal.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-3.5 p-3 rounded-xl bg-black/60 border border-purple-500/20"
+                    className="flex items-center gap-3.5 p-3 rounded-xl bg-black/60 border border-[#D4AF37]/25"
                   >
                     <div className="w-12 h-14 rounded-lg bg-black/80 border border-white/10 overflow-hidden p-1 shrink-0 flex items-center justify-center">
                       <img
@@ -690,21 +690,21 @@ export default function OffersDiscountSection({ products = [] }) {
             </div>
 
             {/* Economics & Savings Breakdown */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 via-black/60 to-purple-950/20 border border-purple-500/40 space-y-3">
+            <div className="p-4 rounded-xl bg-[#140D07]/90 border border-[#D4AF37]/35 space-y-3">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-[#D8BE99] font-cinzel">{language === 'ar' ? 'إجمالي قيمة التجزئة المنفردة:' : 'Combined Retail Value:'}</span>
                 <span className="font-mono text-[#D8BE99] line-through">€{Number(selectedBundleModal.originalItemsPrice || 0).toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between items-center border-t border-purple-500/20 pt-2 text-sm">
-                <span className="text-purple-300 font-cinzel font-bold">{language === 'ar' ? 'سعر الباقة الخاص:' : 'Special Suite Price:'}</span>
+              <div className="flex justify-between items-center border-t border-[#D4AF37]/20 pt-2 text-sm">
+                <span className="text-[#D8BE99] font-cinzel font-bold">{language === 'ar' ? 'سعر الباقة الخاص:' : 'Special Suite Price:'}</span>
                 <span className="font-cinzel text-2xl font-extrabold text-[#F2D675]">
                   €{Number(selectedBundleModal.bundlePrice || 0).toFixed(2)}
                 </span>
               </div>
 
               {selectedBundleModal.savingsAmount > 0 && (
-                <div className="flex justify-between items-center text-xs text-emerald-400 font-bold border-t border-purple-500/20 pt-2">
+                <div className="flex justify-between items-center text-xs text-emerald-400 font-bold border-t border-[#D4AF37]/20 pt-2">
                   <span>{language === 'ar' ? 'مجموع التوفير الفوري:' : 'Immediate Patron Savings:'}</span>
                   <span className="font-mono text-sm">
                     €{Number(selectedBundleModal.savingsAmount).toFixed(2)} ({selectedBundleModal.savingsPercentage}% OFF)
@@ -742,9 +742,9 @@ export default function OffersDiscountSection({ products = [] }) {
                   handleAddBundleToCart(selectedBundleModal);
                   setSelectedBundleModal(null);
                 }}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-800 via-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-500 text-white font-cinzel font-bold text-xs uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] hover:brightness-110 text-black font-cinzel font-bold text-xs uppercase tracking-wider shadow-[0_4px_15px_rgba(212,175,55,0.35)] hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
               >
-                <ShoppingBag className="w-4 h-4" />
+                <ShoppingBag className="w-4 h-4 text-black" />
                 <span>{language === 'ar' ? 'إضافة الباقة للحقيبة' : 'Claim Entire Suite Now'}</span>
               </button>
             </div>

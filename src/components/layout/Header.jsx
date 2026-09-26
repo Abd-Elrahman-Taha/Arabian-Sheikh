@@ -138,42 +138,7 @@ export default function Header({ onOpenSearch }) {
         }`}
       >
         {/* Top VIP Announcement Bar */}
-        {!isScrolled && (
-          <div className={`hidden lg:block border-b pb-2 mb-2 ${
-            isDark ? 'border-[#D4AF37]/15' : 'border-[#5A3517]/15'
-          }`}>
-            <div className={`max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center justify-center text-[11px] uppercase tracking-[0.25em] ${
-              isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'
-            }`}>
-              <div className="flex items-center gap-2">
-                {activePromos.length > 0 ? (
-                  <>
-                    <Sparkles className={`w-3 h-3 ${isDark ? 'text-[#D4AF37]' : 'text-[#5A3517]'}`} />
-                    <Link to="/shop" className="hover:underline flex items-center gap-1.5 font-bold">
-                      <span>
-                        👑 Palace Offer: "{activePromos[0].name.toUpperCase()}" is live —{' '}
-                        {activePromos[0].discountType === 'Fixed' ? `€${activePromos[0].discountValue}` : `${activePromos[0].discountValue}%`}{' '}
-                        OFF{' '}
-                        {(() => {
-                          const rules = activePromos[0].applicabilities || activePromos[0].applicability || [];
-                          if (rules.length === 0) return 'sitewide!';
-                          if (rules.length === 1 && rules[0].targetType === 'Category') return 'on select category!';
-                          if (rules.length === 1 && rules[0].targetType === 'Product') return 'on select flacon!';
-                          if (rules.length === 1 && rules[0].targetType === 'Brand') return 'on select maison!';
-                          return 'on select creations!';
-                        })()}
-                      </span>
-                    </Link>
-                  </>
-                ) : (
-                  <span className="opacity-85 font-cinzel font-semibold text-[10px] tracking-[0.3em]">
-                    Maison de Haute Parfumerie Royale
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+       
 
         <div className="max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-12 xl:px-16">
           <div className="flex items-center justify-between gap-2 sm:gap-6">

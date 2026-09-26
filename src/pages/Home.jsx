@@ -497,18 +497,7 @@ export default function Home() {
           </div>
 
           {/* Active Royal Campaign / Bundles Announcement Ad Pill */}
-          <button
-            onClick={scrollToOffers}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-black/85 via-[#D4AF37]/30 to-black/85 border border-[#F2D675]/70 shadow-[0_0_20px_rgba(212,175,55,0.4)] backdrop-blur-md hover:border-[#F2D675] hover:scale-105 transition-all cursor-pointer group mt-2"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="font-cinzel text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFFDF8] group-hover:text-[#F2D675] transition-colors">
-              {language === 'ar'
-                ? '🎁 عروض وباقات القصر الملكية متاحة الآن — وفر حتى 35%'
-                : '🎁 PALACE OFFERS & CURATED BUNDLES LIVE — SAVE UP TO 35%'}
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#F2D675] rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+         
 
         </div>
 
@@ -586,7 +575,7 @@ export default function Home() {
 
               {/* Radiant Metallic Gold Luminous Title (Glows prominently on phones) */}
               <div className="relative">
-                <h1 className={`font-cinzel font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.04em] leading-tight drop-shadow-[0_0_25px_rgba(212,175,55,0.6)] ${
+                <h1 className={`font-cinzel font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.04em] leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] ${
                   isDark
                     ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#FFFDF9] via-[#F2D675] to-[#D4AF37]'
                     : 'text-[#120B06]'
@@ -597,7 +586,7 @@ export default function Home() {
 
               {/* Luminous Notes & Price Specs on Phone */}
               <p className={`text-xs sm:text-sm font-sans font-medium line-clamp-2 leading-relaxed max-w-sm mx-auto lg:mx-0 ${
-                isDark ? 'text-[#FFF2B2] drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'text-[#3A2116]'
+                isDark ? 'text-[#FFF2B2] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-[#3A2116]'
               }`}>
                 {getTagline(currentHeroFlacon)}
               </p>

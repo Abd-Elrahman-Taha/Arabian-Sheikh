@@ -54,6 +54,14 @@ export default function Hero2DFlaconShowcase({
     return p?.image || p?.cutoutImage || p?.originalImage || '/products/luxury_designs/07_arabian_gold.webp';
   };
 
+  const getDisplayName = (p) => {
+    if (!p) return '';
+    if (language === 'ar') return p.arabicName || p.name;
+    if (language === 'es') return p.spanishName || p.name;
+    if (language === 'bg') return p.bulgarianName || p.name;
+    return p.name;
+  };
+
   const activeProduct = products[currentIndex] || products[0] || {};
   const total = products.length || 3;
 
@@ -73,18 +81,21 @@ export default function Hero2DFlaconShowcase({
           const isRight = diff === 1;
           const isLeft = diff === total - 1 || (!isActive && !isRight);
 
-          // Smooth 3D depth transform coordinates for Desktop
-          let desktopTransform = 'translate(-50%, -50%) translateZ(0px) scale(1.15)';
+          // Position the bottle item in 2D viewport coordinates WITHOUT scaling the outer container
+          let parentTransform = 'translate(-50%, -50%)';
+          let bottle3DTransform = 'scale(1.15) translateZ(0px)';
           let desktopOpacity = 1;
           let desktopZIndex = 30;
 
           if (isRight) {
-            desktopTransform = 'translate(calc(-50% + 230px), calc(-50% + 10px)) translateZ(-90px) scale(0.82) rotateY(-6deg)';
-            desktopOpacity = 0.65;
+            parentTransform = 'translate(calc(-50% + 230px), calc(-50% + 10px))';
+            bottle3DTransform = 'scale(0.82) translateZ(-90px) rotateY(-6deg)';
+            desktopOpacity = 0.75;
             desktopZIndex = 10;
           } else if (isLeft) {
-            desktopTransform = 'translate(calc(-50% - 230px), calc(-50% + 10px)) translateZ(-90px) scale(0.82) rotateY(6deg)';
-            desktopOpacity = 0.65;
+            parentTransform = 'translate(calc(-50% - 230px), calc(-50% + 10px))';
+            bottle3DTransform = 'scale(0.82) translateZ(-90px) rotateY(6deg)';
+            desktopOpacity = 0.75;
             desktopZIndex = 10;
           }
 
@@ -100,9 +111,9 @@ export default function Hero2DFlaconShowcase({
             <div
               key={product.id || idx}
               onClick={() => handleSelect(idx)}
-              className="absolute left-1/2 top-1/2 flex flex-col items-center justify-center cursor-pointer transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) transform-gpu"
+              className="absolute left-1/2 top-1/2 flex flex-col items-center justify-center cursor-pointer transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1)"
               style={{
-                transform: desktopTransform,
+                transform: parentTransform,
                 opacity: desktopOpacity,
                 zIndex: desktopZIndex
               }}
@@ -124,30 +135,48 @@ export default function Hero2DFlaconShowcase({
                 <span>{product.tier || 'Imperial Tier'}</span>
               </div>
 
-              {/* 2D Bottle with Gentle Organic Hovering */}
+              {/* 2D Bottle with 3D Depth Swap & Floating Animation */}
               <div
-                className="relative flex items-center justify-center"
-                style={{ animation: floatAnim }}
+                className="relative flex items-center justify-center transition-transform duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) transform-gpu"
+                style={{
+                  transform: bottle3DTransform,
+                  animation: floatAnim
+                }}
               >
                 <img
                   src={imgSrc}
-                  alt={product.name || 'Haute Parfumerie Flacon'}
-                  className="h-[280px] sm:h-[340px] lg:h-[390px] w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transition-transform duration-500 transform-gpu group-hover:scale-105"
+                  alt={getDisplayName(product) || 'Haute Parfumerie Flacon'}
+                  className="h-[280px] sm:h-[340px] lg:h-[390px] w-auto object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] transition-transform duration-500 group-hover:scale-105"
                   loading="eager"
                   fetchPriority="high"
                 />
               </div>
 
-              {/* Flacon Name Tag */}
-              <div className={`mt-4 text-center transition-all duration-500 ${
-                isActive ? 'opacity-100 transform translate-y-0' : 'opacity-0 group-hover:opacity-75 transform translate-y-1'
-              }`}>
-                <span className="font-cinzel text-xs font-bold uppercase tracking-wider text-[#D4AF37] block">
-                  {product.name}
+              {/* Flacon Name Tag - Razor-Sharp High-Definition Luxury Pedestal */}
+              <div
+                className={`mt-4 px-5 py-2.5 rounded-full border transition-all duration-500 backdrop-blur-md text-center pointer-events-auto ${
+                  isActive
+                    ? 'bg-black/85 border-[#D4AF37]/70 shadow-[0_8px_30px_rgba(0,0,0,0.85),0_0_20px_rgba(212,175,55,0.3)] opacity-100'
+                    : 'bg-black/60 border-white/15 opacity-75 hover:opacity-100 hover:border-[#D4AF37]/50 shadow-md'
+                }`}
+                style={{
+                  WebkitFontSmoothing: 'antialiased',
+                  MozOsxFontSmoothing: 'grayscale',
+                  textRendering: 'geometricPrecision'
+                }}
+              >
+                <span className="font-cinzel text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-[#FFFDF8] block drop-shadow-sm">
+                  {getDisplayName(product)}
                 </span>
-                <span className="text-[10px] font-mono font-medium text-[#FFF2B2]/90">
-                  €{product.price} • {product.size || '60 ml'}
-                </span>
+                <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                  <span className="font-mono text-xs font-bold text-[#F2D675] tracking-wider">
+                    €{product.price}
+                  </span>
+                  <span className="text-[#D4AF37]/60 text-[10px]">•</span>
+                  <span className="font-mono text-[10.5px] font-medium text-[#D8BE99]">
+                    {product.size || '60 ml / 2.0 fl oz'}
+                  </span>
+                </div>
               </div>
             </div>
           );
@@ -249,8 +278,31 @@ export default function Hero2DFlaconShowcase({
           })}
         </div>
 
+        {/* Active Product Name & Price on Mobile - High Definition */}
+        <div
+          className="mt-2.5 px-4 py-1.5 rounded-full bg-black/80 border border-[#D4AF37]/60 text-center shadow-lg backdrop-blur-md z-40"
+          style={{
+            WebkitFontSmoothing: 'antialiased',
+            MozOsxFontSmoothing: 'grayscale',
+            textRendering: 'geometricPrecision'
+          }}
+        >
+          <span className="font-cinzel text-xs font-bold uppercase tracking-[0.2em] text-[#FFFDF8] block">
+            {getDisplayName(activeProduct)}
+          </span>
+          <div className="flex items-center justify-center gap-1.5 mt-0.5">
+            <span className="font-mono text-[11px] font-bold text-[#F2D675]">
+              €{activeProduct.price}
+            </span>
+            <span className="text-[#D4AF37]/60 text-[9px]">•</span>
+            <span className="font-mono text-[10px] text-[#D8BE99]">
+              {activeProduct.size || '60 ml'}
+            </span>
+          </div>
+        </div>
+
         {/* Status Tag on Mobile */}
-        <span className="text-[9.5px] font-cinzel tracking-widest uppercase text-[#FFF2B2] mt-1.5 font-bold transition-opacity duration-300 z-40 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]">
+        <span className="text-[9.5px] font-cinzel tracking-widest uppercase text-[#FFF2B2] mt-1.5 font-bold transition-opacity duration-300 z-40 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
           {currentIndex + 1} / {products.length} • {activeProduct.tier || 'Imperial Tier'}
         </span>
       </div>

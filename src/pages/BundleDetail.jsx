@@ -192,8 +192,8 @@ export default function BundleDetail() {
 
               {/* Top Sovereign Badges Ribbon */}
               <div className="w-full flex items-center justify-between relative z-10">
-                <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-purple-900 via-purple-700 to-purple-900 text-white font-cinzel font-bold text-xs uppercase tracking-widest shadow-md flex items-center gap-1.5 border border-purple-400/40">
-                  <Gift className="w-3.5 h-3.5 text-purple-300" />
+                <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] text-black font-cinzel font-extrabold text-xs uppercase tracking-widest shadow-md flex items-center gap-1.5 border border-[#FFFDF8]/40">
+                  <Crown className="w-3.5 h-3.5 text-black" />
                   <span>{language === 'ar' ? 'باقة ملكية منسقة' : 'Curated Royal Suite'}</span>
                 </span>
 
@@ -442,10 +442,10 @@ export default function BundleDetail() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="group/btn relative flex-1 py-4 px-6 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.22em] flex items-center justify-center gap-2.5 transition-all duration-400 overflow-hidden cursor-pointer bg-gradient-to-r from-[#8C6239] via-[#B8860B] to-[#7A5228] hover:from-[#F2D675] hover:via-[#D4AF37] hover:to-[#F2D675] text-white hover:text-black border border-[#F2D675]/50 shadow-[0_10px_30px_rgba(140,98,57,0.45)] hover:scale-[1.02]"
+                  className="group/btn relative flex-1 py-4 px-6 rounded-full font-cinzel font-bold text-xs uppercase tracking-[0.22em] flex items-center justify-center gap-2.5 transition-all duration-400 overflow-hidden cursor-pointer bg-gradient-to-r from-[#D4AF37] via-[#F2D675] to-[#D4AF37] hover:brightness-110 text-black border border-[#FFFDF8]/40 shadow-[0_10px_30px_rgba(212,175,55,0.4)] hover:scale-[1.02]"
                 >
-                  <ShoppingBag className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:scale-110" />
-                  <span className="relative z-10 drop-shadow-sm">
+                  <ShoppingBag className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/btn:scale-110 text-black" />
+                  <span className="relative z-10 font-extrabold">
                     {language === 'ar'
                       ? `إضافة الباقة للحقيبة • €${(bundle.bundlePrice * quantity).toFixed(2)}`
                       : `Add Royal Suite to Bag • €${(bundle.bundlePrice * quantity).toFixed(2)}`}

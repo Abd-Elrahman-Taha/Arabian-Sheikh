@@ -2145,13 +2145,13 @@ export default function CheckoutPage() {
                       src={item.image || '/products/luxury_designs/07_arabian_gold.webp'}
                       alt={item.name}
                       className={`w-12 h-14 object-contain bg-black/40 p-1 border shrink-0 rounded ${
-                        isBundle ? 'border-purple-500/50' : 'border-white/10'
+                        isBundle ? 'border-[#D4AF37]/50' : 'border-white/10'
                       }`}
                     />
                     <div className="flex-1 min-w-0">
                       {isBundle && (
-                        <span className="text-[9px] uppercase font-cinzel font-bold text-purple-400 block mb-0.5">
-                          🎁 Curated Suite
+                        <span className="text-[9px] uppercase font-cinzel font-bold text-[#F2D675] block mb-0.5">
+                          👑 Curated Suite
                         </span>
                       )}
                       <h4 className="font-cinzel font-bold text-[#F3E6D0] line-clamp-1">{item.name}</h4>

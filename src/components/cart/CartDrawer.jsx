@@ -11,6 +11,7 @@ import {
   Minus,
   Trash2,
   Gift,
+  Crown,
   ArrowRight,
   Sparkles,
   ShieldCheck,
@@ -198,8 +199,8 @@ export default function CartDrawer() {
                     className={`flex gap-3.5 p-3.5 border relative group transition-all rounded-2xl ${
                       isBundle
                         ? isDark
-                          ? 'bg-gradient-to-br from-[#1C0F05] via-[#0B0A08] to-[#120B06] border-purple-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.6)]'
-                          : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-purple-500/50 shadow-md'
+                          ? 'bg-gradient-to-br from-[#1C0F05] via-[#0B0A08] to-[#120B06] border-[#D4AF37]/50 shadow-[0_4px_20px_rgba(0,0,0,0.6)]'
+                          : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/50 shadow-md'
                         : isDark
                         ? 'bg-[#0B0A08] border-[#D4AF37]/15'
                         : 'bg-gradient-to-br from-[#FFFDF8] via-[#FAF1DF] to-[#F5E6CC] border-[#D4AF37]/40 shadow-sm'
@@ -218,7 +219,7 @@ export default function CartDrawer() {
                         alt={item.name}
                         className={`w-16 h-20 object-contain p-0 shrink-0 border rounded-xl overflow-hidden hover:scale-105 transition-transform ${
                           isBundle
-                            ? isDark ? 'bg-black/60 border-purple-500/40' : 'bg-white border-purple-500/40'
+                            ? isDark ? 'bg-black/60 border-[#D4AF37]/40' : 'bg-white border-[#D4AF37]/40'
                             : isDark ? 'bg-black/50 border-white/5' : 'bg-white/80 border-[#D4AF37]/30'
                         }`}
                       />
@@ -229,8 +230,8 @@ export default function CartDrawer() {
                       <div>
                         {/* Bundle Badge */}
                         {isBundle && (
-                          <div className="flex items-center gap-1 text-[9.5px] uppercase font-cinzel font-bold text-purple-400 mb-0.5">
-                            <Gift className="w-3 h-3" />
+                          <div className="flex items-center gap-1 text-[9.5px] uppercase font-cinzel font-bold text-[#F2D675] mb-0.5">
+                            <Crown className="w-3 h-3 text-[#D4AF37]" />
                             <span>{language === 'ar' ? 'باقة عطور ملكية' : 'Curated Royal Suite'}</span>
                           </div>
                         )}

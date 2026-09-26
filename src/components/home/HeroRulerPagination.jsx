@@ -86,7 +86,7 @@ export default function HeroRulerPagination({
                   >
                     <span
                       className={`font-mono text-[11px] sm:text-xs font-bold tracking-widest transition-colors duration-300 ${
-                        isActive ? 'text-[#F2D675] drop-shadow-[0_0_6px_rgba(212,175,55,0.8)]' : 'text-[#D8BE99]'
+                        isActive ? 'text-[#F2D675] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : 'text-[#D8BE99]'
                       }`}
                     >
                       0{idx + 1}
